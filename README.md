@@ -7,6 +7,8 @@ An administrative readiness, qualification audit, incident documentation, and de
 
 > **Demonstration Notice & Statement of Independence:** This application is an independent portfolio demonstration and readiness prototype, not an official product or endorsement of any private military company or operational agency. It is a defensive administrative software prototype built entirely with simulated, non-sensitive, unverified sample demonstration records. It does not connect to live operational command systems, weapons inventories, classified databases, surveillance apparatus, police records, or external communication networks. Preloaded records are sample and unverified records intended solely for demonstration and interface evaluation.
 
+<img width="1774" height="887" alt="SAFER-Github_Repo" src="https://github.com/user-attachments/assets/ecf0bca5-6c94-4aff-b1a3-3109eaed4c10" />
+
 ---
 
 ## 1. Project Purpose
