@@ -16,6 +16,7 @@ import {
   DEFAULT_ACCESSIBILITY_SETTINGS,
   DEFAULT_THEME_ID,
 } from '../utils/themePresets.ts';
+import type { AccessibilitySettings } from '../types/theme.ts';
 
 export type SaferRole =
   | 'super_admin'
@@ -43,7 +44,7 @@ export interface PersonalSettings {
     interfaceDensity: 'comfortable' | 'compact';
     textSize: '100' | '125' | '150' | '175' | '200';
   };
-  accessibility: typeof DEFAULT_ACCESSIBILITY_SETTINGS;
+  accessibility: AccessibilitySettings;
   notifications: {
     incidentAssignments: boolean;
     taskUpdates: boolean;
