@@ -92,34 +92,118 @@ function readLocalArray<T>(key: string, fallback: T[], isValid: (value: unknown)
   }
 }
 
+function isQualificationItem(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return hasString(value, 'id') &&
+    hasString(value, 'name') &&
+    hasString(value, 'completionDate') &&
+    (value.expiryDate === null || typeof value.expiryDate === 'string') &&
+    ['Verified', 'Pending Verification', 'Unverified', 'Audit Flagged'].includes(String(value.verificationStatus)) &&
+    hasString(value, 'issuer') &&
+    hasString(value, 'verificationId');
+}
+
+function isWorkExperienceEntry(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return hasString(value, 'id') &&
+    hasString(value, 'employerName') &&
+    hasString(value, 'employerAddress') &&
+    hasString(value, 'employerContactNumbers') &&
+    hasString(value, 'startDate') &&
+    hasString(value, 'endDate') &&
+    typeof value.currentlyWorkingHere === 'boolean' &&
+    hasString(value, 'workDescription') &&
+    hasString(value, 'skillsInUse');
+}
+
+function isStructuredIncidentDraft(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  const stringArrays = [
+    'peopleAndRolesInvolved',
+    'factualChronologicalAccount',
+    'actionsTaken',
+    'evidenceReferences',
+    'outstandingQuestionsAndMissingInfo',
+    'followUpActionsRequiringHumanReview',
+  ];
+  return hasString(value, 'incidentReference') &&
+    hasString(value, 'dateTime') &&
+    hasString(value, 'locationDescription') &&
+    stringArrays.every((key) => Array.isArray(value[key]) && value[key].every((item) => typeof item === 'string')) &&
+    (value.witnessInformation === null || typeof value.witnessInformation === 'string') &&
+    hasString(value, 'rawNotesProvided');
+}
+
 function isPersonnelRecord(value: unknown): value is PersonnelRecord {
-  return isRecord(value) &&
-    hasString(value, 'id') && hasString(value, 'fullName') &&
-    hasString(value, 'displayName') && hasString(value, 'callSign') &&
-    Array.isArray(value.certifications) && Array.isArray(value.outstandingRequirements);
+  if (!isRecord(value)) return false;
+  const addressIsValid = (address: unknown) =>
+    address === undefined || (isRecord(address) &&
+      ['addressLine', 'city', 'state', 'postalCode', 'country'].every((key) => hasString(address, key)));
+  return hasString(value, 'id') &&
+    hasString(value, 'fullName') &&
+    hasString(value, 'displayName') &&
+    hasString(value, 'callSign') &&
+    hasString(value, 'pmcEmployeeId') &&
+    hasString(value, 'badgeId') &&
+    hasString(value, 'role') &&
+    hasString(value, 'specialisation') &&
+    hasString(value, 'contactEmail') &&
+    Array.isArray(value.certifications) && value.certifications.every(isQualificationItem) &&
+    Array.isArray(value.outstandingRequirements) && value.outstandingRequirements.every((item) => typeof item === 'string') &&
+    (value.workExperience === undefined || (Array.isArray(value.workExperience) && value.workExperience.every(isWorkExperienceEntry))) &&
+    addressIsValid(value.residenceAddress) &&
+    addressIsValid(value.correspondenceAddress) &&
+    (value.roles === undefined || (Array.isArray(value.roles) && value.roles.every((item) => typeof item === 'string'))) &&
+    (value.specialisations === undefined || (Array.isArray(value.specialisations) && value.specialisations.every((item) => typeof item === 'string')));
 }
 
 function isIncidentReport(value: unknown): value is IncidentReport {
-  return isRecord(value) &&
-    hasString(value, 'id') && hasString(value, 'referenceNumber') &&
-    hasString(value, 'title') && hasString(value, 'dateReported') &&
-    hasString(value, 'location') && hasString(value, 'summary') &&
-    hasString(value, 'status');
+  if (!isRecord(value)) return false;
+  const incidentTypes = [
+    'Equipment Malfunction', 'Access Control Anomaly', 'Communications Drop',
+    'Logistics Delay', 'Medical First-Aid Event', 'Administrative Discrepancy',
+  ];
+  const statuses = [
+    'Logged - Pending Officer Review',
+    'Under Investigation / Human Review',
+    'Documented & Filed',
+  ];
+  return hasString(value, 'id') &&
+    hasString(value, 'referenceNumber') &&
+    hasString(value, 'title') &&
+    incidentTypes.includes(String(value.incidentType)) &&
+    hasString(value, 'dateReported') &&
+    hasString(value, 'reportedBy') &&
+    hasString(value, 'location') &&
+    hasString(value, 'summary') &&
+    statuses.includes(String(value.status)) &&
+    ['Routine', 'Moderate', 'High Attention'].includes(String(value.priority)) &&
+    (value.structuredDraft === undefined || isStructuredIncidentDraft(value.structuredDraft));
 }
 
 function isCyberHygieneItem(value: unknown): value is CyberHygieneItem {
   return isRecord(value) &&
-    hasString(value, 'id') && hasString(value, 'domain') &&
-    hasString(value, 'title') && hasString(value, 'recommendation') &&
+    hasString(value, 'id') &&
+    hasString(value, 'domain') &&
+    hasString(value, 'title') &&
+    hasString(value, 'recommendation') &&
     hasString(value, 'plainEnglishExplanation') &&
-    (value.status === 'Completed' || value.status === 'Outstanding');
+    (value.status === 'Completed' || value.status === 'Outstanding') &&
+    (value.itemType === 'General Recommendation' || value.itemType === 'Verified Finding') &&
+    hasString(value, 'findingNotes') &&
+    hasString(value, 'lastChecked') &&
+    (value.verifiedBy === null || typeof value.verifiedBy === 'string');
 }
 
 function isChecklistItem(value: unknown): value is PreDeploymentChecklistItem {
   return isRecord(value) &&
-    hasString(value, 'id') && hasString(value, 'category') &&
-    hasString(value, 'task') && hasString(value, 'description') &&
-    (value.status === 'Complete' || value.status === 'Incomplete' || value.status === 'Not Applicable');
+    hasString(value, 'id') &&
+    hasString(value, 'category') &&
+    hasString(value, 'task') &&
+    hasString(value, 'description') &&
+    (value.status === 'Complete' || value.status === 'Incomplete' || value.status === 'Not Applicable') &&
+    (value.priority === 'High' || value.priority === 'Medium' || value.priority === 'Low') &&
+    typeof value.requiresHumanReview === 'boolean';
 }
 
 function isThemeId(value: unknown): value is string {
