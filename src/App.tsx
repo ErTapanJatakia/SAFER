@@ -32,6 +32,7 @@ import {
 } from './utils/themePresets.ts';
 import { isSafeImageDataUrl } from './utils/securitySanitizer.ts';
 import { getLocalISODate } from './utils/dateUtils.ts';
+import { parseStoredArray, parseStoredValue } from './utils/safeStorage.ts';
 import { SaferWordmark } from './components/SaferWordmark.tsx';
 import { HeaderBanner } from './components/HeaderBanner.tsx';
 import { Navbar, type NavigationSection } from './components/Navbar.tsx';
@@ -55,55 +56,137 @@ import {
 } from './utils/readinessRules.ts';
 import { RotateCcw, Shield, Check, FileText, AlertTriangle, Eye, Palette, Building2 } from 'lucide-react';
 
+
+const DEFAULT_CUSTOM_THEME: CustomThemeSettings = {
+  primary: '#1e3a8a',
+  bg: '#f8fafc',
+  surface: '#ffffff',
+  text: '#0f172a',
+  border: '#cbd5e1',
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function hasString(record: Record<string, unknown>, key: string): boolean {
+  return typeof record[key] === 'string';
+}
+
+function readLocalValue<T>(key: string, fallback: T, isValid: (value: unknown) => value is T): T {
+  try {
+    return parseStoredValue(localStorage.getItem(key), fallback, isValid);
+  } catch {
+    return fallback;
+  }
+}
+
+function readLocalArray<T>(key: string, fallback: T[], isValid: (value: unknown) => value is T): T[] {
+  try {
+    return parseStoredArray(localStorage.getItem(key), fallback, isValid);
+  } catch {
+    return fallback;
+  }
+}
+
+function isPersonnelRecord(value: unknown): value is PersonnelRecord {
+  return isRecord(value) &&
+    hasString(value, 'id') && hasString(value, 'fullName') &&
+    hasString(value, 'displayName') && hasString(value, 'callSign') &&
+    Array.isArray(value.certifications) && Array.isArray(value.outstandingRequirements);
+}
+
+function isIncidentReport(value: unknown): value is IncidentReport {
+  return isRecord(value) &&
+    hasString(value, 'id') && hasString(value, 'referenceNumber') &&
+    hasString(value, 'title') && hasString(value, 'dateReported') &&
+    hasString(value, 'location') && hasString(value, 'summary') &&
+    hasString(value, 'status');
+}
+
+function isCyberHygieneItem(value: unknown): value is CyberHygieneItem {
+  return isRecord(value) &&
+    hasString(value, 'id') && hasString(value, 'domain') &&
+    hasString(value, 'title') && hasString(value, 'recommendation') &&
+    hasString(value, 'plainEnglishExplanation') &&
+    (value.status === 'Completed' || value.status === 'Outstanding');
+}
+
+function isChecklistItem(value: unknown): value is PreDeploymentChecklistItem {
+  return isRecord(value) &&
+    hasString(value, 'id') && hasString(value, 'category') &&
+    hasString(value, 'task') && hasString(value, 'description') &&
+    (value.status === 'Complete' || value.status === 'Incomplete' || value.status === 'Not Applicable');
+}
+
+function isThemeId(value: unknown): value is string {
+  return typeof value === 'string' && THEME_PRESETS.some((theme) => theme.id === value);
+}
+
+function isCustomThemeSettings(value: unknown): value is CustomThemeSettings {
+  if (!isRecord(value)) return false;
+  const isHex = (color: unknown) => typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color);
+  return isHex(value.primary) && isHex(value.bg) && isHex(value.surface) &&
+    isHex(value.text) && isHex(value.border);
+}
+
+function isLogoConfig(value: unknown): value is LogoConfig {
+  if (!isRecord(value)) return false;
+  return (value.id === 'topLogo' || value.id === 'bottomLogo') &&
+    (value.position === 'top-left' || value.position === 'top-right' ||
+      value.position === 'bottom-left' || value.position === 'bottom-right') &&
+    typeof value.enabled === 'boolean' && typeof value.altText === 'string' &&
+    typeof value.height === 'number' && Number.isFinite(value.height) &&
+    value.height >= 24 && value.height <= 96 &&
+    (value.dataUrl === null || typeof value.dataUrl === 'string');
+}
+
+function isAccessibilitySettings(value: unknown): value is AccessibilitySettings {
+  if (!isRecord(value)) return false;
+  return ['100', '125', '150', '175', '200'].includes(String(value.textSize)) &&
+    (value.contrast === 'normal' || value.contrast === 'high') &&
+    (value.colorMode === 'auto' || value.colorMode === 'light' || value.colorMode === 'dark') &&
+    typeof value.reducedMotion === 'boolean' && typeof value.focusRing === 'boolean' &&
+    typeof value.largeTargets === 'boolean' &&
+    (value.lineSpacing === 'normal' || value.lineSpacing === 'relaxed' || value.lineSpacing === 'loose') &&
+    (value.letterSpacing === 'normal' || value.letterSpacing === 'wide') &&
+    typeof value.dyslexicFont === 'boolean';
+}
+
+function loadLogo(key: string, fallback: LogoConfig): LogoConfig {
+  const stored = readLocalValue(key, fallback, isLogoConfig);
+  if (stored.id !== fallback.id) return fallback;
+  if (stored.dataUrl && !isSafeImageDataUrl(stored.dataUrl)) {
+    return { ...stored, dataUrl: null, enabled: false };
+  }
+  return stored;
+}
+
 export default function App() {
   // Navigation State
   const [activeSection, setActiveSection] = useState<NavigationSection>('dashboard');
 
   // Application Data States (with localStorage backing)
-  const [personnelList, setPersonnelList] = useState<PersonnelRecord[]>(() => {
-    try {
-      const saved = localStorage.getItem('prot_ops_personnel_v2');
-      return saved ? JSON.parse(saved) : INITIAL_PERSONNEL;
-    } catch {
-      return INITIAL_PERSONNEL;
-    }
-  });
+  const [personnelList, setPersonnelList] = useState<PersonnelRecord[]>(() =>
+    readLocalArray('prot_ops_personnel_v2', INITIAL_PERSONNEL, isPersonnelRecord)
+  );
 
-  const [incidentList, setIncidentList] = useState<IncidentReport[]>(() => {
-    try {
-      const saved = localStorage.getItem('prot_ops_incidents_v2');
-      return saved ? JSON.parse(saved) : INITIAL_INCIDENTS;
-    } catch {
-      return INITIAL_INCIDENTS;
-    }
-  });
+  const [incidentList, setIncidentList] = useState<IncidentReport[]>(() =>
+    readLocalArray('prot_ops_incidents_v2', INITIAL_INCIDENTS, isIncidentReport)
+  );
 
-  const [cyberItems, setCyberItems] = useState<CyberHygieneItem[]>(() => {
-    try {
-      const saved = localStorage.getItem('prot_ops_cyber_v2');
-      return saved ? JSON.parse(saved) : INITIAL_CYBER_ITEMS;
-    } catch {
-      return INITIAL_CYBER_ITEMS;
-    }
-  });
+  const [cyberItems, setCyberItems] = useState<CyberHygieneItem[]>(() =>
+    readLocalArray('prot_ops_cyber_v2', INITIAL_CYBER_ITEMS, isCyberHygieneItem)
+  );
 
-  const [checklistItems, setChecklistItems] = useState<PreDeploymentChecklistItem[]>(() => {
-    try {
-      const saved = localStorage.getItem('prot_ops_checklist_v2');
-      return saved ? JSON.parse(saved) : INITIAL_CHECKLIST;
-    } catch {
-      return INITIAL_CHECKLIST;
-    }
-  });
+  const [checklistItems, setChecklistItems] = useState<PreDeploymentChecklistItem[]>(() =>
+    readLocalArray('prot_ops_checklist_v2', INITIAL_CHECKLIST, isChecklistItem)
+  );
 
   // Theme Settings State
-  const [currentThemeId, setCurrentThemeId] = useState<string>(() => {
-    try {
-      return localStorage.getItem('prot_ops_theme_v2') || DEFAULT_THEME_ID;
-    } catch {
-      return DEFAULT_THEME_ID;
-    }
-  });
+  const [currentThemeId, setCurrentThemeId] = useState<string>(() =>
+    readLocalValue('prot_ops_theme_v2', DEFAULT_THEME_ID, isThemeId)
+  );
 
   const [isCustomThemeActive, setIsCustomThemeActive] = useState<boolean>(() => {
     try {
@@ -113,71 +196,18 @@ export default function App() {
     }
   });
 
-  const [customTheme, setCustomTheme] = useState<CustomThemeSettings>(() => {
-    try {
-      const saved = localStorage.getItem('prot_ops_custom_theme_v2');
-      return saved
-        ? JSON.parse(saved)
-        : {
-            primary: '#1e3a8a',
-            bg: '#f8fafc',
-            surface: '#ffffff',
-            text: '#0f172a',
-            border: '#cbd5e1',
-          };
-    } catch {
-      return {
-        primary: '#1e3a8a',
-        bg: '#f8fafc',
-        surface: '#ffffff',
-        text: '#0f172a',
-        border: '#cbd5e1',
-      };
-    }
-  });
+  const [customTheme, setCustomTheme] = useState<CustomThemeSettings>(() =>
+    readLocalValue('prot_ops_custom_theme_v2', DEFAULT_CUSTOM_THEME, isCustomThemeSettings)
+  );
 
   // Independent Logo Branding States
-  const [topLogo, setTopLogo] = useState<LogoConfig>(() => {
-    try {
-      const saved = localStorage.getItem('prot_ops_top_logo_v2');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.dataUrl && !isSafeImageDataUrl(parsed.dataUrl)) {
-          parsed.dataUrl = null;
-        }
-        return parsed;
-      }
-      return DEFAULT_TOP_LOGO;
-    } catch {
-      return DEFAULT_TOP_LOGO;
-    }
-  });
-
-  const [bottomLogo, setBottomLogo] = useState<LogoConfig>(() => {
-    try {
-      const saved = localStorage.getItem('prot_ops_bottom_logo_v2');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.dataUrl && !isSafeImageDataUrl(parsed.dataUrl)) {
-          parsed.dataUrl = null;
-        }
-        return parsed;
-      }
-      return DEFAULT_BOTTOM_LOGO;
-    } catch {
-      return DEFAULT_BOTTOM_LOGO;
-    }
-  });
+  const [topLogo, setTopLogo] = useState<LogoConfig>(() => loadLogo('prot_ops_top_logo_v2', DEFAULT_TOP_LOGO));
+  const [bottomLogo, setBottomLogo] = useState<LogoConfig>(() => loadLogo('prot_ops_bottom_logo_v2', DEFAULT_BOTTOM_LOGO));
 
   // Accessibility Settings State
-  const [accessibilitySettings, setAccessibilitySettings] = useState<AccessibilitySettings>(() => {
-    try {
-      const saved = localStorage.getItem('prot_ops_a11y_v2');
-      return saved ? JSON.parse(saved) : DEFAULT_ACCESSIBILITY_SETTINGS;
-    } catch {
-      return DEFAULT_ACCESSIBILITY_SETTINGS;
-    }
-  });
+  const [accessibilitySettings, setAccessibilitySettings] = useState<AccessibilitySettings>(() =>
+    readLocalValue('prot_ops_a11y_v2', DEFAULT_ACCESSIBILITY_SETTINGS, isAccessibilitySettings)
+  );
 
   // Modal Visibility States
   const [isDemoNoticeOpen, setIsDemoNoticeOpen] = useState(false);
