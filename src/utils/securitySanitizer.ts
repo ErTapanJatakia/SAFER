@@ -178,6 +178,8 @@ function isSafeSvgMarkup(markup: string): boolean {
 export function isSafeImageDataUrl(url: unknown): boolean {
   if (typeof url !== 'string' || !url.trim()) return false;
   const trimmed = url.trim();
+  // Limit local logo payloads to prevent storage and memory exhaustion.
+  if (trimmed.length > 2_850_000) return false;
   const lower = trimmed.toLowerCase();
 
   // Reject dangerous pseudo-protocols and non-image data types.
