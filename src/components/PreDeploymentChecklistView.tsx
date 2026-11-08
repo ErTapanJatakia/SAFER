@@ -13,6 +13,7 @@ import {
 import { DEFAULT_FICTIONAL_SCENARIO } from '../data/mockData.ts';
 import { PreDeploymentSummaryModal } from './PreDeploymentSummaryModal.tsx';
 import { copyToClipboard } from '../utils/clipboard.ts';
+import { getLocalISODate } from '../utils/dateUtils.ts';
 import {
   ClipboardList,
   CheckCircle2,
@@ -70,7 +71,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
   const [newTaskPriority, setNewTaskPriority] = useState<'High' | 'Medium' | 'Low'>('High');
   const [newTaskStatus, setNewTaskStatus] = useState<PreDeploymentStatus>('Incomplete');
   const [newTaskAssigned, setNewTaskAssigned] = useState('Safety & Logistics Officer');
-  const [newTaskDeadline, setNewTaskDeadline] = useState('2026-10-18');
+  const [newTaskDeadline, setNewTaskDeadline] = useState(() => getLocalISODate());
   const [newTaskNotes, setNewTaskNotes] = useState('');
   const [taskFormError, setTaskFormError] = useState<string | null>(null);
 
@@ -108,7 +109,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
   }, [items, selectedCategory, selectedStatusFilter, searchQuery]);
 
   const handleQuickCopy = async () => {
-    const text = generatePreDeploymentSummaryText(items, scenario, reviewerName, '2026-10-15');
+    const text = generatePreDeploymentSummaryText(items, scenario, reviewerName, getLocalISODate());
     await copyToClipboard(text);
     setCopiedQuick(true);
     setTimeout(() => setCopiedQuick(false), 2500);
@@ -142,7 +143,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
       complianceNotes: newTaskNotes.trim() || undefined,
       requiresHumanReview: true,
       reviewedBy: newTaskStatus === 'Complete' ? reviewerName : null,
-      reviewDate: newTaskStatus === 'Complete' ? '2026-10-15' : null,
+      reviewDate: newTaskStatus === 'Complete' ? getLocalISODate() : null,
       targetDeadline: newTaskDeadline,
     };
 
@@ -646,7 +647,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                       {item.reviewedBy ? (
                         <span className="text-teal-700 font-semibold flex items-center">
                           <UserCheck className="w-3.5 h-3.5 mr-1" />
-                          Supervisory Sign-Off: {item.reviewedBy} ({item.reviewDate || '2026-10-15'})
+                          Supervisory Sign-Off: {item.reviewedBy} ({item.reviewDate || getLocalISODate()})
                         </span>
                       ) : item.requiresHumanReview ? (
                         <span className="text-amber-800 font-semibold flex items-center">
