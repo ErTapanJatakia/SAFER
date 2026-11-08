@@ -75,3 +75,38 @@ export function isStartBeforeOrEqualEnd(startDate: string, endDate: string): boo
   const eIso = toYYYYMMDD(endDate);
   return sIso <= eIso;
 }
+
+
+/**
+ * Returns the local calendar date as YYYY-MM-DD.
+ * Avoids UTC date shifts caused by toISOString() near local midnight.
+ */
+export function getLocalISODate(date: Date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Returns the local date and time as YYYY-MM-DD HH:mm.
+ */
+export function getLocalDateTime(date: Date = new Date()): string {
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${getLocalISODate(date)} ${hours}:${minutes}`;
+}
+
+/**
+ * Formats a date for human-readable local display.
+ */
+export function formatLocalDisplayDate(
+  date: Date = new Date(),
+  locale = 'en-IN'
+): string {
+  return new Intl.DateTimeFormat(locale, {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
+}
