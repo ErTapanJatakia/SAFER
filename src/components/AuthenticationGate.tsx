@@ -164,7 +164,7 @@ export const AuthenticationGate: React.FC<AuthenticationGateProps> = ({
     );
   }
 
-  if (!profile || profile.status !== 'active') {
+  if (!profile || profile.status !== 'active' || profile.role === 'pending') {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
         <div className="max-w-md w-full rounded-xl border border-slate-700 bg-slate-900 p-6 sm:p-8 space-y-4">
