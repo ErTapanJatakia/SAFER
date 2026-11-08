@@ -97,6 +97,8 @@ interface SaferAuthContextValue {
   saveProfile: (displayName: string) => Promise<void>;
   saveSettings: (settings: PersonalSettings) => Promise<void>;
   submitPrivacyRequest: (type: 'access' | 'correction' | 'deletion', details: string) => Promise<void>;
+  listUserAccounts: () => Promise<SaferProfile[]>;
+  updateUserAccess: (uid: string, role: SaferRole, status: AccountStatus) => Promise<void>;
   clearError: () => void;
 }
 
@@ -409,6 +411,53 @@ export const SaferAuthProvider: React.FC<React.PropsWithChildren> = ({ children 
     });
   }, []);
 
+
+  const listUserAccounts = useCallback(async (): Promise<SaferProfile[]> => {
+    const services = servicesRef.current;
+    const currentUser = services?.auth.currentUser;
+    if (!services || !currentUser) throw new Error('Sign in is required.');
+    if (profile?.role !== 'super_admin' || profile.status !== 'active') {
+      throw new Error('Only an active Super Admin can manage accounts.');
+    }
+    const usersQuery = services.firestoreApi.query(
+      services.firestoreApi.collection(services.db, 'users'),
+      services.firestoreApi.limit(50)
+    );
+    const snapshot = await services.firestoreApi.getDocs(usersQuery);
+    return snapshot.docs.map((document: any) =>
+      normalizeProfile(document.data(), document.id, '')
+    );
+  }, [profile]);
+
+  const updateUserAccess = useCallback(async (
+    uid: string,
+    role: SaferRole,
+    status: AccountStatus
+  ) => {
+    const services = servicesRef.current;
+    const currentUser = services?.auth.currentUser;
+    if (!services || !currentUser) throw new Error('Sign in is required.');
+    if (profile?.role !== 'super_admin' || profile.status !== 'active') {
+      throw new Error('Only an active Super Admin can assign account roles.');
+    }
+    if (!uid || uid === currentUser.uid) {
+      throw new Error('A Super Admin cannot change their own role or status here.');
+    }
+    const allowedRoles: SaferRole[] = [
+      'super_admin', 'org_admin', 'supervisor', 'personnel', 'auditor', 'pending',
+    ];
+    const allowedStatuses: AccountStatus[] = ['pending', 'active', 'suspended'];
+    if (!allowedRoles.includes(role) || !allowedStatuses.includes(status)) {
+      throw new Error('The requested role or account status is invalid.');
+    }
+    const userRef = services.firestoreApi.doc(services.db, 'users', uid);
+    await services.firestoreApi.updateDoc(userRef, {
+      role,
+      status,
+      updatedAt: services.firestoreApi.serverTimestamp(),
+    });
+  }, [profile]);
+
   const clearError = useCallback(() => setError(null), []);
 
   const value = useMemo<SaferAuthContextValue>(() => ({
@@ -427,11 +476,13 @@ export const SaferAuthProvider: React.FC<React.PropsWithChildren> = ({ children 
     saveProfile,
     saveSettings,
     submitPrivacyRequest,
+    listUserAccounts,
+    updateUserAccess,
     clearError,
   }), [
     loading, user, profile, settings, error, signIn, register, signOut,
     requestPasswordReset, refreshEmailVerification, sendVerificationEmail, saveProfile,
-    saveSettings, submitPrivacyRequest, clearError,
+    saveSettings, submitPrivacyRequest, listUserAccounts, updateUserAccess, clearError,
   ]);
 
   return <SaferAuthContext.Provider value={value}>{children}</SaferAuthContext.Provider>;
