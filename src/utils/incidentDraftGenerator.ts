@@ -1,4 +1,5 @@
 import type { StructuredIncidentDraft } from '../types/index.ts';
+import { getLocalISODate } from './dateUtils.ts';
 
 export const INCIDENT_LEGAL_DISCLAIMER =
   'ADMINISTRATIVE INCIDENT DRAFT: This document structures factual observations as reported. It does not establish legal conclusions, determine liability, or automate disciplinary determinations. All items require verified human supervisory review.';
@@ -130,7 +131,7 @@ export function generateStructuredIncidentDraft(
   // 1. Reference
   const ref =
     referenceOverride ||
-    `IR-2026-${Math.floor(1000 + Math.random() * 9000)}-${Date.now().toString().slice(-4)}`;
+    `IR-${getLocalISODate().slice(0, 4)}-${Math.floor(1000 + Math.random() * 9000)}-${Date.now().toString().slice(-4)}`;
 
   // 2. Date and Time Extraction
   let dateTime = '';
@@ -331,7 +332,7 @@ export function generateStructuredIncidentDraft(
     followUpActionsRequiringHumanReview: followUpActions,
     unverifiedClaims: unverifiedClaims.length > 0 ? unverifiedClaims : undefined,
     rawNotesProvided: text,
-    lastEditedTimestamp: '2026-10-15',
+    lastEditedTimestamp: getLocalISODate(),
   };
 }
 

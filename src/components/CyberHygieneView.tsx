@@ -7,6 +7,8 @@ import {
   generateCyberHygieneSummary,
 } from '../utils/cyberHygieneSummary.ts';
 import { CyberHygieneSummaryModal } from './CyberHygieneSummaryModal.tsx';
+import { copyToClipboard } from '../utils/clipboard.ts';
+import { getLocalISODate, formatLocalDisplayDate } from '../utils/dateUtils.ts';
 import { CyberItemModal } from './CyberItemModal.tsx';
 import {
   ShieldCheck,
@@ -98,24 +100,23 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
   };
 
   const handleCopySummary = async () => {
-    const text = generateCyberHygieneSummary(items, '2026-10-15');
+    const text = generateCyberHygieneSummary(items, getLocalISODate());
     try {
-      await navigator.clipboard.writeText(text);
-      setCopyFeedback(true);
-      setTimeout(() => setCopyFeedback(false), 2500);
+      const copied = await copyToClipboard(text);
+      setCopyFeedback(copied);
+      if (copied) setTimeout(() => setCopyFeedback(false), 2500);
     } catch {
-      setCopyFeedback(true);
-      setTimeout(() => setCopyFeedback(false), 2500);
+      setCopyFeedback(false);
     }
   };
 
   const handleDownloadSummary = () => {
-    const text = generateCyberHygieneSummary(items, '2026-10-15');
+    const text = generateCyberHygieneSummary(items, getLocalISODate());
     const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Cybersecurity-Hygiene-Briefing-2026-10-15.txt`;
+    link.download = `Cybersecurity-Hygiene-Briefing-${getLocalISODate()}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -232,7 +233,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
       {auditSuccessMsg && (
         <div className="p-3 bg-teal-50 border border-teal-300 text-teal-800 rounded-md text-xs flex items-center space-x-2">
           <CheckCircle className="w-4 h-4 shrink-0 text-teal-600" />
-          <span>Defensive posture re-evaluated. Audit timestamps synchronized to Oct 15, 2026.</span>
+          <span>Defensive posture re-evaluated. Audit timestamps synchronized to {formatLocalDisplayDate()}.</span>
         </div>
       )}
 
@@ -845,7 +846,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
           </div>
 
           <div className="bg-slate-900 text-slate-100 p-6 rounded-lg border border-slate-800 font-mono text-xs leading-relaxed overflow-x-auto whitespace-pre-wrap selection:bg-blue-600 selection:text-white">
-            {generateCyberHygieneSummary(items, '2026-10-15')}
+            {generateCyberHygieneSummary(items, getLocalISODate())}
           </div>
         </div>
       )}

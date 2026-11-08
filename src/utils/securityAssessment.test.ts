@@ -122,6 +122,20 @@ test('SEC-03: Image Data URL & SVG Sanitization Defense (CWE-434, CWE-79)', () =
   const validJpegDataUrl = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=';
   assert.equal(isSafeImageDataUrl(validJpegDataUrl), true);
 
+
+  // External resource references, CSS, stylesheet links, and entities are not allowed.
+  const externalSvgImage = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><image href="https://attacker.example/pixel.png"/></svg>';
+  assert.equal(isSafeImageDataUrl(externalSvgImage), false);
+
+  const styledSvg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><rect style="fill:url(https://attacker.example/a.svg#x)" width="10" height="10"/></svg>';
+  assert.equal(isSafeImageDataUrl(styledSvg), false);
+
+  const unsafeSvgUrl = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><rect fill="url(https://attacker.example/a.svg#x)" width="10" height="10"/></svg>';
+  assert.equal(isSafeImageDataUrl(unsafeSvgUrl), false);
+
+  const malformedSvg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><rect width="10"></svg>';
+  assert.equal(isSafeImageDataUrl(malformedSvg), false);
+
   // Valid clean SVG
   const validCleanSvg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="blue" width="100" height="100"/></svg>';
   assert.equal(isSafeImageDataUrl(validCleanSvg), true);

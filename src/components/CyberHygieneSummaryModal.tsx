@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { CyberHygieneItem } from '../types/index.ts';
 import { generateCyberHygieneSummary } from '../utils/cyberHygieneSummary.ts';
 import { copyToClipboard } from '../utils/clipboard.ts';
+import { getLocalISODate } from '../utils/dateUtils.ts';
 import { X, Copy, Check, Download, ShieldCheck, AlertCircle } from 'lucide-react';
 
 interface CyberHygieneSummaryModalProps {
@@ -19,7 +20,8 @@ export const CyberHygieneSummaryModal: React.FC<CyberHygieneSummaryModalProps> =
 
   if (!isOpen) return null;
 
-  const summaryText = generateCyberHygieneSummary(items, '2026-10-15');
+  const reportDate = getLocalISODate();
+  const summaryText = generateCyberHygieneSummary(items, reportDate);
 
   const handleCopy = async () => {
     await copyToClipboard(summaryText);
@@ -32,7 +34,7 @@ export const CyberHygieneSummaryModal: React.FC<CyberHygieneSummaryModalProps> =
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Cybersecurity-Hygiene-Briefing-2026-10-15.txt`;
+    link.download = `Cybersecurity-Hygiene-Briefing-${reportDate}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

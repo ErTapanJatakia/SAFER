@@ -1,0 +1,168 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+
+    function isSuperAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'super_admin'
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'active';
+    }
+
+    function validAdminRoleUpdate(uid) {
+      return isSuperAdmin()
+        && request.auth.uid != uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['role', 'status', 'updatedAt'])
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.displayName == resource.data.displayName
+        && request.resource.data.organizationId == resource.data.organizationId
+        && request.resource.data.role in [
+          'super_admin', 'org_admin', 'supervisor', 'personnel', 'auditor', 'pending'
+        ]
+        && request.resource.data.status in ['pending', 'active', 'suspended']
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function validUserCreate(uid) {
+      return isOwner(uid)
+        && request.resource.data.keys().hasAll([
+          'uid', 'email', 'displayName', 'role', 'status',
+          'organizationId', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'uid', 'email', 'displayName', 'role', 'status',
+          'organizationId', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.uid == uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == 'pending'
+        && request.resource.data.status == 'pending'
+        && request.resource.data.organizationId == null
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() <= 100
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function validUserUpdate(uid) {
+      return isOwner(uid)
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['displayName', 'email', 'updatedAt'])
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.status == resource.data.status
+        && request.resource.data.organizationId == resource.data.organizationId
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() <= 100
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function validPersonalSettings(data) {
+      return data.keys().hasAll([
+          'schemaVersion', 'appearance', 'accessibility',
+          'notifications', 'languageRegion', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'schemaVersion', 'appearance', 'accessibility',
+          'notifications', 'languageRegion', 'updatedAt'
+        ])
+        && data.schemaVersion == 1
+        && data.updatedAt == request.time
+        && data.appearance is map
+        && data.appearance.keys().hasOnly([
+          'themeId', 'interfaceDensity', 'textSize'
+        ])
+        && data.appearance.themeId in [
+          'blue-white', 'green-white', 'green-black', 'black-white',
+          'red-green', 'multicolour-rgby', 'bright-daylight-desert',
+          'high-contrast-outdoor', 'tropical-jungle', 'maritime-coastal',
+          'mountain-snow', 'night-low-glare', 'neutral-slate-monochrome',
+          'warm-earth-sand', 'dark-graphite-amber', 'camo-woodland',
+          'camo-naval', 'camo-urban', 'camo-desert', 'camo-tactical-black'
+        ]
+        && data.appearance.interfaceDensity in ['comfortable', 'compact']
+        && data.appearance.textSize in ['100', '125', '150', '175', '200']
+        && data.accessibility is map
+        && data.accessibility.keys().hasOnly([
+          'textSize', 'contrast', 'colorMode', 'reducedMotion',
+          'focusRing', 'largeTargets', 'lineSpacing',
+          'letterSpacing', 'dyslexicFont'
+        ])
+        && data.accessibility.textSize in ['100', '125', '150', '175', '200']
+        && data.accessibility.contrast in ['normal', 'high']
+        && data.accessibility.colorMode in ['auto', 'light', 'dark']
+        && data.accessibility.reducedMotion is bool
+        && data.accessibility.focusRing is bool
+        && data.accessibility.largeTargets is bool
+        && data.accessibility.lineSpacing in ['normal', 'relaxed', 'loose']
+        && data.accessibility.letterSpacing in ['normal', 'wide']
+        && data.accessibility.dyslexicFont is bool
+        && data.notifications is map
+        && data.notifications.keys().hasOnly([
+          'incidentAssignments', 'taskUpdates',
+          'qualificationReminders', 'accountSecurity'
+        ])
+        && data.notifications.incidentAssignments is bool
+        && data.notifications.taskUpdates is bool
+        && data.notifications.qualificationReminders is bool
+        && data.notifications.accountSecurity is bool
+        && data.languageRegion is map
+        && data.languageRegion.keys().hasOnly([
+          'language', 'dateFormat', 'timeFormat', 'timeZone'
+        ])
+        && data.languageRegion.language == 'en'
+        && data.languageRegion.dateFormat in ['DD-MM-YYYY', 'YYYY-MM-DD']
+        && data.languageRegion.timeFormat in ['24h', '12h']
+        && data.languageRegion.timeZone is string
+        && data.languageRegion.timeZone.size() <= 64;
+    }
+
+    match /users/{uid} {
+      allow get: if isOwner(uid) || isSuperAdmin();
+      allow list: if isSuperAdmin();
+      allow create: if validUserCreate(uid);
+      allow update: if validUserUpdate(uid) || validAdminRoleUpdate(uid);
+      // Account deletion requires a separate, reviewed workflow.
+      allow delete: if false;
+    }
+
+    match /userSettings/{uid} {
+      allow read: if isOwner(uid);
+      allow create, update: if isOwner(uid) && validPersonalSettings(request.resource.data);
+      allow delete: if false;
+    }
+
+    match /privacyRequests/{uid}/requests/{requestId} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasOnly([
+          'type', 'details', 'status', 'createdAt'
+        ])
+        && request.resource.data.type in ['access', 'correction', 'deletion']
+        && request.resource.data.details is string
+        && request.resource.data.details.size() <= 2000
+        && request.resource.data.status == 'submitted'
+        && request.resource.data.createdAt == request.time;
+      // Users cannot alter or erase an already submitted privacy request.
+      allow update, delete: if false;
+    }
+
+    // Operational collections remain denied until tenant-scoped data rules
+    // and server-side role permissions are implemented and tested.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

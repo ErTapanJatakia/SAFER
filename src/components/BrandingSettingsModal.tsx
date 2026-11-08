@@ -343,7 +343,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
             {/* Upload & Preview Box */}
             <div className="space-y-2">
               <label className="block font-semibold text-slate-800">
-                Logo Image (PNG, JPG/JPEG, WebP — Up to 10 MB)
+                Logo Image (PNG, JPG/JPEG, WebP, SVG — Up to 2 MB)
               </label>
 
               {currentLogo.dataUrl ? (
@@ -411,7 +411,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
                       Click to upload {activeTab === 'top' ? 'Top' : 'Bottom'} Logo
                     </span>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      PNG, JPG, or WebP. Maximum size 10 MB.
+                      PNG, JPG, or WebP. Maximum size 2 MB.
                     </p>
                   </div>
                 </div>
@@ -421,7 +421,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
               <input
                 ref={topFileInputRef}
                 type="file"
-                accept="image/png, image/jpeg, image/jpg, image/webp"
+                accept="image/png, image/jpeg, image/jpg, image/webp, image/svg+xml"
                 onChange={(e) => handleFileUpload(e, true)}
                 className="hidden"
                 aria-label="Upload Top Logo Image"
@@ -429,7 +429,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
               <input
                 ref={bottomFileInputRef}
                 type="file"
-                accept="image/png, image/jpeg, image/jpg, image/webp"
+                accept="image/png, image/jpeg, image/jpg, image/webp, image/svg+xml"
                 onChange={(e) => handleFileUpload(e, false)}
                 className="hidden"
                 aria-label="Upload Bottom Logo Image"

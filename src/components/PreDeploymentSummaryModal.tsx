@@ -6,6 +6,7 @@ import {
 } from '../utils/preDeploymentSummary.ts';
 import { copyToClipboard } from '../utils/clipboard.ts';
 import { sanitizeSafeFilename } from '../utils/securitySanitizer.ts';
+import { getLocalISODate } from '../utils/dateUtils.ts';
 import {
   X,
   Copy,
@@ -46,7 +47,7 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
     items,
     scenario,
     supervisorName,
-    '2026-10-15'
+    getLocalISODate()
   );
 
   const handleCopy = async () => {

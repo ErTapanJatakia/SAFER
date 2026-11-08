@@ -8,6 +8,7 @@ import {
   INCIDENT_LEGAL_DISCLAIMER,
 } from '../utils/incidentDraftGenerator.ts';
 import { copyToClipboard } from '../utils/clipboard.ts';
+import { getLocalISODate, getLocalDateTime, getTimeZoneLabel } from '../utils/dateUtils.ts';
 import {
   FileText,
   Plus,
@@ -99,9 +100,9 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
     }
     setFormError(null);
 
-    const refNum = `IR-2026-${Math.floor(1000 + Math.random() * 9000)}-${incidentType.substring(0, 2).toUpperCase()}`;
+    const refNum = `IR-${getLocalISODate().slice(0, 4)}-${Math.floor(1000 + Math.random() * 9000)}-${incidentType.substring(0, 2).toUpperCase()}`;
     const draft = generateStructuredIncidentDraft(
-      `Date/Time: 2026-10-15 12:00\nLocation: ${location.trim() || 'Static Facility'}\nReporter: ${reportedBy.trim() || 'Duty Officer'}\nNotes: ${summary.trim()}`,
+      `Date/Time: ${getLocalDateTime()} ${getTimeZoneLabel()}\nLocation: ${location.trim() || 'Static Facility'}\nReporter: ${reportedBy.trim() || 'Duty Officer'}\nNotes: ${summary.trim()}`,
       refNum
     );
 
@@ -110,7 +111,7 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
       referenceNumber: refNum,
       title: title.trim(),
       incidentType,
-      dateReported: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      dateReported: `${getLocalDateTime()} ${getTimeZoneLabel()}`,
       reportedBy: reportedBy.trim() || 'Duty Officer (Demo)',
       location: location.trim() || 'Headquarters Static Facility',
       summary: summary.trim(),

@@ -8,6 +8,7 @@ import {
 } from '../utils/incidentDraftGenerator.ts';
 import { copyToClipboard } from '../utils/clipboard.ts';
 import { sanitizeSafeFilename } from '../utils/securitySanitizer.ts';
+import { getLocalISODate } from '../utils/dateUtils.ts';
 import {
   FileText,
   X,
@@ -138,7 +139,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
       outstandingQuestionsAndMissingInfo: editableQuestions.split('\n').map((l) => l.trim()).filter(Boolean),
       followUpActionsRequiringHumanReview: editableFollowUps.split('\n').map((l) => l.trim()).filter(Boolean),
       unverifiedClaims: editableUnverified ? editableUnverified.split('\n').map((l) => l.trim()).filter(Boolean) : undefined,
-      lastEditedTimestamp: '2026-10-15',
+      lastEditedTimestamp: getLocalISODate(),
     };
     setDraft(updated);
     setIsEditing(false);
@@ -175,7 +176,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
       referenceNumber: draft.incidentReference,
       title: reportTitle.trim() || `Incident ${draft.incidentReference}`,
       incidentType,
-      dateReported: draft.dateTime.includes('[DATE/TIME') ? '2026-10-15 12:00' : draft.dateTime.slice(0, 16),
+      dateReported: draft.dateTime.includes('[DATE/TIME') ? `${getLocalISODate()} 12:00` : draft.dateTime.slice(0, 16),
       reportedBy: draft.peopleAndRolesInvolved[0] || 'Duty Officer (Sample Roster)',
       location: draft.locationDescription.includes('[LOCATION') ? 'Static Facility' : draft.locationDescription,
       summary: draft.factualChronologicalAccount.slice(0, 2).join(' ') || 'Incident documented via structured draft generator.',

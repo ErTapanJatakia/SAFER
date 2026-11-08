@@ -137,11 +137,11 @@ Protection operations coordinators, supervisors, and administrative officers fac
   - Independent upload, removal, preview, size adjustment (small, medium, large, xlarge), and accessible alt-text configuration.
   - Changes or removals to one logo operate completely independently of the other.
 
-### 19 Tactical, Camouflage & High-Visibility Theme Presets
-- **Standard & Dark:** Midnight Navy, Stealth Obsidian, Tactical Charcoal, Slate Grey, Arctic White, Emerald Guard
-- **Camouflage:** Woodland BDU, Desert MARPAT, MultiCam Tactical, Urban SpecOps, Night Recon, Winter Tundra (featuring subtle CSS pattern layers with solid, readable card surfaces)
-- **High Visibility / Field:** Safety Hi-Vis Amber, High-Vis Orange, Search & Rescue Red, Air Ops Sky, Subdued Desert, Field Khaki, Maritime Fleet
-- All themes maintain high typographic contrast and satisfy readable visual hierarchy.
+### 20 Tactical, Camouflage & High-Visibility Theme Presets
+- **Standard:** Blue–White (Default), Green–White, Green–Black, Black–White, Red–Green (accessible shapes and labels), Multicolour RGBY.
+- **High Visibility / Environmental:** Bright Daylight / Desert, High-Contrast Outdoor, Tropical Jungle, Maritime / Coastal, Mountain / Snow, Night / Low-Glare, Neutral Slate / Monochrome, Warm Earth / Sand, Dark Graphite / Amber.
+- **Camouflage:** Woodland, Naval, Urban, Desert, and Tactical Stealth accent presets, using decorative boundary patterns and solid card surfaces.
+- The presets define dedicated foreground and surface tokens; verify contrast under the actual display and lighting conditions before operational use.
 
 ### Accessibility Features
 - **Accessible Typography & Focus:** High-contrast color pairings, visible focus outlines on all interactive elements, and semantic button/input elements.
@@ -155,7 +155,7 @@ Protection operations coordinators, supervisors, and administrative officers fac
 
 - **100% Client-Side Processing:** All personnel management, redaction filtering, incident parsing, and document exports execute entirely in the user's browser runtime.
 - **No External Data Transmission:** User-entered personal data, health particulars, and operational notes are never transmitted to Gemini, external LLM endpoints, analytics servers, or remote databases.
-- **In-Memory Demonstration State:** Additions and edits persist within the browser session memory. Resetting demo data returns records to the curated sample set without overwriting uncommitted user work.
+- **Browser-Local Demonstration State:** Application records, theme choices, accessibility preferences, and logo data are stored in browser `localStorage`. They can persist across browser sessions and are not encrypted by this application. Clear browser data to remove them; do not use real personal, health, confidential, or operational records.
 - **Safe Export Filenames:** Exported filenames use anonymized patterns (e.g. `PMC-ID-001_personnel_record_2026-10-24.pdf`), preventing leakage of names or email addresses into filenames.
 - **Synthetic Sample Records:** Preloaded personnel, incident reports, and checklist items are synthetic sample records created for demonstration purposes. They do not represent real persons, active legal cases, police reports, or operational entities.
 
@@ -169,7 +169,7 @@ Protection operations coordinators, supervisors, and administrative officers fac
 - **Styling:** Tailwind CSS v4
 - **Icons:** Lucide React
 - **Document Generation:** `jspdf`, `jspdf-autotable`, `xlsx`, `docx`
-- **Unit Testing:** Node.js native test runner (`node:test`, `node:assert/strict`)
+- **Unit Testing:** TypeScript test execution with `tsx` and the Node.js native test runner (`node:test`, `node:assert/strict`)
 
 ### Local Development Commands
 ```bash
@@ -180,7 +180,7 @@ npm install
 npm run dev
 
 # Run all automated unit tests (37 tests across 5 suites)
-node --test src/utils/*.test.ts
+npm test
 
 # Type checking and linting
 npm run lint
@@ -206,10 +206,25 @@ npm run build
 | **AI Prompt Injection Resistance (OWASP GenAI)** | Deterministic extraction rejecting adversarial overrides and prohibiting automated guilt findings | **PASSED** (100%) |
 | **Cyber Hygiene & Posture** | 10 security domains, verified vs recommendation distinction, training scenario | **PASSED** (100%) |
 | **Pre-Deployment Checklist** | 8 categories, metrics calculation, outstanding highlight banner, non-authorization disclaimer | **PASSED** (100%) |
-| **Themes & Branding** | 19 theme presets, independent dual logo controls, accessible demonstration notice modal | **PASSED** (100%) |
-| **Automated Suite Run** | 45 tests across `src/utils/*.test.ts` (`node:test`) | **45 / 45 PASSED** (0 failures) |
-| **Compilation & Lint** | `compile_applet` and `tsc --noEmit` | **PASSED** (0 errors) |
+| **Themes & Branding** | 20 source-defined theme presets, independent dual logo controls, accessible demonstration notice modal | Implemented; verify with CI and manual visual review |
+| **Automated Suite Run** | 49 tests across `src/utils/*.test.ts` (`node:test`) | **49 / 49 PASSED** on audit baseline commit (0 failures) |
+| **Compilation & Lint** | `tsc --noEmit` and Vite production build | **PASSED** on audit baseline commit (0 errors) |
 
 ### Limitations
-- **Data Persistence:** In-memory demonstration state; data is not synced to a persistent database (PostgreSQL/Firebase) as requested by the standalone prototype architecture.
-- **Natural Language Parsing:** Incident draft generator uses deterministic regex-based rules to ensure zero fabrication or hallucination; complex conversational narratives should be human-reviewed.
+- **Operational Backend:** Personnel, incident, qualification, employment, cybersecurity, checklist, and associated evidence records remain in browser-local storage. They are not multi-user, tenant-isolated Firestore records and are not protected by the account roles. Do not use real personal, health, confidential, or operational data.
+- **Account Layer:** Optional Firebase Email/Password authentication, email verification, per-UID profile/preferences, password-reset request, Super Admin account approval/role assignment, and privacy-request intake are implemented when Firebase is configured. Firebase setup and first-Super-Admin bootstrap are manual; see FIREBASE_SETUP.md.
+- **Role Enforcement:** Account roles protect account-management operations through Firestore rules, but they do not yet enforce permissions on the browser-local operational modules. Organization creation/membership and tenant-scoped operational permissions remain future work.
+- **Notifications and MFA:** Notification preferences are stored, but no email/SMS/push delivery is implemented. MFA is not configured; the UI does not simulate it.
+- **Privacy Workflow:** Account access/correction/deletion requests are recorded for manual review. Request completion, automatic deletion, legal grievance handling, and a full retention workflow are not implemented.
+- **Data Persistence:** Browser-local operational storage is not encrypted application storage, synchronized multi-device storage, or a secure records-management database.
+- **Natural Language Parsing:** Incident draft generator uses deterministic regex-based rules to reduce fabrication risk; complex conversational narratives should be human-reviewed.
+
+## 7. Optional Account & Personal Settings
+
+When a Firebase Web App is configured on the no-cost Spark plan, SAFER offers email/password registration and sign-in, email verification, per-user profiles, and personal settings. Appearance preferences reuse the existing 20 theme presets and store a user's selected theme without replacing the theme engine. Accessibility, interface density, date/time-zone preferences, notification preferences, password-reset requests, JSON account export, and privacy-request intake are also available.
+
+New accounts are created with a pending role and pending status. The first Super Admin is provisioned by the project owner in Firebase Console; thereafter the Super Admin can approve other accounts and assign roles using a Firestore-rules-protected management interface. Users cannot promote themselves.
+
+This account layer does not yet move the operational modules into a tenant-scoped backend. Personnel, incident, qualification, cybersecurity, checklist, branding, and evidence data remain browser-local demonstration state. Role assignments therefore do not currently enforce operational permissions. Do not use real personal or operational information.
+
+See [FIREBASE_SETUP.md](FIREBASE_SETUP.md) and [PRIVACY_NOTICE.md](PRIVACY_NOTICE.md) for configuration, data-flow, and limitations.

@@ -65,7 +65,7 @@ export const ThemeSettingsModal: React.FC<ThemeSettingsModalProps> = ({
                 Theme Settings & Operational Visual Modes
               </h2>
               <p className="text-xs text-slate-400">
-                19 specialized visual themes, environmental high-visibility palettes, and decorative camouflage trims
+                20 specialized visual themes, environmental high-visibility palettes, and decorative camouflage trims
               </p>
             </div>
           </div>

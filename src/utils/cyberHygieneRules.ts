@@ -1,4 +1,5 @@
 import type { CyberHygieneItem } from '../types/index.ts';
+import { getLocalISODate } from './dateUtils.ts';
 
 export const CYBER_LEGAL_DISCLAIMER =
   'DEFENSIVE CYBERSECURITY NOTICE: This review assesses administrative compliance, hygiene best practices, and operational procedures only. No active vulnerability scans, penetration testing, interception of private communications, or intrusive network probing were conducted.';
@@ -41,7 +42,7 @@ export function computeCyberPosture(items: CyberHygieneItem[]): CyberPostureMetr
  */
 export function generateCyberHygieneSummary(
   items: CyberHygieneItem[],
-  referenceDateStr: string = '2026-10-15'
+  referenceDateStr: string = getLocalISODate()
 ): string {
   const metrics = computeCyberPosture(items);
   const lines: string[] = [];

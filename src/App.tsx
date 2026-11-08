@@ -31,6 +31,11 @@ import {
   DEFAULT_ACCESSIBILITY_SETTINGS,
 } from './utils/themePresets.ts';
 import { isSafeImageDataUrl } from './utils/securitySanitizer.ts';
+import { getLocalISODate } from './utils/dateUtils.ts';
+import { parseStoredArray, parseStoredValue } from './utils/safeStorage.ts';
+import { useSaferAuth } from './context/SaferAuthContext.tsx';
+import { AuthenticationGate } from './components/AuthenticationGate.tsx';
+import { AccountSettingsModal } from './components/AccountSettingsModal.tsx';
 import { SaferWordmark } from './components/SaferWordmark.tsx';
 import { HeaderBanner } from './components/HeaderBanner.tsx';
 import { Navbar, type NavigationSection } from './components/Navbar.tsx';
@@ -54,55 +59,249 @@ import {
 } from './utils/readinessRules.ts';
 import { RotateCcw, Shield, Check, FileText, AlertTriangle, Eye, Palette, Building2 } from 'lucide-react';
 
+
+const DEFAULT_CUSTOM_THEME: CustomThemeSettings = {
+  primary: '#1e3a8a',
+  bg: '#f8fafc',
+  surface: '#ffffff',
+  text: '#0f172a',
+  border: '#cbd5e1',
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function hasString(record: Record<string, unknown>, key: string): boolean {
+  return typeof record[key] === 'string';
+}
+
+function readLocalValue<T>(key: string, fallback: T, isValid: (value: unknown) => value is T): T {
+  try {
+    return parseStoredValue(localStorage.getItem(key), fallback, isValid);
+  } catch {
+    return fallback;
+  }
+}
+
+function readLocalArray<T>(key: string, fallback: T[], isValid: (value: unknown) => value is T): T[] {
+  try {
+    return parseStoredArray(localStorage.getItem(key), fallback, isValid);
+  } catch {
+    return fallback;
+  }
+}
+
+function isQualificationItem(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return hasString(value, 'id') &&
+    hasString(value, 'name') &&
+    hasString(value, 'completionDate') &&
+    (value.expiryDate === null || typeof value.expiryDate === 'string') &&
+    ['Verified', 'Pending Verification', 'Unverified', 'Audit Flagged'].includes(String(value.verificationStatus)) &&
+    hasString(value, 'issuer') &&
+    hasString(value, 'verificationId');
+}
+
+function isWorkExperienceEntry(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return hasString(value, 'id') &&
+    hasString(value, 'employerName') &&
+    hasString(value, 'employerAddress') &&
+    hasString(value, 'employerContactNumbers') &&
+    hasString(value, 'startDate') &&
+    hasString(value, 'endDate') &&
+    typeof value.currentlyWorkingHere === 'boolean' &&
+    hasString(value, 'workDescription') &&
+    hasString(value, 'skillsInUse');
+}
+
+function isStructuredIncidentDraft(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  const stringArrays = [
+    'peopleAndRolesInvolved',
+    'factualChronologicalAccount',
+    'actionsTaken',
+    'evidenceReferences',
+    'outstandingQuestionsAndMissingInfo',
+    'followUpActionsRequiringHumanReview',
+  ];
+  return hasString(value, 'incidentReference') &&
+    hasString(value, 'dateTime') &&
+    hasString(value, 'locationDescription') &&
+    stringArrays.every((key) => Array.isArray(value[key]) && value[key].every((item) => typeof item === 'string')) &&
+    (value.witnessInformation === null || typeof value.witnessInformation === 'string') &&
+    hasString(value, 'rawNotesProvided');
+}
+
+function isPersonnelRecord(value: unknown): value is PersonnelRecord {
+  if (!isRecord(value)) return false;
+  const addressIsValid = (address: unknown) =>
+    address === undefined || (isRecord(address) &&
+      ['addressLine', 'city', 'state', 'postalCode', 'country'].every((key) => hasString(address, key)));
+  return hasString(value, 'id') &&
+    hasString(value, 'fullName') &&
+    hasString(value, 'displayName') &&
+    hasString(value, 'callSign') &&
+    hasString(value, 'pmcEmployeeId') &&
+    hasString(value, 'badgeId') &&
+    hasString(value, 'role') &&
+    hasString(value, 'specialisation') &&
+    hasString(value, 'contactEmail') &&
+    Array.isArray(value.certifications) && value.certifications.every(isQualificationItem) &&
+    Array.isArray(value.outstandingRequirements) && value.outstandingRequirements.every((item) => typeof item === 'string') &&
+    (value.workExperience === undefined || (Array.isArray(value.workExperience) && value.workExperience.every(isWorkExperienceEntry))) &&
+    addressIsValid(value.residenceAddress) &&
+    addressIsValid(value.correspondenceAddress) &&
+    (value.roles === undefined || (Array.isArray(value.roles) && value.roles.every((item) => typeof item === 'string'))) &&
+    (value.specialisations === undefined || (Array.isArray(value.specialisations) && value.specialisations.every((item) => typeof item === 'string')));
+}
+
+function isIncidentReport(value: unknown): value is IncidentReport {
+  if (!isRecord(value)) return false;
+  const incidentTypes = [
+    'Equipment Malfunction', 'Access Control Anomaly', 'Communications Drop',
+    'Logistics Delay', 'Medical First-Aid Event', 'Administrative Discrepancy',
+  ];
+  const statuses = [
+    'Logged - Pending Officer Review',
+    'Under Investigation / Human Review',
+    'Documented & Filed',
+  ];
+  return hasString(value, 'id') &&
+    hasString(value, 'referenceNumber') &&
+    hasString(value, 'title') &&
+    incidentTypes.includes(String(value.incidentType)) &&
+    hasString(value, 'dateReported') &&
+    hasString(value, 'reportedBy') &&
+    hasString(value, 'location') &&
+    hasString(value, 'summary') &&
+    statuses.includes(String(value.status)) &&
+    ['Routine', 'Moderate', 'High Attention'].includes(String(value.priority)) &&
+    (value.structuredDraft === undefined || isStructuredIncidentDraft(value.structuredDraft));
+}
+
+function isCyberHygieneItem(value: unknown): value is CyberHygieneItem {
+  return isRecord(value) &&
+    hasString(value, 'id') &&
+    hasString(value, 'domain') &&
+    hasString(value, 'title') &&
+    hasString(value, 'recommendation') &&
+    hasString(value, 'plainEnglishExplanation') &&
+    (value.status === 'Completed' || value.status === 'Outstanding') &&
+    (value.itemType === 'General Recommendation' || value.itemType === 'Verified Finding') &&
+    hasString(value, 'findingNotes') &&
+    hasString(value, 'lastChecked') &&
+    (value.verifiedBy === null || typeof value.verifiedBy === 'string');
+}
+
+function isChecklistItem(value: unknown): value is PreDeploymentChecklistItem {
+  return isRecord(value) &&
+    hasString(value, 'id') &&
+    hasString(value, 'category') &&
+    hasString(value, 'task') &&
+    hasString(value, 'description') &&
+    (value.status === 'Complete' || value.status === 'Incomplete' || value.status === 'Not Applicable') &&
+    (value.priority === 'High' || value.priority === 'Medium' || value.priority === 'Low') &&
+    typeof value.requiresHumanReview === 'boolean';
+}
+
+function isThemeId(value: unknown): value is string {
+  return typeof value === 'string' && THEME_PRESETS.some((theme) => theme.id === value);
+}
+
+function isCustomThemeSettings(value: unknown): value is CustomThemeSettings {
+  if (!isRecord(value)) return false;
+  const isHex = (color: unknown) => typeof color === 'string' && /^#[0-9a-f]{6}$/i.test(color);
+  return isHex(value.primary) && isHex(value.bg) && isHex(value.surface) &&
+    isHex(value.text) && isHex(value.border);
+}
+
+function isLogoConfig(value: unknown): value is LogoConfig {
+  if (!isRecord(value)) return false;
+  return (value.id === 'topLogo' || value.id === 'bottomLogo') &&
+    (value.position === 'top-left' || value.position === 'top-right' ||
+      value.position === 'bottom-left' || value.position === 'bottom-right') &&
+    typeof value.enabled === 'boolean' && typeof value.altText === 'string' &&
+    typeof value.height === 'number' && Number.isFinite(value.height) &&
+    value.height >= 24 && value.height <= 96 &&
+    (value.dataUrl === null || typeof value.dataUrl === 'string');
+}
+
+function isAccessibilitySettings(value: unknown): value is AccessibilitySettings {
+  if (!isRecord(value)) return false;
+  return ['100', '125', '150', '175', '200'].includes(String(value.textSize)) &&
+    (value.contrast === 'normal' || value.contrast === 'high') &&
+    (value.colorMode === 'auto' || value.colorMode === 'light' || value.colorMode === 'dark') &&
+    typeof value.reducedMotion === 'boolean' && typeof value.focusRing === 'boolean' &&
+    typeof value.largeTargets === 'boolean' &&
+    (value.lineSpacing === 'normal' || value.lineSpacing === 'relaxed' || value.lineSpacing === 'loose') &&
+    (value.letterSpacing === 'normal' || value.letterSpacing === 'wide') &&
+    typeof value.dyslexicFont === 'boolean';
+}
+
+function loadLogo(key: string, fallback: LogoConfig): LogoConfig {
+  const stored = readLocalValue(key, fallback, isLogoConfig);
+  if (stored.id !== fallback.id) return fallback;
+  if (stored.dataUrl && !isSafeImageDataUrl(stored.dataUrl)) {
+    return { ...stored, dataUrl: null, enabled: false };
+  }
+  return stored;
+}
+
 export default function App() {
+  const saferAuth = useSaferAuth();
+  const [isDemoGuest, setIsDemoGuest] = useState(false);
+  const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
+
+  useEffect(() => {
+    if (saferAuth.loading) return;
+    if (saferAuth.user && saferAuth.profile?.status === 'active') {
+      setCurrentThemeId(saferAuth.settings.appearance.themeId);
+      setIsCustomThemeActive(false);
+      setAccessibilitySettings(saferAuth.settings.accessibility);
+      document.documentElement.setAttribute('data-date-format', saferAuth.settings.languageRegion.dateFormat);
+      document.documentElement.setAttribute('data-time-zone', saferAuth.settings.languageRegion.timeZone);
+      document.documentElement.setAttribute('data-interface-density', saferAuth.settings.appearance.interfaceDensity);
+    } else if (!saferAuth.user) {
+      document.documentElement.removeAttribute('data-date-format');
+      document.documentElement.removeAttribute('data-time-zone');
+      document.documentElement.removeAttribute('data-interface-density');
+    }
+  }, [saferAuth.loading, saferAuth.user?.uid, saferAuth.profile?.status, saferAuth.settings]);
+
+  const handleSignOut = async () => {
+    await saferAuth.signOut();
+    setIsDemoGuest(false);
+    setIsAccountSettingsOpen(false);
+    setShowAccountMenu(false);
+  };
+
   // Navigation State
   const [activeSection, setActiveSection] = useState<NavigationSection>('dashboard');
 
   // Application Data States (with localStorage backing)
-  const [personnelList, setPersonnelList] = useState<PersonnelRecord[]>(() => {
-    try {
-      const saved = localStorage.getItem('prot_ops_personnel_v2');
-      return saved ? JSON.parse(saved) : INITIAL_PERSONNEL;
-    } catch {
-      return INITIAL_PERSONNEL;
-    }
-  });
+  const [personnelList, setPersonnelList] = useState<PersonnelRecord[]>(() =>
+    readLocalArray('prot_ops_personnel_v2', INITIAL_PERSONNEL, isPersonnelRecord)
+  );
 
-  const [incidentList, setIncidentList] = useState<IncidentReport[]>(() => {
-    try {
-      const saved = localStorage.getItem('prot_ops_incidents_v2');
-      return saved ? JSON.parse(saved) : INITIAL_INCIDENTS;
-    } catch {
-      return INITIAL_INCIDENTS;
-    }
-  });
+  const [incidentList, setIncidentList] = useState<IncidentReport[]>(() =>
+    readLocalArray('prot_ops_incidents_v2', INITIAL_INCIDENTS, isIncidentReport)
+  );
 
-  const [cyberItems, setCyberItems] = useState<CyberHygieneItem[]>(() => {
-    try {
-      const saved = localStorage.getItem('prot_ops_cyber_v2');
-      return saved ? JSON.parse(saved) : INITIAL_CYBER_ITEMS;
-    } catch {
-      return INITIAL_CYBER_ITEMS;
-    }
-  });
+  const [cyberItems, setCyberItems] = useState<CyberHygieneItem[]>(() =>
+    readLocalArray('prot_ops_cyber_v2', INITIAL_CYBER_ITEMS, isCyberHygieneItem)
+  );
 
-  const [checklistItems, setChecklistItems] = useState<PreDeploymentChecklistItem[]>(() => {
-    try {
-      const saved = localStorage.getItem('prot_ops_checklist_v2');
-      return saved ? JSON.parse(saved) : INITIAL_CHECKLIST;
-    } catch {
-      return INITIAL_CHECKLIST;
-    }
-  });
+  const [checklistItems, setChecklistItems] = useState<PreDeploymentChecklistItem[]>(() =>
+    readLocalArray('prot_ops_checklist_v2', INITIAL_CHECKLIST, isChecklistItem)
+  );
 
   // Theme Settings State
-  const [currentThemeId, setCurrentThemeId] = useState<string>(() => {
-    try {
-      return localStorage.getItem('prot_ops_theme_v2') || DEFAULT_THEME_ID;
-    } catch {
-      return DEFAULT_THEME_ID;
-    }
-  });
+  const [currentThemeId, setCurrentThemeId] = useState<string>(() =>
+    readLocalValue('prot_ops_theme_v2', DEFAULT_THEME_ID, isThemeId)
+  );
 
   const [isCustomThemeActive, setIsCustomThemeActive] = useState<boolean>(() => {
     try {
@@ -112,71 +311,18 @@ export default function App() {
     }
   });
 
-  const [customTheme, setCustomTheme] = useState<CustomThemeSettings>(() => {
-    try {
-      const saved = localStorage.getItem('prot_ops_custom_theme_v2');
-      return saved
-        ? JSON.parse(saved)
-        : {
-            primary: '#1e3a8a',
-            bg: '#f8fafc',
-            surface: '#ffffff',
-            text: '#0f172a',
-            border: '#cbd5e1',
-          };
-    } catch {
-      return {
-        primary: '#1e3a8a',
-        bg: '#f8fafc',
-        surface: '#ffffff',
-        text: '#0f172a',
-        border: '#cbd5e1',
-      };
-    }
-  });
+  const [customTheme, setCustomTheme] = useState<CustomThemeSettings>(() =>
+    readLocalValue('prot_ops_custom_theme_v2', DEFAULT_CUSTOM_THEME, isCustomThemeSettings)
+  );
 
   // Independent Logo Branding States
-  const [topLogo, setTopLogo] = useState<LogoConfig>(() => {
-    try {
-      const saved = localStorage.getItem('prot_ops_top_logo_v2');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.dataUrl && !isSafeImageDataUrl(parsed.dataUrl)) {
-          parsed.dataUrl = null;
-        }
-        return parsed;
-      }
-      return DEFAULT_TOP_LOGO;
-    } catch {
-      return DEFAULT_TOP_LOGO;
-    }
-  });
-
-  const [bottomLogo, setBottomLogo] = useState<LogoConfig>(() => {
-    try {
-      const saved = localStorage.getItem('prot_ops_bottom_logo_v2');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.dataUrl && !isSafeImageDataUrl(parsed.dataUrl)) {
-          parsed.dataUrl = null;
-        }
-        return parsed;
-      }
-      return DEFAULT_BOTTOM_LOGO;
-    } catch {
-      return DEFAULT_BOTTOM_LOGO;
-    }
-  });
+  const [topLogo, setTopLogo] = useState<LogoConfig>(() => loadLogo('prot_ops_top_logo_v2', DEFAULT_TOP_LOGO));
+  const [bottomLogo, setBottomLogo] = useState<LogoConfig>(() => loadLogo('prot_ops_bottom_logo_v2', DEFAULT_BOTTOM_LOGO));
 
   // Accessibility Settings State
-  const [accessibilitySettings, setAccessibilitySettings] = useState<AccessibilitySettings>(() => {
-    try {
-      const saved = localStorage.getItem('prot_ops_a11y_v2');
-      return saved ? JSON.parse(saved) : DEFAULT_ACCESSIBILITY_SETTINGS;
-    } catch {
-      return DEFAULT_ACCESSIBILITY_SETTINGS;
-    }
-  });
+  const [accessibilitySettings, setAccessibilitySettings] = useState<AccessibilitySettings>(() =>
+    readLocalValue('prot_ops_a11y_v2', DEFAULT_ACCESSIBILITY_SETTINGS, isAccessibilitySettings)
+  );
 
   // Modal Visibility States
   const [isDemoNoticeOpen, setIsDemoNoticeOpen] = useState(false);
@@ -364,7 +510,7 @@ export default function App() {
     supervisorName: string,
     reviewNotes: string
   ) => {
-    const today = '2026-10-15';
+    const today = getLocalISODate();
     setPersonnelList((prev) =>
       prev.map((p) => {
         if (p.id === personId) {
@@ -457,7 +603,7 @@ export default function App() {
             ...item,
             completed,
             status,
-            lastChecked: '2026-10-15',
+            lastChecked: getLocalISODate(),
           };
         }
         return item;
@@ -467,7 +613,7 @@ export default function App() {
   };
 
   const handleRunCyberAudit = () => {
-    const today = '2026-10-15';
+    const today = getLocalISODate();
     setCyberItems((prev) =>
       prev.map((item) => ({
         ...item,
@@ -520,7 +666,7 @@ export default function App() {
               completed: true,
               requiresHumanReview: false,
               reviewedBy: reviewerName,
-              reviewDate: '2026-10-15',
+              reviewDate: getLocalISODate(),
             }
           : item
       )
@@ -556,6 +702,12 @@ export default function App() {
   const handleSelectTheme = (themeId: string) => {
     setCurrentThemeId(themeId);
     setIsCustomThemeActive(false);
+    if (saferAuth.user && saferAuth.profile?.status === 'active') {
+      void saferAuth.saveSettings({
+        ...saferAuth.settings,
+        appearance: { ...saferAuth.settings.appearance, themeId },
+      }).catch(() => showToast('Theme applied locally, but the account preference could not be saved.'));
+    }
     const theme = THEME_PRESETS.find((p) => p.id === themeId);
     showToast(`Theme applied: ${theme?.name || themeId}`);
   };
@@ -571,8 +723,29 @@ export default function App() {
     showToast('Restored default organisation branding layout.');
   };
 
+  const handleUpdateAccessibility = (partial: Partial<AccessibilitySettings>) => {
+    const nextSettings = { ...accessibilitySettings, ...partial };
+    setAccessibilitySettings(nextSettings);
+    if (saferAuth.user && saferAuth.profile?.status === 'active') {
+      void saferAuth.saveSettings({
+        ...saferAuth.settings,
+        accessibility: nextSettings,
+        appearance: {
+          ...saferAuth.settings.appearance,
+          textSize: nextSettings.textSize,
+        },
+      }).catch(() => showToast('Accessibility preference applied locally, but account sync failed.'));
+    }
+  };
+
   const handleResetAccessibility = () => {
     setAccessibilitySettings(DEFAULT_ACCESSIBILITY_SETTINGS);
+    if (saferAuth.user && saferAuth.profile?.status === 'active') {
+      void saferAuth.saveSettings({
+        ...saferAuth.settings,
+        accessibility: DEFAULT_ACCESSIBILITY_SETTINGS,
+      }).catch(() => showToast('Accessibility settings reset locally; account sync failed.'));
+    }
     showToast('Accessibility settings reset to default.');
   };
 
@@ -582,6 +755,10 @@ export default function App() {
     bottomLogo.enabled && isSafeImageDataUrl(bottomLogo.dataUrl) && bottomLogo.position === 'bottom-right';
 
   return (
+    <AuthenticationGate
+      isDemoGuest={isDemoGuest}
+      onContinueDemo={() => setIsDemoGuest(true)}
+    >
     <div
       className="min-h-screen flex flex-col antialiased transition-colors duration-150"
       style={{
@@ -620,6 +797,29 @@ export default function App() {
         openIncidentsCount={openIncidentsCount}
         outstandingChecklistCount={outstandingChecklistCount}
       />
+
+      {/* Account / Demo Session Controls */}
+      <div className="bg-slate-100 border-b border-slate-300 px-4 sm:px-6 py-2">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+          <div className="text-xs text-slate-700">
+            {saferAuth.user && saferAuth.profile?.status === 'active' ? (
+              <span><strong>{saferAuth.profile.displayName || saferAuth.user.email}</strong> · {saferAuth.profile.role.replaceAll('_', ' ')} · Authenticated account</span>
+            ) : (
+              <span><strong>Demo Guest</strong> · Browser-local demonstration session</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {saferAuth.user && saferAuth.profile?.status === 'active' ? (
+              <>
+                <button type="button" onClick={() => setIsAccountSettingsOpen(true)} className="px-3 py-1.5 rounded-md border border-slate-400 bg-white hover:bg-slate-50 text-xs font-semibold">My Account &amp; Settings</button>
+                <button type="button" onClick={() => void handleSignOut()} className="px-3 py-1.5 rounded-md border border-slate-400 bg-white hover:bg-slate-50 text-xs font-semibold">Sign Out</button>
+              </>
+            ) : (
+              <button type="button" onClick={() => { setIsDemoGuest(false); setShowAccountMenu(false); }} className="px-3 py-1.5 rounded-md border border-slate-400 bg-white hover:bg-slate-50 text-xs font-semibold">Sign In / Register</button>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Main View Area */}
       <main
@@ -788,11 +988,20 @@ export default function App() {
         isOpen={isAccessibilityOpen}
         onClose={() => setIsAccessibilityOpen(false)}
         settings={accessibilitySettings}
-        onUpdateSettings={(partial) =>
-          setAccessibilitySettings((prev) => ({ ...prev, ...partial }))
-        }
+        onUpdateSettings={handleUpdateAccessibility}
         onResetSettings={handleResetAccessibility}
       />
+
+      {/* Authenticated Personal Account Settings */}
+      {saferAuth.user && saferAuth.profile?.status === 'active' && (
+        <AccountSettingsModal
+          isOpen={isAccountSettingsOpen}
+          onClose={() => setIsAccountSettingsOpen(false)}
+          onApplyTheme={(themeId) => { setCurrentThemeId(themeId); setIsCustomThemeActive(false); }}
+          onApplyAccessibility={(settings) => setAccessibilitySettings(settings)}
+          onApplyDensity={(density) => document.documentElement.setAttribute('data-interface-density', density)}
+        />
+      )}
 
       {/* Personnel Record Create/Edit Modal */}
       <PersonnelModal
@@ -856,5 +1065,6 @@ export default function App() {
         </div>
       )}
     </div>
+    </AuthenticationGate>
   );
 }

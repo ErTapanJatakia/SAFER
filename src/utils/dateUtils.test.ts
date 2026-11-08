@@ -6,6 +6,10 @@ import {
   toYYYYMMDD,
   formatDisplayDate,
   isStartBeforeOrEqualEnd,
+  getLocalISODate,
+  getLocalDateTime,
+  formatLocalDisplayDate,
+  getTimeZoneLabel,
 } from './dateUtils.ts';
 
 test('isValidDDMMYYYY validates standard DD-MM-YYYY dates correctly', () => {
@@ -39,4 +43,19 @@ test('formatDisplayDate handles fallbacks', () => {
 test('isStartBeforeOrEqualEnd compares properly', () => {
   assert.equal(isStartBeforeOrEqualEnd('01-01-2024', '15-10-2026'), true);
   assert.equal(isStartBeforeOrEqualEnd('15-10-2026', '01-01-2024'), false);
+});
+
+
+test('local date helpers use local calendar fields without UTC conversion', () => {
+  const localDate = new Date(2026, 10, 9, 23, 45, 0);
+  assert.equal(getLocalISODate(localDate), '2026-11-09');
+  assert.equal(getLocalDateTime(localDate), '2026-11-09 23:45');
+  assert.equal(formatLocalDisplayDate(new Date(2026, 10, 9), 'en-GB'), '09 Nov 2026');
+});
+
+
+test('time-zone labels are available for the active local or account zone', () => {
+  const label = getTimeZoneLabel(new Date('2026-11-09T12:00:00Z'));
+  assert.equal(typeof label, 'string');
+  assert.ok(label.length > 0);
 });

@@ -1,5 +1,5 @@
 import type { PersonnelRecord, WorkExperienceEntry, QualificationItem } from '../types/index.ts';
-import { toDDMMYYYY } from './dateUtils.ts';
+import { toDDMMYYYY, getLocalISODate } from './dateUtils.ts';
 import {
   sanitizeSpreadsheetFormula,
   sanitizeCsvCell,
@@ -601,7 +601,7 @@ export function applyRedactionsToPerson(person: PersonnelRecord, redactedKeys: S
 export function getSafeExportFilename(
   personOrList: PersonnelRecord | PersonnelRecord[],
   format: ExportFormat,
-  dateStr: string = new Date().toISOString().slice(0, 10)
+  dateStr: string = getLocalISODate()
 ): string {
   const ext = format;
   if (Array.isArray(personOrList)) {
