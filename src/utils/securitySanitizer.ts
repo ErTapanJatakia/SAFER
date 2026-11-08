@@ -63,30 +63,30 @@ function isSafeSvgAttribute(name: string, value: string): boolean {
   const key = name.toLowerCase();
   const trimmed = value.trim();
   if (!SAFE_SVG_ATTRIBUTES.has(key) || /^on/i.test(key)) return false;
-  if (/[\\u0000-\\u001f\\u007f]/.test(trimmed)) return false;
+  if (/[\u0000-\u001f\u007f]/.test(trimmed)) return false;
 
   if (key === 'xmlns') return trimmed === SAFE_SVG_NAMESPACE;
   if (key === 'id') return /^[A-Za-z_][A-Za-z0-9_.-]{0,63}$/.test(trimmed);
   if (key === 'fill' || key === 'stroke' || key === 'stop-color') {
-    return /^(?:none|currentcolor|transparent|#[0-9a-f]{3,8}|[a-z]{1,24}|rgba?\\([0-9.,%\\s]+\\))$/i.test(trimmed);
+    return /^(?:none|currentcolor|transparent|#[0-9a-f]{3,8}|[a-z]{1,24}|rgba?\([0-9.,%\s]+\))$/i.test(trimmed);
   }
   if (key === 'stroke-linecap') return /^(?:butt|round|square)$/i.test(trimmed);
   if (key === 'stroke-linejoin') return /^(?:miter|round|bevel)$/i.test(trimmed);
   if (key === 'font-family') return /^[A-Za-z0-9 ,_-]{1,64}$/.test(trimmed);
-  if (key === 'font-size') return /^\\d+(?:\\.\\d+)?(?:px|pt|em|%)?$/i.test(trimmed);
+  if (key === 'font-size') return /^\d+(?:\.\d+)?(?:px|pt|em|%)?$/i.test(trimmed);
   if (key === 'font-weight') return /^(?:normal|bold|bolder|lighter|[1-9]00)$/i.test(trimmed);
   if (key === 'text-anchor') return /^(?:start|middle|end)$/i.test(trimmed);
   if (key === 'dominant-baseline') return /^(?:auto|middle|central|hanging|text-before-edge|text-after-edge)$/i.test(trimmed);
   if (key === 'gradientunits') return /^(?:userSpaceOnUse|objectBoundingBox)$/i.test(trimmed);
-  if (key === 'offset' || key === 'opacity' || key === 'stop-opacity') return /^(?:0|1|0?\\.\\d+|100%)$/.test(trimmed);
+  if (key === 'offset' || key === 'opacity' || key === 'stop-opacity') return /^(?:0|1|0?\.\d+|100%)$/.test(trimmed);
   if (key === 'width' || key === 'height' || key === 'x' || key === 'y' ||
       key === 'x1' || key === 'y1' || key === 'x2' || key === 'y2' ||
       key === 'cx' || key === 'cy' || key === 'r' || key === 'rx' || key === 'ry' ||
       key === 'stroke-width') {
-    return /^-?\\d+(?:\\.\\d+)?(?:px|%)?$/.test(trimmed);
+    return /^-?\d+(?:\.\d+)?(?:px|%)?$/.test(trimmed);
   }
   if (key === 'viewbox' || key === 'points' || key === 'd' || key === 'transform' || key === 'gradienttransform') {
-    return /^[A-Za-z0-9.,+\\-()\\s]+$/.test(trimmed);
+    return /^[A-Za-z0-9.,+\-()\s]+$/.test(trimmed);
   }
   return false;
 }
@@ -99,7 +99,7 @@ function isSafeSvgAttribute(name: string, value: string): boolean {
 function isSafeSvgMarkup(markup: string): boolean {
   const source = markup.trim();
   if (!source || source.length > 500_000) return false;
-  if (/<!doctype|<!entity|<\\?|<!--|<script|<foreignobject|<iframe|<object|<embed|<use|\\b(?:href|xlink:href|style)\\s*=|url\\s*\\(/i.test(source)) {
+  if (/<!doctype|<!entity|<\?|<!--|<script|<foreignobject|<iframe|<object|<embed|<use|\b(?:href|xlink:href|style)\s*=|url\s*\(/i.test(source)) {
     return false;
   }
 
@@ -126,7 +126,7 @@ function isSafeSvgMarkup(markup: string): boolean {
 
   // Conservative parser fallback for non-browser test/runtime environments.
   // It only accepts the same basic, quoted-attribute SVG subset and balanced tags.
-  const tagPattern = /<(\\/)?([A-Za-z][A-Za-z0-9]*)([^<>]*?)(\\/)?>/g;
+  const tagPattern = /<(\/)?([A-Za-z][A-Za-z0-9]*)([^<>]*?)(\/)?>/g;
   const stack: string[] = [];
   let previousIndex = 0;
   let rootCount = 0;
@@ -151,7 +151,7 @@ function isSafeSvgMarkup(markup: string): boolean {
       if (tag !== 'svg') return false;
     }
 
-    const attributePattern = /([A-Za-z][A-Za-z0-9-]*)\\s*=\\s*(?:"([^"]*)"|'([^']*)')/g;
+    const attributePattern = /([A-Za-z][A-Za-z0-9-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
     const seenAttributes = new Set<string>();
     let attributeMatch: RegExpExecArray | null;
     let remaining = rawAttributes;
@@ -162,7 +162,7 @@ function isSafeSvgMarkup(markup: string): boolean {
       seenAttributes.add(name);
       if (name === 'xmlns' && value === SAFE_SVG_NAMESPACE) sawSvgNamespace = true;
     }
-    remaining = remaining.replace(attributePattern, '').replace(/\\s*\\/?\\s*$/, '').trim();
+    remaining = remaining.replace(attributePattern, '').replace(/\s*\/?\s*$/, '').trim();
     if (remaining) return false;
 
     if (!selfClosing) stack.push(tag);
@@ -189,7 +189,7 @@ export function isSafeImageDataUrl(url: unknown): boolean {
   ) return false;
 
   // PNG, JPEG, and WebP data URLs must use the expected Base64 form.
-  const rasterRegex = /^data:image\\/(png|jpeg|jpg|webp);base64,[A-Za-z0-9+/]+={0,2}$/i;
+  const rasterRegex = /^data:image\/(png|jpeg|jpg|webp);base64,[A-Za-z0-9+/]+={0,2}$/i;
   if (rasterRegex.test(trimmed)) return true;
 
   if (!lower.startsWith('data:image/svg+xml')) return false;
