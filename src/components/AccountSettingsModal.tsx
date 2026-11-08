@@ -2,13 +2,16 @@ import React, { useEffect, useState } from 'react';
 import {
   UserRound, Palette, Accessibility, Bell, Languages, ShieldCheck,
   LockKeyhole, FileJson, Send, RotateCcw, X, Save, CheckCircle2,
-  AlertCircle, MailCheck, KeyRound,
+  AlertCircle, MailCheck, KeyRound, Users,
 } from 'lucide-react';
 import { THEME_PRESETS } from '../utils/themePresets.ts';
 import { getLocalISODate } from '../utils/dateUtils.ts';
 import {
   DEFAULT_PERSONAL_SETTINGS,
   type PersonalSettings,
+  type SaferProfile,
+  type SaferRole,
+  type AccountStatus,
   useSaferAuth,
 } from '../context/SaferAuthContext.tsx';
 import type { AccessibilitySettings } from '../types/theme.ts';
@@ -28,7 +31,8 @@ type SettingsSection =
   | 'Notifications'
   | 'Language & Region'
   | 'Security'
-  | 'Privacy & Data';
+  | 'Privacy & Data'
+  | 'User Management';
 
 const SECTIONS: { name: SettingsSection; icon: React.ElementType }[] = [
   { name: 'Profile', icon: UserRound },
@@ -38,6 +42,7 @@ const SECTIONS: { name: SettingsSection; icon: React.ElementType }[] = [
   { name: 'Language & Region', icon: Languages },
   { name: 'Security', icon: ShieldCheck },
   { name: 'Privacy & Data', icon: LockKeyhole },
+  { name: 'User Management', icon: Users },
 ];
 
 const ROLE_LABELS: Record<string, string> = {
@@ -59,6 +64,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   const {
     user, profile, settings, saveProfile, saveSettings,
     requestPasswordReset, sendVerificationEmail, submitPrivacyRequest,
+    listUserAccounts, updateUserAccess,
   } = useSaferAuth();
 
   const [section, setSection] = useState<SettingsSection>('Profile');
@@ -69,6 +75,11 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [adminAccounts, setAdminAccounts] = useState<SaferProfile[]>([]);
+  const [adminEdits, setAdminEdits] = useState<Record<string, { role: SaferRole; status: AccountStatus }>>({});
+  const [adminLoading, setAdminLoading] = useState(false);
+  const [adminError, setAdminError] = useState<string | null>(null);
+  const [savingAccountUid, setSavingAccountUid] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -77,6 +88,32 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
     setNotice(null);
     setError(null);
   }, [isOpen, settings, profile?.displayName, user?.displayName]);
+
+
+  useEffect(() => {
+    if (!isOpen || section !== 'User Management' || profile?.role !== 'super_admin') return;
+    let active = true;
+    setAdminLoading(true);
+    setAdminError(null);
+    listUserAccounts()
+      .then((accounts) => {
+        if (!active) return;
+        setAdminAccounts(accounts);
+        setAdminEdits(Object.fromEntries(accounts.map((account) => [
+          account.uid,
+          { role: account.role, status: account.status },
+        ])));
+      })
+      .catch((loadError) => {
+        if (active) setAdminError(loadError instanceof Error
+          ? loadError.message
+          : 'Unable to load account records.');
+      })
+      .finally(() => {
+        if (active) setAdminLoading(false);
+      });
+    return () => { active = false; };
+  }, [isOpen, section, profile?.role, listUserAccounts]);
 
   if (!isOpen) return null;
 
@@ -239,6 +276,25 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
     }
   };
 
+
+  const handleSaveAdminAccount = async (account: SaferProfile) => {
+    const edit = adminEdits[account.uid] || { role: account.role, status: account.status };
+    setSavingAccountUid(account.uid);
+    setAdminError(null);
+    setNotice(null);
+    try {
+      await updateUserAccess(account.uid, edit.role, edit.status);
+      setAdminAccounts((current) => current.map((item) => item.uid === account.uid
+        ? { ...item, role: edit.role, status: edit.status }
+        : item));
+      setNotice(`Account access updated for ${account.email || account.uid}.`);
+    } catch (updateError) {
+      setAdminError(updateError instanceof Error ? updateError.message : 'Unable to update account access.');
+    } finally {
+      setSavingAccountUid(null);
+    }
+  };
+
   const roleLabel = profile ? ROLE_LABELS[profile.role] || 'Unrecognized role' : 'Profile unavailable';
 
   return (
@@ -256,7 +312,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-[210px_minmax(0,1fr)] min-h-0 flex-1">
           <nav aria-label="Account settings sections" className="bg-slate-50 border-b md:border-b-0 md:border-r border-slate-200 p-2 md:p-3 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-1 gap-1 content-start">
-            {SECTIONS.map(({ name, icon: Icon }) => (
+            {SECTIONS.filter(({ name }) => name !== 'User Management' || profile?.role === 'super_admin').map(({ name, icon: Icon }) => (
               <button key={name} type="button" onClick={() => { setSection(name); setNotice(null); setError(null); }}
                 aria-current={section === name ? 'page' : undefined}
                 className={`flex items-center gap-2 text-left rounded-md px-3 py-2.5 text-xs sm:text-sm font-semibold transition ${section === name ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-200'}`}>
@@ -382,6 +438,71 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
               </section>
             )}
 
+
+            {section === 'User Management' && profile?.role === 'super_admin' && (
+              <section className="space-y-4">
+                <div>
+                  <h3 className="font-bold text-lg">User Management</h3>
+                  <p className="text-sm text-slate-600">Approve verified accounts and assign roles. Only an active Super Admin can manage accounts. Users cannot change their own role or status.</p>
+                </div>
+                <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                  Organization membership and tenant-scoped operational permissions are not yet implemented. This panel manages account activation and role labels only; it does not secure browser-local personnel or incident records.
+                </div>
+                {adminError && <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">{adminError}</div>}
+                {adminLoading ? (
+                  <p className="text-sm text-slate-500">Loading account records…</p>
+                ) : adminAccounts.length === 0 ? (
+                  <p className="text-sm text-slate-500">No account records were returned.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {adminAccounts.map((account) => {
+                      const edit = adminEdits[account.uid] || { role: account.role, status: account.status };
+                      const isSelf = account.uid === profile.uid;
+                      return (
+                        <div key={account.uid} className="rounded-lg border border-slate-200 p-3 sm:p-4 space-y-3">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-sm break-words">{account.displayName || 'Name not supplied'}</p>
+                            <p className="text-xs text-slate-600 break-all">{account.email}</p>
+                            <p className="text-[10px] text-slate-400 font-mono break-all">UID: {account.uid}</p>
+                          </div>
+                          <div className="grid sm:grid-cols-2 gap-3">
+                            <label className="block text-xs font-semibold">Role
+                              <select disabled={isSelf || savingAccountUid === account.uid} value={edit.role} onChange={(event) => setAdminEdits((current) => ({
+                                ...current,
+                                [account.uid]: { ...edit, role: event.target.value as SaferRole },
+                              }))} className="mt-1 w-full border border-slate-300 rounded-md px-2 py-2 text-sm font-normal disabled:bg-slate-100">
+                                <option value="pending">Pending</option>
+                                <option value="personnel">Personnel / Employee</option>
+                                <option value="supervisor">Supervisor / Manager</option>
+                                <option value="auditor">Read-only Auditor</option>
+                                <option value="org_admin">Organization Admin</option>
+                                <option value="super_admin">Super Admin</option>
+                              </select>
+                            </label>
+                            <label className="block text-xs font-semibold">Account status
+                              <select disabled={isSelf || savingAccountUid === account.uid} value={edit.status} onChange={(event) => setAdminEdits((current) => ({
+                                ...current,
+                                [account.uid]: { ...edit, status: event.target.value as AccountStatus },
+                              }))} className="mt-1 w-full border border-slate-300 rounded-md px-2 py-2 text-sm font-normal disabled:bg-slate-100">
+                                <option value="pending">Pending approval</option>
+                                <option value="active">Active</option>
+                                <option value="suspended">Suspended</option>
+                              </select>
+                            </label>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            {isSelf ? <p className="text-[11px] text-slate-500">Your own role and status cannot be changed here.</p> : <span className="text-[11px] text-slate-500">Save to apply account access changes.</span>}
+                            <button type="button" disabled={isSelf || savingAccountUid === account.uid || (edit.role === account.role && edit.status === account.status)} onClick={() => void handleSaveAdminAccount(account)} className="rounded-md bg-slate-900 text-white px-3 py-2 text-xs font-semibold disabled:opacity-40">{savingAccountUid === account.uid ? 'Saving…' : 'Save access'}</button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                <p className="text-[11px] text-slate-500">Showing up to 50 accounts. For a first Super Admin account, use the trusted Firebase Console bootstrap procedure in FIREBASE_SETUP.md.</p>
+              </section>
+            )}
+
             {section === 'Privacy & Data' && (
               <section className="space-y-4">
                 <div><h3 className="font-bold text-lg">Privacy &amp; Data</h3><p className="text-sm text-slate-600">Manage account-level data requests. Requests are recorded for manual review and are not automatically completed.</p><a href="/privacy-notice.html" target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-sm font-semibold text-blue-800 underline underline-offset-4">Read SAFER Account Privacy Notice</a></div>
@@ -402,7 +523,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
 
             <div className="mt-6 pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
               <button type="button" onClick={handleResetPreferences} disabled={busy} className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 border border-slate-300 rounded-md px-3 py-2 hover:bg-slate-50 disabled:opacity-50"><RotateCcw className="w-3.5 h-3.5" />Reset personal preferences</button>
-              {section !== 'Profile' && section !== 'Security' && section !== 'Privacy & Data' && (
+              {section !== 'Profile' && section !== 'Security' && section !== 'Privacy & Data' && section !== 'User Management' && (
                 <button type="button" onClick={handleSavePreferences} disabled={busy} className="inline-flex items-center gap-2 bg-slate-900 text-white rounded-md px-4 py-2 text-sm font-semibold disabled:opacity-50"><Save className="w-4 h-4" />{busy ? 'Saving…' : 'Save Preferences'}</button>
               )}
             </div>
