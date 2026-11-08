@@ -5,11 +5,13 @@ import { useSaferAuth } from '../context/SaferAuthContext.tsx';
 interface AuthenticationGateProps {
   children: React.ReactNode;
   onContinueDemo: () => void;
+  isDemoGuest: boolean;
 }
 
 export const AuthenticationGate: React.FC<AuthenticationGateProps> = ({
   children,
   onContinueDemo,
+  isDemoGuest,
 }) => {
   const {
     configured, loading, user, profile, error, signIn, register,
@@ -69,6 +71,8 @@ export const AuthenticationGate: React.FC<AuthenticationGateProps> = ({
       void runAction(() => signIn(email.trim(), password));
     }
   };
+
+  if (!loading && isDemoGuest && !user) return <>{children}</>;
 
   if (loading) {
     return (
