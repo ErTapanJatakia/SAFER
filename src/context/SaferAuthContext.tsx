@@ -92,6 +92,7 @@ interface SaferAuthContextValue {
   register: (displayName: string, email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
+  requestEmailChange: (newEmail: string) => Promise<void>;
   refreshEmailVerification: () => Promise<void>;
   sendVerificationEmail: () => Promise<void>;
   saveProfile: (displayName: string) => Promise<void>;
@@ -343,11 +344,36 @@ export const SaferAuthProvider: React.FC<React.PropsWithChildren> = ({ children 
     await services.authApi.sendPasswordResetEmail(services.auth, email.trim());
   }, []);
 
+
+  const requestEmailChange = useCallback(async (newEmail: string) => {
+    const services = servicesRef.current;
+    const currentUser = services?.auth.currentUser;
+    if (!services || !currentUser) throw new Error('Sign in is required.');
+    const cleanEmail = newEmail.trim().toLowerCase();
+    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(cleanEmail)) {
+      throw new Error('Enter a valid email address.');
+    }
+    if (cleanEmail === (currentUser.email || '').toLowerCase()) {
+      throw new Error('The new email address is already your current address.');
+    }
+    // Firebase sends a verification message to the proposed address. The
+    // authenticated profile email is synchronized only after that verification.
+    await services.authApi.verifyBeforeUpdateEmail(currentUser, cleanEmail);
+  }, []);
+
   const refreshEmailVerification = useCallback(async () => {
     const services = servicesRef.current;
     if (!services?.auth.currentUser) return;
     await services.authApi.reload(services.auth.currentUser);
+    await services.auth.currentUser.getIdToken(true);
     const refreshedUser = services.auth.currentUser;
+    if (refreshedUser.email) {
+      const userRef = services.firestoreApi.doc(services.db, 'users', refreshedUser.uid);
+      await services.firestoreApi.updateDoc(userRef, {
+        email: refreshedUser.email,
+        updatedAt: services.firestoreApi.serverTimestamp(),
+      });
+    }
     if (refreshedUser) {
       setUser({
         uid: refreshedUser.uid,
@@ -471,6 +497,7 @@ export const SaferAuthProvider: React.FC<React.PropsWithChildren> = ({ children 
     register,
     signOut,
     requestPasswordReset,
+    requestEmailChange,
     refreshEmailVerification,
     sendVerificationEmail,
     saveProfile,
@@ -481,7 +508,7 @@ export const SaferAuthProvider: React.FC<React.PropsWithChildren> = ({ children 
     clearError,
   }), [
     loading, user, profile, settings, error, signIn, register, signOut,
-    requestPasswordReset, refreshEmailVerification, sendVerificationEmail, saveProfile,
+    requestPasswordReset, requestEmailChange, refreshEmailVerification, sendVerificationEmail, saveProfile,
     saveSettings, submitPrivacyRequest, listUserAccounts, updateUserAccess, clearError,
   ]);
 
