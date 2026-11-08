@@ -639,6 +639,21 @@ export default function App() {
     showToast('Restored default organisation branding layout.');
   };
 
+  const handleUpdateAccessibility = (partial: Partial<AccessibilitySettings>) => {
+    const nextSettings = { ...accessibilitySettings, ...partial };
+    setAccessibilitySettings(nextSettings);
+    if (saferAuth.user && saferAuth.profile?.status === 'active') {
+      void saferAuth.saveSettings({
+        ...saferAuth.settings,
+        accessibility: nextSettings,
+        appearance: {
+          ...saferAuth.settings.appearance,
+          textSize: nextSettings.textSize,
+        },
+      }).catch(() => showToast('Accessibility preference applied locally, but account sync failed.'));
+    }
+  };
+
   const handleResetAccessibility = () => {
     setAccessibilitySettings(DEFAULT_ACCESSIBILITY_SETTINGS);
     if (saferAuth.user && saferAuth.profile?.status === 'active') {
@@ -889,9 +904,7 @@ export default function App() {
         isOpen={isAccessibilityOpen}
         onClose={() => setIsAccessibilityOpen(false)}
         settings={accessibilitySettings}
-        onUpdateSettings={(partial) =>
-          setAccessibilitySettings((prev) => ({ ...prev, ...partial }))
-        }
+        onUpdateSettings={handleUpdateAccessibility}
         onResetSettings={handleResetAccessibility}
       />
 
