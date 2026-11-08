@@ -453,6 +453,13 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
               <section className="space-y-4">
                 <div><h3 className="font-bold text-lg">Security</h3><p className="text-sm text-slate-600">Account security is handled by Firebase Authentication.</p></div>
                 <div className="rounded-lg border border-slate-200 p-4 flex items-center gap-3"><KeyRound className="w-6 h-6 text-slate-600" /><div className="flex-1"><p className="font-semibold text-sm">Password</p><p className="text-xs text-slate-600">Request a password-reset email for your registered address.</p></div><button type="button" disabled={busy || !user?.email} onClick={handlePasswordReset} className="text-xs font-semibold px-3 py-2 rounded-md border hover:bg-slate-50 disabled:opacity-50">Reset password</button></div>
+                <div className="rounded-lg border border-slate-200 p-4 space-y-3">
+                  <div><p className="font-semibold text-sm">Change email address</p><p className="text-xs text-slate-600 mt-1">Firebase sends a verification link to the proposed address. The account email changes only after verification; recent sign-in may be required.</p></div>
+                  <label className="block text-xs font-semibold">New email address
+                    <input type="email" value={newEmail} onChange={(event) => setNewEmail(event.target.value)} autoComplete="email" maxLength={254} className="mt-1 w-full border border-slate-300 rounded-md px-3 py-2 text-sm font-normal" placeholder="name@example.com" />
+                  </label>
+                  <button type="button" disabled={busy || !newEmail.trim()} onClick={handleEmailChangeRequest} className="text-xs font-semibold px-3 py-2 rounded-md border hover:bg-slate-50 disabled:opacity-50">Request verified email change</button>
+                </div>
                 <div className="rounded-lg border border-slate-200 p-4"><p className="text-sm font-semibold">Multi-factor authentication</p><p className="text-xs text-slate-600 mt-1">MFA is not configured for this Firebase project. No simulated MFA controls are shown.</p></div>
                 <div className="rounded-lg border border-slate-200 p-4"><p className="text-sm font-semibold">Session management</p><p className="text-xs text-slate-600 mt-1">This client does not currently provide a complete active-session inventory or remote session-revocation control.</p></div>
               </section>
