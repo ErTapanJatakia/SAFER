@@ -92,6 +92,7 @@ interface SaferAuthContextValue {
   signOut: () => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
   refreshEmailVerification: () => Promise<void>;
+  sendVerificationEmail: () => Promise<void>;
   saveProfile: (displayName: string) => Promise<void>;
   saveSettings: (settings: PersonalSettings) => Promise<void>;
   submitPrivacyRequest: (type: 'access' | 'correction' | 'deletion', details: string) => Promise<void>;
@@ -311,6 +312,13 @@ export const SaferAuthProvider: React.FC<React.PropsWithChildren> = ({ children 
     setUser({ ...services.auth.currentUser });
   }, []);
 
+  const sendVerificationEmail = useCallback(async () => {
+    const services = servicesRef.current;
+    const currentUser = services?.auth.currentUser;
+    if (!services || !currentUser) throw new Error('Sign in is required.');
+    await services.authApi.sendEmailVerification(currentUser);
+  }, []);
+
   const saveProfile = useCallback(async (displayName: string) => {
     const services = servicesRef.current;
     const currentUser = services?.auth.currentUser;
@@ -371,13 +379,14 @@ export const SaferAuthProvider: React.FC<React.PropsWithChildren> = ({ children 
     signOut,
     requestPasswordReset,
     refreshEmailVerification,
+    sendVerificationEmail,
     saveProfile,
     saveSettings,
     submitPrivacyRequest,
     clearError,
   }), [
     loading, user, profile, settings, error, signIn, register, signOut,
-    requestPasswordReset, refreshEmailVerification, saveProfile,
+    requestPasswordReset, refreshEmailVerification, sendVerificationEmail, saveProfile,
     saveSettings, submitPrivacyRequest, clearError,
   ]);
 
