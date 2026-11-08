@@ -31,9 +31,10 @@ SAFER requires email verification before a registered account can enter the auth
 
 4. Confirm the deployed rules match this repository's firestore.rules.
 
-The rules currently authorize only:
-- A signed-in user reading their own users/{uid} profile.
+The rules authorize:
+- A signed-in user reading their own users/{uid} profile; an active Super Admin can list/read account profiles.
 - A signed-in user changing only their own profile display name.
+- An active Super Admin changing another account's role and status through the dedicated account-management interface. A Super Admin cannot change their own role/status through that interface.
 - A signed-in user reading and writing their own allowlisted userSettings/{uid} document.
 - A signed-in user submitting their own privacy request under privacyRequests/{uid}/requests/{requestId}.
 
@@ -56,7 +57,7 @@ If these values are absent, SAFER remains usable in Demo Guest mode and does not
 
 ## 5. Bootstrap the first administrator
 
-There is deliberately no self-service role assignment and no in-app role management UI yet.
+There is deliberately no self-service role assignment. The first Super Admin must be bootstrapped by the trusted project owner in Firebase Console. After that, the in-app User Management section is available to an active Super Admin.
 
 1. Register your own account through SAFER.
 2. Verify your email.
@@ -69,7 +70,7 @@ There is deliberately no self-service role assignment and no in-app role managem
 
 The project owner makes this change in the trusted Firebase Console. The user's own Firestore rules do not permit role, status, or organization changes. Do not grant administrator roles based only on a registration request.
 
-New accounts remain pending until a trusted administrator assigns a role and activates them. At this stage, roles are displayed in account settings but are not yet used to authorize access to browser-local operational records.
+New accounts remain pending until a trusted administrator assigns a role and activates them. An active Super Admin can then approve accounts and assign the roles available in User Management. Organization membership assignment is not yet available because an organization/tenant data model has not been implemented. Roles do not authorize access to browser-local operational records.
 
 ## 6. Cost and privacy guardrails
 
