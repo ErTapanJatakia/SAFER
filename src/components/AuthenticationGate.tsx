@@ -169,9 +169,10 @@ export const AuthenticationGate: React.FC<AuthenticationGateProps> = ({
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
         <div className="max-w-md w-full rounded-xl border border-slate-700 bg-slate-900 p-6 sm:p-8 space-y-4">
           <Clock3 className="w-10 h-10 text-amber-300" />
-          <h1 className="text-xl font-bold">{profile?.status === 'suspended' ? 'Account suspended' : 'Account awaiting approval'}</h1>
-          <p className="text-sm text-slate-300">{profile?.status === 'suspended' ? 'This account is not currently authorized to access the application.' : 'Your email is verified. A SAFER administrator must approve the account and assign an appropriate role before access is granted.'}</p>
-          <p className="text-xs text-slate-400">Current role: {profile?.role || 'Pending'}</p>
+          <h1 className="text-xl font-bold">{profile?.status === 'suspended' ? 'Account suspended' : !profile ? 'Account profile unavailable' : 'Account awaiting approval'}</h1>
+          <p className="text-sm text-slate-300">{profile?.status === 'suspended' ? 'This account is not currently authorized to access the application.' : !profile ? 'SAFER could not load this account profile from Firestore. Access remains blocked. Check the Firebase project configuration and deployed Firestore rules, then sign in again.' : 'Your email is verified. A SAFER administrator must approve the account and assign an appropriate role before access is granted.'}</p>
+          {!profile && error && <p role="alert" className="text-xs text-red-300">Account data could not be loaded. Your account has not been treated as approved.</p>}
+          <p className="text-xs text-slate-400">Current role: {profile?.role || 'Unavailable'}</p>
           <button type="button" onClick={() => void signOut()} className="w-full rounded-md border border-slate-600 px-4 py-2.5 text-sm">Sign Out</button>
           <button type="button" onClick={() => void signOut().then(onContinueDemo)} className="w-full text-xs text-slate-400 underline">Sign out and continue as Demo Guest</button>
         </div>
