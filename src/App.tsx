@@ -33,6 +33,9 @@ import {
 import { isSafeImageDataUrl } from './utils/securitySanitizer.ts';
 import { getLocalISODate } from './utils/dateUtils.ts';
 import { parseStoredArray, parseStoredValue } from './utils/safeStorage.ts';
+import { useSaferAuth } from './context/SaferAuthContext.tsx';
+import { AuthenticationGate } from './components/AuthenticationGate.tsx';
+import { AccountSettingsModal } from './components/AccountSettingsModal.tsx';
 import { SaferWordmark } from './components/SaferWordmark.tsx';
 import { HeaderBanner } from './components/HeaderBanner.tsx';
 import { Navbar, type NavigationSection } from './components/Navbar.tsx';
@@ -163,6 +166,34 @@ function loadLogo(key: string, fallback: LogoConfig): LogoConfig {
 }
 
 export default function App() {
+  const saferAuth = useSaferAuth();
+  const [isDemoGuest, setIsDemoGuest] = useState(false);
+  const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
+
+  useEffect(() => {
+    if (saferAuth.loading) return;
+    if (saferAuth.user && saferAuth.profile?.status === 'active') {
+      setCurrentThemeId(saferAuth.settings.appearance.themeId);
+      setIsCustomThemeActive(false);
+      setAccessibilitySettings(saferAuth.settings.accessibility);
+      document.documentElement.setAttribute('data-date-format', saferAuth.settings.languageRegion.dateFormat);
+      document.documentElement.setAttribute('data-time-zone', saferAuth.settings.languageRegion.timeZone);
+      document.documentElement.setAttribute('data-interface-density', saferAuth.settings.appearance.interfaceDensity);
+    } else if (!saferAuth.user) {
+      document.documentElement.removeAttribute('data-date-format');
+      document.documentElement.removeAttribute('data-time-zone');
+      document.documentElement.removeAttribute('data-interface-density');
+    }
+  }, [saferAuth.loading, saferAuth.user?.uid, saferAuth.profile?.status, saferAuth.settings]);
+
+  const handleSignOut = async () => {
+    await saferAuth.signOut();
+    setIsDemoGuest(false);
+    setIsAccountSettingsOpen(false);
+    setShowAccountMenu(false);
+  };
+
   // Navigation State
   const [activeSection, setActiveSection] = useState<NavigationSection>('dashboard');
 
@@ -587,6 +618,12 @@ export default function App() {
   const handleSelectTheme = (themeId: string) => {
     setCurrentThemeId(themeId);
     setIsCustomThemeActive(false);
+    if (saferAuth.user && saferAuth.profile?.status === 'active') {
+      void saferAuth.saveSettings({
+        ...saferAuth.settings,
+        appearance: { ...saferAuth.settings.appearance, themeId },
+      }).catch(() => showToast('Theme applied locally, but the account preference could not be saved.'));
+    }
     const theme = THEME_PRESETS.find((p) => p.id === themeId);
     showToast(`Theme applied: ${theme?.name || themeId}`);
   };
@@ -604,6 +641,12 @@ export default function App() {
 
   const handleResetAccessibility = () => {
     setAccessibilitySettings(DEFAULT_ACCESSIBILITY_SETTINGS);
+    if (saferAuth.user && saferAuth.profile?.status === 'active') {
+      void saferAuth.saveSettings({
+        ...saferAuth.settings,
+        accessibility: DEFAULT_ACCESSIBILITY_SETTINGS,
+      }).catch(() => showToast('Accessibility settings reset locally; account sync failed.'));
+    }
     showToast('Accessibility settings reset to default.');
   };
 
@@ -613,6 +656,10 @@ export default function App() {
     bottomLogo.enabled && isSafeImageDataUrl(bottomLogo.dataUrl) && bottomLogo.position === 'bottom-right';
 
   return (
+    <AuthenticationGate
+      isDemoGuest={isDemoGuest}
+      onContinueDemo={() => setIsDemoGuest(true)}
+    >
     <div
       className="min-h-screen flex flex-col antialiased transition-colors duration-150"
       style={{
@@ -651,6 +698,29 @@ export default function App() {
         openIncidentsCount={openIncidentsCount}
         outstandingChecklistCount={outstandingChecklistCount}
       />
+
+      {/* Account / Demo Session Controls */}
+      <div className="bg-slate-100 border-b border-slate-300 px-4 sm:px-6 py-2">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+          <div className="text-xs text-slate-700">
+            {saferAuth.user && saferAuth.profile?.status === 'active' ? (
+              <span><strong>{saferAuth.profile.displayName || saferAuth.user.email}</strong> · {saferAuth.profile.role.replaceAll('_', ' ')} · Authenticated account</span>
+            ) : (
+              <span><strong>Demo Guest</strong> · Browser-local demonstration session</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {saferAuth.user && saferAuth.profile?.status === 'active' ? (
+              <>
+                <button type="button" onClick={() => setIsAccountSettingsOpen(true)} className="px-3 py-1.5 rounded-md border border-slate-400 bg-white hover:bg-slate-50 text-xs font-semibold">My Account &amp; Settings</button>
+                <button type="button" onClick={() => void handleSignOut()} className="px-3 py-1.5 rounded-md border border-slate-400 bg-white hover:bg-slate-50 text-xs font-semibold">Sign Out</button>
+              </>
+            ) : (
+              <button type="button" onClick={() => { setIsDemoGuest(false); setShowAccountMenu(false); }} className="px-3 py-1.5 rounded-md border border-slate-400 bg-white hover:bg-slate-50 text-xs font-semibold">Sign In / Register</button>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Main View Area */}
       <main
@@ -825,6 +895,17 @@ export default function App() {
         onResetSettings={handleResetAccessibility}
       />
 
+      {/* Authenticated Personal Account Settings */}
+      {saferAuth.user && saferAuth.profile?.status === 'active' && (
+        <AccountSettingsModal
+          isOpen={isAccountSettingsOpen}
+          onClose={() => setIsAccountSettingsOpen(false)}
+          onApplyTheme={handleSelectTheme}
+          onApplyAccessibility={(settings) => setAccessibilitySettings(settings)}
+          onApplyDensity={(density) => document.documentElement.setAttribute('data-interface-density', density)}
+        />
+      )}
+
       {/* Personnel Record Create/Edit Modal */}
       <PersonnelModal
         isOpen={isPersonnelModalOpen}
@@ -887,5 +968,6 @@ export default function App() {
         </div>
       )}
     </div>
+    </AuthenticationGate>
   );
 }
