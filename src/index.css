@@ -153,3 +153,15 @@ html[data-contrast="high"] [class*="border-"] {
 .skip-link:focus {
   top: 1rem;
 }
+
+
+/* Personal interface density preference (only affects spacing, not theme tokens). */
+html[data-interface-density="compact"] [class~="p-6"] { padding: 0.9rem !important; }
+html[data-interface-density="compact"] [class~="p-5"] { padding: 0.75rem !important; }
+html[data-interface-density="compact"] [class~="p-4"] { padding: 0.6rem !important; }
+html[data-interface-density="compact"] [class~="px-6"] { padding-left: 0.9rem !important; padding-right: 0.9rem !important; }
+html[data-interface-density="compact"] [class~="py-6"] { padding-top: 0.9rem !important; padding-bottom: 0.9rem !important; }
+html[data-interface-density="compact"] [class~="gap-6"] { gap: 0.9rem !important; }
+html[data-interface-density="compact"] [class~="gap-4"] { gap: 0.65rem !important; }
+html[data-interface-density="compact"] th,
+html[data-interface-density="compact"] td { padding-block: 0.35rem !important; }
