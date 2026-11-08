@@ -137,11 +137,11 @@ Protection operations coordinators, supervisors, and administrative officers fac
   - Independent upload, removal, preview, size adjustment (small, medium, large, xlarge), and accessible alt-text configuration.
   - Changes or removals to one logo operate completely independently of the other.
 
-### 19 Tactical, Camouflage & High-Visibility Theme Presets
-- **Standard & Dark:** Midnight Navy, Stealth Obsidian, Tactical Charcoal, Slate Grey, Arctic White, Emerald Guard
-- **Camouflage:** Woodland BDU, Desert MARPAT, MultiCam Tactical, Urban SpecOps, Night Recon, Winter Tundra (featuring subtle CSS pattern layers with solid, readable card surfaces)
-- **High Visibility / Field:** Safety Hi-Vis Amber, High-Vis Orange, Search & Rescue Red, Air Ops Sky, Subdued Desert, Field Khaki, Maritime Fleet
-- All themes maintain high typographic contrast and satisfy readable visual hierarchy.
+### 20 Tactical, Camouflage & High-Visibility Theme Presets
+- **Standard:** Blue–White (Default), Green–White, Green–Black, Black–White, Red–Green (accessible shapes and labels), Multicolour RGBY.
+- **High Visibility / Environmental:** Bright Daylight / Desert, High-Contrast Outdoor, Tropical Jungle, Maritime / Coastal, Mountain / Snow, Night / Low-Glare, Neutral Slate / Monochrome, Warm Earth / Sand, Dark Graphite / Amber.
+- **Camouflage:** Woodland, Naval, Urban, Desert, and Tactical Stealth accent presets, using decorative boundary patterns and solid card surfaces.
+- The presets define dedicated foreground and surface tokens; verify contrast under the actual display and lighting conditions before operational use.
 
 ### Accessibility Features
 - **Accessible Typography & Focus:** High-contrast color pairings, visible focus outlines on all interactive elements, and semantic button/input elements.
@@ -155,7 +155,7 @@ Protection operations coordinators, supervisors, and administrative officers fac
 
 - **100% Client-Side Processing:** All personnel management, redaction filtering, incident parsing, and document exports execute entirely in the user's browser runtime.
 - **No External Data Transmission:** User-entered personal data, health particulars, and operational notes are never transmitted to Gemini, external LLM endpoints, analytics servers, or remote databases.
-- **In-Memory Demonstration State:** Additions and edits persist within the browser session memory. Resetting demo data returns records to the curated sample set without overwriting uncommitted user work.
+- **Browser-Local Demonstration State:** Application records, theme choices, accessibility preferences, and logo data are stored in browser `localStorage`. They can persist across browser sessions and are not encrypted by this application. Clear browser data to remove them; do not use real personal, health, confidential, or operational records.
 - **Safe Export Filenames:** Exported filenames use anonymized patterns (e.g. `PMC-ID-001_personnel_record_2026-10-24.pdf`), preventing leakage of names or email addresses into filenames.
 - **Synthetic Sample Records:** Preloaded personnel, incident reports, and checklist items are synthetic sample records created for demonstration purposes. They do not represent real persons, active legal cases, police reports, or operational entities.
 
@@ -169,7 +169,7 @@ Protection operations coordinators, supervisors, and administrative officers fac
 - **Styling:** Tailwind CSS v4
 - **Icons:** Lucide React
 - **Document Generation:** `jspdf`, `jspdf-autotable`, `xlsx`, `docx`
-- **Unit Testing:** Node.js native test runner (`node:test`, `node:assert/strict`)
+- **Unit Testing:** TypeScript test execution with `tsx` and the Node.js native test runner (`node:test`, `node:assert/strict`)
 
 ### Local Development Commands
 ```bash
@@ -180,7 +180,7 @@ npm install
 npm run dev
 
 # Run all automated unit tests (37 tests across 5 suites)
-node --test src/utils/*.test.ts
+npm test
 
 # Type checking and linting
 npm run lint
@@ -206,10 +206,12 @@ npm run build
 | **AI Prompt Injection Resistance (OWASP GenAI)** | Deterministic extraction rejecting adversarial overrides and prohibiting automated guilt findings | **PASSED** (100%) |
 | **Cyber Hygiene & Posture** | 10 security domains, verified vs recommendation distinction, training scenario | **PASSED** (100%) |
 | **Pre-Deployment Checklist** | 8 categories, metrics calculation, outstanding highlight banner, non-authorization disclaimer | **PASSED** (100%) |
-| **Themes & Branding** | 19 theme presets, independent dual logo controls, accessible demonstration notice modal | **PASSED** (100%) |
+| **Themes & Branding** | 20 source-defined theme presets, independent dual logo controls, accessible demonstration notice modal | Implemented; verify with CI and manual visual review |
 | **Automated Suite Run** | 45 tests across `src/utils/*.test.ts` (`node:test`) | **45 / 45 PASSED** (0 failures) |
 | **Compilation & Lint** | `compile_applet` and `tsc --noEmit` | **PASSED** (0 errors) |
 
 ### Limitations
-- **Data Persistence:** In-memory demonstration state; data is not synced to a persistent database (PostgreSQL/Firebase) as requested by the standalone prototype architecture.
+- **Accounts and Backend:** The current source does not yet implement user registration/login, role-based account management, per-user Firestore storage, or the requested My Account & Settings area. Operational data remains browser-local; it is not a multi-user records-management backend.
+- **Privacy Workflows:** The current source does not implement a full privacy-request case-management workflow. The demonstration notice is not a substitute for a production privacy notice or legal review.
+- **Data Persistence:** Browser-local storage is not encrypted application storage, synchronized multi-device storage, or a secure records-management database.
 - **Natural Language Parsing:** Incident draft generator uses deterministic regex-based rules to ensure zero fabrication or hallucination; complex conversational narratives should be human-reviewed.
