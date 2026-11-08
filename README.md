@@ -207,11 +207,24 @@ npm run build
 | **Cyber Hygiene & Posture** | 10 security domains, verified vs recommendation distinction, training scenario | **PASSED** (100%) |
 | **Pre-Deployment Checklist** | 8 categories, metrics calculation, outstanding highlight banner, non-authorization disclaimer | **PASSED** (100%) |
 | **Themes & Branding** | 20 source-defined theme presets, independent dual logo controls, accessible demonstration notice modal | Implemented; verify with CI and manual visual review |
-| **Automated Suite Run** | 45 tests across `src/utils/*.test.ts` (`node:test`) | **45 / 45 PASSED** (0 failures) |
-| **Compilation & Lint** | `compile_applet` and `tsc --noEmit` | **PASSED** (0 errors) |
+| **Automated Suite Run** | 48 tests across `src/utils/*.test.ts` (`node:test`) | **48 / 48 PASSED** on audit baseline commit (0 failures) |
+| **Compilation & Lint** | `tsc --noEmit` and Vite production build | **PASSED** on audit baseline commit (0 errors) |
 
 ### Limitations
-- **Accounts and Backend:** The current source does not yet implement user registration/login, role-based account management, per-user Firestore storage, or the requested My Account & Settings area. Operational data remains browser-local; it is not a multi-user records-management backend.
-- **Privacy Workflows:** The current source does not implement a full privacy-request case-management workflow. The demonstration notice is not a substitute for a production privacy notice or legal review.
-- **Data Persistence:** Browser-local storage is not encrypted application storage, synchronized multi-device storage, or a secure records-management database.
-- **Natural Language Parsing:** Incident draft generator uses deterministic regex-based rules to ensure zero fabrication or hallucination; complex conversational narratives should be human-reviewed.
+- **Operational Backend:** Personnel, incident, qualification, employment, cybersecurity, checklist, and associated evidence records remain in browser-local storage. They are not multi-user, tenant-isolated Firestore records and are not protected by the account roles. Do not use real personal, health, confidential, or operational data.
+- **Account Layer:** Optional Firebase Email/Password authentication, email verification, per-UID profile/preferences, password-reset request, Super Admin account approval/role assignment, and privacy-request intake are implemented when Firebase is configured. Firebase setup and first-Super-Admin bootstrap are manual; see FIREBASE_SETUP.md.
+- **Role Enforcement:** Account roles protect account-management operations through Firestore rules, but they do not yet enforce permissions on the browser-local operational modules. Organization creation/membership and tenant-scoped operational permissions remain future work.
+- **Notifications and MFA:** Notification preferences are stored, but no email/SMS/push delivery is implemented. MFA is not configured; the UI does not simulate it.
+- **Privacy Workflow:** Account access/correction/deletion requests are recorded for manual review. Request completion, automatic deletion, legal grievance handling, and a full retention workflow are not implemented.
+- **Data Persistence:** Browser-local operational storage is not encrypted application storage, synchronized multi-device storage, or a secure records-management database.
+- **Natural Language Parsing:** Incident draft generator uses deterministic regex-based rules to reduce fabrication risk; complex conversational narratives should be human-reviewed.
+
+## 7. Optional Account & Personal Settings
+
+When a Firebase Web App is configured on the no-cost Spark plan, SAFER offers email/password registration and sign-in, email verification, per-user profiles, and personal settings. Appearance preferences reuse the existing 20 theme presets and store a user's selected theme without replacing the theme engine. Accessibility, interface density, date/time-zone preferences, notification preferences, password-reset requests, JSON account export, and privacy-request intake are also available.
+
+New accounts are created with a pending role and pending status. The first Super Admin is provisioned by the project owner in Firebase Console; thereafter the Super Admin can approve other accounts and assign roles using a Firestore-rules-protected management interface. Users cannot promote themselves.
+
+This account layer does not yet move the operational modules into a tenant-scoped backend. Personnel, incident, qualification, cybersecurity, checklist, branding, and evidence data remain browser-local demonstration state. Role assignments therefore do not currently enforce operational permissions. Do not use real personal or operational information.
+
+See [FIREBASE_SETUP.md](FIREBASE_SETUP.md) and [PRIVACY_NOTICE.md](PRIVACY_NOTICE.md) for configuration, data-flow, and limitations.
