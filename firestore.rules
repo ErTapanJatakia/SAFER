@@ -58,9 +58,9 @@ service cloud.firestore {
     function validUserUpdate(uid) {
       return isOwner(uid)
         && request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['displayName', 'updatedAt'])
+          .hasOnly(['displayName', 'email', 'updatedAt'])
         && request.resource.data.uid == resource.data.uid
-        && request.resource.data.email == resource.data.email
+        && request.resource.data.email == request.auth.token.email
         && request.resource.data.role == resource.data.role
         && request.resource.data.status == resource.data.status
         && request.resource.data.organizationId == resource.data.organizationId
