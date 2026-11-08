@@ -63,7 +63,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
 }) => {
   const {
     user, profile, settings, saveProfile, saveSettings,
-    requestPasswordReset, sendVerificationEmail, submitPrivacyRequest,
+    requestPasswordReset, requestEmailChange, sendVerificationEmail, submitPrivacyRequest,
     listUserAccounts, updateUserAccess,
   } = useSaferAuth();
 
@@ -72,6 +72,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   const [displayName, setDisplayName] = useState(profile?.displayName || user?.displayName || '');
   const [requestType, setRequestType] = useState<'access' | 'correction' | 'deletion'>('access');
   const [requestDetails, setRequestDetails] = useState('');
+  const [newEmail, setNewEmail] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -199,6 +200,25 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
       setNotice('Profile display name updated.');
     } catch (profileError) {
       setError(profileError instanceof Error ? profileError.message : 'Unable to update profile.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+
+  const handleEmailChangeRequest = async () => {
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      await requestEmailChange(newEmail);
+      setNewEmail('');
+      setNotice('A verification message has been requested for the new address. The account email changes only after the verification link is completed. Then refresh your verification status here.');
+    } catch (emailError: any) {
+      const code = typeof emailError?.code === 'string' ? emailError.code : '';
+      setError(code === 'auth/requires-recent-login'
+        ? 'For security, sign out and sign in again, then repeat the email-change request.'
+        : emailError instanceof Error ? emailError.message : 'Unable to request the email change.');
     } finally {
       setBusy(false);
     }
