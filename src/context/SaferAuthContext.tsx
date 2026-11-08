@@ -288,6 +288,41 @@ export const SaferAuthProvider: React.FC<React.PropsWithChildren> = ({ children 
     const credential = await services.authApi.createUserWithEmailAndPassword(services.auth, email.trim(), password);
     const cleanName = displayName.trim().slice(0, 100);
     if (cleanName) await services.authApi.updateProfile(credential.user, { displayName: cleanName });
+
+    // Ensure the initial profile includes the submitted display name even if the
+    // auth-state listener races registration. The only self-writable role/status
+    // values are fixed to pending by Firestore Security Rules.
+    const profileRef = services.firestoreApi.doc(services.db, 'users', credential.user.uid);
+    const profileSnapshot = await services.firestoreApi.getDoc(profileRef);
+    if (!profileSnapshot.exists()) {
+      try {
+        await services.firestoreApi.setDoc(profileRef, {
+          uid: credential.user.uid,
+          email: credential.user.email || email.trim(),
+          displayName: cleanName,
+          role: 'pending',
+          status: 'pending',
+          organizationId: null,
+          createdAt: services.firestoreApi.serverTimestamp(),
+          updatedAt: services.firestoreApi.serverTimestamp(),
+        });
+      } catch (profileCreateError) {
+        // The auth-state listener may have created the same document concurrently.
+        const racedSnapshot = await services.firestoreApi.getDoc(profileRef);
+        if (!racedSnapshot.exists()) throw profileCreateError;
+        if (racedSnapshot.data().displayName !== cleanName) {
+          await services.firestoreApi.updateDoc(profileRef, {
+            displayName: cleanName,
+            updatedAt: services.firestoreApi.serverTimestamp(),
+          });
+        }
+      }
+    } else if (profileSnapshot.data().displayName !== cleanName) {
+      await services.firestoreApi.updateDoc(profileRef, {
+        displayName: cleanName,
+        updatedAt: services.firestoreApi.serverTimestamp(),
+      });
+    }
     await services.authApi.sendEmailVerification(credential.user);
   }, []);
 
