@@ -421,7 +421,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
               <input
                 ref={topFileInputRef}
                 type="file"
-                accept="image/png, image/jpeg, image/jpg, image/webp"
+                accept="image/png, image/jpeg, image/jpg, image/webp, image/svg+xml"
                 onChange={(e) => handleFileUpload(e, true)}
                 className="hidden"
                 aria-label="Upload Top Logo Image"
@@ -429,7 +429,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
               <input
                 ref={bottomFileInputRef}
                 type="file"
-                accept="image/png, image/jpeg, image/jpg, image/webp"
+                accept="image/png, image/jpeg, image/jpg, image/webp, image/svg+xml"
                 onChange={(e) => handleFileUpload(e, false)}
                 className="hidden"
                 aria-label="Upload Bottom Logo Image"
