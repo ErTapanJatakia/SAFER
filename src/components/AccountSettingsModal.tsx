@@ -384,7 +384,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
 
             {section === 'Privacy & Data' && (
               <section className="space-y-4">
-                <div><h3 className="font-bold text-lg">Privacy &amp; Data</h3><p className="text-sm text-slate-600">Manage account-level data requests. Requests are recorded for manual review and are not automatically completed.</p></div>
+                <div><h3 className="font-bold text-lg">Privacy &amp; Data</h3><p className="text-sm text-slate-600">Manage account-level data requests. Requests are recorded for manual review and are not automatically completed.</p><a href="/privacy-notice.html" target="_blank" rel="noopener noreferrer" className="inline-block mt-2 text-sm font-semibold text-blue-800 underline underline-offset-4">Read SAFER Account Privacy Notice</a></div>
                 <button type="button" onClick={handleExport} className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold hover:bg-slate-50"><FileJson className="w-4 h-4" />Export account profile and preferences (JSON)</button>
                 <form onSubmit={handlePrivacyRequest} className="space-y-3 border border-slate-200 rounded-lg p-4">
                   <h4 className="font-semibold text-sm">Submit a privacy request</h4>
