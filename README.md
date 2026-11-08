@@ -207,7 +207,7 @@ npm run build
 | **Cyber Hygiene & Posture** | 10 security domains, verified vs recommendation distinction, training scenario | **PASSED** (100%) |
 | **Pre-Deployment Checklist** | 8 categories, metrics calculation, outstanding highlight banner, non-authorization disclaimer | **PASSED** (100%) |
 | **Themes & Branding** | 20 source-defined theme presets, independent dual logo controls, accessible demonstration notice modal | Implemented; verify with CI and manual visual review |
-| **Automated Suite Run** | 48 tests across `src/utils/*.test.ts` (`node:test`) | **48 / 48 PASSED** on audit baseline commit (0 failures) |
+| **Automated Suite Run** | 49 tests across `src/utils/*.test.ts` (`node:test`) | **49 / 49 PASSED** on audit baseline commit (0 failures) |
 | **Compilation & Lint** | `tsc --noEmit` and Vite production build | **PASSED** on audit baseline commit (0 errors) |
 
 ### Limitations
