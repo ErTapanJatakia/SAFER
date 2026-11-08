@@ -309,7 +309,15 @@ export const SaferAuthProvider: React.FC<React.PropsWithChildren> = ({ children 
     const services = servicesRef.current;
     if (!services?.auth.currentUser) return;
     await services.authApi.reload(services.auth.currentUser);
-    setUser({ ...services.auth.currentUser });
+    const refreshedUser = services.auth.currentUser;
+    if (refreshedUser) {
+      setUser({
+        uid: refreshedUser.uid,
+        email: refreshedUser.email,
+        displayName: refreshedUser.displayName,
+        emailVerified: refreshedUser.emailVerified,
+      });
+    }
   }, []);
 
   const sendVerificationEmail = useCallback(async () => {
