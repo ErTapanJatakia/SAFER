@@ -10,6 +10,30 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
+
+    function isSuperAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'super_admin'
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'active';
+    }
+
+    function validAdminRoleUpdate(uid) {
+      return isSuperAdmin()
+        && request.auth.uid != uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['role', 'status', 'updatedAt'])
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.displayName == resource.data.displayName
+        && request.resource.data.organizationId == resource.data.organizationId
+        && request.resource.data.role in [
+          'super_admin', 'org_admin', 'supervisor', 'personnel', 'auditor', 'pending'
+        ]
+        && request.resource.data.status in ['pending', 'active', 'suspended']
+        && request.resource.data.updatedAt == request.time;
+    }
+
     function validUserCreate(uid) {
       return isOwner(uid)
         && request.resource.data.keys().hasAll([
@@ -106,9 +130,10 @@ service cloud.firestore {
     }
 
     match /users/{uid} {
-      allow read: if isOwner(uid);
+      allow get: if isOwner(uid) || isSuperAdmin();
+      allow list: if isSuperAdmin();
       allow create: if validUserCreate(uid);
-      allow update: if validUserUpdate(uid);
+      allow update: if validUserUpdate(uid) || validAdminRoleUpdate(uid);
       // Account deletion requires a separate, reviewed workflow.
       allow delete: if false;
     }
