@@ -521,7 +521,7 @@ export default function App() {
               completed: true,
               requiresHumanReview: false,
               reviewedBy: reviewerName,
-              reviewDate: '2026-10-15',
+              reviewDate: getLocalISODate(),
             }
           : item
       )
