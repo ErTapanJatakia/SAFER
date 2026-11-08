@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>SAFER Account Privacy Notice</title>
+  <style>
+    :root{color-scheme:light;font-family:Inter,system-ui,sans-serif;color:#172033;background:#f3f6fa}
+    body{margin:0;padding:2rem 1rem;line-height:1.65}
+    main{max-width:850px;margin:0 auto;background:#fff;border:1px solid #d7dee8;border-radius:14px;padding:2rem;box-shadow:0 12px 36px #0f172a12}
+    h1,h2{line-height:1.25;color:#0f1d33}h1{font-size:1.8rem}h2{font-size:1.1rem;margin-top:1.7rem}
+    p,li{font-size:.95rem}small{color:#5b6678}
+    .notice{background:#fff7e8;border:1px solid #e9c77c;color:#69480d;padding:1rem;border-radius:8px}
+    a{color:#174d91}
+  </style>
+</head>
+<body>
+<main>
+  <h1>SAFER Account Privacy Notice</h1>
+  <small>Last updated: 9 November 2026 · Prototype notice, not legal advice or a compliance certification.</small>
+  <p class="notice"><strong>Demonstration data only.</strong> Personnel, incident, qualification, cybersecurity and checklist records remain in browser-local storage. They are not tenant-isolated or protected by account roles. Do not enter real personal, health, confidential, evidence or operational information.</p>
+
+  <h2>Account information</h2>
+  <p>When Firebase is configured, SAFER uses Firebase Authentication for email/password sign-in and email verification. Passwords are handled by Firebase Authentication and are not stored in SAFER settings documents.</p>
+  <p>SAFER stores an account profile in the Firestore users collection, keyed by Firebase UID. It contains UID, email, display name, role, status, organization identifier and timestamps. New accounts start with a pending role and pending status. A trusted project administrator must approve the account and assign a role.</p>
+
+  <h2>Personal settings</h2>
+  <p>Personal preferences are stored in a separate Firestore userSettings document keyed by the authenticated UID. This includes the selected existing theme, interface density, accessibility preferences, notification preferences, and language/date/time-zone settings.</p>
+
+  <h2>Privacy requests</h2>
+  <p>The Privacy &amp; Data screen accepts access, correction and deletion requests for account profile and personal preferences. A submitted request is recorded for manual review. Submission does not mean the request has been completed. The current prototype does not automatically delete accounts or implement a full statutory grievance workflow.</p>
+
+  <h2>Notifications</h2>
+  <p>Notification switches store preferences only. SAFER does not currently deliver email alerts, SMS, browser push or background notifications.</p>
+
+  <h2>Security boundaries</h2>
+  <p>Firestore rules restrict account profile and personal-settings access to the signed-in UID. Users cannot use account settings to change their own role, account status or organization membership. Other Firestore data paths are denied pending a separately designed tenant-scoped records backend.</p>
+  <p>These controls do not protect browser-local operational demonstration data, and they do not establish a production-ready records-management system.</p>
+
+  <h2>Retention and contact</h2>
+  <p>Account data are retained in the Firebase project until handled through a separately approved administrative process. The deployment operator must publish and maintain an actual privacy/grievance contact address before inviting real users. This repository does not invent a contact address.</p>
+
+  <h2>Further information</h2>
+  <p>See <a href="https://github.com/ErTapanJatakia/SAFER/blob/main/PRIVACY_NOTICE.md">the full repository privacy notice</a> and <a href="https://github.com/ErTapanJatakia/SAFER/blob/main/FIREBASE_SETUP.md">Firebase setup and security boundaries</a>.</p>
+</main>
+</body>
+</html>
