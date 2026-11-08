@@ -900,7 +900,7 @@ export default function App() {
         <AccountSettingsModal
           isOpen={isAccountSettingsOpen}
           onClose={() => setIsAccountSettingsOpen(false)}
-          onApplyTheme={handleSelectTheme}
+          onApplyTheme={(themeId) => { setCurrentThemeId(themeId); setIsCustomThemeActive(false); }}
           onApplyAccessibility={(settings) => setAccessibilitySettings(settings)}
           onApplyDensity={(density) => document.documentElement.setAttribute('data-interface-density', density)}
         />
