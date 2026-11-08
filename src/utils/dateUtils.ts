@@ -162,3 +162,22 @@ export function formatLocalDisplayDate(
     year: 'numeric',
   }).format(date);
 }
+
+
+/**
+ * Returns the short time-zone label for an operational timestamp.
+ * Uses the signed-in account's selected zone when valid, otherwise the
+ * browser's local zone. Never labels a non-IST time as IST.
+ */
+export function getTimeZoneLabel(date: Date = new Date(), locale = 'en-IN'): string {
+  const zone = getPreferredTimeZone();
+  try {
+    const parts = new Intl.DateTimeFormat(locale, {
+      timeZone: zone,
+      timeZoneName: 'short',
+    }).formatToParts(date);
+    return parts.find((part) => part.type === 'timeZoneName')?.value || (zone || 'Local time');
+  } catch {
+    return 'Local time';
+  }
+}
