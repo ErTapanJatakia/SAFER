@@ -31,6 +31,7 @@ import {
   DEFAULT_ACCESSIBILITY_SETTINGS,
 } from './utils/themePresets.ts';
 import { isSafeImageDataUrl } from './utils/securitySanitizer.ts';
+import { getLocalISODate } from './utils/dateUtils.ts';
 import { SaferWordmark } from './components/SaferWordmark.tsx';
 import { HeaderBanner } from './components/HeaderBanner.tsx';
 import { Navbar, type NavigationSection } from './components/Navbar.tsx';
@@ -364,7 +365,7 @@ export default function App() {
     supervisorName: string,
     reviewNotes: string
   ) => {
-    const today = '2026-10-15';
+    const today = getLocalISODate();
     setPersonnelList((prev) =>
       prev.map((p) => {
         if (p.id === personId) {
@@ -457,7 +458,7 @@ export default function App() {
             ...item,
             completed,
             status,
-            lastChecked: '2026-10-15',
+            lastChecked: getLocalISODate(),
           };
         }
         return item;
@@ -467,7 +468,7 @@ export default function App() {
   };
 
   const handleRunCyberAudit = () => {
-    const today = '2026-10-15';
+    const today = getLocalISODate();
     setCyberItems((prev) =>
       prev.map((item) => ({
         ...item,
