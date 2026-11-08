@@ -1,7 +1,6 @@
 import type { LogoConfig } from '../types/theme.ts';
 import { isSafeImageDataUrl } from '../utils/securitySanitizer.ts';
 import { formatLocalDisplayDate } from '../utils/dateUtils.ts';
-import { formatLocalDisplayDate } from '../utils/dateUtils.ts';
 import { SaferWordmark } from './SaferWordmark.tsx';
 import {
   Shield,
