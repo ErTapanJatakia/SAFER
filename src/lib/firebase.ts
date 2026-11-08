@@ -14,12 +14,13 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
 };
 
-export const isFirebaseConfigured = Boolean(
-  firebaseConfig.apiKey &&
-  firebaseConfig.authDomain &&
-  firebaseConfig.projectId &&
-  firebaseConfig.appId
-);
+function isRealConfigurationValue(value: string): boolean {
+  const normalized = value.trim();
+  return normalized.length > 0 &&
+    !/^(?:YOUR_|MY_|REPLACE_ME|CHANGEME)/i.test(normalized);
+}
+
+export const isFirebaseConfigured = Object.values(firebaseConfig).every(isRealConfigurationValue);
 
 export interface FirebaseServices {
   app: any;
