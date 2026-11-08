@@ -1,5 +1,6 @@
 import type { LogoConfig } from '../types/theme.ts';
 import { isSafeImageDataUrl } from '../utils/securitySanitizer.ts';
+import { formatLocalDisplayDate } from '../utils/dateUtils.ts';
 import { SaferWordmark } from './SaferWordmark.tsx';
 import {
   Shield,
@@ -103,7 +104,7 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
 
           <span className="hidden md:inline-flex items-center text-slate-400 text-xs">
             <Calendar className="w-3.5 h-3.5 mr-1" />
-            Oct 15, 2026
+            {formatLocalDisplayDate()}
           </span>
         </div>
       </div>
