@@ -8,7 +8,7 @@ import {
   DEFAULT_ACCESSIBILITY_SETTINGS,
 } from './themePresets.ts';
 
-test('THEME_PRESETS has all 19 presets covering standard, high_vis, and camouflage', () => {
+test('THEME_PRESETS has all 20 presets covering standard, high_vis, and camouflage', () => {
   assert.equal(THEME_PRESETS.length, 20); // 6 standard, 9 high_vis, 5 camouflage = 20 presets total
 
   const ids = THEME_PRESETS.map((p) => p.id);
