@@ -40,15 +40,16 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    if (!auth) {
+    const firebaseAuth = auth;
+    if (!firebaseAuth) {
       setLoading(false);
       return;
     }
-    return onAuthStateChanged(auth, (nextUser) => {
+    return onAuthStateChanged(firebaseAuth, (nextUser) => {
       if (nextUser && !nextUser.emailVerified) {
         setVerificationEmail(nextUser.email || '');
         setMode('verify');
-        void signOut(auth);
+        void signOut(firebaseAuth);
         setUser(null);
       } else {
         setUser(nextUser);
@@ -95,7 +96,8 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!auth) return;
+    const firebaseAuth = auth;
+    if (!firebaseAuth) return;
     if (!email.trim()) {
       setError('Enter your email address.');
       return;
@@ -110,12 +112,12 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
         return;
       }
       void run(async () => {
-        const credential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+        const credential = await createUserWithEmailAndPassword(firebaseAuth, email.trim(), password);
         setVerificationEmail(credential.user.email || email.trim());
         try {
           await sendEmailVerification(credential.user);
         } finally {
-          await signOut(auth);
+          await signOut(firebaseAuth);
         }
         setMode('verify');
         setPassword('');
@@ -126,7 +128,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
     }
     if (mode === 'reset') {
       void run(async () => {
-        await sendPasswordResetEmail(auth, email.trim());
+        await sendPasswordResetEmail(firebaseAuth, email.trim());
         setMessage('If an account exists for that address, password-reset instructions have been sent.');
       });
       return;
@@ -136,13 +138,13 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       return;
     }
     void run(async () => {
-      const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
+      const credential = await signInWithEmailAndPassword(firebaseAuth, email.trim(), password);
       if (!credential.user.emailVerified) {
         try {
           await sendEmailVerification(credential.user);
         } finally {
           setVerificationEmail(credential.user.email || email.trim());
-          await signOut(auth);
+          await signOut(firebaseAuth);
           setMode('verify');
           setMessage('Email verification is required. A verification message has been requested.');
         }
@@ -151,12 +153,13 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
   };
 
   const handleGoogle = () => {
-    if (!auth) return;
+    const firebaseAuth = auth;
+    if (!firebaseAuth) return;
     void run(async () => {
       const provider = new GoogleAuthProvider();
-      const credential = await signInWithPopup(auth, provider);
+      const credential = await signInWithPopup(firebaseAuth, provider);
       if (!credential.user.emailVerified) {
-        await signOut(auth);
+        await signOut(firebaseAuth);
         throw new Error('Google account email is not verified.');
       }
     });
@@ -180,8 +183,9 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
   };
 
   const leaveAccount = () => {
-    if (!auth) return;
-    void signOut(auth).finally(() => {
+    const firebaseAuth = auth;
+    if (!firebaseAuth) return;
+    void signOut(firebaseAuth).finally(() => {
       setUser(null);
       setDemoGuest(false);
     });
