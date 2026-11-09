@@ -48,7 +48,7 @@ The candidate accepts only the following keys: `recordId`, `orgId`, `employeeRef
 - Record ID and organisation ID must match the path.
 - Employee reference is a non-empty string of at most 64 characters.
 - Display label is at most 80 characters.
-- Operational roles and specialisations are allowlisted and limited to 10 entries each.
+- Operational roles and specialisations are limited to 10 non-empty string entries each; each entry is length-bounded. Canonical vocabulary validation remains an application-level requirement because enumerating every current label in Rules exceeded Firestore's per-evaluation expression budget.
 - Assignment sector and readiness status use the current TypeScript enum values.
 - Creator UID and creation timestamp are immutable.
 - Update UID and update timestamp must match the authenticated request.
