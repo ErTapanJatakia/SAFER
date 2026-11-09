@@ -202,6 +202,52 @@ test("suspended organisation denies otherwise active owner", async () => {
   ));
 });
 
+
+test("bootstrap trust anchor rejects mismatched UID, tenant, role, and missing organisation", async () => {
+  const fixtures = [
+    { orgId: "bootstrap-wrong-uid", uid: "wrong-uid-user", member: {
+      uid: "different-uid", orgId: "bootstrap-wrong-uid", role: "owner", status: "active",
+    } },
+    { orgId: "bootstrap-wrong-org", uid: "wrong-org-user", member: {
+      uid: "wrong-org-user", orgId: "another-org", role: "owner", status: "active",
+    } },
+    { orgId: "bootstrap-invalid-role", uid: "invalid-role-user", member: {
+      uid: "invalid-role-user", orgId: "bootstrap-invalid-role", role: "platform-admin", status: "active",
+    } },
+  ];
+
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    for (const fixture of fixtures) {
+      await setDoc(doc(db, "organisations", fixture.orgId), {
+        orgId: fixture.orgId,
+        displayName: "Synthetic Bootstrap Tenant",
+        status: "active",
+        schemaVersion: 1,
+      });
+      await setDoc(
+        doc(db, "organisations", fixture.orgId, "members", fixture.uid),
+        fixture.member,
+      );
+    }
+    await setDoc(doc(db, "organisations", "bootstrap-missing-org", "members", "orphan-user"), {
+      uid: "orphan-user",
+      orgId: "bootstrap-missing-org",
+      role: "owner",
+      status: "active",
+    });
+  });
+
+  for (const fixture of fixtures) {
+    const db = dbFor(fixture.uid);
+    await assertFails(getDoc(doc(db, "organisations", fixture.orgId)));
+    await assertFails(getDoc(doc(db, "organisations", fixture.orgId, "personnel", "synthetic")));
+  }
+
+  const orphanDb = dbFor("orphan-user");
+  await assertFails(getDoc(doc(orphanDb, "organisations/bootstrap-missing-org")));
+});
+
 test("tenant binding, UID provenance, enums, and strict key allowlists reject spoofed or malformed records", async () => {
   await seedTenant();
   const db = dbFor("owner-a");
