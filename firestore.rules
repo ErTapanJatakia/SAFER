@@ -51,41 +51,11 @@ service cloud.firestore {
     }
 
     function validOperationalRole(value) {
-      return value in [
-        'Close Protection Officer', 'Protective Security Officer',
-        'Security Officer', 'Security Team Leader',
-        'Security Operations Manager', 'Site Security Personnel',
-        'Static Guard', 'Mobile Patrol Officer',
-        'Security Driver / Protective Driver', 'Security Escort Personnel',
-        'Maritime Security Personnel', 'Aviation / Airport Security',
-        'Port and Terminal Security', 'Residential Security',
-        'Event Security Personnel', 'Security Operations Centre Analyst',
-        'Security Intelligence Analyst', 'Risk Assessment Specialist',
-        'Crisis Management Coordinator', 'Incident Response Coordinator',
-        'First-Aid / Medical Support Personnel', 'K9 Handler',
-        'Access Control and Screening Personnel', 'Security Trainer / Instructor',
-        'Security Consultant', 'Logistics and Operations Support',
-        'Communications / Radio Operator', 'Cybersecurity Specialist',
-        'Physical Security Systems Specialist'
-      ];
+      return value is string && value.size() >= 1 && value.size() <= 60;
     }
 
     function validSpecialisation(value) {
-      return value in [
-        'Close Protection', 'Executive Protection', 'Protective Security',
-        'Threat and Risk Assessment', 'Physical Security',
-        'Site and Residential Security', 'Travel Risk Management',
-        'Maritime Security', 'Aviation Security', 'Security Driving',
-        'Crisis and Emergency Management', 'Incident Reporting',
-        'Medical First Aid', 'Security Training', 'K9 Operations',
-        'Access Control and Screening', 'CCTV and Physical Security Systems',
-        'Security Intelligence', 'Open-Source Intelligence',
-        'Cybersecurity', 'Security Operations / SOC', 'Digital Forensics',
-        'Evidence Handling', 'Governance, Risk and Compliance',
-        'Investigations and Documentation', 'Logistics and Operations Support',
-        'Communications', 'Human Rights and Use-of-Force Compliance',
-        'Language and Cultural Competence'
-      ];
+      return value is string && value.size() >= 1 && value.size() <= 80;
     }
 
     function validOperationalRoleList(values) {
