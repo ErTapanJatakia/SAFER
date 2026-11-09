@@ -172,7 +172,6 @@ service cloud.firestore {
         ]
         && request.resource.data.summary is string
         && request.resource.data.summary.size() <= 2000
-        && request.resource.data.reportedByUid == request.auth.uid
         && (!('locationLabel' in request.resource.data)
           || (request.resource.data.locationLabel is string
             && request.resource.data.locationLabel.size() <= 120))
@@ -183,13 +182,15 @@ service cloud.firestore {
     function validIncidentCreate(orgId, incidentId) {
       return validIncidentData(orgId, incidentId)
         && request.resource.data.createdAt == request.time
-        && request.resource.data.createdByUid == request.auth.uid;
+        && request.resource.data.createdByUid == request.auth.uid
+        && request.resource.data.reportedByUid == request.auth.uid;
     }
 
     function validIncidentUpdate(orgId, incidentId) {
       return validIncidentData(orgId, incidentId)
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.createdByUid == resource.data.createdByUid
+        && request.resource.data.reportedByUid == resource.data.reportedByUid
         && request.resource.data.incidentId == resource.data.incidentId
         && request.resource.data.orgId == resource.data.orgId;
     }
