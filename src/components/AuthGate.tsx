@@ -3,7 +3,6 @@ import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
-  reload,
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
@@ -46,7 +45,14 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       return;
     }
     return onAuthStateChanged(auth, (nextUser) => {
-      setUser(nextUser?.emailVerified ? nextUser : null);
+      if (nextUser && !nextUser.emailVerified) {
+        setVerificationEmail(nextUser.email || '');
+        setMode('verify');
+        void signOut(auth);
+        setUser(null);
+      } else {
+        setUser(nextUser);
+      }
       setLoading(false);
     }, () => {
       setUser(null);
@@ -105,9 +111,12 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       }
       void run(async () => {
         const credential = await createUserWithEmailAndPassword(auth, email.trim(), password);
-        await sendEmailVerification(credential.user);
         setVerificationEmail(credential.user.email || email.trim());
-        await signOut(auth);
+        try {
+          await sendEmailVerification(credential.user);
+        } finally {
+          await signOut(auth);
+        }
         setMode('verify');
         setPassword('');
         setConfirmPassword('');
@@ -145,18 +154,21 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
     if (!auth) return;
     void run(async () => {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const credential = await signInWithPopup(auth, provider);
+      if (!credential.user.emailVerified) {
+        await signOut(auth);
+        throw new Error('Google account email is not verified.');
+      }
     });
   };
 
   const handleRefreshVerification = () => {
     if (!auth) return;
     void run(async () => {
-      // Reload the current Firebase user if a session still exists; otherwise
-      // return to sign-in so the verified account can establish a fresh session.
-      if (auth.currentUser) await reload(auth.currentUser);
+      // The verification link is completed outside this signed-out session.
+      // A fresh sign-in rehydrates and verifies the Firebase user state.
       setMode('signin');
-      setMessage('Now sign in again. SAFER will re-check your verified email status.');
+      setMessage('Sign in again. SAFER will re-check your verified email status.');
     });
   };
 
