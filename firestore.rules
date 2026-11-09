@@ -50,7 +50,7 @@ service cloud.firestore {
             && request.resource.data.themeId.matches('^[a-z0-9-]{1,40}$')));
     }
 
-    function validPersonnelCreate(orgId, recordId) {
+    function validPersonnelData(orgId, recordId) {
       return request.resource.data.keys().hasOnly([
           'recordId', 'orgId', 'employeeRef', 'displayLabel',
           'operationalRoles', 'specialisations', 'assignmentSector',
@@ -117,21 +117,25 @@ service cloud.firestore {
           'PENDING_INTAKE_DOCS'
         ]
         && request.resource.data.requiresHumanReview is bool
-        && request.resource.data.createdAt == request.time
-        && request.resource.data.createdByUid == request.auth.uid
         && request.resource.data.updatedAt == request.time
         && request.resource.data.updatedByUid == request.auth.uid;
     }
 
+    function validPersonnelCreate(orgId, recordId) {
+      return validPersonnelData(orgId, recordId)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.createdByUid == request.auth.uid;
+    }
+
     function validPersonnelUpdate(orgId, recordId) {
-      return validPersonnelCreate(orgId, recordId)
+      return validPersonnelData(orgId, recordId)
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.createdByUid == resource.data.createdByUid
         && request.resource.data.recordId == resource.data.recordId
         && request.resource.data.orgId == resource.data.orgId;
     }
 
-    function validIncidentCreate(orgId, incidentId) {
+    function validIncidentData(orgId, incidentId) {
       return request.resource.data.keys().hasOnly([
           'incidentId', 'orgId', 'referenceNumber', 'incidentType',
           'dateReported', 'title', 'status', 'priority', 'summary',
@@ -172,14 +176,18 @@ service cloud.firestore {
         && (!('locationLabel' in request.resource.data)
           || (request.resource.data.locationLabel is string
             && request.resource.data.locationLabel.size() <= 120))
-        && request.resource.data.createdAt == request.time
-        && request.resource.data.createdByUid == request.auth.uid
         && request.resource.data.updatedAt == request.time
         && request.resource.data.updatedByUid == request.auth.uid;
     }
 
+    function validIncidentCreate(orgId, incidentId) {
+      return validIncidentData(orgId, incidentId)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.createdByUid == request.auth.uid;
+    }
+
     function validIncidentUpdate(orgId, incidentId) {
-      return validIncidentCreate(orgId, incidentId)
+      return validIncidentData(orgId, incidentId)
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.createdByUid == resource.data.createdByUid
         && request.resource.data.incidentId == resource.data.incidentId
