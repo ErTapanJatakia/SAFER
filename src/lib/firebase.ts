@@ -1,46 +1,33 @@
-import {getApp, getApps, initializeApp} from 'firebase/app';
-import {getAuth} from 'firebase/auth';
-import {getFirestore} from 'firebase/firestore';
+import {getApp, getApps, initializeApp, type FirebaseApp} from 'firebase/app';
+import {getAuth, type Auth} from 'firebase/auth';
+import {getFirestore, type Firestore} from 'firebase/firestore';
 
 /**
- * Public Firebase web configuration.
- *
- * Values are supplied through Vite environment variables. Firebase web config
- * is not a secret; access control must be enforced by Authentication and
- * Firestore Security Rules, never by hiding these client-side values.
+ * Public Firebase web configuration. These values are not secrets.
+ * Authorisation must be enforced by Firebase Authentication and Security Rules.
  */
-const requiredEnv = {
+const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-const missing = Object.entries(requiredEnv)
-  .filter(([, value]) => !value?.trim())
-  .map(([key]) => key);
-
-if (missing.length > 0) {
-  throw new Error(
-    `Firebase configuration is incomplete. Set the following Vite variables: ${missing.join(', ')}.`,
-  );
-}
-
-const firebaseConfig = {
-  apiKey: requiredEnv.apiKey,
-  authDomain: requiredEnv.authDomain,
-  projectId: requiredEnv.projectId,
-  appId: requiredEnv.appId,
-};
-
-export const firebaseApp = getApps().length
-  ? getApp()
-  : initializeApp(firebaseConfig);
-
-export const auth = getAuth(firebaseApp);
+export const isFirebaseConfigured = Object.values(firebaseConfig)
+  .every((value) => typeof value === 'string' && value.trim().length > 0);
 
 /**
- * Uses the project's default Firestore database.
- * No Storage, Analytics, Cloud Functions, or paid services are initialized.
+ * Firebase remains optional at build/runtime so deployments without credentials
+ * can still use the isolated synthetic Demo Guest experience.
  */
-export const db = getFirestore(firebaseApp);
+export const firebaseApp: FirebaseApp | null = isFirebaseConfigured
+  ? (getApps().length ? getApp() : initializeApp(firebaseConfig))
+  : null;
+
+export const auth: Auth | null = firebaseApp ? getAuth(firebaseApp) : null;
+
+/**
+ * Uses the default Firestore database when configured. No Firestore reads or
+ * writes are performed by the authentication gate in this implementation.
+ */
+export const db: Firestore | null = firebaseApp ? getFirestore(firebaseApp) : null;
