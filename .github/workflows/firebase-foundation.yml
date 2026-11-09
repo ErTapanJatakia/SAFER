@@ -12,6 +12,9 @@ on:
       - "package-lock.json"
       - "bun.lock"
       - "src/**"
+      - "firestore.rules"
+      - "firebase.json"
+      - "docs/**"
       - ".github/workflows/firebase-foundation.yml"
 
 permissions:
