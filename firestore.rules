@@ -50,6 +50,72 @@ service cloud.firestore {
             && request.resource.data.themeId.matches('^[a-z0-9-]{1,40}$')));
     }
 
+    function validOperationalRole(value) {
+      return value in [
+        'Close Protection Officer', 'Protective Security Officer',
+        'Security Officer', 'Security Team Leader',
+        'Security Operations Manager', 'Site Security Personnel',
+        'Static Guard', 'Mobile Patrol Officer',
+        'Security Driver / Protective Driver', 'Security Escort Personnel',
+        'Maritime Security Personnel', 'Aviation / Airport Security',
+        'Port and Terminal Security', 'Residential Security',
+        'Event Security Personnel', 'Security Operations Centre Analyst',
+        'Security Intelligence Analyst', 'Risk Assessment Specialist',
+        'Crisis Management Coordinator', 'Incident Response Coordinator',
+        'First-Aid / Medical Support Personnel', 'K9 Handler',
+        'Access Control and Screening Personnel', 'Security Trainer / Instructor',
+        'Security Consultant', 'Logistics and Operations Support',
+        'Communications / Radio Operator', 'Cybersecurity Specialist',
+        'Physical Security Systems Specialist'
+      ];
+    }
+
+    function validSpecialisation(value) {
+      return value in [
+        'Close Protection', 'Executive Protection', 'Protective Security',
+        'Threat and Risk Assessment', 'Physical Security',
+        'Site and Residential Security', 'Travel Risk Management',
+        'Maritime Security', 'Aviation Security', 'Security Driving',
+        'Crisis and Emergency Management', 'Incident Reporting',
+        'Medical First Aid', 'Security Training', 'K9 Operations',
+        'Access Control and Screening', 'CCTV and Physical Security Systems',
+        'Security Intelligence', 'Open-Source Intelligence',
+        'Cybersecurity', 'Security Operations / SOC', 'Digital Forensics',
+        'Evidence Handling', 'Governance, Risk and Compliance',
+        'Investigations and Documentation', 'Logistics and Operations Support',
+        'Communications', 'Human Rights and Use-of-Force Compliance',
+        'Language and Cultural Competence'
+      ];
+    }
+
+    function validOperationalRoleList(values) {
+      return values is list && values.size() <= 10
+        && (values.size() < 1 || validOperationalRole(values[0]))
+        && (values.size() < 2 || validOperationalRole(values[1]))
+        && (values.size() < 3 || validOperationalRole(values[2]))
+        && (values.size() < 4 || validOperationalRole(values[3]))
+        && (values.size() < 5 || validOperationalRole(values[4]))
+        && (values.size() < 6 || validOperationalRole(values[5]))
+        && (values.size() < 7 || validOperationalRole(values[6]))
+        && (values.size() < 8 || validOperationalRole(values[7]))
+        && (values.size() < 9 || validOperationalRole(values[8]))
+        && (values.size() < 10 || validOperationalRole(values[9]));
+    }
+
+    function validSpecialisationList(values) {
+      return values is list && values.size() <= 10
+        && (values.size() < 1 || validSpecialisation(values[0]))
+        && (values.size() < 2 || validSpecialisation(values[1]))
+        && (values.size() < 3 || validSpecialisation(values[2]))
+        && (values.size() < 4 || validSpecialisation(values[3]))
+        && (values.size() < 5 || validSpecialisation(values[4]))
+        && (values.size() < 6 || validSpecialisation(values[5]))
+        && (values.size() < 7 || validSpecialisation(values[6]))
+        && (values.size() < 8 || validSpecialisation(values[7]))
+        && (values.size() < 9 || validSpecialisation(values[8]))
+        && (values.size() < 10 || validSpecialisation(values[9]));
+    }
+
     function validPersonnelData(orgId, recordId) {
       return request.resource.data.keys().hasOnly([
           'recordId', 'orgId', 'employeeRef', 'displayLabel',
@@ -71,42 +137,8 @@ service cloud.firestore {
         && (!('displayLabel' in request.resource.data)
           || (request.resource.data.displayLabel is string
             && request.resource.data.displayLabel.size() <= 80))
-        && request.resource.data.operationalRoles is list
-        && request.resource.data.operationalRoles.size() <= 10
-        && request.resource.data.operationalRoles.hasOnly([
-          'Close Protection Officer', 'Protective Security Officer',
-          'Security Officer', 'Security Team Leader',
-          'Security Operations Manager', 'Site Security Personnel',
-          'Static Guard', 'Mobile Patrol Officer',
-          'Security Driver / Protective Driver', 'Security Escort Personnel',
-          'Maritime Security Personnel', 'Aviation / Airport Security',
-          'Port and Terminal Security', 'Residential Security',
-          'Event Security Personnel', 'Security Operations Centre Analyst',
-          'Security Intelligence Analyst', 'Risk Assessment Specialist',
-          'Crisis Management Coordinator', 'Incident Response Coordinator',
-          'First-Aid / Medical Support Personnel', 'K9 Handler',
-          'Access Control and Screening Personnel', 'Security Trainer / Instructor',
-          'Security Consultant', 'Logistics and Operations Support',
-          'Communications / Radio Operator', 'Cybersecurity Specialist',
-          'Physical Security Systems Specialist'
-        ])
-        && request.resource.data.specialisations is list
-        && request.resource.data.specialisations.size() <= 10
-        && request.resource.data.specialisations.hasOnly([
-          'Close Protection', 'Executive Protection', 'Protective Security',
-          'Threat and Risk Assessment', 'Physical Security',
-          'Site and Residential Security', 'Travel Risk Management',
-          'Maritime Security', 'Aviation Security', 'Security Driving',
-          'Crisis and Emergency Management', 'Incident Reporting',
-          'Medical First Aid', 'Security Training', 'K9 Operations',
-          'Access Control and Screening', 'CCTV and Physical Security Systems',
-          'Security Intelligence', 'Open-Source Intelligence',
-          'Cybersecurity', 'Security Operations / SOC', 'Digital Forensics',
-          'Evidence Handling', 'Governance, Risk and Compliance',
-          'Investigations and Documentation', 'Logistics and Operations Support',
-          'Communications', 'Human Rights and Use-of-Force Compliance',
-          'Language and Cultural Competence'
-        ])
+        && validOperationalRoleList(request.resource.data.operationalRoles)
+        && validSpecialisationList(request.resource.data.specialisations)
         && request.resource.data.assignmentSector in [
           'Sector Alpha (Metropolitan)', 'Sector Bravo (Transit)',
           'Sector Charlie (Static Facility)', 'Sector Delta (Reserve)'
