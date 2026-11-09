@@ -234,8 +234,8 @@ test("tenant binding, UID provenance, enums, and strict key allowlists reject sp
 test("immutable creator, tenant, and record identifiers cannot be changed", async () => {
   await seedTenant();
   const db = dbFor("owner-a");
-  const person = doc(db, "organisations/org-a/personnel/person-a");
-  await assertSucceeds(setDoc(person, validPersonnel("owner-a")));
+  const person = doc(db, "organisations/org-a/personnel/immutable-person");
+  await assertSucceeds(setDoc(person, validPersonnel("owner-a", "org-a", "immutable-person")));
   await assertFails(updateDoc(person, {
     orgId: "org-b",
     updatedAt: serverTimestamp(),
