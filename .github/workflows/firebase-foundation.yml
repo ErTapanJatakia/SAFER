@@ -1,9 +1,9 @@
-name: Firebase foundation validation
+name: SAFER dependency and build validation
 
 on:
   push:
     branches:
-      - migration/firebase-npm-foundation
+      - security/sheetjs-0203-remediation
   pull_request:
     branches:
       - main
@@ -12,14 +12,13 @@ on:
       - "package-lock.json"
       - "bun.lock"
       - "src/**"
-      - ".env.example"
       - ".github/workflows/firebase-foundation.yml"
 
 permissions:
   contents: write
 
 concurrency:
-  group: firebase-foundation-${{ github.ref }}
+  group: safer-dependency-validation-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -49,6 +48,9 @@ jobs:
       - name: Install from npm lockfile
         run: npm ci
 
+      - name: Dependency security audit
+        run: npm audit --omit=dev --audit-level=high
+
       - name: Type-check
         run: npm run lint
 
@@ -62,6 +64,6 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add package-lock.json bun.lock
-            git commit -m "chore: synchronize npm and Bun lockfiles"
+            git commit -m "chore: synchronize dependency lockfiles"
             git push
           fi
