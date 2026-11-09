@@ -3,7 +3,18 @@ name: SAFER dependency and build validation
 on:
   push:
     branches:
-      - security/sheetjs-0203-remediation
+      - "feature/*"
+      - "security/*"
+    paths:
+      - "package.json"
+      - "package-lock.json"
+      - "bun.lock"
+      - "src/**"
+      - "tests/**"
+      - "firestore.rules"
+      - "firebase.json"
+      - "docs/**"
+      - ".github/workflows/firebase-foundation.yml"
   pull_request:
     branches:
       - main
@@ -12,6 +23,7 @@ on:
       - "package-lock.json"
       - "bun.lock"
       - "src/**"
+      - "tests/**"
       - "firestore.rules"
       - "firebase.json"
       - "docs/**"
@@ -40,6 +52,12 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Set up Java for Firebase Emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
 
@@ -50,6 +68,9 @@ jobs:
 
       - name: Install from npm lockfile
         run: npm ci
+
+      - name: Firestore Security Rules Emulator tests
+        run: npm run test:firestore-rules
 
       - name: Dependency security audit
         run: npm audit --omit=dev --audit-level=high
