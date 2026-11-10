@@ -61,13 +61,11 @@ jobs:
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
 
-      - name: Regenerate package lockfiles
-        run: |
-          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-          bun install --lockfile-only
+      - name: Regenerate Bun lockfile
+        run: bun install --lockfile-only
 
-      - name: Install from npm lockfile
-        run: npm ci
+      - name: Install from frozen Bun lockfile
+        run: bun install --frozen-lockfile
 
       - name: Firestore Security Rules Emulator tests
         run: npm run test:firestore-rules
