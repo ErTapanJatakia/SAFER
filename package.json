@@ -14,6 +14,7 @@
     "test:auth-membership-ui": "vitest run src/components/AuthGate.test.tsx",
     "test:data-boundary": "tsx --test src/lib/dataBoundary.test.ts",
     "test:session-lifecycle": "tsx --test src/lib/sessionLifecycle.test.ts",
+    "test:session-invalidation": "vitest run src/lib/sessionInvalidation.test.ts",
     "test:demo-repository": "tsx --test src/lib/demoRepository.test.ts",
     "test:demo-workspace": "tsx --test src/lib/demoWorkspace.test.ts"
   },
