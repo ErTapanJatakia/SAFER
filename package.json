@@ -11,7 +11,8 @@
     "lint": "tsc --noEmit",
     "test:firestore-rules": "firebase emulators:exec --only firestore --project demo-safer \"node --test tests/firestore-rules.test.mjs\"",
     "test:tenant-membership": "firebase emulators:exec --only firestore --project demo-safer \"tsx --test src/lib/tenantMembership.test.ts\"",
-    "test:auth-membership-ui": "vitest run src/components/AuthGate.test.tsx"
+    "test:auth-membership-ui": "vitest run src/components/AuthGate.test.tsx",
+    "test:data-boundary": "tsx --test src/lib/dataBoundary.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
