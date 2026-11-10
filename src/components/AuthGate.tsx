@@ -34,6 +34,8 @@ const passwordMeetsPolicy = (value: string) =>
 export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authObserverFailed, setAuthObserverFailed] = useState(false);
+  const [authObserverRetry, setAuthObserverRetry] = useState(0);
   const [demoGuest, setDemoGuest] = useState(false);
   const [mode, setMode] = useState<AuthMode>('signin');
   const [email, setEmail] = useState('');
@@ -69,6 +71,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       setLoading(false);
       return;
     }
+    setAuthObserverFailed(false);
     return onAuthStateChanged(firebaseAuth, (nextUser) => {
       const nextUid = nextUser?.uid ?? null;
       const previousUid = lastAuthUidRef.current;
@@ -81,6 +84,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
         // including when this tab restores an already-signed-in account at startup.
         publishSessionInvalidation();
       }
+      setAuthObserverFailed(false);
       lastAuthUidRef.current = nextUid;
       // Invalidate pending lookups so an old identity cannot restore stale authority.
       if (nextUser) sessionLifecycleRef.current.startAuthenticated(nextUser.uid);
@@ -112,9 +116,16 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       setMembershipError('');
       setUser(null);
       setLoading(false);
-      setError('Unable to verify the current account session. Please try again.');
+      setAuthObserverFailed(true);
+      setError('Unable to verify the current account session. Please retry account verification.');
     });
-  }, []);
+  }, [authObserverRetry]);
+
+  const retryAuthObserver = () => {
+    setError('');
+    setLoading(true);
+    setAuthObserverRetry((retry) => retry + 1);
+  };
 
   const clearFeedback = () => {
     setError('');
@@ -392,13 +403,18 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
                   <input type="password" required autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-400" />
                 </label>
               )}
-              <button type="submit" disabled={busy || !isFirebaseConfigured} className="w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-bold text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Please wait…' : mode === 'register' ? 'Create account' : mode === 'reset' ? 'Send reset instructions' : 'Sign in'}</button>
+              <button type="submit" disabled={busy || !isFirebaseConfigured || authObserverFailed} className="w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-bold text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Please wait…' : mode === 'register' ? 'Create account' : mode === 'reset' ? 'Send reset instructions' : 'Sign in'}</button>
             </form>
           )}
           {mode === 'signin' && isFirebaseConfigured && (
-            <button type="button" disabled={busy} onClick={handleGoogle} className="w-full rounded-lg border border-slate-600 px-4 py-2.5 text-sm font-semibold hover:bg-slate-800 disabled:opacity-50">Continue with Google</button>
+            <button type="button" disabled={busy || authObserverFailed} onClick={handleGoogle} className="w-full rounded-lg border border-slate-600 px-4 py-2.5 text-sm font-semibold hover:bg-slate-800 disabled:opacity-50">Continue with Google</button>
           )}
           {error && <p role="alert" className="rounded-lg border border-red-800 bg-red-950/50 p-3 text-xs text-red-200">{error}</p>}
+          {authObserverFailed && (
+            <button type="button" onClick={retryAuthObserver} className="w-full rounded-lg border border-amber-600 px-4 py-2.5 text-sm font-semibold text-amber-200 hover:bg-amber-950/40">
+              Retry account verification
+            </button>
+          )}
           {message && <p role="status" className="rounded-lg border border-emerald-800 bg-emerald-950/50 p-3 text-xs text-emerald-200">{message}</p>}
           <div className="border-t border-slate-800 pt-4">
             <button type="button" onClick={() => {setDemoGuest(true); clearFeedback();}} className="w-full rounded-lg border border-slate-600 bg-slate-800 px-4 py-3 text-sm font-semibold hover:bg-slate-700">Continue as Demo Guest</button>
