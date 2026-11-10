@@ -31,6 +31,7 @@ import {
   DEFAULT_ACCESSIBILITY_SETTINGS,
 } from './utils/themePresets.ts';
 import { isSafeImageDataUrl } from './utils/securitySanitizer.ts';
+import { createDemoRepository } from './lib/demoRepository.ts';
 import { SaferWordmark } from './components/SaferWordmark.tsx';
 import { HeaderBanner } from './components/HeaderBanner.tsx';
 import { Navbar, type NavigationSection } from './components/Navbar.tsx';
@@ -55,14 +56,18 @@ import {
 import { RotateCcw, Shield, Check, FileText, AlertTriangle, Eye, Palette, Building2 } from 'lucide-react';
 
 export default function App() {
+  // The AuthGate mounts this workspace only for an explicit Demo Guest session.
+  // The repository is browser-local and is not available to authenticated sessions.
+  const demoRepository = useMemo(() => createDemoRepository(window.localStorage), []);
+  const initialDemoSnapshot = useMemo(() => demoRepository.loadSnapshot(), [demoRepository]);
+
   // Navigation State
   const [activeSection, setActiveSection] = useState<NavigationSection>('dashboard');
 
   // Application Data States (with localStorage backing)
   const [personnelList, setPersonnelList] = useState<PersonnelRecord[]>(() => {
     try {
-      const saved = localStorage.getItem('prot_ops_personnel_v2');
-      return saved ? JSON.parse(saved) : INITIAL_PERSONNEL;
+      return [...initialDemoSnapshot.personnel];
     } catch {
       return INITIAL_PERSONNEL;
     }
@@ -70,8 +75,7 @@ export default function App() {
 
   const [incidentList, setIncidentList] = useState<IncidentReport[]>(() => {
     try {
-      const saved = localStorage.getItem('prot_ops_incidents_v2');
-      return saved ? JSON.parse(saved) : INITIAL_INCIDENTS;
+      return [...initialDemoSnapshot.incidents];
     } catch {
       return INITIAL_INCIDENTS;
     }
@@ -79,8 +83,7 @@ export default function App() {
 
   const [cyberItems, setCyberItems] = useState<CyberHygieneItem[]>(() => {
     try {
-      const saved = localStorage.getItem('prot_ops_cyber_v2');
-      return saved ? JSON.parse(saved) : INITIAL_CYBER_ITEMS;
+      return [...initialDemoSnapshot.cyberHygiene];
     } catch {
       return INITIAL_CYBER_ITEMS;
     }
@@ -88,8 +91,7 @@ export default function App() {
 
   const [checklistItems, setChecklistItems] = useState<PreDeploymentChecklistItem[]>(() => {
     try {
-      const saved = localStorage.getItem('prot_ops_checklist_v2');
-      return saved ? JSON.parse(saved) : INITIAL_CHECKLIST;
+      return [...initialDemoSnapshot.checklist];
     } catch {
       return INITIAL_CHECKLIST;
     }
@@ -208,30 +210,22 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Sync state to localStorage
+  // Operational persistence is routed through the Demo Guest repository only.
   useEffect(() => {
-    try {
-      localStorage.setItem('prot_ops_personnel_v2', JSON.stringify(personnelList));
-    } catch {}
-  }, [personnelList]);
+    void demoRepository.replacePersonnel(personnelList).catch(() => showToast('Unable to save demonstration personnel data in this browser.'));
+  }, [demoRepository, personnelList]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem('prot_ops_incidents_v2', JSON.stringify(incidentList));
-    } catch {}
-  }, [incidentList]);
+    void demoRepository.replaceIncidents(incidentList).catch(() => showToast('Unable to save demonstration incident data in this browser.'));
+  }, [demoRepository, incidentList]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem('prot_ops_cyber_v2', JSON.stringify(cyberItems));
-    } catch {}
-  }, [cyberItems]);
+    void demoRepository.replaceCyberHygiene(cyberItems).catch(() => showToast('Unable to save demonstration cyber hygiene data in this browser.'));
+  }, [demoRepository, cyberItems]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem('prot_ops_checklist_v2', JSON.stringify(checklistItems));
-    } catch {}
-  }, [checklistItems]);
+    void demoRepository.replaceChecklist(checklistItems).catch(() => showToast('Unable to save demonstration checklist data in this browser.'));
+  }, [demoRepository, checklistItems]);
 
   useEffect(() => {
     try {
@@ -543,12 +537,7 @@ export default function App() {
     setIncidentList(INITIAL_INCIDENTS);
     setCyberItems(INITIAL_CYBER_ITEMS);
     setChecklistItems(INITIAL_CHECKLIST);
-    try {
-      localStorage.removeItem('prot_ops_personnel_v2');
-      localStorage.removeItem('prot_ops_incidents_v2');
-      localStorage.removeItem('prot_ops_cyber_v2');
-      localStorage.removeItem('prot_ops_checklist_v2');
-    } catch {}
+    demoRepository.reset();
     showToast('Reset all demonstration data to baseline prototype state.');
   };
 
