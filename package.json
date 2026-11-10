@@ -42,7 +42,8 @@
     "tsx": "^4.21.0",
     "typescript": "^7.0.2",
     "jsdom": "^26.1.0",
-    "vitest": "^4.0.8"
+    "vitest": "^4.0.8",
+    "@types/jsdom": "^21.1.7"
   },
   "overrides": {
     "@grpc/grpc-js": "^1.14.7"
