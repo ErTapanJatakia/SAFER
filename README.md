@@ -151,65 +151,98 @@ Protection operations coordinators, supervisors, and administrative officers fac
 
 ---
 
-## 4. Privacy & Security Limitations
+## 4. Privacy, Data Handling & Security Boundaries
 
-- **100% Client-Side Processing:** All personnel management, redaction filtering, incident parsing, and document exports execute entirely in the user's browser runtime.
-- **No External Data Transmission:** User-entered personal data, health particulars, and operational notes are never transmitted to Gemini, external LLM endpoints, analytics servers, or remote databases.
-- **In-Memory Demonstration State:** Additions and edits persist within the browser session memory. Resetting demo data returns records to the curated sample set without overwriting uncommitted user work.
-- **Safe Export Filenames:** Exported filenames use anonymized patterns (e.g. `PMC-ID-001_personnel_record_2026-10-24.pdf`), preventing leakage of names or email addresses into filenames.
-- **Synthetic Sample Records:** Preloaded personnel, incident reports, and checklist items are synthetic sample records created for demonstration purposes. They do not represent real persons, active legal cases, police reports, or operational entities.
+- **Demo Guest operational records:** Personnel, incident, cyber-hygiene, and checklist records are stored in this browser's `localStorage` for the explicit Demo Guest experience. They are not synced to a tenant database. Browser-local storage is not a secure vault; use synthetic demonstration records only.
+- **No real operational data in Demo Guest:** Do not enter real personal information, health particulars, employee records, incident evidence, credentials, or sensitive operational notes. Other scripts running on the same origin may be able to access browser storage.
+- **Browser preferences:** Theme, custom branding, logos, and accessibility preferences are also persisted in browser-local storage.
+- **Exports:** Report and roster exports are generated in the browser and downloaded by the user. Review redactions and the destination device before sharing an export.
+- **Firebase account services:** When configured, Firebase Authentication handles account registration, email verification, sign-in, password reset, and Google sign-in. These account operations require network communication with Firebase/Google.
+- **Tenant access is not released:** The application includes an organisation-membership verification foundation, but successful authentication or membership resolution does not grant access to the operational workspace. The tenant operational repository is not implemented or enabled.
+- **Firestore production posture:** Production Firestore rules remain default-deny. No production tenant data onboarding, tenant operational reads/writes, or migration from browser storage is enabled.
+- **No privileged backend:** This prototype does not use Cloud Functions, an Admin SDK, custom claims, or a privileged service-account workflow.
+- **Synthetic sample records:** Preloaded personnel, incident reports, and checklist items are fictional demonstration data and must not be treated as verified records or real-world findings.
+
+### Important deployment and security notes
+
+- Firebase web configuration values exposed to a browser are not secrets. Access control must be enforced by Firebase Authentication and Firestore Security Rules.
+- A successful CI run validates the tested code paths; it is not a penetration test, independent security assessment, or production authorization.
+- Security-header configuration in `vercel.json` takes effect only after a deployment containing that configuration is live. Verify actual response headers after deployment rather than relying on repository configuration alone.
+- Automatic Vercel Git deployments are configured in the repository to allow `main` and disable other branches. This policy itself takes effect only after Vercel deploys a commit containing the configuration.
 
 ---
 
 ## 5. Technology Stack & How to Run
 
-### Technology Used
-- **Framework:** React 19 (TypeScript)
-- **Build Tool:** Vite
-- **Styling:** Tailwind CSS v4
-- **Icons:** Lucide React
-- **Document Generation:** `jspdf`, `jspdf-autotable`, `xlsx`, `docx`
-- **Unit Testing:** Node.js native test runner (`node:test`, `node:assert/strict`)
+### Technology used
 
-### Local Development Commands
+- **Application:** React 19 with TypeScript
+- **Build and development:** Vite 8
+- **Styling and icons:** Tailwind CSS 4 and Lucide React
+- **Authentication foundation:** Firebase Authentication (email/password and Google)
+- **Data boundary:** Explicit Demo Guest repository; tenant repository reserved but not released
+- **Production database posture:** Firestore configured for the project, with production rules remaining default-deny
+- **Document generation:** `jspdf`, `jspdf-autotable`, `xlsx`, and `docx`
+- **Testing:** Node.js test runner, Vitest, TypeScript, Firebase Emulator Suite
+
+### Local development
+
+Requirements: Node.js 22 and npm. From the repository root:
+
 ```bash
-# Install dependencies
 npm install
-
-# Start the Vite development server on port 3000
 npm run dev
-
-# Run all automated unit tests (37 tests across 5 suites)
-node --test src/utils/*.test.ts
-
-# Type checking and linting
-npm run lint
-
-# Production build
-npm run build
 ```
+
+The Vite development server starts on port 3000. To validate locally:
+
+```bash
+npm run lint
+npm run build
+node --test tests/vercel-security-headers.test.mjs
+npm run test:firestore-rules
+npm run test:tenant-membership
+npm run test:auth-membership-ui
+npm run test:data-boundary
+npm run test:demo-repository
+npm run test:demo-workspace
+npm run test:session-lifecycle
+npm run test:session-invalidation
+npm audit --omit=dev --audit-level=high
+```
+
+Firebase Emulator tests require the Java runtime used by the CI workflow. The CI pipeline also installs dependencies from the frozen Bun lockfile before running validation.
 
 ---
 
 ## 6. Verification & Test Summary
 
-| Test Domain | Target Tested | Result |
-| :--- | :--- | :--- |
-| **Indian-Context Incidents** | 8 requested scenarios (badge, visitor log, transceiver, phishing email, generator, lost phone, handover, fire exit) with Indian locations, DD-MM-YYYY dates, 24h IST times, neutral labels | **PASSED** (100%) |
-| **Factual Incident Drafting** | Fact/claim separation, missing info tags, source timestamp preservation, zero guilt/liability findings, supervisory review items | **PASSED** (100%) |
-| **Personnel & Call Sign Consistency** | `PMC-ID-XXX` format, `Call Sign` terminology, multiple roles/specializations, address synchronization, `(DD-MM-YYYY)` date indicators | **PASSED** (100%) |
-| **Privacy, Redaction & Filenames** | Granular field masking (`[REDACTED]`), non-sensitive filenames, non-mutating redaction, safe SVG upload validation | **PASSED** (100%) |
-| **Document Exports** | Multi-format generation (TXT, CSV, XLSX, PDF, DOCX) with headers, tables, and redactions | **PASSED** (100%) |
-| **Spreadsheet Formula Defense (CWE-1236)** | Formula injection neutralization (`=`, `+`, `-`, `@`, `\t`, `\r`, `|`) in CSV and all XLSX worksheets | **PASSED** (100%) |
-| **Logo & Image Data URL Defense (CWE-434, CWE-79)** | Rejection of active scripts, event handlers (`onload`, `on*`), and dangerous protocols (`javascript:`) | **PASSED** (100%) |
-| **Path Traversal & Filename Defense (CWE-22)** | Directory traversal filtering (`..`, `/`, `\`), null-byte stripping, and safe filename creation | **PASSED** (100%) |
-| **AI Prompt Injection Resistance (OWASP GenAI)** | Deterministic extraction rejecting adversarial overrides and prohibiting automated guilt findings | **PASSED** (100%) |
-| **Cyber Hygiene & Posture** | 10 security domains, verified vs recommendation distinction, training scenario | **PASSED** (100%) |
-| **Pre-Deployment Checklist** | 8 categories, metrics calculation, outstanding highlight banner, non-authorization disclaimer | **PASSED** (100%) |
-| **Themes & Branding** | 19 theme presets, independent dual logo controls, accessible demonstration notice modal | **PASSED** (100%) |
-| **Automated Suite Run** | 45 tests across `src/utils/*.test.ts` (`node:test`) | **45 / 45 PASSED** (0 failures) |
-| **Compilation & Lint** | `compile_applet` and `tsc --noEmit` | **PASSED** (0 errors) |
+The GitHub Actions validation workflow currently checks:
 
-### Limitations
-- **Data Persistence:** In-memory demonstration state; data is not synced to a persistent database (PostgreSQL/Firebase) as requested by the standalone prototype architecture.
-- **Natural Language Parsing:** Incident draft generator uses deterministic regex-based rules to ensure zero fabrication or hallucination; complex conversational narratives should be human-reviewed.
+| Validation area | What it covers |
+| :--- | :--- |
+| Vercel security-header policy | Expected response-header configuration and Content Security Policy directives |
+| Firestore Security Rules | Allow/deny behavior exercised against the Firebase Emulator |
+| Tenant membership resolver | Membership lookup and identity/organisation matching behavior |
+| AuthGate membership UI | Authentication, membership-state, and workspace-boundary behavior |
+| Operational data boundary | Fail-closed repository selection and unavailable tenant repository |
+| Demo Guest repository | Browser-local demonstration data operations |
+| Demo Guest workspace boundary | Explicit Demo Guest access and revocation behavior |
+| Session lifecycle | Identity transitions and stale asynchronous membership results |
+| Cross-tab session invalidation | Broadcast/storage transport, replay handling, and cleanup |
+| Dependency security audit | Production dependency advisories at the configured high severity threshold |
+| Type-check | TypeScript compilation without emitting files |
+| Production build | Vite production bundle generation |
+
+The workflow is the source of truth for the current automated validation scope. Individual test counts can change as regression coverage grows; this README intentionally avoids stale fixed totals.
+
+### Current release limitations
+
+- Tenant operational data access is not released. Authenticated users do not receive the Demo Guest workspace or a tenant repository.
+- Production Firestore rules remain default-deny; candidate rules in source control are not evidence that production rules have been published.
+- Demo Guest data is browser-local and intended only for synthetic records. It is not tenant-isolated storage for real operational information.
+- No automatic migration of existing browser-local data to Firebase is implemented.
+- First-owner provisioning, invitations, role lifecycle, owner transfer, recovery, and production tenant onboarding remain outside the released feature set.
+- COOP and COEP response headers remain deferred pending compatibility validation for Google sign-in and cross-origin resources.
+- Live security-header effectiveness must be verified against the deployed site after the deployment quota permits a new deployment.
+
