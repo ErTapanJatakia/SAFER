@@ -26,9 +26,10 @@ function createNonce(): string {
 function getChannel(): BroadcastChannel | null {
   if (channelUnavailable || typeof BroadcastChannel === 'undefined') return null;
   if (sharedChannel) return sharedChannel;
+  let channel: BroadcastChannel | null = null;
   try {
-    sharedChannel = new BroadcastChannel(CHANNEL_NAME);
-    sharedChannel.addEventListener('message', (event: MessageEvent<SessionInvalidationMessage>) => {
+    channel = new BroadcastChannel(CHANNEL_NAME);
+    channel.addEventListener('message', (event: MessageEvent<SessionInvalidationMessage>) => {
       const message = event.data;
       if (message?.type !== 'session-invalidated' || !isValidNonce(message.nonce)) return;
       for (const listener of listeners) {
@@ -39,8 +40,17 @@ function getChannel(): BroadcastChannel | null {
         }
       }
     });
-    return sharedChannel;
+    // Publish the channel only after construction and listener registration succeed.
+    sharedChannel = channel;
+    return channel;
   } catch {
+    // A constructor may succeed even when listener registration fails.
+    // Close that partial resource before permanently degrading to storage events.
+    try {
+      channel?.close();
+    } catch {
+      // Preserve the storage fallback even if partial cleanup also fails.
+    }
     channelUnavailable = true;
     return null;
   }
