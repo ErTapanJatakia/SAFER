@@ -13,6 +13,7 @@ import {
 import {auth, db, isFirebaseConfigured} from '../lib/firebase.ts';
 import {resolveTenantMembership, type TenantMembership} from '../lib/tenantMembership.ts';
 import {createSessionLifecycle} from '../lib/sessionLifecycle.ts';
+import {publishSessionInvalidation, subscribeToSessionInvalidation} from '../lib/sessionInvalidation.ts';
 import {enterDemoGuest} from '../lib/dataBoundary.ts';
 import {DemoGuestWorkspaceProvider} from './DemoGuestWorkspaceProvider.tsx';
 
@@ -47,6 +48,19 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
   const [membershipBusy, setMembershipBusy] = useState(false);
   const [membershipError, setMembershipError] = useState('');
   const sessionLifecycleRef = useRef(createSessionLifecycle());
+  const lastAuthUidRef = useRef<string | null | undefined>(undefined);
+
+  useEffect(() => subscribeToSessionInvalidation(() => {
+    // A different tab crossed an account/session boundary. Revoke the local
+    // Demo Guest capability immediately; never carry its workspace forward.
+    sessionLifecycleRef.current.beginSignOut();
+    sessionLifecycleRef.current.endSession();
+    setMembershipBusy(false);
+    setMembership(null);
+    setOrganisationId('');
+    setMembershipError('');
+    setDemoGuest(false);
+  }), []);
 
   useEffect(() => {
     const firebaseAuth = auth;
@@ -55,6 +69,12 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       return;
     }
     return onAuthStateChanged(firebaseAuth, (nextUser) => {
+      const nextUid = nextUser?.uid ?? null;
+      const previousUid = lastAuthUidRef.current;
+      if (previousUid !== undefined && previousUid !== nextUid) {
+        publishSessionInvalidation();
+      }
+      lastAuthUidRef.current = nextUid;
       // Invalidate pending lookups so an old identity cannot restore stale authority.
       if (nextUser) sessionLifecycleRef.current.startAuthenticated(nextUser.uid);
       else sessionLifecycleRef.current.endSession();
@@ -240,13 +260,15 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
 
   const leaveAccount = () => {
     const firebaseAuth = auth;
-    if (!firebaseAuth) return;
+    // Signal peer tabs before local teardown, including Demo Guest-only deployments.
+    publishSessionInvalidation();
     sessionLifecycleRef.current.beginSignOut();
     setMembershipBusy(false);
     setMembership(null);
     setOrganisationId('');
     setMembershipError('');
     setDemoGuest(false);
+    if (!firebaseAuth) return;
     void signOut(firebaseAuth).catch(() => {
       setError('Unable to complete sign-out. Please retry.');
     });
