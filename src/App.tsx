@@ -31,6 +31,7 @@ import {
   DEFAULT_ACCESSIBILITY_SETTINGS,
 } from './utils/themePresets.ts';
 import { isSafeImageDataUrl } from './utils/securitySanitizer.ts';
+import { getCurrentISODate } from './utils/dateUtils.ts';
 import { useDemoWorkspaceRepository } from './components/DemoGuestWorkspaceProvider.tsx';
 import { SaferWordmark } from './components/SaferWordmark.tsx';
 import { HeaderBanner } from './components/HeaderBanner.tsx';
@@ -358,7 +359,7 @@ export default function App() {
     supervisorName: string,
     reviewNotes: string
   ) => {
-    const today = '2026-10-15';
+    const today = getCurrentISODate();
     setPersonnelList((prev) =>
       prev.map((p) => {
         if (p.id === personId) {
@@ -451,7 +452,7 @@ export default function App() {
             ...item,
             completed,
             status,
-            lastChecked: '2026-10-15',
+            lastChecked: getCurrentISODate();
           };
         }
         return item;
@@ -514,7 +515,7 @@ export default function App() {
               completed: true,
               requiresHumanReview: false,
               reviewedBy: reviewerName,
-              reviewDate: '2026-10-15',
+              reviewDate: getCurrentISODate(),
             }
           : item
       )
