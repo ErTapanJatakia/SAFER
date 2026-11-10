@@ -15,6 +15,7 @@ on:
       - "firebase.json"
       - "vercel.json"
       - "docs/**"
+      - "README.md"
       - ".github/workflows/firebase-foundation.yml"
   pull_request:
     branches:
@@ -29,6 +30,7 @@ on:
       - "firebase.json"
       - "vercel.json"
       - "docs/**"
+      - "README.md"
       - ".github/workflows/firebase-foundation.yml"
 
 permissions:
