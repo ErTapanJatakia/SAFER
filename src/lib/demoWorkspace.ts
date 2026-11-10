@@ -1,4 +1,5 @@
 import type { DemoRepository, DataAccessState, RepositorySelection } from './dataBoundary.ts';
+import type { CyberHygieneItem, IncidentReport, PersonnelRecord, PreDeploymentChecklistItem } from '../types/index.ts';
 import { selectOperationalRepository } from './dataBoundary.ts';
 import type { DemoSnapshot } from './demoRepository.ts';
 
@@ -41,17 +42,17 @@ export function createRevocableDemoRepository(
       repository.reset();
     },
     listPersonnel: async () => { assertActive(); return repository.listPersonnel(); },
-    replacePersonnel: async (records) => { assertActive(); return repository.replacePersonnel(records); },
-    savePersonnel: async (record) => { assertActive(); return repository.savePersonnel(record); },
-    deletePersonnel: async (recordId) => { assertActive(); return repository.deletePersonnel(recordId); },
+    replacePersonnel: async (records: readonly PersonnelRecord[]) => { assertActive(); return repository.replacePersonnel(records); },
+    savePersonnel: async (record: PersonnelRecord) => { assertActive(); return repository.savePersonnel(record); },
+    deletePersonnel: async (recordId: string) => { assertActive(); return repository.deletePersonnel(recordId); },
     listIncidents: async () => { assertActive(); return repository.listIncidents(); },
-    replaceIncidents: async (records) => { assertActive(); return repository.replaceIncidents(records); },
-    saveIncident: async (record) => { assertActive(); return repository.saveIncident(record); },
+    replaceIncidents: async (records: readonly IncidentReport[]) => { assertActive(); return repository.replaceIncidents(records); },
+    saveIncident: async (record: IncidentReport) => { assertActive(); return repository.saveIncident(record); },
     listCyberHygiene: async () => { assertActive(); return repository.listCyberHygiene(); },
-    replaceCyberHygiene: async (items) => { assertActive(); return repository.replaceCyberHygiene(items); },
-    saveCyberHygiene: async (item) => { assertActive(); return repository.saveCyberHygiene(item); },
+    replaceCyberHygiene: async (items: readonly CyberHygieneItem[]) => { assertActive(); return repository.replaceCyberHygiene(items); },
+    saveCyberHygiene: async (item: CyberHygieneItem) => { assertActive(); return repository.saveCyberHygiene(item); },
     listChecklist: async () => { assertActive(); return repository.listChecklist(); },
-    replaceChecklist: async (items) => { assertActive(); return repository.replaceChecklist(items); },
-    saveChecklist: async (item) => { assertActive(); return repository.saveChecklist(item); },
+    replaceChecklist: async (items: readonly PreDeploymentChecklistItem[]) => { assertActive(); return repository.replaceChecklist(items); },
+    saveChecklist: async (item: PreDeploymentChecklistItem) => { assertActive(); return repository.saveChecklist(item); },
   });
 }
