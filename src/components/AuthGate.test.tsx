@@ -46,7 +46,7 @@ describe('AuthGate membership session handling',()=>{
   vi.mocked(signOut).mockRejectedValueOnce(new Error('network unavailable'));
   button('Sign out').click();await flush();
   expect(host.textContent).toContain('Signed in: user-a@example.test');
-  expect(host.querySelector('[role="alert"]')?.textContent).toContain('Unable to complete sign-out.');
+  expect(host.querySelector('[role="alert"]')?.textContent).toContain('Your account session remains active');
   const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
   change(field,'org-a');await flush();submit(field.closest('form')!);await flush();
   expect(host.textContent).toContain('Verified active membership');
