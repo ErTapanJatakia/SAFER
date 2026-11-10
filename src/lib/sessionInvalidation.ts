@@ -12,6 +12,10 @@ const listeners = new Set<InvalidationListener>();
 let sharedChannel: BroadcastChannel | null = null;
 let channelUnavailable = false;
 
+function isValidNonce(value: unknown): value is string {
+  return typeof value === 'string' && /^[A-Za-z0-9-]{1,128}$/.test(value);
+}
+
 function createNonce(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return crypto.randomUUID();
@@ -26,8 +30,14 @@ function getChannel(): BroadcastChannel | null {
     sharedChannel = new BroadcastChannel(CHANNEL_NAME);
     sharedChannel.addEventListener('message', (event: MessageEvent<SessionInvalidationMessage>) => {
       const message = event.data;
-      if (message?.type !== 'session-invalidated' || typeof message.nonce !== 'string') return;
-      for (const listener of listeners) listener(message.nonce);
+      if (message?.type !== 'session-invalidated' || !isValidNonce(message.nonce)) return;
+      for (const listener of listeners) {
+        try {
+          listener(message.nonce);
+        } catch {
+          // One faulty consumer must not prevent other tabs' session boundaries.
+        }
+      }
     });
     return sharedChannel;
   } catch {
@@ -59,11 +69,22 @@ export function publishSessionInvalidation(): void {
 
 /** Subscribe to invalidations from other tabs; returns an idempotent cleanup. */
 export function subscribeToSessionInvalidation(onInvalidated: () => void): () => void {
-  let lastNonce = '';
+  const seenNonces = new Set<string>();
+  const nonceOrder: string[] = [];
   const notify = (nonce: string) => {
-    if (!nonce || nonce === lastNonce) return;
-    lastNonce = nonce;
-    onInvalidated();
+    if (!isValidNonce(nonce) || seenNonces.has(nonce)) return;
+    seenNonces.add(nonce);
+    nonceOrder.push(nonce);
+    // Bound memory while suppressing recent replay/dual-transport duplicates.
+    if (nonceOrder.length > 256) {
+      const expired = nonceOrder.shift();
+      if (expired) seenNonces.delete(expired);
+    }
+    try {
+      onInvalidated();
+    } catch {
+      // A failing consumer must not interrupt other subscribers or event delivery.
+    }
   };
   const listener: InvalidationListener = notify;
   listeners.add(listener);

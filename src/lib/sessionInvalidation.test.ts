@@ -84,6 +84,56 @@ describe('cross-tab session invalidation', () => {
     unsubscribeSecond();
   });
 
+  it('suppresses non-consecutive replayed nonces across transport events', () => {
+    const onInvalidated = vi.fn();
+    const unsubscribe = subscribeToSessionInvalidation(onInvalidated);
+    const signal = (nonce: string) => window.dispatchEvent(new StorageEvent('storage', {
+      key: 'safer:session-boundary-signal',
+      newValue: nonce,
+    }));
+
+    signal('boundary-a');
+    signal('boundary-b');
+    signal('boundary-a');
+
+    expect(onInvalidated).toHaveBeenCalledTimes(2);
+    unsubscribe();
+  });
+
+  it('rejects malformed or oversized invalidation values', () => {
+    const onInvalidated = vi.fn();
+    const unsubscribe = subscribeToSessionInvalidation(onInvalidated);
+    const signal = (nonce: string) => window.dispatchEvent(new StorageEvent('storage', {
+      key: 'safer:session-boundary-signal',
+      newValue: nonce,
+    }));
+
+    signal('');
+    signal('contains spaces');
+    signal('x'.repeat(129));
+    signal('valid-boundary-1');
+
+    expect(onInvalidated).toHaveBeenCalledTimes(1);
+    unsubscribe();
+  });
+
+  it('isolates a failing subscriber from other subscribers', () => {
+    const failing = vi.fn(() => { throw new Error('consumer failure'); });
+    const healthy = vi.fn();
+    const unsubscribeFailing = subscribeToSessionInvalidation(failing);
+    const unsubscribeHealthy = subscribeToSessionInvalidation(healthy);
+
+    expect(() => window.dispatchEvent(new StorageEvent('storage', {
+      key: 'safer:session-boundary-signal',
+      newValue: 'fault-isolation-boundary',
+    }))).not.toThrow();
+    expect(failing).toHaveBeenCalledTimes(1);
+    expect(healthy).toHaveBeenCalledTimes(1);
+
+    unsubscribeFailing();
+    unsubscribeHealthy();
+  });
+
   it('makes cleanup idempotent', () => {
     const onInvalidated = vi.fn();
     const unsubscribe = subscribeToSessionInvalidation(onInvalidated);
