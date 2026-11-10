@@ -71,7 +71,10 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
     return onAuthStateChanged(firebaseAuth, (nextUser) => {
       const nextUid = nextUser?.uid ?? null;
       const previousUid = lastAuthUidRef.current;
-      if (previousUid !== undefined && previousUid !== nextUid) {
+      if ((previousUid === undefined && nextUid !== null)
+        || (previousUid !== undefined && previousUid !== nextUid)) {
+        // An authenticated tab must invalidate any peer Demo Guest workspace,
+        // including when this tab restores an already-signed-in account at startup.
         publishSessionInvalidation();
       }
       lastAuthUidRef.current = nextUid;
