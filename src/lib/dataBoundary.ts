@@ -16,13 +16,17 @@ export type DataAccessState =
 
 export interface OperationalRepository {
   listPersonnel(): Promise<readonly PersonnelRecord[]>;
+  replacePersonnel(records: readonly PersonnelRecord[]): Promise<void>;
   savePersonnel(record: PersonnelRecord): Promise<void>;
   deletePersonnel(recordId: string): Promise<void>;
   listIncidents(): Promise<readonly IncidentReport[]>;
+  replaceIncidents(records: readonly IncidentReport[]): Promise<void>;
   saveIncident(record: IncidentReport): Promise<void>;
   listCyberHygiene(): Promise<readonly CyberHygieneItem[]>;
+  replaceCyberHygiene(items: readonly CyberHygieneItem[]): Promise<void>;
   saveCyberHygiene(item: CyberHygieneItem): Promise<void>;
   listChecklist(): Promise<readonly PreDeploymentChecklistItem[]>;
+  replaceChecklist(items: readonly PreDeploymentChecklistItem[]): Promise<void>;
   saveChecklist(item: PreDeploymentChecklistItem): Promise<void>;
 }
 
