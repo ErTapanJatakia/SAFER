@@ -8,7 +8,7 @@ const headers = new Map((route?.headers ?? []).map(({key, value}) => [key.toLowe
 const csp = headers.get('content-security-policy') ?? '';
 const directives = new Map(
   csp.split(';').map((part) => part.trim()).filter(Boolean).map((part) => {
-    const [name, ...values] = part.split(/\\s+/);
+    const [name, ...values] = part.split(/\s+/);
     return [name.toLowerCase(), values];
   }),
 );
