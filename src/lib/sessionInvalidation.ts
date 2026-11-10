@@ -80,7 +80,11 @@ export function subscribeToSessionInvalidation(onInvalidated: () => void): () =>
       const expired = nonceOrder.shift();
       if (expired) seenNonces.delete(expired);
     }
-    onInvalidated();
+    try {
+      onInvalidated();
+    } catch {
+      // A failing consumer must not interrupt other subscribers or event delivery.
+    }
   };
   const listener: InvalidationListener = notify;
   listeners.add(listener);
