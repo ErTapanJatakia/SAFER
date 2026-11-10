@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { CyberHygieneItem, CyberHygieneDomain, CyberItemClassification } from '../types/index.ts';
 import { ALL_CYBER_DOMAINS } from '../utils/cyberHygieneSummary.ts';
+import { getCurrentISODate } from '../utils/dateUtils.ts';
 import { X, ShieldCheck, AlertCircle } from 'lucide-react';
 
 interface CyberItemModalProps {
@@ -75,7 +76,7 @@ export const CyberItemModal: React.FC<CyberItemModalProps> = ({
       plainEnglishExplanation: plainEnglishExplanation.trim(),
       status,
       findingNotes: findingNotes.trim(),
-      lastChecked: '2026-10-15',
+      lastChecked: getCurrentISODate(),
       verifiedBy: verifiedBy.trim() || null,
     };
 
