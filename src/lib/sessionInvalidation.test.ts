@@ -221,3 +221,81 @@ describe('BroadcastChannel session invalidation transport', () => {
     unsubscribeHealthy();
   });
 });
+
+
+describe('session invalidation transport degradation', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    vi.resetModules();
+    vi.unstubAllGlobals();
+  });
+
+  it('uses the storage transport when BroadcastChannel is unavailable', async () => {
+    const originalDescriptor = Object.getOwnPropertyDescriptor(window, 'localStorage');
+    const storage = { setItem: vi.fn(), removeItem: vi.fn() };
+    Object.defineProperty(window, 'localStorage', { configurable: true, value: storage });
+    vi.resetModules();
+    vi.stubGlobal('BroadcastChannel', undefined);
+    try {
+      const module = await import('./sessionInvalidation.ts');
+      module.publishSessionInvalidation();
+      expect(storage.setItem).toHaveBeenCalledTimes(1);
+      expect(storage.setItem).toHaveBeenCalledWith(
+        'safer:session-boundary-signal',
+        expect.stringMatching(/^[A-Za-z0-9-]{1,128}$/),
+      );
+      expect(storage.removeItem).toHaveBeenCalledWith('safer:session-boundary-signal');
+    } finally {
+      if (originalDescriptor) Object.defineProperty(window, 'localStorage', originalDescriptor);
+      else Reflect.deleteProperty(window, 'localStorage');
+    }
+  });
+
+  it('falls back to storage when BroadcastChannel publishing throws', async () => {
+    class FailingBroadcastChannel extends EventTarget {
+      postMessage = vi.fn(() => { throw new Error('channel unavailable'); });
+      constructor() { super(); }
+    }
+    const originalDescriptor = Object.getOwnPropertyDescriptor(window, 'localStorage');
+    const storage = { setItem: vi.fn(), removeItem: vi.fn() };
+    Object.defineProperty(window, 'localStorage', { configurable: true, value: storage });
+    vi.resetModules();
+    vi.stubGlobal('BroadcastChannel', FailingBroadcastChannel);
+    try {
+      const module = await import('./sessionInvalidation.ts');
+      module.publishSessionInvalidation();
+      expect(storage.setItem).toHaveBeenCalledTimes(1);
+      expect(storage.removeItem).toHaveBeenCalledTimes(1);
+    } finally {
+      if (originalDescriptor) Object.defineProperty(window, 'localStorage', originalDescriptor);
+      else Reflect.deleteProperty(window, 'localStorage');
+    }
+  });
+
+  it('keeps BroadcastChannel publishing operational when storage is unavailable', async () => {
+    class FakeBroadcastChannel extends EventTarget {
+      static instances: FakeBroadcastChannel[] = [];
+      postMessage = vi.fn();
+      constructor() {
+        super();
+        FakeBroadcastChannel.instances.push(this);
+      }
+    }
+    const originalDescriptor = Object.getOwnPropertyDescriptor(window, 'localStorage');
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      get() { throw new Error('storage blocked'); },
+    });
+    vi.resetModules();
+    vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel);
+    try {
+      const module = await import('./sessionInvalidation.ts');
+      module.publishSessionInvalidation();
+      expect(FakeBroadcastChannel.instances[0].postMessage).toHaveBeenCalledTimes(1);
+    } finally {
+      if (originalDescriptor) Object.defineProperty(window, 'localStorage', originalDescriptor);
+      else Reflect.deleteProperty(window, 'localStorage');
+    }
+  });
+});
