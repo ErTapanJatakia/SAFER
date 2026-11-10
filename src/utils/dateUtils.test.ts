@@ -7,6 +7,7 @@ import {
   formatDisplayDate,
   isStartBeforeOrEqualEnd,
   getCurrentISODate,
+  getCurrentLocalDateTime,
 } from './dateUtils.ts';
 
 test('isValidDDMMYYYY validates standard DD-MM-YYYY dates correctly', () => {
@@ -45,4 +46,9 @@ test('isStartBeforeOrEqualEnd compares properly', () => {
 test('getCurrentISODate uses local calendar components and zero-pads values', () => {
   const date = new Date(2026, 0, 5, 23, 59, 0);
   assert.equal(getCurrentISODate(date), '2026-01-05');
+});
+
+test('getCurrentLocalDateTime uses local date and zero-padded time components', () => {
+  const date = new Date(2026, 0, 5, 9, 7, 0);
+  assert.equal(getCurrentLocalDateTime(date), '2026-01-05 09:07');
 });
