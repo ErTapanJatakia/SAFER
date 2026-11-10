@@ -31,7 +31,7 @@ import {
   DEFAULT_ACCESSIBILITY_SETTINGS,
 } from './utils/themePresets.ts';
 import { isSafeImageDataUrl } from './utils/securitySanitizer.ts';
-import { createDemoRepository } from './lib/demoRepository.ts';
+import { useDemoWorkspaceRepository } from './components/DemoGuestWorkspaceProvider.tsx';
 import { SaferWordmark } from './components/SaferWordmark.tsx';
 import { HeaderBanner } from './components/HeaderBanner.tsx';
 import { Navbar, type NavigationSection } from './components/Navbar.tsx';
@@ -56,9 +56,9 @@ import {
 import { RotateCcw, Shield, Check, FileText, AlertTriangle, Eye, Palette, Building2 } from 'lucide-react';
 
 export default function App() {
-  // The AuthGate mounts this workspace only for an explicit Demo Guest session.
-  // The repository is browser-local and is not available to authenticated sessions.
-  const demoRepository = useMemo(() => createDemoRepository(window.localStorage), []);
+  // Repository capability is injected only by the explicit Demo Guest boundary.
+  // App cannot construct or select a browser-local operational repository itself.
+  const demoRepository = useDemoWorkspaceRepository();
   const initialDemoSnapshot = useMemo(() => demoRepository.loadSnapshot(), [demoRepository]);
 
   // Navigation State

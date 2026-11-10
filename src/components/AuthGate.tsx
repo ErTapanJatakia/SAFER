@@ -13,6 +13,8 @@ import {
 import {auth, db, isFirebaseConfigured} from '../lib/firebase.ts';
 import {resolveTenantMembership, type TenantMembership} from '../lib/tenantMembership.ts';
 import {createSessionLifecycle} from '../lib/sessionLifecycle.ts';
+import {enterDemoGuest} from '../lib/dataBoundary.ts';
+import {DemoGuestWorkspaceProvider} from './DemoGuestWorkspaceProvider.tsx';
 
 type AuthMode = 'signin' | 'register' | 'reset' | 'verify';
 
@@ -297,7 +299,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
             <div className="border-b border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-950">
               <strong>Demo workspace:</strong> This session uses browser-local demonstration data only. Use synthetic records; do not enter real personal, personnel, incident or operational information.
             </div>
-            {children}
+            <DemoGuestWorkspaceProvider accessState={enterDemoGuest(1)}>{children}</DemoGuestWorkspaceProvider>
           </>
         ) : (
           <main className="min-h-[60vh] bg-slate-950 px-4 py-10 text-slate-100">
