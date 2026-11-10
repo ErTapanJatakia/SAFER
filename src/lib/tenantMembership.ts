@@ -33,6 +33,44 @@ const SUPPORTED_ROLES = new Set<TenantRole>(['owner', 'admin', 'manager', 'viewe
 const MEMBERSHIP_KEYS = ['uid', 'orgId', 'role', 'status'] as const;
 
 /**
+ * Pure schema and provenance validation, independent of Firestore access.
+ * Rules may reject malformed documents before this function can receive them.
+ */
+export function parseTenantMembership(
+  data: unknown,
+  authenticatedUid: string,
+  expectedOrgId: string,
+): TenantMembership {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    throw new TenantMembershipError('invalid-membership');
+  }
+
+  const record = data as Record<string, unknown>;
+  const keys = Object.keys(record).sort();
+  const expectedKeys = [...MEMBERSHIP_KEYS].sort();
+  const hasExactKeys = keys.length === expectedKeys.length
+    && keys.every((key, index) => key === expectedKeys[index]);
+
+  if (
+    !hasExactKeys
+    || record.uid !== authenticatedUid
+    || record.orgId !== expectedOrgId
+    || record.status !== 'active'
+    || typeof record.role !== 'string'
+    || !SUPPORTED_ROLES.has(record.role as TenantRole)
+  ) {
+    throw new TenantMembershipError('invalid-membership');
+  }
+
+  return Object.freeze({
+    uid: authenticatedUid,
+    orgId: expectedOrgId,
+    role: record.role as TenantRole,
+    status: 'active' as const,
+  });
+}
+
+/**
  * Resolve one exact membership document for the currently authenticated UID.
  * The organisation ID is an out-of-band locator, never an authorisation token.
  * Firestore Security Rules remain the authoritative access-control boundary.
@@ -63,32 +101,5 @@ export async function resolveTenantMembership(
     throw new TenantMembershipError('membership-unavailable');
   }
 
-  const data: unknown = snapshot.data();
-  if (!data || typeof data !== 'object' || Array.isArray(data)) {
-    throw new TenantMembershipError('invalid-membership');
-  }
-
-  const record = data as Record<string, unknown>;
-  const keys = Object.keys(record).sort();
-  const expectedKeys = [...MEMBERSHIP_KEYS].sort();
-  const hasExactKeys = keys.length === expectedKeys.length
-    && keys.every((key, index) => key === expectedKeys[index]);
-
-  if (
-    !hasExactKeys
-    || record.uid !== user.uid
-    || record.orgId !== orgId
-    || record.status !== 'active'
-    || typeof record.role !== 'string'
-    || !SUPPORTED_ROLES.has(record.role as TenantRole)
-  ) {
-    throw new TenantMembershipError('invalid-membership');
-  }
-
-  return Object.freeze({
-    uid: user.uid,
-    orgId,
-    role: record.role as TenantRole,
-    status: 'active' as const,
-  });
+  return parseTenantMembership(snapshot.data(), user.uid, orgId);
 }
