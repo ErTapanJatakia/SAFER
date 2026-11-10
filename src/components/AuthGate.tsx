@@ -250,10 +250,10 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
     return (
       <>
         <div className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-2 border-b border-slate-700 bg-slate-950 px-4 py-2 text-xs text-slate-100">
-          <span>{demoGuest ? 'Demo Guest session' : `Signed in: ${user?.email || 'verified account'}`}</span>
+          <span>{user ? `Signed in: ${user.email || 'verified account'}` : 'Demo Guest session'}</span>
           <button type="button" onClick={leaveAccount} className="rounded border border-slate-600 px-3 py-1.5 hover:bg-slate-800">Sign out</button>
         </div>
-        {!demoGuest && (
+        {!!user && (
           <section aria-labelledby="organisation-access-heading" className="border-b border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-100">
             <div className="mx-auto flex max-w-7xl flex-col gap-2">
               <div>
@@ -284,10 +284,22 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
             </div>
           </section>
         )}
-        <div className="border-b border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-950">
-          <strong>Data boundary:</strong> Authentication and membership verification do not enable cloud operational access. Personnel, incident, checklist and other operational records remain browser-local and are not yet tenant-isolated or protected by a released production Firestore ruleset. Use synthetic demonstration data only; no real personal or operational information.
-        </div>
-        {children}
+        {demoGuest && !user ? (
+          <>
+            <div className="border-b border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-950">
+              <strong>Demo workspace:</strong> This session uses browser-local demonstration data only. Use synthetic records; do not enter real personal, personnel, incident or operational information.
+            </div>
+            {children}
+          </>
+        ) : (
+          <main className="min-h-[60vh] bg-slate-950 px-4 py-10 text-slate-100">
+            <section className="mx-auto max-w-3xl rounded-xl border border-amber-700 bg-slate-900 p-6">
+              <h1 className="text-lg font-semibold">Account verified — workspace not yet released</h1>
+              <p className="mt-2 text-sm text-slate-300">Your account session is active, but SAFER tenant operational access has not been released. The operational workspace is intentionally unavailable in authenticated sessions.</p>
+              <p className="mt-3 text-xs text-amber-200">No personnel, incident, checklist or other operational browser data is loaded or written in this session. Membership verification alone does not grant access. Production Firestore rules remain deny-all.</p>
+            </section>
+          </main>
+        )}
       </>
     );
   }
