@@ -75,6 +75,9 @@ jobs:
       - name: Tenant membership resolver Emulator tests
         run: npm run test:tenant-membership
 
+      - name: AuthGate membership UI tests
+        run: npm run test:auth-membership-ui
+
       - name: Dependency security audit
         run: npm audit --omit=dev --audit-level=high
 
