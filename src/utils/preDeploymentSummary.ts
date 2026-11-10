@@ -4,6 +4,7 @@ import type {
   PreDeploymentStatus,
   FictionalDemonstrationScenario,
 } from '../types/index.ts';
+import { getCurrentISODate } from './dateUtils.ts';
 
 export const ALL_PREDEPLOYMENT_CATEGORIES: PreDeploymentCategory[] = [
   'Required documentation and approvals',
@@ -86,7 +87,7 @@ export function generatePreDeploymentSummaryText(
   items: PreDeploymentChecklistItem[],
   scenario?: FictionalDemonstrationScenario,
   supervisorName = 'Veer Bahadur Singh (Call Sign: KAVACH-1)',
-  evaluationDate = '15-10-2026'
+  evaluationDate = getCurrentISODate()
 ): string {
   const metrics = computePreDeploymentMetrics(items);
   const scenarioTitle = scenario?.title || 'National Technology & Trade Envoy Protective Readiness Review';
