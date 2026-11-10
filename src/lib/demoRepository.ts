@@ -63,6 +63,7 @@ export function createDemoRepository(storage: DemoStorage): DemoRepository & {
     kind: 'demo' as const,
     loadSnapshot,
     listPersonnel: async () => loadSnapshot().personnel,
+    replacePersonnel: async (records: readonly PersonnelRecord[]) => { save(KEYS.personnel, records); },
     savePersonnel: async (record: PersonnelRecord) => {
       const current = [...loadSnapshot().personnel];
       const index = current.findIndex((item) => item.id === record.id);
@@ -74,6 +75,7 @@ export function createDemoRepository(storage: DemoStorage): DemoRepository & {
       save(KEYS.personnel, loadSnapshot().personnel.filter((item) => item.id !== recordId));
     },
     listIncidents: async () => loadSnapshot().incidents,
+    replaceIncidents: async (records: readonly IncidentReport[]) => { save(KEYS.incidents, records); },
     saveIncident: async (record: IncidentReport) => {
       const current = [...loadSnapshot().incidents];
       const index = current.findIndex((item) => item.id === record.id);
@@ -82,6 +84,7 @@ export function createDemoRepository(storage: DemoStorage): DemoRepository & {
       save(KEYS.incidents, current);
     },
     listCyberHygiene: async () => loadSnapshot().cyberHygiene,
+    replaceCyberHygiene: async (items: readonly CyberHygieneItem[]) => { save(KEYS.cyberHygiene, items); },
     saveCyberHygiene: async (item: CyberHygieneItem) => {
       const current = [...loadSnapshot().cyberHygiene];
       const index = current.findIndex((entry) => entry.id === item.id);
@@ -90,6 +93,7 @@ export function createDemoRepository(storage: DemoStorage): DemoRepository & {
       save(KEYS.cyberHygiene, current);
     },
     listChecklist: async () => loadSnapshot().checklist,
+    replaceChecklist: async (items: readonly PreDeploymentChecklistItem[]) => { save(KEYS.checklist, items); },
     saveChecklist: async (item: PreDeploymentChecklistItem) => {
       const current = [...loadSnapshot().checklist];
       const index = current.findIndex((entry) => entry.id === item.id);
