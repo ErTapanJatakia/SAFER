@@ -3,7 +3,11 @@ import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { initializeTestEnvironment, type RulesTestEnvironment } from '@firebase/rules-unit-testing';
 import { doc, setDoc } from 'firebase/firestore';
-import { resolveTenantMembership, TenantMembershipError } from './tenantMembership.ts';
+import {
+  parseTenantMembership,
+  resolveTenantMembership,
+  TenantMembershipError,
+} from './tenantMembership.ts';
 
 const projectId = 'demo-safer';
 const rules = readFileSync(new URL('../../firestore.rules', import.meta.url), 'utf8');
@@ -65,7 +69,7 @@ test('fails closed when membership is absent or denied by Firestore Rules', asyn
   );
 });
 
-test('rejects inactive, unsupported, mismatched, and non-minimal membership records', async () => {
+test('Rules deny malformed membership documents before resolver parsing', async () => {
   const fixtures = [
     { orgId: 'resolver-inactive', uid: 'resolver-inactive', fields: { status: 'suspended' } },
     { orgId: 'resolver-invalid-role', uid: 'resolver-invalid-role', fields: { role: 'platform-admin' } },
@@ -78,6 +82,35 @@ test('rejects inactive, unsupported, mismatched, and non-minimal membership reco
     const database = testEnv.authenticatedContext(fixture.uid).firestore();
     await assert.rejects(
       resolveTenantMembership(database, { uid: fixture.uid }, fixture.orgId),
+      (error: unknown) => error instanceof TenantMembershipError && error.code === 'membership-unavailable',
+    );
+  }
+});
+
+test('pure parser rejects malformed, mismatched, inactive, and non-minimal membership data', () => {
+  const uid = 'parser-user';
+  const orgId = 'parser-org';
+  const valid = { uid, orgId, role: 'owner', status: 'active' };
+
+  assert.deepEqual(parseTenantMembership(valid, uid, orgId), {
+    uid, orgId, role: 'owner', status: 'active',
+  });
+  assert.equal(Object.isFrozen(parseTenantMembership(valid, uid, orgId)), true);
+
+  const invalidRecords: unknown[] = [
+    null,
+    [],
+    { ...valid, uid: 'other-user' },
+    { ...valid, orgId: 'other-org' },
+    { ...valid, status: 'suspended' },
+    { ...valid, role: 'platform-admin' },
+    { ...valid, extraField: 'not permitted' },
+    { uid, orgId, role: 'owner' },
+  ];
+
+  for (const record of invalidRecords) {
+    assert.throws(
+      () => parseTenantMembership(record, uid, orgId),
       (error: unknown) => error instanceof TenantMembershipError && error.code === 'invalid-membership',
     );
   }
