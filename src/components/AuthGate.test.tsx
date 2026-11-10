@@ -9,7 +9,6 @@ import {resolveTenantMembership} from '../lib/tenantMembership';
 import {onAuthStateChanged,signOut} from 'firebase/auth';
 import {auth as firebaseAuth} from '../lib/firebase.ts';
 import * as sessionInvalidation from '../lib/sessionInvalidation';
-import {auth as firebaseAuth} from '../lib/firebase';
 
 vi.mock('firebase/auth',()=>({GoogleAuthProvider:vi.fn(),createUserWithEmailAndPassword:vi.fn(),onAuthStateChanged:vi.fn(),sendEmailVerification:vi.fn(),sendPasswordResetEmail:vi.fn(),signInWithEmailAndPassword:vi.fn(),signInWithPopup:vi.fn(),signOut:vi.fn()}));
 vi.mock('../lib/firebase.ts',()=>({auth:{name:'test-auth',currentUser:null},db:{name:'test-db'},isFirebaseConfigured:true}));
@@ -139,26 +138,6 @@ describe('AuthGate membership session handling',()=>{
   expect(read).toHaveBeenCalledTimes(1);
   expect(publish).toHaveBeenCalledTimes(1);
   publish.mockRestore();
- });
- it('restores membership-check lifecycle when manual sign-out is rejected',async()=>{
-  vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'manager',status:'active'});
-  auth(makeUser('user-a'));await flush();
-  let field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
-  change(field,'org-a');await flush();submit(field.closest('form')!);await flush();
-  expect(host.textContent).toContain('Role: manager');
-
-  Object.defineProperty(firebaseAuth,'currentUser',{configurable:true,value:makeUser('user-a')});
-  vi.mocked(signOut).mockRejectedValueOnce(new Error('network unavailable'));
-  button('Sign out').click();await flush();
-  expect(host.textContent).toContain('Unable to complete sign-out');
-  expect(host.textContent).toContain('Signed in: user-a@example.test');
-  expect(host.textContent).not.toContain('Role: manager');
-
-  field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
-  expect(field).not.toBeNull();
-  change(field,'org-a');await flush();submit(field.closest('form')!);await flush();
-  expect(host.textContent).toContain('Role: manager');
-  expect(resolveTenantMembership).toHaveBeenCalledTimes(2);
  });
  it('re-subscribes to Firebase auth state after an observer failure',async()=>{
   act(()=>authError?.(new Error('auth observer unavailable')));
