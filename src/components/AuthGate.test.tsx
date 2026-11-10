@@ -24,7 +24,7 @@ beforeEach(async()=>{
  host=document.createElement('div');document.body.append(host);root=createRoot(host);listener=undefined;
  vi.mocked(onAuthStateChanged).mockImplementation((_auth,cb)=>{listener=cb as typeof listener;listener!(null);return vi.fn();});
  vi.mocked(signOut).mockImplementation(async()=>{listener?.(null);});
- await act(async()=>{root.render(<AuthGate><div>App shell</div></AuthGate>);});
+ await act(async()=>{root.render(<AuthGate><StorageProbe /></AuthGate>);});
  await flush();
 });
 afterEach(async()=>{await act(async()=>root.unmount());dom.window.close();vi.clearAllMocks();});
