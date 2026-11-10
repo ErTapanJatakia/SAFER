@@ -31,7 +31,7 @@ import {
   DEFAULT_ACCESSIBILITY_SETTINGS,
 } from './utils/themePresets.ts';
 import { isSafeImageDataUrl } from './utils/securitySanitizer.ts';
-import { useDemoWorkspaceRepository } from './lib/DemoGuestWorkspaceProvider.tsx';
+import { useDemoWorkspaceRepository } from './components/DemoGuestWorkspaceProvider.tsx';
 import { SaferWordmark } from './components/SaferWordmark.tsx';
 import { HeaderBanner } from './components/HeaderBanner.tsx';
 import { Navbar, type NavigationSection } from './components/Navbar.tsx';
