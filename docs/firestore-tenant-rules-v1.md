@@ -18,7 +18,7 @@ For tenant-scoped reads and writes, the rules require all of the following:
 5. Organisation `orgId` matching the path and organisation `status == "active"`.
 6. An explicit `owner` or `admin` role for operational collection access.
 
-Role and status are read from the membership document, never from client payloads, UI state, email address, or email-verification status. Membership documents themselves remain unreadable and unwritable by clients. The organisation and membership records must be provisioned by a trusted operator outside this client ruleset.
+Role and status are read from the membership document, never from client payloads, UI state, email address, or email-verification status. Membership documents are not enumerable or writable by clients. An authenticated user may get only the membership document whose UID matches their authenticated UID, and only when the membership and active parent organisation fields validate. The organisation and membership records must be provisioned by a trusted operator outside this client ruleset.
 
 ## 2. Effective candidate permissions
 
@@ -26,7 +26,7 @@ Role and status are read from the membership document, never from client payload
 |---|---|
 | `/users/{uid}` | User may get/create/update only their own minimal profile/preferences; delete and list denied |
 | `/organisations/{orgId}` | Active owner/admin may get; list and all client writes denied |
-| `/organisations/{orgId}/members/{uid}` | All client reads/writes denied |
+| `/organisations/{orgId}/members/{uid}` | Authenticated user may get only their own active, valid membership document; list and all writes denied |
 | `/organisations/{orgId}/personnel/{recordId}` | Active owner/admin may get/list/create/update with strict allowlists; delete denied |
 | `/organisations/{orgId}/incidents/{incidentId}` | Active owner/admin may get/list/create/update with strict allowlists; delete denied |
 | `/organisations/{orgId}/evidence/{evidenceId}` | Active owner/admin read only; all writes denied |
@@ -85,7 +85,7 @@ The test suite includes positive and negative cases for:
 - tenant ID and UID provenance spoofing;
 - invalid enums and unexpected fields;
 - immutable creator, reporter, tenant, and record identifiers;
-- membership self-assignment denial;
+- exact self-membership get allowed for active supported roles; cross-user get, list, malformed/inactive membership, and self-assignment denied;
 - restricted collections and client audit-event denial;
 - organisation write denial;
 - constrained versus unconstrained tenant queries;

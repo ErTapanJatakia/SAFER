@@ -1,6 +1,6 @@
 # ADR: self-service resolution of an explicitly supplied tenant membership
 
-**Status:** proposed for review; not yet implemented  
+**Status:** implemented in candidate rules and emulator tests; production publication remains separately gated  
 **Scope:** application bootstrap and candidate Firestore authorization only  
 **Production posture:** Firebase Console-published rules remain deny-all  
 **Cost boundary:** Firebase Spark only; no Functions, Admin SDK, custom claims, paid services, or billing

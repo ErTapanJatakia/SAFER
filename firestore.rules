@@ -219,7 +219,18 @@ service cloud.firestore {
       allow list, create, update, delete: if false;
 
       match /members/{uid} {
-        allow read, write: if false;
+        // A signed-in user may get only their own minimal membership record.
+        // This is a locator-bound read, not tenant discovery or role management.
+        allow get: if signedIn()
+          && request.auth.uid == uid
+          && resource.data.uid == uid
+          && resource.data.orgId == orgId
+          && resource.data.status == 'active'
+          && resource.data.role in ['owner', 'admin', 'manager', 'viewer']
+          && exists(organisationPath(orgId))
+          && get(organisationPath(orgId)).data.orgId == orgId
+          && get(organisationPath(orgId)).data.status == 'active';
+        allow list, create, update, delete: if false;
       }
 
       match /personnel/{recordId} {
