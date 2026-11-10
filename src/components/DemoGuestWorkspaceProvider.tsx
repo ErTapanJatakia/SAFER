@@ -1,9 +1,9 @@
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef } from 'react';
 import { createDemoRepository } from '../lib/demoRepository.ts';
-import { selectDemoWorkspaceRepository } from '../lib/demoWorkspace.ts';
+import { createRevocableDemoRepository, selectDemoWorkspaceRepository } from '../lib/demoWorkspace.ts';
+import type { DemoWorkspaceRepository } from '../lib/demoWorkspace.ts';
 import type { DataAccessState } from '../lib/dataBoundary.ts';
 
-type DemoWorkspaceRepository = ReturnType<typeof createDemoRepository>;
 const DemoWorkspaceContext = createContext<DemoWorkspaceRepository | null>(null);
 
 interface ProviderProps {
@@ -20,7 +20,19 @@ export function DemoGuestWorkspaceProvider({ accessState, children }: ProviderPr
 }
 
 function AuthorizedDemoGuestWorkspace({ accessState, children }: { accessState: DataAccessState; children: React.ReactNode }) {
-  const repository = useMemo(() => createDemoRepository(window.localStorage), []);
+  const activeRef = useRef(true);
+  useEffect(() => {
+    activeRef.current = true;
+    return () => {
+      // Revoke retained repository references as soon as this session boundary exits.
+      activeRef.current = false;
+    };
+  }, []);
+
+  const repository = useMemo(() => {
+    const browserRepository = createDemoRepository(window.localStorage);
+    return createRevocableDemoRepository(browserRepository, () => activeRef.current);
+  }, []);
   const selection = selectDemoWorkspaceRepository(accessState, repository);
   if (selection.kind !== 'demo') {
     return <main role="alert">The operational workspace is unavailable for this session.</main>;

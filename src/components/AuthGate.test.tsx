@@ -3,6 +3,8 @@ import {createRoot, type Root} from 'react-dom/client';
 import {JSDOM} from 'jsdom';
 import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
 import {AuthGate} from './AuthGate';
+import {useDemoWorkspaceRepository} from './DemoGuestWorkspaceProvider';
+import type {DemoWorkspaceRepository} from '../lib/demoWorkspace';
 import {resolveTenantMembership} from '../lib/tenantMembership';
 import {onAuthStateChanged,signOut} from 'firebase/auth';
 
@@ -10,7 +12,8 @@ vi.mock('firebase/auth',()=>({GoogleAuthProvider:vi.fn(),createUserWithEmailAndP
 vi.mock('../lib/firebase.ts',()=>({auth:{name:'test-auth'},db:{name:'test-db'},isFirebaseConfigured:true}));
 vi.mock('../lib/tenantMembership.ts',()=>({resolveTenantMembership:vi.fn()}));
 const makeUser=(uid:string)=>({uid,email:uid+'@example.test',emailVerified:true});
-const StorageProbe=()=>{const [stored]=React.useState(()=>window.localStorage.getItem('prot_ops_personnel_v2'));return <div>Operational app shell {stored||''}</div>;};
+let retainedRepository: DemoWorkspaceRepository | null = null;
+const StorageProbe=()=>{const repository=useDemoWorkspaceRepository();retainedRepository=repository;const [stored]=React.useState(()=>window.localStorage.getItem('prot_ops_personnel_v2'));return <div>Operational app shell {stored||''}</div>;};
 
 let dom: JSDOM, root:Root, host:HTMLElement, listener:((user:ReturnType<typeof makeUser>|null)=>void)|undefined;
 const flush=async()=>{await act(async()=>{await Promise.resolve();await Promise.resolve();});};
@@ -21,7 +24,7 @@ const auth=(user:ReturnType<typeof makeUser>|null)=>{act(()=>listener?.(user));}
 beforeEach(async()=>{
  dom=new JSDOM('<!doctype html><html><body></body></html>',{url:'http://localhost'});
  Object.assign(globalThis,{window:dom.window,document:dom.window.document,navigator:dom.window.navigator,HTMLElement:dom.window.HTMLElement,HTMLInputElement:dom.window.HTMLInputElement,Event:dom.window.Event,IS_REACT_ACT_ENVIRONMENT:true});
- host=document.createElement('div');document.body.append(host);root=createRoot(host);listener=undefined;
+ host=document.createElement('div');document.body.append(host);root=createRoot(host);listener=undefined;retainedRepository=null;
  vi.mocked(onAuthStateChanged).mockImplementation((_auth,cb)=>{listener=cb as typeof listener;listener!(null);return vi.fn();});
  vi.mocked(signOut).mockImplementation(async()=>{listener?.(null);});
  await act(async()=>{root.render(<AuthGate><StorageProbe /></AuthGate>);});
