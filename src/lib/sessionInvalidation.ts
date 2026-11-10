@@ -101,5 +101,16 @@ export function subscribeToSessionInvalidation(onInvalidated: () => void): () =>
     active = false;
     listeners.delete(listener);
     if (typeof window !== 'undefined') window.removeEventListener('storage', onStorage);
+
+    // Release the shared browser resource once no session-bound consumers remain.
+    if (listeners.size === 0 && sharedChannel) {
+      const channel = sharedChannel;
+      sharedChannel = null;
+      try {
+        channel.close();
+      } catch {
+        // Cleanup must remain safe even if a browser transport is already closed.
+      }
+    }
   };
 }

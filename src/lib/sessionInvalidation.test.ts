@@ -220,6 +220,38 @@ describe('BroadcastChannel session invalidation transport', () => {
     unsubscribeFailing();
     unsubscribeHealthy();
   });
+
+  it('closes the shared channel after the final subscriber and recreates it for a later subscriber', async () => {
+    class ManagedBroadcastChannel extends EventTarget {
+      static instances: ManagedBroadcastChannel[] = [];
+      postMessage = vi.fn();
+      close = vi.fn();
+      constructor() {
+        super();
+        ManagedBroadcastChannel.instances.push(this);
+      }
+    }
+
+    vi.resetModules();
+    vi.stubGlobal('BroadcastChannel', ManagedBroadcastChannel);
+    const module = await import('./sessionInvalidation.ts');
+    const firstCleanup = module.subscribeToSessionInvalidation(vi.fn());
+    const secondCleanup = module.subscribeToSessionInvalidation(vi.fn());
+    const firstChannel = ManagedBroadcastChannel.instances[0];
+
+    firstCleanup();
+    expect(firstChannel.close).not.toHaveBeenCalled();
+    secondCleanup();
+    secondCleanup();
+    expect(firstChannel.close).toHaveBeenCalledTimes(1);
+
+    const laterCleanup = module.subscribeToSessionInvalidation(vi.fn());
+    expect(ManagedBroadcastChannel.instances).toHaveLength(2);
+    expect(ManagedBroadcastChannel.instances[1]).not.toBe(firstChannel);
+    laterCleanup();
+    expect(ManagedBroadcastChannel.instances[1].close).toHaveBeenCalledTimes(1);
+  });
+
 });
 
 
