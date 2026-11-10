@@ -57,6 +57,33 @@ describe('cross-tab session invalidation', () => {
     unsubscribe();
   });
 
+  it('delivers each unique cross-tab boundary once to every active subscriber', () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    const unsubscribeFirst = subscribeToSessionInvalidation(first);
+    const unsubscribeSecond = subscribeToSessionInvalidation(second);
+
+    const signal = (nonce: string) => window.dispatchEvent(new StorageEvent('storage', {
+      key: 'safer:session-boundary-signal',
+      newValue: nonce,
+    }));
+
+    signal('shared-boundary-1');
+    signal('shared-boundary-1');
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(second).toHaveBeenCalledTimes(1);
+
+    signal('shared-boundary-2');
+    expect(first).toHaveBeenCalledTimes(2);
+    expect(second).toHaveBeenCalledTimes(2);
+
+    unsubscribeFirst();
+    signal('shared-boundary-3');
+    expect(first).toHaveBeenCalledTimes(2);
+    expect(second).toHaveBeenCalledTimes(3);
+    unsubscribeSecond();
+  });
+
   it('makes cleanup idempotent', () => {
     const onInvalidated = vi.fn();
     const unsubscribe = subscribeToSessionInvalidation(onInvalidated);
