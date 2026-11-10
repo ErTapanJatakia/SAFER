@@ -7,16 +7,28 @@ describe('cross-tab session invalidation', () => {
   });
 
   it('publishes only an opaque, transient storage signal', () => {
-    const setItem = vi.spyOn(window.localStorage, 'setItem');
-    const removeItem = vi.spyOn(window.localStorage, 'removeItem');
-    publishSessionInvalidation();
+    // Vitest's default jsdom origin may be opaque and reject real localStorage.
+    // Inject a deterministic storage surface to exercise the fallback contract.
+    const originalDescriptor = Object.getOwnPropertyDescriptor(window, 'localStorage');
+    const storage = {
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      getItem: vi.fn().mockReturnValue(null),
+    };
+    Object.defineProperty(window, 'localStorage', { configurable: true, value: storage });
+    try {
+      publishSessionInvalidation();
 
-    expect(setItem).toHaveBeenCalledTimes(1);
-    expect(setItem.mock.calls[0][0]).toBe('safer:session-boundary-signal');
-    expect(setItem.mock.calls[0][1]).toBeTruthy();
-    expect(setItem.mock.calls[0][1]).not.toMatch(/user|org|role|personnel|incident/i);
-    expect(removeItem).toHaveBeenCalledWith('safer:session-boundary-signal');
-    expect(window.localStorage.getItem('safer:session-boundary-signal')).toBeNull();
+      expect(storage.setItem).toHaveBeenCalledTimes(1);
+      expect(storage.setItem.mock.calls[0][0]).toBe('safer:session-boundary-signal');
+      expect(storage.setItem.mock.calls[0][1]).toBeTruthy();
+      expect(storage.setItem.mock.calls[0][1]).not.toMatch(/user|org|role|personnel|incident/i);
+      expect(storage.removeItem).toHaveBeenCalledWith('safer:session-boundary-signal');
+      expect(storage.getItem('safer:session-boundary-signal')).toBeNull();
+    } finally {
+      if (originalDescriptor) Object.defineProperty(window, 'localStorage', originalDescriptor);
+      else Reflect.deleteProperty(window, 'localStorage');
+    }
   });
 
   it('notifies a tab when another tab publishes a storage invalidation', () => {
