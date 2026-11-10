@@ -20,7 +20,7 @@ beforeEach(async()=>{
  dom=new JSDOM('<!doctype html><html><body></body></html>',{url:'http://localhost'});
  Object.assign(globalThis,{window:dom.window,document:dom.window.document,navigator:dom.window.navigator,HTMLElement:dom.window.HTMLElement,HTMLInputElement:dom.window.HTMLInputElement,Event:dom.window.Event,IS_REACT_ACT_ENVIRONMENT:true});
  host=document.createElement('div');document.body.append(host);root=createRoot(host);listener=undefined;
- vi.mocked(onAuthStateChanged).mockImplementation((_auth,cb)=>{listener=cb as typeof listener;listener(null);return vi.fn();});
+ vi.mocked(onAuthStateChanged).mockImplementation((_auth,cb)=>{listener=cb as typeof listener;listener!(null);return vi.fn();});
  vi.mocked(signOut).mockImplementation(async()=>{listener?.(null);});
  await act(async()=>{root.render(<AuthGate><div>App shell</div></AuthGate>);});
  await flush();
