@@ -125,6 +125,21 @@ describe('AuthGate membership session handling',()=>{
   expect(publish).toHaveBeenCalledTimes(1);
   publish.mockRestore();
  });
+ it('re-subscribes to Firebase auth state after an observer failure',async()=>{
+  act(()=>authError?.(new Error('auth observer unavailable')));
+  await flush();
+  expect(host.textContent).toContain('Retry account verification');
+  expect(onAuthStateChanged).toHaveBeenCalledTimes(1);
+  button('Retry account verification').click();
+  await flush();
+  expect(onAuthStateChanged).toHaveBeenCalledTimes(2);
+  expect(host.textContent).not.toContain('Retry account verification');
+  auth(makeUser('user-recovered'));
+  await flush();
+  expect(host.textContent).toContain('Account verified — workspace not yet released');
+  expect(host.textContent).toContain('Signed in: user-recovered@example.test');
+  expect(host.textContent).not.toContain('Continue as Demo Guest');
+ });
  it('does not resurrect a previous Demo Guest workspace after an auth identity appears and signs out',async()=>{
   const read=vi.spyOn(dom.window.Storage.prototype,'getItem');
   button('Continue as Demo Guest').click();await flush();
