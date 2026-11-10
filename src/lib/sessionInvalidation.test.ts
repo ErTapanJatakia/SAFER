@@ -146,3 +146,78 @@ describe('cross-tab session invalidation', () => {
     expect(onInvalidated).not.toHaveBeenCalled();
   });
 });
+
+describe('BroadcastChannel session invalidation transport', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    vi.resetModules();
+  });
+
+  it('publishes opaque signals and accepts valid messages from another tab', async () => {
+    class FakeBroadcastChannel extends EventTarget {
+      static instances: FakeBroadcastChannel[] = [];
+      postMessage = vi.fn();
+      constructor(public readonly name: string) {
+        super();
+        FakeBroadcastChannel.instances.push(this);
+      }
+    }
+
+    vi.resetModules();
+    vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel);
+    const module = await import('./sessionInvalidation.ts');
+    const onInvalidated = vi.fn();
+    const unsubscribe = module.subscribeToSessionInvalidation(onInvalidated);
+    const channel = FakeBroadcastChannel.instances[0];
+
+    expect(channel.name).toBe('safer-session-boundary-v1');
+    module.publishSessionInvalidation();
+    expect(channel.postMessage).toHaveBeenCalledTimes(1);
+    const published = channel.postMessage.mock.calls[0][0] as { type: string; nonce: string };
+    expect(published.type).toBe('session-invalidated');
+    expect(published.nonce).toMatch(/^[A-Za-z0-9-]{1,128}$/);
+    expect(Object.keys(published).sort()).toEqual(['nonce', 'type']);
+
+    channel.dispatchEvent(new MessageEvent('message', {
+      data: { type: 'session-invalidated', nonce: 'remote-broadcast-boundary' },
+    }));
+    channel.dispatchEvent(new MessageEvent('message', {
+      data: { type: 'unrelated', nonce: 'ignored-boundary' },
+    }));
+    channel.dispatchEvent(new MessageEvent('message', {
+      data: { type: 'session-invalidated', nonce: 'contains spaces' },
+    }));
+
+    expect(onInvalidated).toHaveBeenCalledTimes(1);
+    unsubscribe();
+  });
+
+  it('isolates BroadcastChannel subscriber failures', async () => {
+    class FakeBroadcastChannel extends EventTarget {
+      static instances: FakeBroadcastChannel[] = [];
+      postMessage = vi.fn();
+      constructor() {
+        super();
+        FakeBroadcastChannel.instances.push(this);
+      }
+    }
+
+    vi.resetModules();
+    vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel);
+    const module = await import('./sessionInvalidation.ts');
+    const failing = vi.fn(() => { throw new Error('consumer failure'); });
+    const healthy = vi.fn();
+    const unsubscribeFailing = module.subscribeToSessionInvalidation(failing);
+    const unsubscribeHealthy = module.subscribeToSessionInvalidation(healthy);
+
+    expect(() => FakeBroadcastChannel.instances[0].dispatchEvent(new MessageEvent('message', {
+      data: { type: 'session-invalidated', nonce: 'broadcast-fault-isolation' },
+    }))).not.toThrow();
+    expect(failing).toHaveBeenCalledTimes(1);
+    expect(healthy).toHaveBeenCalledTimes(1);
+
+    unsubscribeFailing();
+    unsubscribeHealthy();
+  });
+});
