@@ -79,6 +79,9 @@ jobs:
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
+      - name: Session lifecycle invalidation tests
+        run: npm run test:session-lifecycle
+
       - name: Dependency security audit
         run: npm audit --omit=dev --audit-level=high
 
