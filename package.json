@@ -13,7 +13,8 @@
     "test:tenant-membership": "firebase emulators:exec --only firestore --project demo-safer \"tsx --test src/lib/tenantMembership.test.ts\"",
     "test:auth-membership-ui": "vitest run src/components/AuthGate.test.tsx",
     "test:data-boundary": "tsx --test src/lib/dataBoundary.test.ts",
-    "test:session-lifecycle": "tsx --test src/lib/sessionLifecycle.test.ts"
+    "test:session-lifecycle": "tsx --test src/lib/sessionLifecycle.test.ts",
+    "test:demo-repository": "tsx --test src/lib/demoRepository.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
