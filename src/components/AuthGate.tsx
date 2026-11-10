@@ -74,6 +74,9 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       const previousUid = lastAuthUidRef.current;
       if ((previousUid === undefined && nextUid !== null)
         || (previousUid !== undefined && previousUid !== nextUid)) {
+        // Any real auth identity transition ends an explicit Demo Guest choice.
+        // Do not allow a later sign-out callback to resurrect that old workspace.
+        setDemoGuest(false);
         // An authenticated tab must invalidate any peer Demo Guest workspace,
         // including when this tab restores an already-signed-in account at startup.
         publishSessionInvalidation();

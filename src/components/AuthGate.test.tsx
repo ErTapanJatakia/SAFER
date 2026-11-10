@@ -108,4 +108,22 @@ describe('AuthGate membership session handling',()=>{
   expect(host.textContent).toContain('Account verified — workspace not yet released');
  });
  it('clears membership on account switch and sign-out',async()=>{vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'admin',status:'active'});auth(makeUser('user-a'));await flush();let field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();expect(host.textContent).toContain('Role: admin');auth(makeUser('user-b'));await flush();expect(host.textContent).not.toContain('Role: admin');field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;expect(field.value).toBe('');change(field,'org-b');await flush();submit(field.closest('form')!);await flush();expect(host.textContent).toContain('Role: admin');button('Sign out').click();await flush();expect(host.textContent).not.toContain('Role: admin');expect(host.textContent).toContain('Continue as Demo Guest');expect(resolveTenantMembership).toHaveBeenCalledTimes(2);});
+
+ it('does not resurrect a previous Demo Guest workspace after an auth identity appears and signs out',async()=>{
+  const read=vi.spyOn(dom.window.Storage.prototype,'getItem');
+  button('Continue as Demo Guest').click();await flush();
+  expect(host.textContent).toContain('Operational app shell');
+  expect(retainedRepository).not.toBeNull();
+  auth(makeUser('user-a'));await flush();
+  expect(host.textContent).toContain('Account verified — workspace not yet released');
+  expect(host.textContent).not.toContain('Operational app shell');
+  expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);
+  auth(null);await flush();
+  expect(host.textContent).toContain('Continue as Demo Guest');
+  expect(host.textContent).not.toContain('Operational app shell');
+  expect(read).toHaveBeenCalledTimes(1);
+  button('Continue as Demo Guest').click();await flush();
+  expect(host.textContent).toContain('Operational app shell');
+  expect(read).toHaveBeenCalledTimes(2);
+ });
 });
