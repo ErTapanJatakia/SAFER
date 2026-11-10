@@ -391,3 +391,59 @@ test("evidence metadata is read-only and deletes remain disabled", async () => {
     evidenceId: "evidence-b", orgId: "org-a",
   }));
 });
+
+
+test("personnel updates reject extra keys, immutable identity/provenance changes, invalid values, and spoofed timestamps", async () => {
+  await seedTenant({ orgId: "org-personnel-update", uid: "owner-personnel-update" });
+  const db = dbFor("owner-personnel-update");
+  const person = doc(db, "organisations/org-personnel-update/personnel/personnel-update-a");
+  await assertSucceeds(setDoc(person, validPersonnel(
+    "owner-personnel-update", "org-personnel-update", "personnel-update-a",
+  )));
+
+  const rejectedUpdates = [
+    { bloodGroup: "O+", updatedAt: serverTimestamp(), updatedByUid: "owner-personnel-update" },
+    { recordId: "personnel-update-b", updatedAt: serverTimestamp(), updatedByUid: "owner-personnel-update" },
+    { orgId: "org-other", updatedAt: serverTimestamp(), updatedByUid: "owner-personnel-update" },
+    { createdByUid: "attacker", updatedAt: serverTimestamp(), updatedByUid: "owner-personnel-update" },
+    { createdAt: new Date("2020-01-01T00:00:00.000Z"), updatedAt: serverTimestamp(), updatedByUid: "owner-personnel-update" },
+    { updatedByUid: "attacker", updatedAt: serverTimestamp() },
+    { assignmentSector: "Unlisted Sector", updatedAt: serverTimestamp(), updatedByUid: "owner-personnel-update" },
+    { readinessStatus: "UNAPPROVED_STATUS", updatedAt: serverTimestamp(), updatedByUid: "owner-personnel-update" },
+    { operationalRoles: "Security Officer", updatedAt: serverTimestamp(), updatedByUid: "owner-personnel-update" },
+    { updatedAt: new Date("2020-01-01T00:00:00.000Z"), updatedByUid: "owner-personnel-update" },
+  ];
+
+  for (const changes of rejectedUpdates) {
+    await assertFails(updateDoc(person, changes));
+  }
+});
+
+test("incident updates reject extra keys, immutable identity/reporter provenance changes, invalid values, and spoofed timestamps", async () => {
+  await seedTenant({ orgId: "org-incident-update", uid: "owner-incident-update" });
+  const db = dbFor("owner-incident-update");
+  const incident = doc(db, "organisations/org-incident-update/incidents/incident-update-a");
+  await assertSucceeds(setDoc(incident, validIncident(
+    "owner-incident-update", "org-incident-update", "incident-update-a",
+  )));
+
+  const rejectedUpdates = [
+    { internalClassification: "restricted", updatedAt: serverTimestamp(), updatedByUid: "owner-incident-update" },
+    { incidentId: "incident-update-b", updatedAt: serverTimestamp(), updatedByUid: "owner-incident-update" },
+    { orgId: "org-other", updatedAt: serverTimestamp(), updatedByUid: "owner-incident-update" },
+    { createdByUid: "attacker", updatedAt: serverTimestamp(), updatedByUid: "owner-incident-update" },
+    { reportedByUid: "attacker", updatedAt: serverTimestamp(), updatedByUid: "owner-incident-update" },
+    { createdAt: new Date("2020-01-01T00:00:00.000Z"), updatedAt: serverTimestamp(), updatedByUid: "owner-incident-update" },
+    { updatedByUid: "attacker", updatedAt: serverTimestamp() },
+    { incidentType: "Unlisted Type", updatedAt: serverTimestamp(), updatedByUid: "owner-incident-update" },
+    { status: "Unapproved Status", updatedAt: serverTimestamp(), updatedByUid: "owner-incident-update" },
+    { priority: "Critical", updatedAt: serverTimestamp(), updatedByUid: "owner-incident-update" },
+    { dateReported: "not-a-timestamp", updatedAt: serverTimestamp(), updatedByUid: "owner-incident-update" },
+    { summary: 42, updatedAt: serverTimestamp(), updatedByUid: "owner-incident-update" },
+    { updatedAt: new Date("2020-01-01T00:00:00.000Z"), updatedByUid: "owner-incident-update" },
+  ];
+
+  for (const changes of rejectedUpdates) {
+    await assertFails(updateDoc(incident, changes));
+  }
+});
