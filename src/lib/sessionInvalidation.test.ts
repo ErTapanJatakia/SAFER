@@ -305,6 +305,39 @@ describe('session invalidation transport degradation', () => {
     }
   });
 
+  it('closes a partially initialized channel and falls back to storage when listener registration fails', async () => {
+    class ListenerRegistrationFailureChannel {
+      addEventListener = vi.fn(() => { throw new Error('listener registration failed'); });
+      close = vi.fn();
+      postMessage = vi.fn();
+      constructor() { ListenerRegistrationFailureChannel.instances.push(this); }
+      static instances: ListenerRegistrationFailureChannel[] = [];
+    }
+    const originalDescriptor = Object.getOwnPropertyDescriptor(window, 'localStorage');
+    const storage = { setItem: vi.fn(), removeItem: vi.fn() };
+    Object.defineProperty(window, 'localStorage', { configurable: true, value: storage });
+    vi.resetModules();
+    vi.stubGlobal('BroadcastChannel', ListenerRegistrationFailureChannel);
+    try {
+      const module = await import('./sessionInvalidation.ts');
+      const unsubscribe = module.subscribeToSessionInvalidation(vi.fn());
+      expect(ListenerRegistrationFailureChannel.instances).toHaveLength(1);
+      expect(ListenerRegistrationFailureChannel.instances[0].addEventListener).toHaveBeenCalledTimes(1);
+      expect(ListenerRegistrationFailureChannel.instances[0].close).toHaveBeenCalledTimes(1);
+
+      module.publishSessionInvalidation();
+      expect(storage.setItem).toHaveBeenCalledWith(
+        'safer:session-boundary-signal',
+        expect.stringMatching(/^[A-Za-z0-9-]{1,128}$/),
+      );
+      expect(ListenerRegistrationFailureChannel.instances[0].postMessage).not.toHaveBeenCalled();
+      unsubscribe();
+    } finally {
+      if (originalDescriptor) Object.defineProperty(window, 'localStorage', originalDescriptor);
+      else Reflect.deleteProperty(window, 'localStorage');
+    }
+  });
+
   it('keeps BroadcastChannel publishing operational when storage is unavailable', async () => {
     class FakeBroadcastChannel extends EventTarget {
       static instances: FakeBroadcastChannel[] = [];
