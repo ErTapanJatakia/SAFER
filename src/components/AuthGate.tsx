@@ -12,6 +12,7 @@ import {
 } from 'firebase/auth';
 import {auth, db, isFirebaseConfigured} from '../lib/firebase.ts';
 import {resolveTenantMembership, type TenantMembership} from '../lib/tenantMembership.ts';
+import {createSessionLifecycle} from '../lib/sessionLifecycle.ts';
 
 type AuthMode = 'signin' | 'register' | 'reset' | 'verify';
 
@@ -43,7 +44,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
   const [membership, setMembership] = useState<TenantMembership | null>(null);
   const [membershipBusy, setMembershipBusy] = useState(false);
   const [membershipError, setMembershipError] = useState('');
-  const membershipRequestRef = useRef(0);
+  const sessionLifecycleRef = useRef(createSessionLifecycle());
 
   useEffect(() => {
     const firebaseAuth = auth;
@@ -53,7 +54,8 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
     }
     return onAuthStateChanged(firebaseAuth, (nextUser) => {
       // Invalidate pending lookups so an old identity cannot restore stale authority.
-      membershipRequestRef.current += 1;
+      if (nextUser) sessionLifecycleRef.current.startAuthenticated(nextUser.uid);
+      else sessionLifecycleRef.current.endSession();
       setMembershipBusy(false);
       // Membership is session-only and must never survive an auth identity change.
       setMembership(null);
@@ -69,7 +71,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       }
       setLoading(false);
     }, () => {
-      membershipRequestRef.current += 1;
+      sessionLifecycleRef.current.endSession();
       setMembership(null);
       setOrganisationId('');
       setMembershipBusy(false);
@@ -207,31 +209,37 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       setMembershipError('Organisation membership verification is unavailable in this deployment.');
       return;
     }
-    const requestId = ++membershipRequestRef.current;
     const requestedUid = user.uid;
-    const requestedOrganisationId = organisationId;
+    const requestedOrganisationId = organisationId.trim();
+    const requestToken = sessionLifecycleRef.current.beginRequest();
+    if (!requestToken || requestToken.uid !== requestedUid || requestToken.orgId !== requestedOrganisationId) {
+      setMembership(null);
+      setMembershipBusy(false);
+      setMembershipError('Membership could not be verified. Check the organisation ID or contact its authorised administrator.');
+      return;
+    }
     setMembershipBusy(true);
     setMembership(null);
     setMembershipError('');
     try {
       const resolved = await resolveTenantMembership(db, {uid: requestedUid}, requestedOrganisationId);
-      if (membershipRequestRef.current === requestId) {
+      if (sessionLifecycleRef.current.isCurrent(requestToken)) {
         // Keep the verified result in memory only; never persist roles or tenant authority.
         setMembership(resolved);
       }
     } catch {
-      if (membershipRequestRef.current === requestId) {
+      if (sessionLifecycleRef.current.isCurrent(requestToken)) {
         setMembershipError('Membership could not be verified. Check the organisation ID or contact its authorised administrator.');
       }
     } finally {
-      if (membershipRequestRef.current === requestId) setMembershipBusy(false);
+      if (sessionLifecycleRef.current.isCurrent(requestToken)) setMembershipBusy(false);
     }
   };
 
   const leaveAccount = () => {
     const firebaseAuth = auth;
     if (!firebaseAuth) return;
-    membershipRequestRef.current += 1;
+    sessionLifecycleRef.current.beginSignOut();
     setMembershipBusy(false);
     setMembership(null);
     setOrganisationId('');
@@ -264,7 +272,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
                 <label className="flex-1 text-xs font-medium text-slate-300">Organisation ID
                   <input
                     value={organisationId}
-                    onChange={(event) => {membershipRequestRef.current += 1; setMembershipBusy(false); setOrganisationId(event.target.value); setMembership(null); setMembershipError('');}}
+                    onChange={(event) => {sessionLifecycleRef.current.selectOrganisation(event.target.value); setMembershipBusy(false); setOrganisationId(event.target.value); setMembership(null); setMembershipError('');}}
                     autoComplete="off"
                     spellCheck={false}
                     maxLength={128}
