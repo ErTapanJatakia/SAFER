@@ -90,14 +90,28 @@ describe('revocable Demo Guest repository capability', () => {
     assert.equal((await raw.listPersonnel()).find((item) => item.id === record.id)?.fullName, record.fullName);
   });
 
-  it('does not make a revoked repository usable again when a later session starts', async () => {
+  it('keeps the prior session revoked when a separate later session starts', async () => {
     const storage = trackedStorage();
-    let active = true;
-    const guarded = createRevocableDemoRepository(createDemoRepository(storage), () => active);
-    active = false;
-    active = true;
-    const before = storage.calls.length;
-    assert.throws(() => guarded.loadSnapshot(), /session has ended/);
-    assert.equal(storage.calls.length, before);
+    let priorSessionActive = true;
+    const priorRepository = createRevocableDemoRepository(
+      createDemoRepository(storage),
+      () => priorSessionActive,
+    );
+    priorSessionActive = false;
+
+    // A new guest session receives a new capability and a new revocation scope.
+    let nextSessionActive = true;
+    const nextRepository = createRevocableDemoRepository(
+      createDemoRepository(storage),
+      () => nextSessionActive,
+    );
+    assert.doesNotThrow(() => nextRepository.loadSnapshot());
+
+    const beforePriorAccess = storage.calls.length;
+    assert.throws(() => priorRepository.loadSnapshot(), /session has ended/);
+    assert.equal(storage.calls.length, beforePriorAccess);
+
+    nextSessionActive = false;
+    assert.throws(() => nextRepository.loadSnapshot(), /session has ended/);
   });
 });
