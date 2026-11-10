@@ -60,5 +60,19 @@ describe('AuthGate membership session handling',()=>{
   expect(publish).toHaveBeenCalledTimes(4);
   publish.mockRestore();
  });
+ it('discards a delayed membership response after a rapid account switch',async()=>{
+  let finish!:(value:{uid:string;orgId:string;role:'owner';status:'active'})=>void;
+  vi.mocked(resolveTenantMembership).mockReturnValue(new Promise(resolve=>{finish=resolve;}));
+  auth(makeUser('user-a'));await flush();
+  const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
+  change(field,'org-a');await flush();submit(field.closest('form')!);await flush();
+  expect(host.textContent).toContain('Verifying organisation membership');
+  auth(makeUser('user-b'));await flush();
+  await act(async()=>finish({uid:'user-a',orgId:'org-a',role:'owner',status:'active'}));
+  await flush();
+  expect(host.textContent).not.toContain('Verified active membership');
+  expect(host.textContent).not.toContain('Role: owner');
+  expect(host.textContent).toContain('Account verified — workspace not yet released');
+ });
  it('clears membership on account switch and sign-out',async()=>{vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'admin',status:'active'});auth(makeUser('user-a'));await flush();let field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();expect(host.textContent).toContain('Role: admin');auth(makeUser('user-b'));await flush();expect(host.textContent).not.toContain('Role: admin');field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;expect(field.value).toBe('');change(field,'org-b');await flush();submit(field.closest('form')!);await flush();expect(host.textContent).toContain('Role: admin');button('Sign out').click();await flush();expect(host.textContent).not.toContain('Role: admin');expect(host.textContent).toContain('Continue as Demo Guest');expect(resolveTenantMembership).toHaveBeenCalledTimes(2);});
 });
