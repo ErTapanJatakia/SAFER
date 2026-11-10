@@ -7,10 +7,11 @@ import {useDemoWorkspaceRepository} from './DemoGuestWorkspaceProvider';
 import type {DemoWorkspaceRepository} from '../lib/demoWorkspace';
 import {resolveTenantMembership} from '../lib/tenantMembership';
 import {onAuthStateChanged,signOut} from 'firebase/auth';
+import {auth as firebaseAuth} from '../lib/firebase.ts';
 import * as sessionInvalidation from '../lib/sessionInvalidation';
 
 vi.mock('firebase/auth',()=>({GoogleAuthProvider:vi.fn(),createUserWithEmailAndPassword:vi.fn(),onAuthStateChanged:vi.fn(),sendEmailVerification:vi.fn(),sendPasswordResetEmail:vi.fn(),signInWithEmailAndPassword:vi.fn(),signInWithPopup:vi.fn(),signOut:vi.fn()}));
-vi.mock('../lib/firebase.ts',()=>({auth:{name:'test-auth'},db:{name:'test-db'},isFirebaseConfigured:true}));
+vi.mock('../lib/firebase.ts',()=>({auth:{name:'test-auth',currentUser:null},db:{name:'test-db'},isFirebaseConfigured:true}));
 vi.mock('../lib/tenantMembership.ts',()=>({resolveTenantMembership:vi.fn()}));
 const makeUser=(uid:string)=>({uid,email:uid+'@example.test',emailVerified:true});
 let retainedRepository: DemoWorkspaceRepository | null = null;
@@ -21,13 +22,13 @@ const flush=async()=>{await act(async()=>{await Promise.resolve();await Promise.
 const button=(name:string)=>[...host.querySelectorAll('button')].find(b=>b.textContent?.trim()===name) as HTMLButtonElement;
 const change=(el:HTMLInputElement,value:string)=>{const setter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')?.set; if (setter) setter.call(el,value); el.dispatchEvent(new dom.window.Event('input',{bubbles:true}));el.dispatchEvent(new dom.window.Event('change',{bubbles:true}));};
 const submit=(form:HTMLFormElement)=>form.dispatchEvent(new dom.window.Event('submit',{bubbles:true,cancelable:true}));
-const auth=(user:ReturnType<typeof makeUser>|null)=>{act(()=>listener?.(user));};
+const auth=(user:ReturnType<typeof makeUser>|null)=>{Object.defineProperty(firebaseAuth,'currentUser',{configurable:true,value:user});act(()=>listener?.(user));};
 beforeEach(async()=>{
  dom=new JSDOM('<!doctype html><html><body></body></html>',{url:'http://localhost'});
  Object.assign(globalThis,{window:dom.window,document:dom.window.document,navigator:dom.window.navigator,HTMLElement:dom.window.HTMLElement,HTMLInputElement:dom.window.HTMLInputElement,Event:dom.window.Event,IS_REACT_ACT_ENVIRONMENT:true});
  host=document.createElement('div');document.body.append(host);root=createRoot(host);listener=undefined;authError=undefined;retainedRepository=null;
  vi.mocked(onAuthStateChanged).mockImplementation((_auth,cb,error)=>{listener=cb as typeof listener;authError=error as typeof authError;listener!(null);return vi.fn();});
- vi.mocked(signOut).mockImplementation(async()=>{listener?.(null);});
+ vi.mocked(signOut).mockImplementation(async()=>{Object.defineProperty(firebaseAuth,'currentUser',{configurable:true,value:null});listener?.(null);});
  await act(async()=>{root.render(<AuthGate><StorageProbe /></AuthGate>);});
  await flush();
 });
@@ -39,6 +40,19 @@ describe('AuthGate membership session handling',()=>{
  it('does not touch operational browser storage while signed out or authenticated',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');expect(read).not.toHaveBeenCalled();auth(makeUser('user-a'));await flush();expect(read).not.toHaveBeenCalled();expect(host.textContent).not.toContain('Operational app shell');});
  it('initializes operational browser storage only after explicit Demo Guest entry',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');expect(read).not.toHaveBeenCalled();button('Continue as Demo Guest').click();await flush();expect(read).toHaveBeenCalledTimes(1);expect(read).toHaveBeenCalledWith('prot_ops_personnel_v2');expect(host.textContent).toContain('Operational app shell');});
  it('unmounts the Demo Guest workspace when an authenticated identity appears and revokes retained access',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');button('Continue as Demo Guest').click();await flush();expect(read).toHaveBeenCalledTimes(1);auth(makeUser('user-a'));await flush();expect(host.textContent).not.toContain('Operational app shell');expect(host.textContent).toContain('Account verified — workspace not yet released');expect(read).toHaveBeenCalledTimes(1);expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);expect(read).toHaveBeenCalledTimes(1);});
+ it('restores the authenticated lifecycle when Firebase sign-out fails but the same user remains current',async()=>{
+  vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'manager',status:'active'});
+  auth(makeUser('user-a'));await flush();
+  vi.mocked(signOut).mockRejectedValueOnce(new Error('network unavailable'));
+  button('Sign out').click();await flush();
+  expect(host.textContent).toContain('Signed in: user-a@example.test');
+  expect(host.querySelector('[role="alert"]')?.textContent).toContain('Unable to complete sign-out.');
+  const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
+  change(field,'org-a');await flush();submit(field.closest('form')!);await flush();
+  expect(host.textContent).toContain('Verified active membership');
+  expect(host.textContent).toContain('Role: manager');
+  expect(resolveTenantMembership).toHaveBeenCalledWith({name:'test-db'},{uid:'user-a'},'org-a');
+ });
  it('revokes retained repository access during Demo Guest sign-out',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');button('Continue as Demo Guest').click();await flush();expect(retainedRepository).not.toBeNull();button('Sign out').click();await flush();expect(host.textContent).toContain('Continue as Demo Guest');expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);expect(read).toHaveBeenCalledTimes(1);});
  it('revokes the Demo Guest workspace when another tab signals an account boundary',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');button('Continue as Demo Guest').click();await flush();expect(retainedRepository).not.toBeNull();act(()=>window.dispatchEvent(new StorageEvent('storage',{key:'safer:session-boundary-signal',newValue:'other-tab-signout'})));await flush();expect(host.textContent).toContain('Continue as Demo Guest');expect(host.textContent).not.toContain('Operational app shell');expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);expect(read).toHaveBeenCalledTimes(1);});
 
