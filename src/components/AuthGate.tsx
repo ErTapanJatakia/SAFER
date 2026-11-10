@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
@@ -43,6 +43,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
   const [membership, setMembership] = useState<TenantMembership | null>(null);
   const [membershipBusy, setMembershipBusy] = useState(false);
   const [membershipError, setMembershipError] = useState('');
+  const membershipRequestRef = useRef(0);
 
   useEffect(() => {
     const firebaseAuth = auth;
@@ -51,6 +52,9 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       return;
     }
     return onAuthStateChanged(firebaseAuth, (nextUser) => {
+      // Invalidate pending lookups so an old identity cannot restore stale authority.
+      membershipRequestRef.current += 1;
+      setMembershipBusy(false);
       // Membership is session-only and must never survive an auth identity change.
       setMembership(null);
       setOrganisationId('');
@@ -65,6 +69,11 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       }
       setLoading(false);
     }, () => {
+      membershipRequestRef.current += 1;
+      setMembership(null);
+      setOrganisationId('');
+      setMembershipBusy(false);
+      setMembershipError('');
       setUser(null);
       setLoading(false);
       setError('Unable to verify the current account session. Please try again.');
@@ -198,29 +207,38 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       setMembershipError('Organisation membership verification is unavailable in this deployment.');
       return;
     }
+    const requestId = ++membershipRequestRef.current;
+    const requestedUid = user.uid;
+    const requestedOrganisationId = organisationId;
     setMembershipBusy(true);
     setMembership(null);
     setMembershipError('');
     try {
-      const resolved = await resolveTenantMembership(db, {uid: user.uid}, organisationId);
-      // Keep the verified result in memory only; never persist roles or tenant authority.
-      setMembership(resolved);
+      const resolved = await resolveTenantMembership(db, {uid: requestedUid}, requestedOrganisationId);
+      if (membershipRequestRef.current === requestId) {
+        // Keep the verified result in memory only; never persist roles or tenant authority.
+        setMembership(resolved);
+      }
     } catch {
-      setMembershipError('Membership could not be verified. Check the organisation ID or contact its authorised administrator.');
+      if (membershipRequestRef.current === requestId) {
+        setMembershipError('Membership could not be verified. Check the organisation ID or contact its authorised administrator.');
+      }
     } finally {
-      setMembershipBusy(false);
+      if (membershipRequestRef.current === requestId) setMembershipBusy(false);
     }
   };
 
   const leaveAccount = () => {
     const firebaseAuth = auth;
     if (!firebaseAuth) return;
-    void signOut(firebaseAuth).finally(() => {
-      setUser(null);
-      setDemoGuest(false);
-      setMembership(null);
-      setOrganisationId('');
-      setMembershipError('');
+    membershipRequestRef.current += 1;
+    setMembershipBusy(false);
+    setMembership(null);
+    setOrganisationId('');
+    setMembershipError('');
+    setDemoGuest(false);
+    void signOut(firebaseAuth).catch(() => {
+      setError('Unable to complete sign-out. Please retry.');
     });
   };
 
@@ -246,7 +264,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
                 <label className="flex-1 text-xs font-medium text-slate-300">Organisation ID
                   <input
                     value={organisationId}
-                    onChange={(event) => {setOrganisationId(event.target.value); setMembership(null); setMembershipError('');}}
+                    onChange={(event) => {membershipRequestRef.current += 1; setMembershipBusy(false); setOrganisationId(event.target.value); setMembership(null); setMembershipError('');}}
                     autoComplete="off"
                     spellCheck={false}
                     maxLength={128}

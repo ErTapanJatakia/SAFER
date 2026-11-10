@@ -10,7 +10,8 @@
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "test:firestore-rules": "firebase emulators:exec --only firestore --project demo-safer \"node --test tests/firestore-rules.test.mjs\"",
-    "test:tenant-membership": "firebase emulators:exec --only firestore --project demo-safer \"tsx --test src/lib/tenantMembership.test.ts\""
+    "test:tenant-membership": "firebase emulators:exec --only firestore --project demo-safer \"tsx --test src/lib/tenantMembership.test.ts\"",
+    "test:auth-membership-ui": "vitest run src/components/AuthGate.test.tsx"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -39,7 +40,10 @@
     "firebase-tools": "^15.35.0",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "jsdom": "^26.1.0",
+    "vitest": "^4.0.8",
+    "@types/jsdom": "^21.1.7"
   },
   "overrides": {
     "@grpc/grpc-js": "^1.14.7"
