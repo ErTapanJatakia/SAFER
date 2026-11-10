@@ -66,7 +66,8 @@ describe('AuthGate membership session handling',()=>{
   auth(makeUser('user-a'));await flush();
   const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
   change(field,'org-a');await flush();submit(field.closest('form')!);await flush();
-  expect(host.textContent).toContain('Verifying organisation membership');
+  expect(host.textContent).toContain('Checking…');
+  expect(resolveTenantMembership).toHaveBeenCalledWith({name:'test-db'},{uid:'user-a'},'org-a');
   auth(makeUser('user-b'));await flush();
   await act(async()=>finish({uid:'user-a',orgId:'org-a',role:'owner',status:'active'}));
   await flush();
