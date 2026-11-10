@@ -300,7 +300,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       if (currentUid && user?.uid === currentUid) {
         sessionLifecycleRef.current.startAuthenticated(currentUid);
       }
-      setError('Unable to complete sign-out. Please retry.');
+      setError('Unable to complete sign-out. Your account session remains active; please retry.');
     });
   };
 
@@ -315,6 +315,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
           <span>{user ? `Signed in: ${user.email || 'verified account'}` : 'Demo Guest session'}</span>
           <button type="button" onClick={leaveAccount} className="rounded border border-slate-600 px-3 py-1.5 hover:bg-slate-800">Sign out</button>
         </div>
+        {error && <p role="alert" className="border-b border-red-800 bg-red-950/60 px-4 py-2 text-xs text-red-200">{error}</p>}
         {!!user && (
           <section aria-labelledby="organisation-access-heading" className="border-b border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-100">
             <div className="mx-auto flex max-w-7xl flex-col gap-2">
