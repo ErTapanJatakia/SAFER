@@ -31,7 +31,7 @@ function emitAuth(user: ReturnType<typeof authUser> | null) {
 beforeEach(() => {
   authListener = undefined;
   vi.mocked(onAuthStateChanged).mockImplementation((_auth, callback) => {
-    authListener = callback as typeof authListener;
+    authListener = callback as (user: ReturnType<typeof authUser> | null) => void;
     return vi.fn();
   });
   vi.mocked(signOut).mockImplementation(async () => {
@@ -74,7 +74,7 @@ describe('AuthGate organisation membership UI', () => {
     emitAuth(authUser('user-a'));
     fireEvent.change(await screen.findByLabelText('Organisation ID'), {target:{value:'org-a'}});
     fireEvent.click(screen.getByRole('button', {name:'Verify membership'}));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Membership could not be verified.');
+    expect((await screen.findByRole('alert')).textContent).toContain('Membership could not be verified.');
     expect(screen.queryByText(/Role:/)).toBeNull();
   });
 
@@ -103,7 +103,7 @@ describe('AuthGate organisation membership UI', () => {
     await screen.findByText(/Verified active membership/);
     emitAuth(authUser('user-b'));
     await waitFor(() => expect(screen.queryByText(/Verified active membership/)).toBeNull());
-    expect(screen.getByLabelText('Organisation ID')).toHaveValue('');
+    expect((screen.getByLabelText('Organisation ID') as HTMLInputElement).value).toBe('');
     fireEvent.change(screen.getByLabelText('Organisation ID'), {target:{value:'org-b'}});
     fireEvent.click(screen.getByRole('button', {name:'Verify membership'}));
     await screen.findByText(/Verified active membership/);
