@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { initializeTestEnvironment, type RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { doc, setDoc } from 'firebase/firestore';
+import { assertFails, initializeTestEnvironment, type RulesTestEnvironment } from '@firebase/rules-unit-testing';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import {
   parseTenantMembership,
   resolveTenantMembership,
@@ -80,9 +80,8 @@ test('Rules deny malformed membership documents before resolver parsing', async 
   for (const fixture of fixtures) {
     await seedMembership(fixture.orgId, fixture.uid, fixture.fields);
     const database = testEnv.authenticatedContext(fixture.uid).firestore();
-    await assert.rejects(
-      resolveTenantMembership(database, { uid: fixture.uid }, fixture.orgId),
-      (error: unknown) => error instanceof TenantMembershipError && error.code === 'membership-unavailable',
+    await assertFails(
+      getDoc(doc(database, 'organisations', fixture.orgId, 'members', fixture.uid)),
     );
   }
 });
