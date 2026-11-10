@@ -88,6 +88,9 @@ jobs:
       - name: Session lifecycle invalidation tests
         run: npm run test:session-lifecycle
 
+      - name: Cross-tab session invalidation tests
+        run: npm run test:session-invalidation
+
       - name: Dependency security audit
         run: npm audit --omit=dev --audit-level=high
 
