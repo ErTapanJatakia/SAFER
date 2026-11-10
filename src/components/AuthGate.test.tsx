@@ -3,7 +3,8 @@ import {createRoot, type Root} from 'react-dom/client';
 import {JSDOM} from 'jsdom';
 import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
 import {AuthGate} from './AuthGate';
-import {useDemoWorkspaceRepository, type DemoWorkspaceRepository} from './DemoGuestWorkspaceProvider';
+import {useDemoWorkspaceRepository} from './DemoGuestWorkspaceProvider';
+import type {DemoWorkspaceRepository} from '../lib/demoWorkspace';
 import {resolveTenantMembership} from '../lib/tenantMembership';
 import {onAuthStateChanged,signOut} from 'firebase/auth';
 
