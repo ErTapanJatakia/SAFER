@@ -10,7 +10,8 @@ import {
   signOut,
   type User,
 } from 'firebase/auth';
-import {auth, isFirebaseConfigured} from '../lib/firebase.ts';
+import {auth, db, isFirebaseConfigured} from '../lib/firebase.ts';
+import {resolveTenantMembership, type TenantMembership} from '../lib/tenantMembership.ts';
 
 type AuthMode = 'signin' | 'register' | 'reset' | 'verify';
 
@@ -38,6 +39,10 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [organisationId, setOrganisationId] = useState('');
+  const [membership, setMembership] = useState<TenantMembership | null>(null);
+  const [membershipBusy, setMembershipBusy] = useState(false);
+  const [membershipError, setMembershipError] = useState('');
 
   useEffect(() => {
     const firebaseAuth = auth;
@@ -46,6 +51,10 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       return;
     }
     return onAuthStateChanged(firebaseAuth, (nextUser) => {
+      // Membership is session-only and must never survive an auth identity change.
+      setMembership(null);
+      setOrganisationId('');
+      setMembershipError('');
       if (nextUser && !nextUser.emailVerified) {
         setVerificationEmail(nextUser.email || '');
         setMode('verify');
@@ -182,12 +191,36 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
     setMessage('Sign in with your email and password to request another verification message.');
   };
 
+  const handleResolveMembership = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!user || !db) {
+      setMembership(null);
+      setMembershipError('Organisation membership verification is unavailable in this deployment.');
+      return;
+    }
+    setMembershipBusy(true);
+    setMembership(null);
+    setMembershipError('');
+    try {
+      const resolved = await resolveTenantMembership(db, {uid: user.uid}, organisationId);
+      // Keep the verified result in memory only; never persist roles or tenant authority.
+      setMembership(resolved);
+    } catch {
+      setMembershipError('Membership could not be verified. Check the organisation ID or contact its authorised administrator.');
+    } finally {
+      setMembershipBusy(false);
+    }
+  };
+
   const leaveAccount = () => {
     const firebaseAuth = auth;
     if (!firebaseAuth) return;
     void signOut(firebaseAuth).finally(() => {
       setUser(null);
       setDemoGuest(false);
+      setMembership(null);
+      setOrganisationId('');
+      setMembershipError('');
     });
   };
 
@@ -202,8 +235,39 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
           <span>{demoGuest ? 'Demo Guest session' : `Signed in: ${user?.email || 'verified account'}`}</span>
           <button type="button" onClick={leaveAccount} className="rounded border border-slate-600 px-3 py-1.5 hover:bg-slate-800">Sign out</button>
         </div>
+        {!demoGuest && (
+          <section aria-labelledby="organisation-access-heading" className="border-b border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-100">
+            <div className="mx-auto flex max-w-7xl flex-col gap-2">
+              <div>
+                <h2 id="organisation-access-heading" className="font-semibold">Organisation membership</h2>
+                <p className="text-xs text-slate-300">Enter the organisation ID supplied through your authorised onboarding process. SAFER checks only your exact membership record.</p>
+              </div>
+              <form onSubmit={handleResolveMembership} className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                <label className="flex-1 text-xs font-medium text-slate-300">Organisation ID
+                  <input
+                    value={organisationId}
+                    onChange={(event) => {setOrganisationId(event.target.value); setMembership(null); setMembershipError('');}}
+                    autoComplete="off"
+                    spellCheck={false}
+                    maxLength={128}
+                    pattern="[A-Za-z0-9_-]{1,128}"
+                    aria-describedby="organisation-id-help"
+                    className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-blue-400"
+                    placeholder="Enter organisation ID"
+                  />
+                </label>
+                <button type="submit" disabled={membershipBusy || !organisationId.trim() || !db} className="rounded-lg bg-blue-700 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50">
+                  {membershipBusy ? 'Checking…' : 'Verify membership'}
+                </button>
+              </form>
+              <p id="organisation-id-help" className="text-[11px] text-slate-400">The ID is a locator, not a password or access token. Membership status is held in memory only.</p>
+              {membershipError && <p role="alert" className="text-xs text-red-300">{membershipError}</p>}
+              {membership && <p role="status" className="text-xs text-emerald-300">Verified active membership · Role: {membership.role} · Organisation: {membership.orgId}</p>}
+            </div>
+          </section>
+        )}
         <div className="border-b border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-950">
-          <strong>Data boundary:</strong> Authentication currently gates application access only. Personnel, incident, checklist and other operational records remain browser-local and are not yet tenant-isolated or protected by Firestore rules. Use synthetic demonstration data only until the data migration and access-control phases are complete.
+          <strong>Data boundary:</strong> Authentication and membership verification do not enable cloud operational access. Personnel, incident, checklist and other operational records remain browser-local and are not yet tenant-isolated or protected by a released production Firestore ruleset. Use synthetic demonstration data only; no real personal or operational information.
         </div>
         {children}
       </>
