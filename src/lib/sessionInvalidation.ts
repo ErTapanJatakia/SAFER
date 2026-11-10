@@ -42,7 +42,11 @@ function getChannel(): BroadcastChannel | null {
  */
 export function publishSessionInvalidation(): void {
   const nonce = createNonce();
-  getChannel()?.postMessage({ type: 'session-invalidated', nonce } satisfies SessionInvalidationMessage);
+  try {
+    getChannel()?.postMessage({ type: 'session-invalidated', nonce } satisfies SessionInvalidationMessage);
+  } catch {
+    // Fall through to the storage-event transport if BroadcastChannel is unavailable.
+  }
 
   if (typeof window === 'undefined') return;
   try {
