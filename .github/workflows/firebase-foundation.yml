@@ -76,6 +76,9 @@ jobs:
       - name: AuthGate membership UI tests
         run: npm run test:auth-membership-ui
 
+      - name: Operational data-boundary unit tests
+        run: npm run test:data-boundary
+
       - name: Dependency security audit
         run: npm audit --omit=dev --audit-level=high
 
