@@ -10,6 +10,7 @@ import {
   MANDATORY_LEGAL_DISCLAIMER,
 } from './readinessRules.ts';
 import type { QualificationItem, PersonnelRecord } from '../types/index.ts';
+import { getCurrentISODate } from './dateUtils.ts';
 
 test('getDaysDifference computes correct delta', () => {
   assert.equal(getDaysDifference('2026-10-20', '2026-10-15'), 5);
@@ -205,4 +206,20 @@ test('generatePlainEnglishPersonnelSummary satisfies safety boundary and disclai
   assert.match(summary, /medical fitness/i);
   assert.match(summary, /suitability for deployment/i);
   assert.match(summary, /legal eligibility/i);
+});
+
+test('evaluateCertification defaults to the current local date', () => {
+  const today = getCurrentISODate();
+  const cert: QualificationItem = {
+    id: 'current-date-default',
+    name: 'Date-bound qualification',
+    completionDate: today,
+    expiryDate: today,
+    verificationStatus: 'Verified',
+    issuer: 'Test issuer',
+    verificationId: 'TEST-001',
+  };
+  const result = evaluateCertification(cert);
+  assert.equal(result.status, 'EXPIRING_SOON');
+  assert.equal(result.daysRemaining, 0);
 });
