@@ -2,6 +2,17 @@
  * Date utility helpers supporting DD-MM-YYYY input, display, and validation.
  */
 
+/**
+ * Returns the current local calendar date as YYYY-MM-DD.
+ * Local getters avoid shifting the date around midnight through UTC conversion.
+ */
+export function getCurrentISODate(date: Date = new Date()): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function isValidDDMMYYYY(str: string): boolean {
   if (!str || typeof str !== 'string') return false;
   const match = str.trim().match(/^(\d{2})-(\d{2})-(\d{4})$/);
