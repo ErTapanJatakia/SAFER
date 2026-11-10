@@ -79,6 +79,9 @@ jobs:
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
+      - name: Demo Guest repository tests
+        run: npm run test:demo-repository
+
       - name: Session lifecycle invalidation tests
         run: npm run test:session-lifecycle
 
