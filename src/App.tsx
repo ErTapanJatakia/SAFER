@@ -452,7 +452,7 @@ export default function App() {
             ...item,
             completed,
             status,
-            lastChecked: getCurrentISODate();
+            lastChecked: getCurrentISODate(),
           };
         }
         return item;
