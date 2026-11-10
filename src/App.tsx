@@ -462,7 +462,7 @@ export default function App() {
   };
 
   const handleRunCyberAudit = () => {
-    const today = '2026-10-15';
+    const today = getCurrentISODate();
     setCyberItems((prev) =>
       prev.map((item) => ({
         ...item,
