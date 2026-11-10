@@ -5,7 +5,7 @@ import {
   completeTenantResolution, enterDemoGuest, signedOutState,
   type DemoRepository,
 } from './dataBoundary.ts';
-import { createRevocableDemoRepository, selectDemoWorkspaceRepository } from './demoWorkspace.ts';
+import { createRevocableDemoRepository, selectDemoWorkspaceRepository, type DemoWorkspaceRepository } from './demoWorkspace.ts';
 import { createDemoRepository, type DemoStorage } from './demoRepository.ts';
 import { INITIAL_PERSONNEL } from '../data/mockData.ts';
 
@@ -71,6 +71,25 @@ describe('revocable Demo Guest repository capability', () => {
     assert.throws(() => guarded.loadSnapshot(), /session has ended/);
     await assert.rejects(guarded.listPersonnel(), /session has ended/);
     assert.equal(storage.calls.length, beforeRevocation);
+  });
+
+  it('does not deliver an in-flight read result after the session is revoked', async () => {
+    let active = true;
+    let completeRead!: (records: readonly typeof INITIAL_PERSONNEL[number][]) => void;
+    const pendingRead = new Promise<readonly typeof INITIAL_PERSONNEL[number][]>((resolve) => {
+      completeRead = resolve;
+    });
+    const raw = createDemoRepository(trackedStorage());
+    const delayed: DemoWorkspaceRepository = {
+      ...raw,
+      listPersonnel: () => pendingRead,
+    };
+    const guarded = createRevocableDemoRepository(delayed, () => active);
+
+    const result = guarded.listPersonnel();
+    active = false;
+    completeRead(INITIAL_PERSONNEL);
+    await assert.rejects(result, /session has ended/);
   });
 
   it('rejects retained writes and reset after sign-out without changing stored records', async () => {
