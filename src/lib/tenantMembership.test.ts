@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { assertFails, initializeTestEnvironment, type RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, type Firestore } from 'firebase/firestore';
 import {
   parseTenantMembership,
   resolveTenantMembership,
@@ -38,7 +38,7 @@ test('resolves only the caller exact active membership for every supported role'
     const uid = 'resolver-' + role;
     const orgId = 'resolver-org-' + role;
     await seedMembership(orgId, uid, { role });
-    const database = testEnv.authenticatedContext(uid).firestore();
+    const database = testEnv.authenticatedContext(uid).firestore() as unknown as Firestore;
     const result = await resolveTenantMembership(database, { uid }, orgId);
     assert.deepEqual(result, { uid, orgId, role, status: 'active' });
     assert.equal(Object.isFrozen(result), true);
@@ -46,7 +46,7 @@ test('resolves only the caller exact active membership for every supported role'
 });
 
 test('rejects unauthenticated users and unsafe organisation locators', async () => {
-  const database = testEnv.unauthenticatedContext().firestore();
+  const database = testEnv.unauthenticatedContext().firestore() as unknown as Firestore;
   await assert.rejects(
     resolveTenantMembership(database, null, 'org-safe'),
     (error: unknown) => error instanceof TenantMembershipError && error.code === 'unauthenticated',
@@ -62,7 +62,7 @@ test('rejects unauthenticated users and unsafe organisation locators', async () 
 });
 
 test('fails closed when membership is absent or denied by Firestore Rules', async () => {
-  const database = testEnv.authenticatedContext('no-membership').firestore();
+  const database = testEnv.authenticatedContext('no-membership').firestore() as unknown as Firestore;
   await assert.rejects(
     resolveTenantMembership(database, { uid: 'no-membership' }, 'missing-org'),
     (error: unknown) => error instanceof TenantMembershipError && error.code === 'membership-unavailable',
@@ -79,7 +79,7 @@ test('Rules deny malformed membership documents before resolver parsing', async 
 
   for (const fixture of fixtures) {
     await seedMembership(fixture.orgId, fixture.uid, fixture.fields);
-    const database = testEnv.authenticatedContext(fixture.uid).firestore();
+    const database = testEnv.authenticatedContext(fixture.uid).firestore() as unknown as Firestore;
     await assertFails(
       getDoc(doc(database, 'organisations', fixture.orgId, 'members', fixture.uid)),
     );
