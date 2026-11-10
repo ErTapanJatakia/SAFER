@@ -16,12 +16,12 @@ export function DemoGuestWorkspaceProvider({ accessState, children }: ProviderPr
   if (accessState.kind !== 'demo_guest') {
     return <main role="alert">The operational workspace is unavailable for this session.</main>;
   }
-  return <AuthorizedDemoGuestWorkspace>{children}</AuthorizedDemoGuestWorkspace>;
+  return <AuthorizedDemoGuestWorkspace accessState={accessState}>{children}</AuthorizedDemoGuestWorkspace>;
 }
 
-function AuthorizedDemoGuestWorkspace({ children }: { children: React.ReactNode }) {
+function AuthorizedDemoGuestWorkspace({ accessState, children }: { accessState: DataAccessState; children: React.ReactNode }) {
   const repository = useMemo(() => createDemoRepository(window.localStorage), []);
-  const selection = selectDemoWorkspaceRepository({ kind: 'demo_guest', generation: 1 }, repository);
+  const selection = selectDemoWorkspaceRepository(accessState, repository);
   if (selection.kind !== 'demo') {
     return <main role="alert">The operational workspace is unavailable for this session.</main>;
   }
