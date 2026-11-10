@@ -13,6 +13,13 @@ export function getCurrentISODate(date: Date = new Date()): string {
   return `${year}-${month}-${day}`;
 }
 
+/** Returns the current local date and time as YYYY-MM-DD HH:mm. */
+export function getCurrentLocalDateTime(date: Date = new Date()): string {
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${getCurrentISODate(date)} ${hours}:${minutes}`;
+}
+
 export function isValidDDMMYYYY(str: string): boolean {
   if (!str || typeof str !== 'string') return false;
   const match = str.trim().match(/^(\d{2})-(\d{2})-(\d{4})$/);
