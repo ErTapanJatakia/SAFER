@@ -13,7 +13,7 @@ const makeUser=(uid:string)=>({uid,email:uid+'@example.test',emailVerified:true}
 let dom: JSDOM, root:Root, host:HTMLElement, listener:((user:ReturnType<typeof makeUser>|null)=>void)|undefined;
 const flush=async()=>{await act(async()=>{await Promise.resolve();await Promise.resolve();});};
 const button=(name:string)=>[...host.querySelectorAll('button')].find(b=>b.textContent?.trim()===name) as HTMLButtonElement;
-const change=(el:HTMLInputElement,value:string)=>{const setter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')?.set; setter?.call(el,value); el.dispatchEvent(new dom.window.Event('input',{bubbles:true}));el.dispatchEvent(new dom.window.Event('change',{bubbles:true}));};
+const change=(el:HTMLInputElement,value:string)=>{const setter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')?.set; if (setter) setter.call(el,value); el.dispatchEvent(new dom.window.Event('input',{bubbles:true}));el.dispatchEvent(new dom.window.Event('change',{bubbles:true}));};
 const submit=(form:HTMLFormElement)=>form.dispatchEvent(new dom.window.Event('submit',{bubbles:true,cancelable:true}));
 const auth=(user:ReturnType<typeof makeUser>|null)=>{act(()=>listener?.(user));};
 beforeEach(async()=>{
