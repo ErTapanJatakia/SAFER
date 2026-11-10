@@ -1,5 +1,5 @@
 import type { QualificationItem, PersonnelRecord, AdministrativeReadinessStatus, VerificationStatus } from '../types/index.ts';
-import { toYYYYMMDD, toDDMMYYYY } from './dateUtils.ts';
+import { toYYYYMMDD, toDDMMYYYY, getCurrentISODate } from './dateUtils.ts';
 
 /**
  * Calculates days difference between target date and base date.
@@ -22,7 +22,7 @@ export type CertExpiryStatus = 'EXPIRED' | 'EXPIRING_SOON' | 'CURRENT' | 'NON_EX
  */
 export function evaluateCertification(
   cert: QualificationItem,
-  referenceDateStr: string = '2026-10-15'
+  referenceDateStr: string = getCurrentISODate()
 ): { status: CertExpiryStatus; daysRemaining: number | null } {
   if (!cert.expiryDate) {
     return { status: 'NON_EXPIRING', daysRemaining: null };
@@ -47,7 +47,7 @@ export type RecordIndicatorStatus = 'VALID' | 'EXPIRING' | 'EXPIRED' | 'UNVERIFI
  */
 export function evaluatePersonnelReadiness(
   personnel: PersonnelRecord,
-  referenceDateStr: string = '2026-10-15'
+  referenceDateStr: string = getCurrentISODate()
 ): {
   status: AdministrativeReadinessStatus;
   indicator: RecordIndicatorStatus;
@@ -182,7 +182,7 @@ export interface OperationalMetrics {
 
 export function computeOperationalMetrics(
   roster: PersonnelRecord[],
-  referenceDateStr: string = '2026-10-15'
+  referenceDateStr: string = getCurrentISODate()
 ): OperationalMetrics {
   let expiredCertsCount = 0;
   let expiringSoonCertsCount = 0;
@@ -238,7 +238,7 @@ export const MANDATORY_LEGAL_DISCLAIMER =
  */
 export function generatePlainEnglishPersonnelSummary(
   person: PersonnelRecord,
-  referenceDateStr: string = '2026-10-15'
+  referenceDateStr: string = getCurrentISODate()
 ): string {
   const readiness = evaluatePersonnelReadiness(person, referenceDateStr);
   const certs = person.certifications || [];
@@ -318,7 +318,7 @@ export function generatePlainEnglishPersonnelSummary(
  */
 export function generatePlainEnglishRosterSummary(
   roster: PersonnelRecord[],
-  referenceDateStr: string = '2026-10-15'
+  referenceDateStr: string = getCurrentISODate()
 ): string {
   const metrics = computeOperationalMetrics(roster, referenceDateStr);
   const lines: string[] = [];
