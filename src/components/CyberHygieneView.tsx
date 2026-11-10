@@ -111,7 +111,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
   };
 
   const handleDownloadSummary = () => {
-    const text = generateCyberHygieneSummary(items, '2026-10-15');
+    const text = generateCyberHygieneSummary(items);
     const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -846,7 +846,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
           </div>
 
           <div className="bg-slate-900 text-slate-100 p-6 rounded-lg border border-slate-800 font-mono text-xs leading-relaxed overflow-x-auto whitespace-pre-wrap selection:bg-blue-600 selection:text-white">
-            {generateCyberHygieneSummary(items, '2026-10-15')}
+            {generateCyberHygieneSummary(items)}
           </div>
         </div>
       )}
