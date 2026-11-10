@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useRef } from 'react';
+import React, { createContext, useContext, useLayoutEffect, useMemo, useRef } from 'react';
 import { createDemoRepository } from '../lib/demoRepository.ts';
 import { createRevocableDemoRepository, selectDemoWorkspaceRepository } from '../lib/demoWorkspace.ts';
 import type { DemoWorkspaceRepository } from '../lib/demoWorkspace.ts';
@@ -21,10 +21,11 @@ export function DemoGuestWorkspaceProvider({ accessState, children }: ProviderPr
 
 function AuthorizedDemoGuestWorkspace({ accessState, children }: { accessState: DataAccessState; children: React.ReactNode }) {
   const activeRef = useRef(true);
-  useEffect(() => {
+  useLayoutEffect(() => {
     activeRef.current = true;
     return () => {
-      // Revoke retained repository references as soon as this session boundary exits.
+      // Layout cleanup revokes the capability during the unmount commit,
+      // before passive effects and before the browser can paint the next state.
       activeRef.current = false;
     };
   }, []);
