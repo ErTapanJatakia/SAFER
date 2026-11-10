@@ -82,6 +82,9 @@ jobs:
       - name: Demo Guest repository tests
         run: npm run test:demo-repository
 
+      - name: Demo Guest repository-boundary tests
+        run: npm run test:demo-workspace
+
       - name: Session lifecycle invalidation tests
         run: npm run test:session-lifecycle
 
