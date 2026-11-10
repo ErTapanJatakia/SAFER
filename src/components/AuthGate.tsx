@@ -293,6 +293,13 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
     setDemoGuest(false);
     if (!firebaseAuth) return;
     void signOut(firebaseAuth).catch(() => {
+      // Firebase may still hold the same authenticated identity when sign-out
+      // fails. Restore the in-memory lifecycle to match that verified state;
+      // never infer a session from stale React state alone.
+      const currentUid = firebaseAuth.currentUser?.uid;
+      if (currentUid && user?.uid === currentUid) {
+        sessionLifecycleRef.current.startAuthenticated(currentUid);
+      }
       setError('Unable to complete sign-out. Please retry.');
     });
   };
