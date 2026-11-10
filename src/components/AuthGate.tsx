@@ -53,8 +53,9 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
   useEffect(() => subscribeToSessionInvalidation(() => {
     // A different tab crossed an account/session boundary. Revoke the local
     // Demo Guest capability immediately; never carry its workspace forward.
-    sessionLifecycleRef.current.beginSignOut();
-    sessionLifecycleRef.current.endSession();
+    // Invalidate pending membership work but retain the still-valid Firebase
+    // identity so this tab can perform a fresh membership check.
+    sessionLifecycleRef.current.invalidate();
     setMembershipBusy(false);
     setMembership(null);
     setOrganisationId('');
