@@ -72,6 +72,9 @@ jobs:
       - name: Firestore Security Rules Emulator tests
         run: npm run test:firestore-rules
 
+      - name: Tenant membership resolver Emulator tests
+        run: npm run test:tenant-membership
+
       - name: Dependency security audit
         run: npm audit --omit=dev --audit-level=high
 

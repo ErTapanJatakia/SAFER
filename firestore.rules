@@ -223,6 +223,8 @@ service cloud.firestore {
         // This is a locator-bound read, not tenant discovery or role management.
         allow get: if signedIn()
           && request.auth.uid == uid
+          && resource.data.keys().hasOnly(['uid', 'orgId', 'role', 'status'])
+          && resource.data.keys().hasAll(['uid', 'orgId', 'role', 'status'])
           && resource.data.uid == uid
           && resource.data.orgId == orgId
           && resource.data.status == 'active'
