@@ -16,7 +16,7 @@ const makeUser=(uid:string)=>({uid,email:uid+'@example.test',emailVerified:true}
 let retainedRepository: DemoWorkspaceRepository | null = null;
 const StorageProbe=()=>{const repository=useDemoWorkspaceRepository();retainedRepository=repository;const [stored]=React.useState(()=>window.localStorage.getItem('prot_ops_personnel_v2'));return <div>Operational app shell {stored||''}</div>;};
 
-let dom: JSDOM, root:Root, host:HTMLElement, listener:((user:ReturnType<typeof makeUser>|null)=>void)|undefined;
+let dom: JSDOM, root:Root, host:HTMLElement, listener:((user:ReturnType<typeof makeUser>|null)=>void)|undefined, authError:((error:Error)=>void)|undefined;
 const flush=async()=>{await act(async()=>{await Promise.resolve();await Promise.resolve();});};
 const button=(name:string)=>[...host.querySelectorAll('button')].find(b=>b.textContent?.trim()===name) as HTMLButtonElement;
 const change=(el:HTMLInputElement,value:string)=>{const setter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')?.set; if (setter) setter.call(el,value); el.dispatchEvent(new dom.window.Event('input',{bubbles:true}));el.dispatchEvent(new dom.window.Event('change',{bubbles:true}));};
@@ -25,8 +25,8 @@ const auth=(user:ReturnType<typeof makeUser>|null)=>{act(()=>listener?.(user));}
 beforeEach(async()=>{
  dom=new JSDOM('<!doctype html><html><body></body></html>',{url:'http://localhost'});
  Object.assign(globalThis,{window:dom.window,document:dom.window.document,navigator:dom.window.navigator,HTMLElement:dom.window.HTMLElement,HTMLInputElement:dom.window.HTMLInputElement,Event:dom.window.Event,IS_REACT_ACT_ENVIRONMENT:true});
- host=document.createElement('div');document.body.append(host);root=createRoot(host);listener=undefined;retainedRepository=null;
- vi.mocked(onAuthStateChanged).mockImplementation((_auth,cb)=>{listener=cb as typeof listener;listener!(null);return vi.fn();});
+ host=document.createElement('div');document.body.append(host);root=createRoot(host);listener=undefined;authError=undefined;retainedRepository=null;
+ vi.mocked(onAuthStateChanged).mockImplementation((_auth,cb,error)=>{listener=cb as typeof listener;authError=error as typeof authError;listener!(null);return vi.fn();});
  vi.mocked(signOut).mockImplementation(async()=>{listener?.(null);});
  await act(async()=>{root.render(<AuthGate><StorageProbe /></AuthGate>);});
  await flush();
@@ -109,6 +109,22 @@ describe('AuthGate membership session handling',()=>{
  });
  it('clears membership on account switch and sign-out',async()=>{vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'admin',status:'active'});auth(makeUser('user-a'));await flush();let field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();expect(host.textContent).toContain('Role: admin');auth(makeUser('user-b'));await flush();expect(host.textContent).not.toContain('Role: admin');field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;expect(field.value).toBe('');change(field,'org-b');await flush();submit(field.closest('form')!);await flush();expect(host.textContent).toContain('Role: admin');button('Sign out').click();await flush();expect(host.textContent).not.toContain('Role: admin');expect(host.textContent).toContain('Continue as Demo Guest');expect(resolveTenantMembership).toHaveBeenCalledTimes(2);});
 
+ it('revokes Demo Guest access and pending authority when the auth observer errors',async()=>{
+  const read=vi.spyOn(dom.window.Storage.prototype,'getItem');
+  const publish=vi.spyOn(sessionInvalidation,'publishSessionInvalidation');
+  button('Continue as Demo Guest').click();await flush();
+  expect(host.textContent).toContain('Operational app shell');
+  expect(retainedRepository).not.toBeNull();
+  act(()=>authError?.(new Error('auth observer unavailable')));
+  await flush();
+  expect(host.textContent).toContain('Continue as Demo Guest');
+  expect(host.textContent).not.toContain('Operational app shell');
+  expect(host.textContent).toContain('Unable to verify the current account session.');
+  expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);
+  expect(read).toHaveBeenCalledTimes(1);
+  expect(publish).toHaveBeenCalledTimes(1);
+  publish.mockRestore();
+ });
  it('does not resurrect a previous Demo Guest workspace after an auth identity appears and signs out',async()=>{
   const read=vi.spyOn(dom.window.Storage.prototype,'getItem');
   button('Continue as Demo Guest').click();await flush();

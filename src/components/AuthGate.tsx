@@ -100,7 +100,12 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       }
       setLoading(false);
     }, () => {
+      // An observer failure makes the account state uncertain. Revoke every
+      // local workspace capability and invalidate work in this and peer tabs.
       sessionLifecycleRef.current.endSession();
+      lastAuthUidRef.current = null;
+      setDemoGuest(false);
+      publishSessionInvalidation();
       setMembership(null);
       setOrganisationId('');
       setMembershipBusy(false);
