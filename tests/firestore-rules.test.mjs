@@ -103,6 +103,7 @@ test("unauthenticated clients cannot access tenant or profile documents", async 
   const db = testEnv.unauthenticatedContext().firestore();
   await assertFails(getDoc(doc(db, "users/user-a")));
   await assertFails(getDoc(doc(db, "organisations/org-a")));
+  await assertFails(getDoc(doc(db, "organisations/org-a", "members", "user-a")));
   await assertFails(getDoc(doc(db, "organisations/org-a", "personnel", "person-a")));
   await assertFails(setDoc(doc(db, "organisations/org-a", "incidents", "incident-a"), {}));
 });
@@ -294,10 +295,68 @@ test("immutable creator, tenant, and record identifiers cannot be changed", asyn
   }));
 });
 
+test("users can get only their own active, valid membership across supported roles", async () => {
+  for (const role of ["owner", "admin", "manager", "viewer"]) {
+    const uid = `self-${role}`;
+    const orgId = `self-org-${role}`;
+    await seedTenant({ orgId, uid, role });
+    const db = dbFor(uid);
+    await assertSucceeds(getDoc(doc(db, "organisations", orgId, "members", uid)));
+    await assertFails(getDoc(doc(db, "organisations", orgId, "members", "someone-else")));
+    await assertFails(getDocs(collection(db, `organisations/${orgId}/members`)));
+    await assertFails(setDoc(doc(db, "organisations", orgId, "members", uid), {
+      uid, orgId, role: "owner", status: "active",
+    }));
+    await assertFails(updateDoc(doc(db, "organisations", orgId, "members", uid), {
+      role: "owner",
+    }));
+    await assertFails(deleteDoc(doc(db, "organisations", orgId, "members", uid)));
+  }
+});
+
+test("self-membership get fails closed for invalid membership or organisation trust anchors", async () => {
+  const fixtures = [
+    { orgId: "self-inactive-member", uid: "inactive-member", role: "owner", membershipStatus: "suspended" },
+    { orgId: "self-revoked-member", uid: "revoked-member", role: "owner", membershipStatus: "revoked" },
+    { orgId: "self-invalid-role", uid: "invalid-role", role: "platform-admin" },
+    { orgId: "self-suspended-org", uid: "suspended-org-member", role: "owner", organisationStatus: "suspended" },
+  ];
+  for (const fixture of fixtures) {
+    await seedTenant(fixture);
+    const db = dbFor(fixture.uid);
+    await assertFails(getDoc(doc(db, "organisations", fixture.orgId, "members", fixture.uid)));
+  }
+
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, "organisations/self-mismatch-uid"), {
+      orgId: "self-mismatch-uid", displayName: "Synthetic", status: "active", schemaVersion: 1,
+    });
+    await setDoc(doc(db, "organisations/self-mismatch-uid/members/mismatch-user"), {
+      uid: "different-user", orgId: "self-mismatch-uid", role: "owner", status: "active",
+    });
+    await setDoc(doc(db, "organisations/self-mismatch-org"), {
+      orgId: "another-org", displayName: "Synthetic", status: "active", schemaVersion: 1,
+    });
+    await setDoc(doc(db, "organisations/self-mismatch-org/members/mismatch-org-user"), {
+      uid: "mismatch-org-user", orgId: "another-org", role: "owner", status: "active",
+    });
+    await setDoc(doc(db, "organisations/self-missing-parent/members/orphan-user"), {
+      uid: "orphan-user", orgId: "self-missing-parent", role: "owner", status: "active",
+    });
+  });
+
+  await assertFails(getDoc(doc(dbFor("mismatch-user"), "organisations/self-mismatch-uid/members/mismatch-user")));
+  await assertFails(getDoc(doc(dbFor("mismatch-org-user"), "organisations/self-mismatch-org/members/mismatch-org-user")));
+  await assertFails(getDoc(doc(dbFor("orphan-user"), "organisations/self-missing-parent/members/orphan-user")));
+});
+
 test("membership, restricted records, audit events, and unapproved organisation writes remain denied", async () => {
   await seedTenant();
   const db = dbFor("owner-a");
-  await assertFails(getDoc(doc(db, "organisations/org-a", "members", "owner-a")));
+  await assertSucceeds(getDoc(doc(db, "organisations/org-a", "members", "owner-a")));
+  await assertFails(getDoc(doc(db, "organisations/org-a", "members", "attacker")));
+  await assertFails(getDocs(collection(db, "organisations/org-a/members")));
   await assertFails(setDoc(doc(db, "organisations/org-a", "members", "attacker"), {
     uid: "attacker", orgId: "org-a", role: "owner", status: "active",
   }));
