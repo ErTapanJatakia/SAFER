@@ -10,7 +10,7 @@ test('phishing scenario names and email identity fields remain readable', () => 
   assert.match(cyber, /text-\[11px\] break-words \$\{selectedPhishIndex/);
   assert.doesNotMatch(cyber, /font-bold truncate">Scenario/);
   assert.match(cyber, /font-mono text-\[11px\] break-all/);
-  assert.match(cyber, /currentPhish\.subject<\/span>/);
+  assert.match(cyber, /\{currentPhish\.subject\}<\/span>/);
   assert.match(cyber, /currentPhish\.body/);
 });
 
