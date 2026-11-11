@@ -38,7 +38,8 @@
     "test:navbar-mobile-accessibility": "node --test tests/navbar-mobile-accessibility.test.mjs",
     "test:theme-preset-accessibility": "node --test tests/theme-preset-accessibility.test.mjs",
     "test:theme-custom-color-accessibility": "node --test tests/theme-custom-color-accessibility.test.mjs",
-    "test:branding-logo-upload-accessibility": "node --test tests/branding-logo-upload-accessibility.test.mjs",\n    "test:branding-settings-form-accessibility": "node --test tests/branding-settings-form-accessibility.test.mjs"
+    "test:branding-logo-upload-accessibility": "node --test tests/branding-logo-upload-accessibility.test.mjs",
+    "test:branding-settings-form-accessibility": "node --test tests/branding-settings-form-accessibility.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
