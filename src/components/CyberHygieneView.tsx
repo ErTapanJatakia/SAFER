@@ -201,7 +201,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center space-x-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0 self-start md:self-auto">
           <button
             onClick={() => setIsSummaryModalOpen(true)}
             className="inline-flex items-center px-3 py-2 text-xs font-semibold rounded-md bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition shadow-xs space-x-1.5"
@@ -428,7 +428,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
                 value={domainFilter}
                 onChange={(e) => setDomainFilter(e.target.value as any)}
                 aria-label="Filter by Defensive Domain"
-                className="px-2.5 py-1 text-xs border border-slate-300 rounded-md bg-white text-slate-700 font-medium max-w-[220px] truncate"
+                className="px-2.5 py-1 text-xs border border-slate-300 rounded-md bg-white text-slate-700 font-medium max-w-full sm:max-w-[220px] truncate"
               >
                 <option value="All">All 10 Domains</option>
                 {ALL_CYBER_DOMAINS.map((dom) => (
@@ -523,7 +523,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
                       </div>
 
                       {/* Right: Status Badge & Quick Status Switch */}
-                      <div className="flex items-center space-x-2 shrink-0 self-end sm:self-auto">
+                      <div className="flex flex-wrap items-center gap-2 shrink-0 self-start sm:self-auto">
                         <button
                           onClick={() => onUpdateStatus(item.id, isCompleted ? 'Outstanding' : 'Completed')}
                           aria-label={`Mark ${item.title} as ${isCompleted ? 'Outstanding' : 'Completed'}`}
@@ -844,7 +844,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
             </div>
           </div>
 
-          <div className="bg-slate-900 text-slate-100 p-6 rounded-lg border border-slate-800 font-mono text-xs leading-relaxed overflow-x-auto whitespace-pre-wrap selection:bg-blue-600 selection:text-white">
+          <div className="bg-slate-900 text-slate-100 p-4 sm:p-6 rounded-lg border border-slate-800 font-mono text-xs leading-relaxed max-w-full overflow-x-hidden whitespace-pre-wrap break-words selection:bg-blue-600 selection:text-white">
             {generateCyberHygieneSummary(items, '2026-10-15')}
           </div>
         </div>
