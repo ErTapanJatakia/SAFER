@@ -132,14 +132,14 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
     <div className="space-y-6 pb-12">
       {/* Section Header */}
       <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <div className="flex items-start flex-wrap gap-2 min-w-0">
             <FileText className="w-5 h-5 text-blue-900" />
             <h2 className="text-lg font-bold text-slate-900 min-w-0 break-words">
               Administrative & Operational Incident Reports
             </h2>
           </div>
-          <p className="text-xs text-slate-600 mt-1 max-w-2xl">
+          <p className="text-xs text-slate-600 mt-1 max-w-2xl break-words">
             Input field observations to generate a 10-point structured incident draft.
             Preserves the distinction between reported facts, unverified claims, and review prompts without automated legal conclusions.
           </p>
@@ -166,16 +166,16 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
 
       {/* Structured Draft Generator Callout Banner */}
       <div className="bg-slate-900 text-white rounded-lg p-4 sm:p-5 shadow-xs border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center space-x-2">
+        <div className="space-y-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2 min-w-0">
             <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-blue-900 text-blue-200 border border-blue-700 font-bold">
               10-Field Schema Active
             </span>
-            <span className="font-bold text-sm text-slate-100">
+            <span className="font-bold text-sm text-slate-100 min-w-0 break-words">
               Convert Raw Incident Notes into Standardized Drafts
             </span>
           </div>
-          <p className="text-xs text-slate-300 leading-relaxed max-w-2xl">
+          <p className="text-xs text-slate-300 leading-relaxed max-w-2xl break-words">
             Formats chronological facts, user-reported actions, witness information, evidence references, outstanding missing data, and human review items. Never invents timestamps or evidence.
           </p>
         </div>
@@ -204,12 +204,12 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
           />
         </div>
 
-        <div className="w-full sm:w-auto flex items-center space-x-2">
+        <div className="w-full sm:w-auto flex flex-wrap items-center gap-2 min-w-0">
           <label className="text-xs font-medium text-slate-600">Category:</label>
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="px-2.5 py-1.5 border border-slate-300 rounded-md text-xs bg-white text-slate-700 font-medium"
+            className="w-full sm:w-auto min-w-0 px-2.5 py-1.5 border border-slate-300 rounded-md text-xs bg-white text-slate-700 font-medium"
           >
             <option value="ALL">All Categories</option>
             <option value="Access Control Anomaly">Access Control Anomaly</option>
@@ -232,11 +232,11 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
           filteredIncidents.map((inc) => (
             <div
               key={inc.id}
-              className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs hover:border-slate-300 transition space-y-3.5"
+              className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs hover:border-slate-300 transition space-y-3.5 min-w-0"
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="flex items-center space-x-2">
-                  <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-900 text-white">
+                <div className="flex flex-wrap items-center gap-2 min-w-0">
+                  <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-900 text-white break-all">
                     {inc.referenceNumber}
                   </span>
                   <span className="text-xs font-semibold text-slate-400">&bull;</span>
@@ -266,9 +266,9 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
                 </div>
               </div>
 
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">{inc.title}</h3>
-                <p className="text-xs text-slate-700 mt-1 leading-relaxed">{inc.summary}</p>
+              <div className="min-w-0">
+                <h3 className="text-sm font-bold text-slate-900 break-words">{inc.title}</h3>
+                <p className="text-xs text-slate-700 mt-1 leading-relaxed break-words">{inc.summary}</p>
               </div>
 
               {/* 10-Field Structured Badge indicators if draft exists */}
@@ -302,7 +302,7 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
                 </div>
 
                 {/* Actions: Open Draft Workspace, Copy Draft Text, Workflow Status */}
-                <div className="flex items-center space-x-2">
+                <div className="flex flex-wrap items-center gap-2 min-w-0">
                   <button
                     onClick={() => handleOpenDraftGenerator(inc)}
                     className="px-2.5 py-1 bg-blue-50 text-blue-900 border border-blue-200 hover:bg-blue-100 rounded text-xs font-semibold flex items-center space-x-1"
@@ -354,23 +354,23 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
       {/* Standard Quick Log Modal */}
       {isLogModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full flex flex-col border border-slate-200">
-            <div className="px-6 py-4 bg-slate-900 text-white rounded-t-xl flex items-center justify-between border-b border-slate-800">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] min-w-0 overflow-y-auto flex flex-col border border-slate-200">
+            <div className="px-4 sm:px-6 py-4 bg-slate-900 text-white rounded-t-xl flex flex-wrap items-center justify-between gap-2 border-b border-slate-800">
               <h3 className="font-bold text-sm text-white">Log Operational Incident</h3>
               <button onClick={() => setIsLogModalOpen(false)} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreate} noValidate className="p-6 space-y-4 text-xs">
+            <form onSubmit={handleCreate} noValidate className="p-4 sm:p-6 space-y-4 text-xs min-w-0">
               {formError && (
                 <div className="p-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-md flex items-center space-x-2">
                   <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
                   <span>{formError}</span>
                 </div>
               )}
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">
+              <div className="min-w-0">
+                <label className="block font-semibold text-slate-700 mb-1 break-words">
                   Incident Title <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -383,9 +383,9 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Incident Category</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
+                <div className="min-w-0">
+                  <label className="block font-semibold text-slate-700 mb-1 break-words">Incident Category</label>
                   <select
                     value={incidentType}
                     onChange={(e) => setIncidentType(e.target.value as IncidentReport['incidentType'])}
@@ -452,7 +452,7 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
                 ></textarea>
               </div>
 
-              <div className="pt-2 flex items-center justify-end space-x-2">
+              <div className="pt-2 flex flex-wrap items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsLogModalOpen(false)}

@@ -124,6 +124,9 @@ jobs:
       - name: Readiness scenario and sign-off readability tests
         run: npm run test:readiness-scenario-signoff
 
+      - name: Incident report content readability tests
+        run: npm run test:incident-report-content
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
