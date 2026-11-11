@@ -79,10 +79,10 @@ export const ReadinessSummaryModal: React.FC<ReadinessSummaryModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col border border-slate-300">
+      <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] min-w-0 flex flex-col border border-slate-300">
         {/* Header */}
-        <div className="px-6 py-4 bg-slate-900 text-white rounded-t-xl flex items-center justify-between border-b border-slate-800">
-          <div className="flex items-center space-x-2.5">
+        <div className="px-4 sm:px-6 py-4 bg-slate-900 text-white rounded-t-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800">
+          <div className="flex items-start space-x-2.5 min-w-0">
             <div className="w-8 h-8 rounded bg-blue-900/80 border border-blue-700 flex items-center justify-center text-blue-200">
               <FileText className="w-4 h-4" />
             </div>
@@ -168,15 +168,15 @@ export const ReadinessSummaryModal: React.FC<ReadinessSummaryModalProps> = ({
         </div>
 
         {/* Content Body: Monospaced Text Readout */}
-        <div className="p-6 overflow-y-auto flex-1 bg-slate-900 text-slate-100 font-mono text-xs leading-relaxed select-text">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-900 text-slate-100 font-mono text-xs leading-relaxed select-text min-w-0">
           <pre className="whitespace-pre-wrap font-mono text-[11px] sm:text-xs">
             {currentSummary}
           </pre>
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 bg-slate-50 border-t border-slate-200 rounded-b-xl flex items-center justify-between text-xs text-slate-500">
-          <span className="flex items-center">
+        <div className="px-4 sm:px-6 py-3 bg-slate-50 border-t border-slate-200 rounded-b-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500">
+          <span className="flex items-start min-w-0">
             <Info className="w-3.5 h-3.5 mr-1 text-slate-400" />
             Plain-English format for supervisory briefings and compliance records
           </span>
