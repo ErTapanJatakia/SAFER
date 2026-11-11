@@ -156,6 +156,9 @@ jobs:
       - name: Branding tab selected-state accessibility tests
         run: npm run test:branding-tab-state
 
+      - name: Branding corner-position accessibility tests
+        run: npm run test:branding-corner-position
+
 
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
