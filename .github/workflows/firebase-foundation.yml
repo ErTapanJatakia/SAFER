@@ -145,6 +145,9 @@ jobs:
       - name: Custom theme colour control accessibility tests
         run: npm run test:theme-custom-color-accessibility
 
+      - name: Branding logo upload accessibility tests
+        run: npm run test:branding-logo-upload-accessibility
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
