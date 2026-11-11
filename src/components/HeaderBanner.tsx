@@ -50,7 +50,7 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
 
       {/* Required Prototype Demonstration Banner */}
       <div className="bg-slate-950 px-4 py-2 text-xs font-medium text-slate-300 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
           {/* Permanently visible clickable text link */}
           <button
             type="button"
@@ -67,7 +67,7 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
         </div>
 
         {/* Presentation Controls: Accessibility, Theme, Branding */}
-        <div className="flex items-center space-x-2 sm:space-x-3 text-xs">
+        <div className="flex flex-wrap items-center justify-end gap-2 min-w-0 text-xs">
           <button
             type="button"
             onClick={onOpenAccessibility}
@@ -111,7 +111,7 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
       {/* Main Header Brand & Safety Principle Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 min-w-0">
             {/* Top Logo Positioned Top-Left if selected */}
             {showTopLogoLeft && (
               <div className="shrink-0 bg-white/10 p-1 rounded-md border border-white/20">
@@ -128,31 +128,31 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
           </div>
 
           {/* Right Header items (Status Badges + Optional Top-Right Logo) */}
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap min-w-0">
             {/* Real-time Readiness & Human Review Status Indicators */}
-            <div className="bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-1.5 flex items-center gap-2 text-xs">
+            <div className="bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-1.5 flex items-center gap-2 text-xs min-w-0">
               <AlertTriangle
-                className={`w-4 h-4 ${
+                className={`w-4 h-4 shrink-0 ${
                   expiredCertsCount > 0 ? 'text-rose-400' : 'text-slate-400'
                 }`}
               />
-              <div>
+              <div className="min-w-0">
                 <div className="text-[10px] uppercase text-slate-400 font-medium">Expired Certs</div>
-                <div className="font-semibold text-white">
+                <div className="font-semibold text-white break-words">
                   {expiredCertsCount} {expiredCertsCount === 1 ? 'Action Item' : 'Action Items'}
                 </div>
               </div>
             </div>
 
-            <div className="bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-1.5 flex items-center gap-2 text-xs">
+            <div className="bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-1.5 flex items-center gap-2 text-xs min-w-0">
               <UserCheck
-                className={`w-4 h-4 ${
+                className={`w-4 h-4 shrink-0 ${
                   requiringReviewCount > 0 ? 'text-amber-400' : 'text-teal-400'
                 }`}
               />
-              <div>
+              <div className="min-w-0">
                 <div className="text-[10px] uppercase text-slate-400 font-medium">Human Review Queue</div>
-                <div className="font-semibold text-white">
+                <div className="font-semibold text-white break-words">
                   {requiringReviewCount} Personnel Pending
                 </div>
               </div>
@@ -173,14 +173,14 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
         </div>
 
         {/* Human Mandate Disclaimer Strip */}
-        <div className="mt-3 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
-          <div className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-            <span>
+        <div className="mt-3 pt-2 border-t border-slate-800/80 flex flex-wrap items-start justify-between gap-2 text-[11px] text-slate-400 min-w-0">
+          <div className="flex items-start gap-1.5 min-w-0 flex-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0 mt-1"></span>
+            <span className="min-w-0 break-words">
               <strong className="text-slate-300 font-semibold">Human Review Mandate:</strong> This system does not automatically declare personnel fit or cleared for duty. Status reflects administrative document validity requiring supervisor verification.
             </span>
           </div>
-          <span className="hidden lg:inline text-slate-500 font-mono">
+          <span className="hidden lg:inline text-slate-500 font-mono shrink-0">
             SEC-ADMIN-v1.0.4-MVP
           </span>
         </div>
