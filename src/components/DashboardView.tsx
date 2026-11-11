@@ -65,7 +65,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* Top Banner Notice: Scope & Safety with SAFER Wordmark */}
       <div className="bg-white border border-slate-200 border-l-4 border-l-emerald-600 shadow-xs p-5 rounded-r-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
         <SaferWordmark variant="hero" />
-        <div className="flex items-center space-x-2 shrink-0 self-start md:self-auto">
+        <div className="flex flex-wrap items-center gap-2 shrink-0 self-start md:self-auto">
           <button
             onClick={onOpenAddPersonnel}
             className="inline-flex items-center px-3.5 py-2 text-xs font-semibold rounded-md bg-blue-900 text-white hover:bg-blue-800 transition shadow-xs"
@@ -93,11 +93,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <Users className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3 flex items-baseline justify-between">
+          <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
             <div className="text-2xl font-bold text-slate-900">{metrics.totalPersonnel}</div>
             <span className="text-xs text-slate-500 font-medium">{representedSectorCount} Sectors Represented</span>
           </div>
-          <div className="mt-2 text-xs text-slate-600 border-t border-slate-100 pt-2 flex items-center justify-between">
+          <div className="mt-2 text-sm text-slate-600 border-t border-slate-100 pt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
             <span>Current Documentation:</span>
             <span className="font-semibold text-teal-700">{metrics.docsCurrentCount} on file</span>
           </div>
@@ -113,13 +113,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <UserCheck className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3 flex items-baseline justify-between">
+          <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
             <div className="text-2xl font-bold text-amber-900">{metrics.requiringHumanReviewCount}</div>
-            <span className="text-[11px] font-semibold text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded">
+            <span className="text-xs font-semibold text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded">
               Action Queue
             </span>
           </div>
-          <div className="mt-2 text-xs text-slate-600 border-t border-slate-100 pt-2 flex items-center justify-between">
+          <div className="mt-2 text-sm text-slate-600 border-t border-slate-100 pt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
             <span>Expiring within 45 days:</span>
             <span className="font-semibold text-amber-800">{metrics.expiringSoonCertsCount} certs</span>
           </div>
@@ -135,13 +135,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3 flex items-baseline justify-between">
+          <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
             <div className="text-2xl font-bold text-rose-900">{metrics.expiredCertsCount}</div>
-            <span className="text-[11px] font-semibold text-rose-700 bg-rose-100/70 px-2 py-0.5 rounded">
+            <span className="text-xs font-semibold text-rose-700 bg-rose-100/70 px-2 py-0.5 rounded">
               High Priority
             </span>
           </div>
-          <div className="mt-2 text-xs text-slate-600 border-t border-slate-100 pt-2 flex items-center justify-between">
+          <div className="mt-2 text-sm text-slate-600 border-t border-slate-100 pt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
             <span>Immediate re-qual:</span>
             <span className="font-semibold text-rose-700">Flagged on file</span>
           </div>
@@ -157,7 +157,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <FileCheck2 className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3 flex items-baseline justify-between">
+          <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
             <div className="text-2xl font-bold text-slate-900">
               {metrics.overallTaskCompletionRate}%
             </div>
@@ -227,7 +227,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         <span className="text-xs font-mono text-slate-500">
                           [Call Sign: {person.callSign || person.callsign}]
                         </span>
-                        <span className="text-[11px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">
+                        <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">
                           {person.role}
                         </span>
                       </div>
@@ -244,7 +244,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           return (
                             <span
                               key={c.id}
-                              className={`text-[10px] px-2 py-0.5 rounded font-medium border flex items-center gap-1 ${
+                              className={`text-xs px-2 py-0.5 rounded font-medium border flex items-center gap-1 ${
                                 isExpired
                                   ? 'bg-rose-50 text-rose-800 border-rose-300'
                                   : 'bg-amber-50 text-amber-800 border-amber-300'
@@ -256,7 +256,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           );
                         })}
                         {person.requiresReview && flaggedCerts.length === 0 && (
-                          <span className="text-[10px] px-2 py-0.5 rounded font-medium border bg-amber-50 text-amber-800 border-amber-300">
+                          <span className="text-xs px-2 py-0.5 rounded font-medium border bg-amber-50 text-amber-800 border-amber-300">
                             Supervisory quarterly review pending
                           </span>
                         )}
@@ -264,7 +264,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
 
                     <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 shrink-0">
-                      <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${evalResult.badgeColor}`}>
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${evalResult.badgeColor}`}>
                         {evalResult.label}
                       </span>
                       <button
@@ -280,7 +280,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             )}
           </div>
 
-          <div className="bg-slate-50 px-4 py-3 border-t border-slate-200 text-[11px] text-slate-600 flex items-center justify-between">
+          <div className="bg-slate-50 px-4 py-3 border-t border-slate-200 text-xs text-slate-600 flex items-center justify-between">
             <span>
               <strong>Note:</strong> Items in this queue require supervisor signature before administrative sign-off is completed.
             </span>
@@ -292,21 +292,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="space-y-4">
           {/* Pre-Deployment Readiness Widget */}
           <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
               <div className="flex items-center space-x-2">
                 <FileCheck2 className="w-4 h-4 text-blue-900" />
                 <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                   Pre-Deployment Checklist
                 </h4>
                 {outstandingChecklistCount > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-bold border border-amber-300">
+                  <span className="text-xs px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-bold border border-amber-300">
                     {outstandingChecklistCount} Due
                   </span>
                 )}
               </div>
               <button
                 onClick={() => onNavigate('checklist')}
-                className="text-[11px] text-blue-900 font-semibold hover:underline"
+                className="text-xs text-blue-900 font-semibold hover:underline"
               >
                 Full Checklist
               </button>
@@ -333,7 +333,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
             </div>
             <div className="mt-4 space-y-2 text-xs">
-              {checklistItems.slice(0, 3).map((item) => {
+              {checklistItems.length === 0 ? (\n                <p className="text-sm text-slate-600">No checklist items have been added yet.</p>\n              ) : checklistItems.slice(0, 3).map((item) => {
                 const isComplete = item.status === 'Complete' || item.completed;
                 return (
                   <div key={item.id} className="flex items-start space-x-2 text-slate-700">
@@ -362,20 +362,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
               <button
                 onClick={() => onNavigate('incidents')}
-                className="text-[11px] text-blue-900 font-semibold hover:underline"
+                className="text-xs text-blue-900 font-semibold hover:underline"
               >
                 View All
               </button>
             </div>
             <div className="mt-3 space-y-3">
-              {incidentList.slice(0, 2).map((inc) => (
+              {incidentList.length === 0 ? (\n                <p className="text-sm text-slate-600">No incident records have been added yet.</p>\n              ) : incidentList.slice(0, 2).map((inc) => (
                 <div key={inc.id} className="text-xs space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-slate-900 truncate max-w-[190px]">
                       {inc.title}
                     </span>
                     <span
-                      className={`text-[9px] px-1.5 py-0.2 rounded font-semibold ${
+                      className={`text-xs px-1.5 py-0.2 rounded font-semibold ${
                         inc.priority === 'High Attention'
                           ? 'bg-rose-100 text-rose-800'
                           : 'bg-slate-100 text-slate-700'
@@ -384,7 +384,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       {inc.priority}
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-500 line-clamp-1">{inc.summary}</p>
+                  <p className="text-sm text-slate-600 line-clamp-2">{inc.summary}</p>
                 </div>
               ))}
             </div>
@@ -399,7 +399,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   Defensive Cyber Posture
                 </h4>
               </div>
-              <span className="text-[10px] font-mono bg-teal-900/60 text-teal-300 border border-teal-700/60 px-1.5 py-0.5 rounded">
+              <span className="text-xs font-mono bg-teal-900/60 text-teal-300 border border-teal-700/60 px-1.5 py-0.5 rounded">
                 AUDITED
               </span>
             </div>
