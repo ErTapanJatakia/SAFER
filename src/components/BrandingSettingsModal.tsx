@@ -286,14 +286,15 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
 
             {/* Corner Selector */}
             <div className="space-y-1.5">
-              <label className="block font-semibold text-slate-800">
+              <div id="branding-corner-position-label" className="block font-semibold text-slate-800">
                 Display Corner Position
-              </label>
-              <div className="grid grid-cols-2 gap-3">
+              </div>
+              <div role="group" aria-labelledby="branding-corner-position-label" className="grid grid-cols-2 gap-3">
                 {activeTab === 'top' ? (
                   <>
                     <button
                       type="button"
+                      aria-pressed={topLogo.position === 'top-left'}
                       onClick={() => updateCurrent({ position: 'top-left' })}
                       className={`p-2.5 rounded-lg border text-center font-semibold text-xs transition ${
                         topLogo.position === 'top-left'
@@ -305,6 +306,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
                     </button>
                     <button
                       type="button"
+                      aria-pressed={topLogo.position === 'top-right'}
                       onClick={() => updateCurrent({ position: 'top-right' })}
                       className={`p-2.5 rounded-lg border text-center font-semibold text-xs transition ${
                         topLogo.position === 'top-right'
@@ -319,6 +321,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
                   <>
                     <button
                       type="button"
+                      aria-pressed={bottomLogo.position === 'bottom-left'}
                       onClick={() => updateCurrent({ position: 'bottom-left' })}
                       className={`p-2.5 rounded-lg border text-center font-semibold text-xs transition ${
                         bottomLogo.position === 'bottom-left'
@@ -330,6 +333,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
                     </button>
                     <button
                       type="button"
+                      aria-pressed={bottomLogo.position === 'bottom-right'}
                       onClick={() => updateCurrent({ position: 'bottom-right' })}
                       className={`p-2.5 rounded-lg border text-center font-semibold text-xs transition ${
                         bottomLogo.position === 'bottom-right'
