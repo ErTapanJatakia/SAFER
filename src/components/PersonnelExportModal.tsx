@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import type { PersonnelRecord } from '../types/index.ts';
 import {
   type ExportFormat,
@@ -78,6 +78,11 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
 
   // Redacted field keys state
   const [redactedKeys, setRedactedKeys] = useState<Set<string>>(new Set());
+  const modalRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   // Initialize with sensitive defaults when opening
   useEffect(() => {
@@ -88,17 +93,50 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
     }
   }, [isOpen, defaultSensitiveKeys]);
 
-  // Keyboard navigation & Escape key handling
+  // Keep keyboard focus within the export dialog and return it to the opener.
   useEffect(() => {
     if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
+
+    previouslyFocusedElementRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    closeButtonRef.current?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+      if (event.key !== 'Tab' || !modalRef.current) return;
+      const focusableElements = Array.from(
+        modalRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((element) => element.getAttribute('aria-hidden') !== 'true');
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        modalRef.current.focus();
+        return;
+      }
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+      const activeElement = document.activeElement;
+      if (event.shiftKey && (activeElement === firstElement || !modalRef.current.contains(activeElement))) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && (activeElement === lastElement || !modalRef.current.contains(activeElement))) {
+        event.preventDefault();
+        firstElement.focus();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      if (previouslyFocusedElementRef.current?.isConnected) previouslyFocusedElementRef.current.focus();
+      previouslyFocusedElementRef.current = null;
+    };
+  }, [isOpen]);
 
   // Toggle single field redaction
   const toggleFieldRedaction = (key: string) => {
@@ -227,7 +265,7 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
       aria-labelledby="export-modal-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-xs overflow-y-auto"
     >
-      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col border border-slate-300">
+      <div ref={modalRef} tabIndex={-1} className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col border border-slate-300">
         {/* Top Header */}
         <div className="px-6 py-4 bg-slate-900 text-white rounded-t-xl flex items-center justify-between border-b border-slate-800 shrink-0">
           <div className="flex items-center space-x-3">
@@ -249,6 +287,8 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
             </div>
           </div>
           <button
+            ref={closeButtonRef}
+            type="button"
             onClick={onClose}
             aria-label="Close export modal"
             className="p-1.5 rounded-md text-slate-300 hover:text-white hover:bg-slate-800 transition"
@@ -282,7 +322,7 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
             <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
               Export Format:
             </span>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Export format">
               {[
                 { id: 'txt', label: '.TXT', desc: 'Plain Text', icon: FileText },
                 { id: 'csv', label: '.CSV', desc: 'Comma-Separated', icon: FileSpreadsheet },
@@ -295,6 +335,8 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
                 return (
                   <button
                     key={fmt.id}
+                    type="button"
+                    aria-pressed={isSelected}
                     onClick={() => setFormat(fmt.id as ExportFormat)}
                     className={`px-2.5 py-1.5 rounded text-xs font-semibold flex items-center space-x-1.5 transition border ${
                       isSelected
@@ -313,6 +355,8 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
           {/* Tab Switcher: Redactions vs Preview */}
           <div className="flex items-center bg-slate-200/80 p-0.5 rounded-lg border border-slate-300">
             <button
+              type="button"
+              aria-pressed={activeTab === 'redact'}
               onClick={() => setActiveTab('redact')}
               className={`px-3 py-1 text-xs font-semibold rounded-md transition flex items-center space-x-1.5 ${
                 activeTab === 'redact'
@@ -324,6 +368,8 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
               <span>Configure Redactions ({redactedKeys.size})</span>
             </button>
             <button
+              type="button"
+              aria-pressed={activeTab === 'preview'}
               onClick={() => setActiveTab('preview')}
               className={`px-3 py-1 text-xs font-semibold rounded-md transition flex items-center space-x-1.5 ${
                 activeTab === 'preview'
@@ -340,7 +386,7 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
         {/* Modal Main Body */}
         <div className="p-6 overflow-y-auto flex-1 space-y-4">
           {exportSuccessMsg && (
-            <div className="p-3 bg-teal-50 border border-teal-300 rounded-lg flex items-center space-x-2 text-xs font-semibold text-teal-900">
+            <div role="status" aria-live="polite" className="p-3 bg-teal-50 border border-teal-300 rounded-lg flex items-center space-x-2 text-xs font-semibold text-teal-900">
               <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
               <span>{exportSuccessMsg}</span>
             </div>
@@ -387,6 +433,7 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
                   <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400" />
                   <input
                     type="text"
+                    aria-label="Filter export fields"
                     placeholder="Filter fields..."
                     value={fieldSearch}
                     onChange={(e) => setFieldSearch(e.target.value)}
