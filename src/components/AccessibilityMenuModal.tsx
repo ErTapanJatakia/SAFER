@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import type { AccessibilitySettings } from '../types/theme.ts';
 import {
   Eye,
@@ -33,6 +33,64 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
   onUpdateSettings,
   onResetSettings,
 }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    previouslyFocusedElementRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    closeButtonRef.current?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+
+      if (event.key !== 'Tab' || !modalRef.current) return;
+
+      const focusableElements = Array.from(
+        modalRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((element) => element.getAttribute('aria-hidden') !== 'true');
+
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        modalRef.current.focus();
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+      const activeElement = document.activeElement;
+
+      if (event.shiftKey && (activeElement === firstElement || !modalRef.current.contains(activeElement))) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && (activeElement === lastElement || !modalRef.current.contains(activeElement))) {
+        event.preventDefault();
+        firstElement.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      if (previouslyFocusedElementRef.current?.isConnected) {
+        previouslyFocusedElementRef.current.focus();
+      }
+      previouslyFocusedElementRef.current = null;
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
@@ -42,7 +100,7 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
       aria-modal="true"
       aria-labelledby="accessibility-menu-title"
     >
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full border border-slate-300 overflow-hidden flex flex-col max-h-[92vh] text-slate-900">
+      <div ref={modalRef} tabIndex={-1} className="bg-white rounded-xl shadow-2xl max-w-2xl w-full border border-slate-300 overflow-hidden flex flex-col max-h-[92vh] text-slate-900">
         {/* Header */}
         <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800 shrink-0">
           <div className="flex items-center space-x-3">
@@ -59,6 +117,7 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
             </div>
           </div>
           <button
+            ref={closeButtonRef}
             onClick={onClose}
             className="text-slate-400 hover:text-white p-1 rounded-md"
             aria-label="Close Accessibility Preferences"
