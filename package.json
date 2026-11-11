@@ -24,7 +24,8 @@
     "test:responsive-dashboard": "node --test tests/responsive-dashboard-layout.test.mjs",
     "test:responsive-operational-views": "node --test tests/responsive-operational-views.test.mjs",
     "test:responsive-modals": "node --test tests/responsive-modal-layout.test.mjs",
-    "test:responsive-settings-modals": "node --test tests/responsive-settings-modal-layout.test.mjs"
+    "test:responsive-settings-modals": "node --test tests/responsive-settings-modal-layout.test.mjs",
+    "test:responsive-detail-modals": "node --test tests/responsive-detail-modal-layout.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
