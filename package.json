@@ -41,7 +41,8 @@
     "test:branding-logo-upload-accessibility": "node --test tests/branding-logo-upload-accessibility.test.mjs",
     "test:branding-settings-form-accessibility": "node --test tests/branding-settings-form-accessibility.test.mjs",
     "test:branding-announcements": "node --test tests/branding-announcements-accessibility.test.mjs",
-    "test:branding-tab-state": "node --test tests/branding-tab-state-accessibility.test.mjs"
+    "test:branding-tab-state": "node --test tests/branding-tab-state-accessibility.test.mjs",
+    "test:branding-corner-position": "node --test tests/branding-corner-position-accessibility.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
