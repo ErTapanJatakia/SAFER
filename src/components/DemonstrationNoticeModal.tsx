@@ -68,16 +68,16 @@ export const DemonstrationNoticeModal: React.FC<DemonstrationNoticeModalProps> =
     >
       <div
         ref={modalRef}
-        className="bg-white rounded-xl shadow-2xl max-w-3xl w-full border border-slate-300 overflow-hidden flex flex-col max-h-[90vh] my-8 text-slate-900"
+        className="bg-white rounded-xl shadow-2xl max-w-3xl w-full border border-slate-300 overflow-hidden flex flex-col max-h-[90vh] min-w-0 my-4 sm:my-8 text-slate-900"
       >
         {/* Header */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800 shrink-0">
-          <div className="flex items-center space-x-3">
+        <div className="bg-slate-900 text-white px-4 sm:px-6 py-4 flex items-start justify-between gap-3 border-b border-slate-800 shrink-0">
+          <div className="flex items-start space-x-3 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
               <ShieldAlert className="w-5 h-5" />
             </div>
             <div>
-              <h2 id="demonstration-notice-title" className="font-bold text-base text-white">
+              <h2 id="demonstration-notice-title" className="font-bold text-base text-white break-words">
                 DEMONSTRATION NOTICE — FULL TEXT
               </h2>
               <p className="text-xs text-slate-400">
@@ -96,7 +96,7 @@ export const DemonstrationNoticeModal: React.FC<DemonstrationNoticeModalProps> =
         </div>
 
         {/* Scrollable Notice Content */}
-        <div className="p-6 overflow-y-auto space-y-5 text-xs text-slate-700 leading-relaxed">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-5 text-xs text-slate-700 leading-relaxed min-w-0">
           <section className="space-y-1">
             <h3 className="font-bold text-sm text-slate-900">Purpose and status</h3>
             <p>
@@ -170,11 +170,11 @@ export const DemonstrationNoticeModal: React.FC<DemonstrationNoticeModalProps> =
         </div>
 
         {/* Footer Actions */}
-        <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex items-center justify-between shrink-0">
+        <div className="bg-slate-50 px-4 sm:px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
           <div className="text-[11px] text-slate-500 font-mono">
             Independent Demonstration Scope &bull; Human Authority Mandatory
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-start space-x-3 min-w-0">
             <button
               ref={understandButtonRef}
               type="button"
