@@ -35,7 +35,8 @@
     "test:header-banner-reflow": "node --test tests/header-banner-reflow.test.mjs",
     "test:incident-draft-content": "node --test tests/incident-draft-content.test.mjs",
     "test:cyber-hygiene-briefing": "node --test tests/cyber-hygiene-briefing.test.mjs",
-    "test:navbar-mobile-accessibility": "node --test tests/navbar-mobile-accessibility.test.mjs"
+    "test:navbar-mobile-accessibility": "node --test tests/navbar-mobile-accessibility.test.mjs",
+    "test:theme-preset-accessibility": "node --test tests/theme-preset-accessibility.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
