@@ -22,7 +22,7 @@ test('personnel requirement rows stack and allow long requirements to wrap', () 
 
 test('cyber hygiene header and action controls wrap on narrow screens', () => {
   assert.match(cyber, /flex flex-wrap items-center gap-2 shrink-0 self-start md:self-auto/);
-  assert.match(cyber, /max-w-full sm:max-w-\[220px\]/);
+  assert.match(cyber, /w-full sm:w-auto sm:max-w-\[220px\]/);
 });
 
 test('cyber hygiene generated summary avoids forced horizontal overflow', () => {
