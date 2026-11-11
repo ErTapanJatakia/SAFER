@@ -159,6 +159,9 @@ jobs:
       - name: Branding corner-position accessibility tests
         run: npm run test:branding-corner-position
 
+      - name: Branding modal button accessibility tests
+        run: npm run test:branding-modal-buttons
+
 
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
