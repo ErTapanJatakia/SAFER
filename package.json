@@ -20,7 +20,8 @@
     "test:session-invalidation": "vitest run src/lib/sessionInvalidation.test.ts",
     "test:demo-repository": "tsx --test src/lib/demoRepository.test.ts",
     "test:demo-workspace": "tsx --test src/lib/demoWorkspace.test.ts",
-    "test:responsive-forms": "node --test tests/responsive-form-layout.test.mjs"
+    "test:responsive-forms": "node --test tests/responsive-form-layout.test.mjs",
+    "test:responsive-dashboard": "node --test tests/responsive-dashboard-layout.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
