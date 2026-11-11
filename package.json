@@ -22,7 +22,8 @@
     "test:demo-workspace": "tsx --test src/lib/demoWorkspace.test.ts",
     "test:responsive-forms": "node --test tests/responsive-form-layout.test.mjs",
     "test:responsive-dashboard": "node --test tests/responsive-dashboard-layout.test.mjs",
-    "test:responsive-operational-views": "node --test tests/responsive-operational-views.test.mjs"
+    "test:responsive-operational-views": "node --test tests/responsive-operational-views.test.mjs",
+    "test:responsive-modals": "node --test tests/responsive-modal-layout.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
