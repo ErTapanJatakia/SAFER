@@ -246,14 +246,14 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
         {/* Modal Body */}
         <div className="p-4 sm:p-6 overflow-y-auto space-y-5 text-xs text-slate-700 min-w-0">
           {errorMsg && (
-            <div className="p-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-md flex items-center space-x-2">
+            <div role="alert" className="p-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-md flex items-center space-x-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           {successMsg && (
-            <div className="p-3 bg-teal-50 border border-teal-300 text-teal-800 rounded-md flex items-center space-x-2">
+            <div role="status" aria-live="polite" aria-atomic="true" className="p-3 bg-teal-50 border border-teal-300 text-teal-800 rounded-md flex items-center space-x-2">
               <Check className="w-4 h-4 shrink-0 text-teal-600" />
               <span>{successMsg}</span>
             </div>

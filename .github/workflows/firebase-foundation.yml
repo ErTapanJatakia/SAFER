@@ -150,6 +150,9 @@ jobs:
 
       - name: Branding settings form accessibility tests
         run: npm run test:branding-settings-form-accessibility
+      - name: Branding upload announcement accessibility tests
+        run: npm run test:branding-announcements
+
 
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
