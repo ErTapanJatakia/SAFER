@@ -13,6 +13,7 @@
     "test:tenant-membership": "firebase emulators:exec --only firestore --project demo-safer \"tsx --test src/lib/tenantMembership.test.ts\"",
     "test:auth-membership-ui": "vitest run src/components/AuthGate.test.tsx",
     "test:modal-focus-a11y": "vitest run src/hooks/useModalFocus.test.tsx",
+    "test:cyber-item-modal-focus": "node --test tests/cyber-item-modal-focus.test.mjs",
     "test:data-boundary": "tsx --test src/lib/dataBoundary.test.ts",
     "test:session-lifecycle": "tsx --test src/lib/sessionLifecycle.test.ts",
     "test:session-invalidation": "vitest run src/lib/sessionInvalidation.test.ts",
