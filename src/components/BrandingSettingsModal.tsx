@@ -433,7 +433,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
                 id="bottom-logo-file-input"
                 ref={bottomFileInputRef}
                 type="file"
-                accept="image/png, image/jpeg, image/jpg, image/webp"
+                accept="image/png, image/jpeg, image/jpg, image/webp, image/svg+xml"
                 onChange={(e) => handleFileUpload(e, false)}
                 className="hidden"
                 aria-label="Upload Bottom Logo Image"
@@ -443,7 +443,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
             {/* Display Size Slider */}
             <div className="space-y-1.5 pt-2">
               <div className="flex items-center justify-between">
-                <label className="font-semibold text-slate-800 flex items-center space-x-1.5">
+                <label htmlFor="branding-logo-height" className="font-semibold text-slate-800 flex items-center space-x-1.5">
                   <Sliders className="w-3.5 h-3.5 text-blue-900" />
                   <span>Display Height: {currentLogo.height}px</span>
                 </label>
@@ -452,6 +452,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
                 </span>
               </div>
               <input
+                id="branding-logo-height"
                 type="range"
                 min="24"
                 max="80"
@@ -469,10 +470,11 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
 
             {/* Alternative Text */}
             <div className="space-y-1 pt-1">
-              <label className="block font-semibold text-slate-800">
+              <label htmlFor="branding-logo-alt-text" className="block font-semibold text-slate-800">
                 Accessible Alternative Text (for Screen Readers)
               </label>
               <input
+                id="branding-logo-alt-text"
                 type="text"
                 value={currentLogo.altText}
                 onChange={(e) => updateCurrent({ altText: e.target.value })}
