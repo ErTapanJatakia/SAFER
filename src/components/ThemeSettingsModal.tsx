@@ -53,15 +53,15 @@ export const ThemeSettingsModal: React.FC<ThemeSettingsModalProps> = ({
       aria-modal="true"
       aria-labelledby="theme-modal-title"
     >
-      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full border border-slate-300 overflow-hidden flex flex-col max-h-[92vh] text-slate-900">
+      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full border border-slate-300 overflow-hidden flex flex-col max-h-[92vh] min-w-0 text-slate-900">
         {/* Header */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800 shrink-0">
-          <div className="flex items-center space-x-3">
+        <div className="bg-slate-900 text-white px-4 sm:px-6 py-4 flex items-start justify-between gap-3 border-b border-slate-800 shrink-0">
+          <div className="flex items-start space-x-3 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-blue-900/60 border border-blue-700/60 flex items-center justify-center text-blue-300">
               <Palette className="w-5 h-5" />
             </div>
             <div>
-              <h2 id="theme-modal-title" className="font-bold text-base text-white">
+              <h2 id="theme-modal-title" className="font-bold text-base text-white break-words">
                 Theme Settings & Operational Visual Modes
               </h2>
               <p className="text-xs text-slate-400">
@@ -79,7 +79,7 @@ export const ThemeSettingsModal: React.FC<ThemeSettingsModalProps> = ({
         </div>
 
         {/* Notice & Scope Principle */}
-        <div className="px-6 py-3 bg-amber-50 border-b border-amber-200 text-amber-900 text-xs flex items-start space-x-2 shrink-0">
+        <div className="px-4 sm:px-6 py-3 bg-amber-50 border-b border-amber-200 text-amber-900 text-xs flex items-start space-x-2 shrink-0">
           <Shield className="w-4 h-4 text-amber-700 mt-0.5 shrink-0" />
           <div className="text-[11px] leading-relaxed">
             <strong>Visual Theme Advisory:</strong> Presets are visual display choices for presenter preference, lighting adaptation, and high-visibility contrast. They are not verified claims of technical fitness for military or specialized environmental use. Camouflage trims are strictly decorative borders and never obscure text or tables. Red–Green modes always feature distinct geometric icons and text badges so no status relies on color alone.
@@ -151,7 +151,7 @@ export const ThemeSettingsModal: React.FC<ThemeSettingsModalProps> = ({
         </div>
 
         {/* Preset Cards Grid */}
-        <div className="p-6 overflow-y-auto space-y-6">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-6 min-w-0">
           {activeCategory !== 'custom' ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredPresets.map((preset) => {
@@ -403,7 +403,7 @@ export const ThemeSettingsModal: React.FC<ThemeSettingsModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="bg-slate-50 px-6 py-3.5 border-t border-slate-200 flex items-center justify-between shrink-0">
+        <div className="bg-slate-50 px-4 sm:px-6 py-3.5 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shrink-0">
           <span className="text-[11px] text-slate-500 font-mono">
             WCAG 2.2 AA Contrast Verified &bull; Shared CSS Design Tokens Active
           </span>
