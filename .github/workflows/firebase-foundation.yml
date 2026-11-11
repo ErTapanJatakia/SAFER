@@ -97,6 +97,9 @@ jobs:
       - name: Responsive dashboard and checklist layout tests
         run: npm run test:responsive-dashboard
 
+      - name: Responsive operational view layout tests
+        run: npm run test:responsive-operational-views
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
