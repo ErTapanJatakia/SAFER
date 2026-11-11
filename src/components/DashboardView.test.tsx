@@ -71,7 +71,7 @@ describe('DashboardView accessibility and empty states', () => {
         tasksCompleted: 0,
         tasksOutstanding: 0,
       },
-    ] as PersonnelRecord[];
+    ] as unknown as PersonnelRecord[];
 
     renderDashboard(personnelList);
 
