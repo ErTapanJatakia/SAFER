@@ -30,21 +30,39 @@ html[data-color-mode="dark"] {
   color-scheme: dark;
 }
 
-/* Accessibility: Text Scaling Root Controller */
+/* Accessibility: Text Scaling Root Controller.
+   Percentages preserve the browser's configured default font size. */
 html[data-text-size="100"] {
-  font-size: 16px;
+  font-size: 100%;
+  --app-text-scale: 1;
 }
 html[data-text-size="125"] {
-  font-size: 20px;
+  font-size: 125%;
+  --app-text-scale: 1.25;
 }
 html[data-text-size="150"] {
-  font-size: 24px;
+  font-size: 150%;
+  --app-text-scale: 1.5;
 }
 html[data-text-size="175"] {
-  font-size: 28px;
+  font-size: 175%;
+  --app-text-scale: 1.75;
 }
 html[data-text-size="200"] {
-  font-size: 32px;
+  font-size: 200%;
+  --app-text-scale: 2;
+}
+
+/* Tailwind arbitrary pixel text utilities do not inherit the root rem scale.
+   Keep the small fixed-size labels in step with the selected text preference. */
+html[data-text-size] [class~="text-[9px]"] {
+  font-size: calc(9px * var(--app-text-scale)) !important;
+}
+html[data-text-size] [class~="text-[10px]"] {
+  font-size: calc(10px * var(--app-text-scale)) !important;
+}
+html[data-text-size] [class~="text-[11px]"] {
+  font-size: calc(11px * var(--app-text-scale)) !important;
 }
 
 /* Accessibility: Line & Letter Spacing */
