@@ -59,7 +59,7 @@ html[data-letter-spacing="wide"] body {
   word-spacing: 0.12em !important;
 }
 
-/* Accessibility: Dyslexia-Friendly High-Legibility Font Mode */
+/* Accessibility: alternate system font presentation; availability varies by device. */
 html[data-dyslexic="true"] body,
 html[data-dyslexic="true"] * {
   font-family: 'Comic Sans MS', 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif !important;
@@ -79,9 +79,8 @@ html[data-focus-ring="true"] :focus-visible {
 html[data-large-targets="true"] button,
 html[data-large-targets="true"] a,
 html[data-large-targets="true"] select,
-html[data-large-targets="true"] input[type="text"],
-html[data-large-targets="true"] input[type="date"],
-html[data-large-targets="true"] input[type="search"] {
+html[data-large-targets="true"] input:not([type="hidden"]),
+html[data-large-targets="true"] textarea {
   min-height: 44px !important;
   padding-top: 0.6rem !important;
   padding-bottom: 0.6rem !important;
