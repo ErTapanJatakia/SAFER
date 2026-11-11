@@ -675,9 +675,9 @@ export default function App() {
 
       {/* Footer & Compliance Principles */}
       <footer className="bg-slate-900 text-slate-400 border-t border-slate-800 py-6 px-4 sm:px-6 lg:px-8 text-xs relative">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           {/* Left Footer: Bottom-Left Logo + Info */}
-          <div className="flex items-center space-x-3 text-center md:text-left">
+          <div className="flex min-w-0 w-full md:w-auto items-start space-x-3 text-left">
             {showBottomLogoLeft && (
               <div className="shrink-0 bg-white/10 p-1 rounded-md border border-white/20">
                 <img
@@ -689,7 +689,7 @@ export default function App() {
               </div>
             )}
 
-            <div className="space-y-1">
+            <div className="min-w-0 space-y-1">
               <SaferWordmark variant="footer" />
               <p className="text-[11px] text-slate-400 pl-1">
                 Independent Portfolio Prototype. Sample and Unverified Records for Demonstration Purposes Only.
@@ -698,7 +698,7 @@ export default function App() {
           </div>
 
           {/* Center / Action Buttons */}
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
+          <div className="w-full md:w-auto flex flex-wrap items-center justify-start md:justify-center gap-2.5">
             {/* Clickable DEMONSTRATION NOTICE Link */}
             <button
               type="button"
