@@ -836,8 +836,7 @@ export default function App() {
       {/* Toast Notification */}
       {toastMessage && (
         <div
-          role="status"
-          aria-live="polite"
+          aria-hidden="true"
           className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-lg shadow-lg border border-slate-700 flex items-center space-x-2 text-xs animate-in fade-in slide-in-from-bottom-2 duration-200"
         >
           <Check className="w-4 h-4 text-teal-400 shrink-0" />
