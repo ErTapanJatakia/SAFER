@@ -18,6 +18,18 @@
   --app-font-scale: 1;
 }
 
+/* Accessibility: browser-native form control colour scheme.
+   This intentionally does not override SAFER's selected theme palette. */
+html[data-color-mode="auto"] {
+  color-scheme: light dark;
+}
+html[data-color-mode="light"] {
+  color-scheme: light;
+}
+html[data-color-mode="dark"] {
+  color-scheme: dark;
+}
+
 /* Accessibility: Text Scaling Root Controller */
 html[data-text-size="100"] {
   font-size: 16px;
