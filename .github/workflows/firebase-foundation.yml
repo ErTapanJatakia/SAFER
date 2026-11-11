@@ -109,6 +109,9 @@ jobs:
       - name: Responsive detail and readiness modal tests
         run: npm run test:responsive-detail-modals
 
+      - name: Responsive readiness and incident action tests
+        run: npm run test:responsive-readiness-incident-actions
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
