@@ -72,4 +72,19 @@ describe('AccessibilityMenuModal preferences', () => {
     expect(host.textContent).toContain('do not certify WCAG conformance');
     expect(host.textContent).not.toContain('This interface implements WCAG 2.2 AA accessibility practices');
   });
+
+  it('reflows the preference controls and modal chrome at narrow widths', () => {
+    const panel = host.querySelector('[role="dialog"] > div') as HTMLElement;
+    const header = panel.firstElementChild as HTMLElement;
+    const footer = panel.lastElementChild as HTMLElement;
+    const scaleGrid = Array.from(panel.querySelectorAll('div')).find((element) =>
+      element.className.includes('grid-cols-2') && element.className.includes('sm:grid-cols-5'),
+    );
+
+    expect(header.className).toContain('flex-wrap');
+    expect(header.querySelector('h2')?.className).toContain('break-words');
+    expect(scaleGrid).toBeTruthy();
+    expect(footer.className).toContain('flex-wrap');
+    expect(footer.className).toContain('gap-3');
+  });
 });
