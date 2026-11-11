@@ -106,6 +106,9 @@ jobs:
       - name: Responsive settings and personnel modal tests
         run: npm run test:responsive-settings-modals
 
+      - name: Responsive detail and readiness modal tests
+        run: npm run test:responsive-detail-modals
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
