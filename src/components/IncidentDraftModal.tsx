@@ -273,7 +273,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
               className="w-full p-3 bg-white border border-slate-300 rounded-md font-mono text-xs focus:ring-1 focus:ring-blue-900 focus:outline-none"
             ></textarea>
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <span className="text-[11px] text-slate-500">
                 Rule: Missing details will be marked with clear tags. No timestamps, quotes, or witnesses will be invented.
               </span>
@@ -292,7 +292,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
           {draft && (
             <div className="space-y-4 pt-2">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
-                <div className="flex items-center space-x-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-900 text-white">
                     {draft.incidentReference}
                   </span>
@@ -301,7 +301,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
                   </h4>
                 </div>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {!isEditing ? (
                     <button
                       type="button"
@@ -393,7 +393,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
 
                   {/* Field 5: Factual Chronological Account */}
                   <div className="md:col-span-2 bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-2">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <span className="text-[10px] uppercase font-bold text-slate-500">
                         5. Factual Chronological Account
                       </span>
@@ -412,7 +412,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
                     {/* Unverified Claims Separation */}
                     {draft.unverifiedClaims && draft.unverifiedClaims.length > 0 && (
                       <div className="mt-3 pt-2 border-t border-slate-200 space-y-1.5">
-                        <div className="flex items-center space-x-1.5 text-amber-800">
+                        <div className="flex items-start gap-1.5 text-amber-800 min-w-0">
                           <AlertTriangle className="w-3.5 h-3.5" />
                           <span className="font-bold text-[10px] uppercase">
                             Unverified Claims (Pending Independent Corroboration)
@@ -661,19 +661,19 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
                   <div className="font-semibold text-xs text-slate-900">
                     File this Structured Draft to Active Incident Roster
                   </div>
-                  <div className="flex items-center space-x-2 text-[11px] text-slate-600">
-                    <span>Title:</span>
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600 min-w-0">
+                    <span className="shrink-0">Title:</span>
                     <input
                       type="text"
                       value={reportTitle}
                       onChange={(e) => setReportTitle(e.target.value)}
-                      className="px-2 py-0.5 border border-slate-300 rounded bg-white text-xs"
+                      className="px-2 py-1 border border-slate-300 rounded bg-white text-xs min-w-0 flex-1"
                     />
-                    <span>Priority:</span>
+                    <span className="shrink-0">Priority:</span>
                     <select
                       value={priority}
                       onChange={(e) => setPriority(e.target.value as IncidentReport['priority'])}
-                      className="px-2 py-0.5 border border-slate-300 rounded bg-white text-xs"
+                      className="px-2 py-1 border border-slate-300 rounded bg-white text-xs min-w-0 flex-1"
                     >
                       <option value="Routine">Routine</option>
                       <option value="Moderate">Moderate</option>
