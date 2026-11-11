@@ -393,7 +393,9 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
                   </div>
                 </div>
               ) : (
-                <div
+                <button
+                  type="button"
+                  aria-controls={activeTab === 'top' ? 'top-logo-file-input' : 'bottom-logo-file-input'}
                   onClick={() => {
                     if (activeTab === 'top') {
                       topFileInputRef.current?.click();
@@ -401,7 +403,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
                       bottomFileInputRef.current?.click();
                     }
                   }}
-                  className="border-2 border-dashed border-slate-300 hover:border-blue-700 bg-slate-50 hover:bg-blue-50/50 rounded-lg p-6 text-center cursor-pointer transition space-y-2"
+                  className="w-full border-2 border-dashed border-slate-300 hover:border-blue-700 bg-slate-50 hover:bg-blue-50/50 rounded-lg p-6 text-center cursor-pointer transition space-y-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
                 >
                   <div className="w-10 h-10 mx-auto rounded-full bg-blue-100 text-blue-900 flex items-center justify-center">
                     <Upload className="w-5 h-5" />
@@ -414,11 +416,12 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
                       PNG, JPG, or WebP. Maximum size 10 MB.
                     </p>
                   </div>
-                </div>
+                </button>
               )}
 
               {/* Hidden file inputs */}
               <input
+                id="top-logo-file-input"
                 ref={topFileInputRef}
                 type="file"
                 accept="image/png, image/jpeg, image/jpg, image/webp"
@@ -427,6 +430,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
                 aria-label="Upload Top Logo Image"
               />
               <input
+                id="bottom-logo-file-input"
                 ref={bottomFileInputRef}
                 type="file"
                 accept="image/png, image/jpeg, image/jpg, image/webp"
