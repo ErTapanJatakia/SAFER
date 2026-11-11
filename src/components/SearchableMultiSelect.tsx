@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useId } from 'react';
 import { Search, X, Check, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface SearchableMultiSelectProps {
@@ -28,8 +28,11 @@ export const SearchableMultiSelect: React.FC<SearchableMultiSelectProps> = ({
   const [showOtherInput, setShowOtherInput] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const listId = useId();
+  const errorId = useId();
 
-  // Close dropdown on outside click
+  // Close dropdown on outside click and provide predictable keyboard dismissal.
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -39,6 +42,20 @@ export const SearchableMultiSelect: React.FC<SearchableMultiSelectProps> = ({
     document.addEventListener('mousedown', handleOutsideClick);
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    searchInputRef.current?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setIsOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
 
   const filteredOptions = options.filter((opt) =>
     opt.toLowerCase().includes(searchQuery.toLowerCase())
@@ -69,11 +86,12 @@ export const SearchableMultiSelect: React.FC<SearchableMultiSelectProps> = ({
   return (
     <div ref={containerRef} className="space-y-1.5 relative">
       <div className="flex items-center justify-between">
-        <label className="block text-xs font-semibold text-slate-800">
-          {label} {required && <span className="text-rose-600">*</span>}
-        </label>
+        <span className="block text-xs font-semibold text-slate-800">
+          {label} {required && <span aria-hidden="true" className="text-rose-600">*</span>}
+          {required && <span className="sr-only"> (required)</span>}
+        </span>
         {selectedValues.length > 0 && (
-          <span className="text-[11px] font-medium text-slate-500">
+          <span role="status" aria-live="polite" className="text-[11px] font-medium text-slate-500">
             {selectedValues.length} selected
           </span>
         )}
@@ -109,40 +127,39 @@ export const SearchableMultiSelect: React.FC<SearchableMultiSelectProps> = ({
       )}
 
       {/* Dropdown Toggle Trigger Button */}
-      <div
-        onClick={() => {
-          setIsOpen(!isOpen);
-          setTimeout(() => {
-            if (!isOpen) searchInputRef.current?.focus();
-          }, 50);
-        }}
-        className={`w-full px-3 py-2 bg-white border rounded-md cursor-pointer flex items-center justify-between transition text-xs ${
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setIsOpen((open) => !open)}
+        className={`w-full px-3 py-2 bg-white border rounded-md cursor-pointer flex items-center justify-between transition text-xs text-left ${
           error
             ? 'border-rose-400 ring-1 ring-rose-300'
             : isOpen
             ? 'border-blue-900 ring-1 ring-blue-900'
             : 'border-slate-300 hover:border-slate-400'
         }`}
-        tabIndex={0}
-        role="button"
+        aria-label={`Choose ${label}`}
         aria-expanded={isOpen}
-        aria-haspopup="listbox"
+        aria-controls={listId}
+        aria-haspopup="true"
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? errorId : undefined}
       >
         <span className={selectedValues.length === 0 ? 'text-slate-400' : 'text-slate-700 font-medium'}>
           {selectedValues.length === 0 ? placeholder : `${selectedValues.length} item(s) selected (Click to modify)`}
         </span>
         {isOpen ? (
-          <ChevronUp className="w-4 h-4 text-slate-500 shrink-0" />
+          <ChevronUp aria-hidden="true" className="w-4 h-4 text-slate-500 shrink-0" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-slate-500 shrink-0" />
+          <ChevronDown aria-hidden="true" className="w-4 h-4 text-slate-500 shrink-0" />
         )}
-      </div>
+      </button>
 
-      {error && <p className="text-[11px] text-rose-600 font-medium">{error}</p>}
+      {error && <p id={errorId} role="alert" className="text-[11px] text-rose-600 font-medium">{error}</p>}
 
       {/* Dropdown Panel */}
       {isOpen && (
-        <div className="absolute z-40 left-0 right-0 mt-1 bg-white border border-slate-300 rounded-lg shadow-xl overflow-hidden flex flex-col max-h-72 animate-in fade-in zoom-in-95 duration-100">
+        <div id={listId} role="group" aria-label={`${label} options`} className="absolute z-40 left-0 right-0 mt-1 bg-white border border-slate-300 rounded-lg shadow-xl overflow-hidden flex flex-col max-h-72 animate-in fade-in zoom-in-95 duration-100">
           {/* Search Input Box */}
           <div className="p-2 border-b border-slate-200 bg-slate-50 flex items-center space-x-2">
             <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -151,6 +168,7 @@ export const SearchableMultiSelect: React.FC<SearchableMultiSelectProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label={`Search ${label} options`}
               placeholder="Filter list..."
               className="w-full text-xs bg-transparent focus:outline-none text-slate-900 placeholder:text-slate-400"
             />
@@ -159,8 +177,9 @@ export const SearchableMultiSelect: React.FC<SearchableMultiSelectProps> = ({
                 type="button"
                 onClick={() => setSearchQuery('')}
                 className="text-slate-400 hover:text-slate-600"
+                aria-label={`Clear ${label} search`}
               >
-                <X className="w-3.5 h-3.5" />
+                <X aria-hidden="true" className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
@@ -189,7 +208,7 @@ export const SearchableMultiSelect: React.FC<SearchableMultiSelectProps> = ({
                 );
               })
             ) : (
-              <div className="p-3 text-center text-xs text-slate-500">
+              <div role="status" className="p-3 text-center text-xs text-slate-500">
                 No matching presets found.
               </div>
             )}
@@ -213,6 +232,7 @@ export const SearchableMultiSelect: React.FC<SearchableMultiSelectProps> = ({
                     type="text"
                     value={otherText}
                     onChange={(e) => setOtherText(e.target.value)}
+                    aria-label={`Custom ${label} option`}
                     placeholder="Enter custom title..."
                     className="flex-1 px-2.5 py-1 border border-slate-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-900"
                     onKeyDown={(e) => {
@@ -237,7 +257,7 @@ export const SearchableMultiSelect: React.FC<SearchableMultiSelectProps> = ({
                     }}
                     className="p-1 text-slate-500 hover:text-slate-700"
                   >
-                    <X className="w-3.5 h-3.5" />
+                    <X aria-hidden="true" className="w-3.5 h-3.5" />
                   </button>
                 </div>
               )}
@@ -248,7 +268,10 @@ export const SearchableMultiSelect: React.FC<SearchableMultiSelectProps> = ({
           <div className="p-2 bg-slate-100 border-t border-slate-200 flex justify-end">
             <button
               type="button"
-              onClick={() => setIsOpen(false)}
+              onClick={() => {
+                setIsOpen(false);
+                triggerRef.current?.focus();
+              }}
               className="px-3 py-1 bg-white border border-slate-300 rounded text-xs font-semibold text-slate-700 hover:bg-slate-200"
             >
               Done
