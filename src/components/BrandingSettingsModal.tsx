@@ -170,15 +170,15 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
       aria-modal="true"
       aria-labelledby="branding-modal-title"
     >
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full border border-slate-300 overflow-hidden flex flex-col max-h-[92vh] text-slate-900">
+      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full border border-slate-300 overflow-hidden flex flex-col max-h-[92vh] min-w-0 text-slate-900">
         {/* Header */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
-          <div className="flex items-center space-x-3">
+        <div className="bg-slate-900 text-white px-4 sm:px-6 py-4 flex items-start justify-between gap-3 border-b border-slate-800">
+          <div className="flex items-start space-x-3 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-blue-900/60 border border-blue-700/60 flex items-center justify-center text-blue-300">
               <Building2 className="w-5 h-5" />
             </div>
             <div>
-              <h2 id="branding-modal-title" className="font-bold text-base text-white">
+              <h2 id="branding-modal-title" className="font-bold text-base text-white break-words">
                 Organisation Branding & Presentation Settings
               </h2>
               <p className="text-xs text-slate-400">
@@ -196,8 +196,8 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
         </div>
 
         {/* Tab selection: Top Logo vs Bottom Logo */}
-        <div className="px-6 pt-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-          <div className="flex space-x-2">
+        <div className="px-4 sm:px-6 pt-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex flex-wrap gap-2 min-w-0">
             <button
               onClick={() => {
                 setActiveTab('top');
@@ -244,7 +244,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-5 text-xs text-slate-700">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-5 text-xs text-slate-700 min-w-0">
           {errorMsg && (
             <div className="p-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-md flex items-center space-x-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
@@ -480,7 +480,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="bg-slate-50 px-6 py-3.5 border-t border-slate-200 flex items-center justify-between">
+        <div className="bg-slate-50 px-4 sm:px-6 py-3.5 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <span className="text-[11px] text-slate-500">
             Settings persist locally across browser sessions
           </span>
