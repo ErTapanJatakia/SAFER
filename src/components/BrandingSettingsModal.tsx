@@ -187,8 +187,9 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-md"
+            className="text-slate-400 hover:text-white p-1 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             aria-label="Close Branding Settings"
           >
             <X className="w-5 h-5" />
@@ -235,11 +236,12 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
           </div>
 
           <button
+            type="button"
             onClick={() => {
               onResetLogos();
               setSuccessMsg('Restored default branding layout.');
             }}
-            className="text-xs text-slate-600 hover:text-slate-900 flex items-center space-x-1 px-2.5 py-1 rounded border border-slate-300 hover:bg-slate-100 mb-2 transition"
+            className="text-xs text-slate-600 hover:text-slate-900 flex items-center space-x-1 px-2.5 py-1 rounded border border-slate-300 hover:bg-slate-100 mb-2 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
             title="Restore default branding layout"
           >
             <RotateCcw className="w-3 h-3" />
