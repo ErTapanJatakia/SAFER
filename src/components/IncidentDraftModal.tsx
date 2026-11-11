@@ -225,9 +225,9 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
         </div>
 
         {/* Legal Disclaimer Strip */}
-        <div className="px-4 sm:px-6 py-2.5 bg-amber-50 border-b border-amber-200 text-amber-900 text-[11px] flex items-start space-x-2">
+        <div className="px-4 sm:px-6 py-2.5 bg-amber-50 border-b border-amber-200 text-amber-900 text-[11px] flex items-start gap-2 min-w-0">
           <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0" />
-          <span>
+          <span className="min-w-0 break-words [overflow-wrap:anywhere]">
             <strong>Neutral Administrative Documentation:</strong> {INCIDENT_LEGAL_DISCLAIMER}
           </span>
         </div>
@@ -235,7 +235,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
         {/* Modal Content - Split or Tabbed */}
         <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-6 text-xs text-slate-800 min-w-0">
           {/* Section 1: Input Notes & Sample Presets */}
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3">
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3 min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <label className="font-bold text-slate-900 text-xs flex items-center space-x-1.5">
                 <Edit3 className="w-3.5 h-3.5 text-blue-900" />
@@ -243,7 +243,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
               </label>
 
               {/* Sample Presets Picker */}
-              <div className="flex items-center space-x-1.5 flex-wrap">
+              <div className="flex flex-wrap items-center gap-1.5 min-w-0">
                 <span className="text-[10px] uppercase font-bold text-slate-500 mr-1">Load Sample Preset:</span>
                 {FICTIONAL_INCIDENT_PRESETS.map((p, idx) => (
                   <button
@@ -290,10 +290,10 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
 
           {/* Section 2: Structured 10-Field Output */}
           {draft && (
-            <div className="space-y-4 pt-2">
+            <div className="space-y-4 pt-2 min-w-0">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-900 text-white">
+                <div className="flex flex-wrap items-center gap-2 min-w-0">
+                  <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-900 text-white break-all">
                     {draft.incidentReference}
                   </span>
                   <h4 className="font-bold text-sm text-slate-900">
@@ -344,13 +344,13 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
 
               {/* View / Edit Mode */}
               {!isEditing ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-w-0">
                   {/* Field 1 & 2 & 3: Reference, Date/Time, Location */}
-                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 space-y-2">
+                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 space-y-2 min-w-0">
                     <span className="text-[10px] uppercase font-bold text-slate-500">
                       1. Incident Reference &amp; Meta
                     </span>
-                    <div className="font-mono text-xs font-bold text-slate-900">
+                    <div className="font-mono text-xs font-bold text-slate-900 break-all">
                       {draft.incidentReference}
                     </div>
                   </div>
@@ -360,7 +360,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
                       <Clock className="w-3 h-3 mr-1 text-slate-400" />
                       2. Date &amp; Time
                     </span>
-                    <div className={`text-xs ${draft.dateTime.includes('[DATE/TIME') ? 'text-amber-800 italic font-semibold' : 'text-slate-900 font-medium'}`}>
+                    <div className={`text-xs break-words [overflow-wrap:anywhere] ${draft.dateTime.includes('[DATE/TIME') ? 'text-amber-800 italic font-semibold' : 'text-slate-900 font-medium'}`}>
                       {draft.dateTime}
                     </div>
                   </div>
@@ -371,7 +371,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
                       <MapPin className="w-3 h-3 mr-1 text-slate-400" />
                       3. Location Description
                     </span>
-                    <div className={`text-xs ${draft.locationDescription.includes('[LOCATION') ? 'text-amber-800 italic font-semibold' : 'text-slate-900 font-medium'}`}>
+                    <div className={`text-xs break-words [overflow-wrap:anywhere] ${draft.locationDescription.includes('[LOCATION') ? 'text-amber-800 italic font-semibold' : 'text-slate-900 font-medium'}`}>
                       {draft.locationDescription}
                     </div>
                   </div>
@@ -384,7 +384,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
                     </span>
                     <ul className="space-y-1">
                       {draft.peopleAndRolesInvolved.map((p, i) => (
-                        <li key={i} className={`text-xs ${p.includes('[NO SPECIFIC') ? 'text-amber-800 italic' : 'text-slate-800 font-medium'}`}>
+                        <li key={i} className={`text-xs break-words [overflow-wrap:anywhere] ${p.includes('[NO SPECIFIC') ? 'text-amber-800 italic' : 'text-slate-800 font-medium'}`}>
                           &bull; {p}
                         </li>
                       ))}
@@ -403,7 +403,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
                     </div>
                     <div className="space-y-1.5 pt-1">
                       {draft.factualChronologicalAccount.map((fact, idx) => (
-                        <div key={idx} className="text-xs text-slate-800 leading-relaxed bg-white border border-slate-200 p-2.5 rounded">
+                        <div key={idx} className="text-xs text-slate-800 leading-relaxed bg-white border border-slate-200 p-2.5 rounded break-words [overflow-wrap:anywhere] min-w-0">
                           {fact}
                         </div>
                       ))}
@@ -419,7 +419,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
                           </span>
                         </div>
                         {draft.unverifiedClaims.map((claim, idx) => (
-                          <div key={idx} className="text-xs text-amber-900 bg-amber-50/70 border border-amber-200 p-2.5 rounded italic">
+                          <div key={idx} className="text-xs text-amber-900 bg-amber-50/70 border border-amber-200 p-2.5 rounded italic break-words [overflow-wrap:anywhere]">
                             &bull; {claim}
                           </div>
                         ))}
@@ -435,7 +435,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
                     </span>
                     <ul className="space-y-1">
                       {draft.actionsTaken.map((act, i) => (
-                        <li key={i} className={`text-xs ${act.includes('[NO IMMEDIATE') ? 'text-amber-800 italic' : 'text-slate-800'}`}>
+                        <li key={i} className={`text-xs break-words [overflow-wrap:anywhere] ${act.includes('[NO IMMEDIATE') ? 'text-amber-800 italic' : 'text-slate-800'}`}>
                           &bull; {act}
                         </li>
                       ))}
@@ -447,7 +447,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
                     <span className="text-[10px] uppercase font-bold text-slate-500">
                       7. Witness Information
                     </span>
-                    <div className={`text-xs ${draft.witnessInformation?.includes('[NO WITNESS') ? 'text-slate-500 italic' : 'text-slate-800'}`}>
+                    <div className={`text-xs break-words [overflow-wrap:anywhere] ${draft.witnessInformation?.includes('[NO WITNESS') ? 'text-slate-500 italic' : 'text-slate-800'}`}>
                       {draft.witnessInformation || '[NO WITNESS INFORMATION PROVIDED]'}
                     </div>
                   </div>
@@ -459,7 +459,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
                     </span>
                     <ul className="space-y-1">
                       {draft.evidenceReferences.map((ev, i) => (
-                        <li key={i} className={`text-xs ${ev.includes('[NO EVIDENCE') ? 'text-slate-500 italic' : 'text-slate-800'}`}>
+                        <li key={i} className={`text-xs break-words [overflow-wrap:anywhere] ${ev.includes('[NO EVIDENCE') ? 'text-slate-500 italic' : 'text-slate-800'}`}>
                           # {ev}
                         </li>
                       ))}
@@ -474,7 +474,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
                     </span>
                     <ul className="space-y-1 text-amber-950">
                       {draft.outstandingQuestionsAndMissingInfo.map((q, i) => (
-                        <li key={i} className="text-xs">
+                        <li key={i} className="text-xs break-words [overflow-wrap:anywhere]">
                           [?] {q}
                         </li>
                       ))}
@@ -489,9 +489,9 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
                     </span>
                     <ul className="space-y-1">
                       {draft.followUpActionsRequiringHumanReview.map((action, i) => (
-                        <li key={i} className="text-xs text-slate-800 flex items-start space-x-2">
+                        <li key={i} className="text-xs text-slate-800 flex items-start gap-2 min-w-0">
                           <span className="font-mono text-slate-400 font-semibold">[ ]</span>
-                          <span>{action}</span>
+                          <span className="min-w-0 break-words [overflow-wrap:anywhere]">{action}</span>
                         </li>
                       ))}
                     </ul>
@@ -499,8 +499,8 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
                 </div>
               ) : (
                 /* Editable Mode: User can tweak each of the fields */
-                <div className="space-y-4 bg-slate-50 border border-slate-300 rounded-lg p-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-4 bg-slate-50 border border-slate-300 rounded-lg p-4 min-w-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0">
                     <div>
                       <label className="block text-[10px] uppercase font-bold text-slate-600 mb-1">
                         1. Incident Reference
@@ -574,7 +574,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
                     <div>
                       <label className="block text-[10px] uppercase font-bold text-slate-600 mb-1">
                         6. Actions Taken (As reported by author)
@@ -656,9 +656,9 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
               )}
 
               {/* Section 3: File to Roster Options */}
-              <div className="p-4 bg-slate-100 rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="space-y-1">
-                  <div className="font-semibold text-xs text-slate-900">
+              <div className="p-4 bg-slate-100 rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
+                <div className="space-y-1 min-w-0">
+                  <div className="font-semibold text-xs text-slate-900 break-words">
                     File this Structured Draft to Active Incident Roster
                   </div>
                   <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600 min-w-0">

@@ -130,6 +130,9 @@ jobs:
       - name: Header banner narrow-screen readability tests
         run: npm run test:header-banner-reflow
 
+      - name: Structured incident draft content readability tests
+        run: npm run test:incident-draft-content
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
