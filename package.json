@@ -14,6 +14,7 @@
     "test:auth-membership-ui": "vitest run src/components/AuthGate.test.tsx",
     "test:accessibility-preferences": "vitest run src/components/AccessibilityMenuModal.test.tsx",
     "test:live-announcer": "vitest run src/components/LiveAnnouncer.test.tsx",
+    "test:text-scaling": "vitest run src/utils/textScaling.test.ts",
     "test:data-boundary": "tsx --test src/lib/dataBoundary.test.ts",
     "test:session-lifecycle": "tsx --test src/lib/sessionLifecycle.test.ts",
     "test:session-invalidation": "vitest run src/lib/sessionInvalidation.test.ts",
