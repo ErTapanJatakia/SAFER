@@ -142,6 +142,9 @@ jobs:
       - name: Theme preset keyboard accessibility tests
         run: npm run test:theme-preset-accessibility
 
+      - name: Custom theme colour control accessibility tests
+        run: npm run test:theme-custom-color-accessibility
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
