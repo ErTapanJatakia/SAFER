@@ -28,7 +28,8 @@
     "test:responsive-detail-modals": "node --test tests/responsive-detail-modal-layout.test.mjs",
     "test:responsive-readiness-incident-actions": "node --test tests/responsive-readiness-incident-actions.test.mjs",
     "test:long-content-reflow": "node --test tests/long-content-reflow.test.mjs",
-    "test:checklist-cyber-content": "node --test tests/checklist-cyber-content.test.mjs"
+    "test:checklist-cyber-content": "node --test tests/checklist-cyber-content.test.mjs",
+    "test:predeployment-summary-content": "node --test tests/predeployment-summary-content.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
