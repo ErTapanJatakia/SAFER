@@ -193,16 +193,16 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/75 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[94vh] flex flex-col border border-slate-300">
+      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[94vh] min-w-0 flex flex-col border border-slate-300">
         {/* Modal Header */}
-        <div className="px-6 py-4 bg-slate-900 text-white rounded-t-xl flex items-center justify-between border-b border-slate-800">
-          <div className="flex items-center space-x-3">
+        <div className="px-4 sm:px-6 py-4 bg-slate-900 text-white rounded-t-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800">
+          <div className="flex items-start space-x-3 min-w-0">
             <div className="w-9 h-9 rounded-lg bg-blue-900 flex items-center justify-center text-blue-200 border border-blue-700">
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center space-x-2">
-                <h3 className="font-bold text-base text-white">
+              <div className="flex flex-wrap items-center gap-2 min-w-0">
+                <h3 className="font-bold text-base text-white break-words">
                   Structured Incident Draft Generator
                 </h3>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800">
@@ -225,7 +225,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
         </div>
 
         {/* Legal Disclaimer Strip */}
-        <div className="px-6 py-2.5 bg-amber-50 border-b border-amber-200 text-amber-900 text-[11px] flex items-center space-x-2">
+        <div className="px-4 sm:px-6 py-2.5 bg-amber-50 border-b border-amber-200 text-amber-900 text-[11px] flex items-start space-x-2">
           <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0" />
           <span>
             <strong>Neutral Administrative Documentation:</strong> {INCIDENT_LEGAL_DISCLAIMER}
@@ -233,7 +233,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
         </div>
 
         {/* Modal Content - Split or Tabbed */}
-        <div className="p-6 overflow-y-auto flex-1 space-y-6 text-xs text-slate-800">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-6 text-xs text-slate-800 min-w-0">
           {/* Section 1: Input Notes & Sample Presets */}
           <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -706,8 +706,8 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="px-6 py-3 bg-slate-50 border-t border-slate-200 rounded-b-xl flex items-center justify-between text-xs text-slate-500">
-          <span className="font-mono text-[11px]">
+        <div className="px-4 sm:px-6 py-3 bg-slate-50 border-t border-slate-200 rounded-b-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500">
+          <span className="font-mono text-[11px] break-words min-w-0">
             SAFER Incident Documentation Engine &bull; Deterministic &amp; Free-Tier
           </span>
           <button
