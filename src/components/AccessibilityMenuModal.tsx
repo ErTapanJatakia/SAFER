@@ -144,7 +144,7 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
                 <span>Text Size Enlargement ({settings.textSize}%)</span>
               </label>
               <span className="text-[11px] text-slate-500">
-                Supports up to 200% without loss of functionality
+                Choose a scale and check each screen at your preferred size
               </span>
             </div>
             <div className="grid grid-cols-5 gap-2">
@@ -172,10 +172,10 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
             <div className="space-y-1.5">
               <label className="font-bold text-xs text-slate-900 flex items-center space-x-2">
                 <Contrast className="w-4 h-4 text-blue-900" />
-                <span>High-Contrast Outlines</span>
+                <span>Thicker Borders</span>
               </label>
               <p className="text-[11px] text-slate-500">
-                Enhances border definitions and separates controls with thicker boundary strokes.
+                Increases border thickness and darkens the application border token. It does not verify text or background contrast.
               </p>
               <div className="flex items-center space-x-2 pt-1">
                 <button
@@ -231,10 +231,10 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
             <div className="space-y-1.5">
               <label className="font-bold text-xs text-slate-900 flex items-center space-x-2">
                 <BookOpen className="w-4 h-4 text-blue-900" />
-                <span>Dyslexia-Friendly Font</span>
+                <span>Alternative Font Presentation</span>
               </label>
               <p className="text-[11px] text-slate-500">
-                Applies wide letterforms and weighted baselines to reduce visual crowding.
+                Uses an available system font from the configured font stack. Font availability and appearance vary by device; this is not a dyslexia-specific typeface.
               </p>
               <div className="pt-1">
                 <button
@@ -325,10 +325,10 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
             <div className="space-y-1.5">
               <label className="font-bold text-xs text-slate-900 flex items-center space-x-2">
                 <Maximize2 className="w-4 h-4 text-blue-900" />
-                <span>Larger Touch Targets (≥44px)</span>
+                <span>Larger Control Targets</span>
               </label>
               <p className="text-[11px] text-slate-500">
-                Enlarges clickable buttons and form inputs for motor ease on touchscreens.
+                Increases the minimum height of buttons, selects, and supported form fields. Actual target dimensions vary by control and layout.
               </p>
               <div className="pt-1">
                 <button
