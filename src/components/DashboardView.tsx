@@ -333,7 +333,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
             </div>
             <div className="mt-4 space-y-2 text-xs">
-              {checklistItems.length === 0 ? (\n                <p className="text-sm text-slate-600">No checklist items have been added yet.</p>\n              ) : checklistItems.slice(0, 3).map((item) => {
+              {checklistItems.length === 0 ? (
+                <p className="text-sm text-slate-600">No checklist items have been added yet.</p>
+              ) : checklistItems.slice(0, 3).map((item) => {
                 const isComplete = item.status === 'Complete' || item.completed;
                 return (
                   <div key={item.id} className="flex items-start space-x-2 text-slate-700">
@@ -368,7 +370,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </button>
             </div>
             <div className="mt-3 space-y-3">
-              {incidentList.length === 0 ? (\n                <p className="text-sm text-slate-600">No incident records have been added yet.</p>\n              ) : incidentList.slice(0, 2).map((inc) => (
+              {incidentList.length === 0 ? (
+                <p className="text-sm text-slate-600">No incident records have been added yet.</p>
+              ) : incidentList.slice(0, 2).map((inc) => (
                 <div key={inc.id} className="text-xs space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-slate-900 truncate max-w-[190px]">
