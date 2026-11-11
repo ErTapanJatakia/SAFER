@@ -76,16 +76,16 @@ export const PersonnelDetailModal: React.FC<PersonnelDetailModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[92vh] flex flex-col border border-slate-300">
+      <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[92vh] min-w-0 flex flex-col border border-slate-300">
         {/* Modal Top Header */}
-        <div className="px-6 py-4 bg-slate-900 text-white rounded-t-xl flex items-center justify-between border-b border-slate-800 shrink-0">
-          <div className="flex items-center space-x-3">
+        <div className="px-4 sm:px-6 py-4 bg-slate-900 text-white rounded-t-xl flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-slate-800 shrink-0">
+          <div className="flex items-start space-x-3 min-w-0">
             <div className="w-10 h-10 rounded-lg bg-blue-900 flex items-center justify-center text-blue-200 border border-blue-700 shrink-0">
               <Shield className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center space-x-2 flex-wrap">
-                <h3 className="font-bold text-base text-white">
+                <h3 className="font-bold text-base text-white break-words">
                   {person.displayName || person.fullName}
                 </h3>
                 <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-200 border border-slate-700">
@@ -105,7 +105,7 @@ export const PersonnelDetailModal: React.FC<PersonnelDetailModalProps> = ({
               </div>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2">
             {onExport && (
               <button
                 onClick={() => onExport(person)}
@@ -147,7 +147,7 @@ export const PersonnelDetailModal: React.FC<PersonnelDetailModalProps> = ({
         </div>
 
         {/* Modal Content */}
-        <div className="p-6 overflow-y-auto space-y-5 text-xs text-slate-800">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-5 text-xs text-slate-800 min-w-0">
           {/* Status & Indicator Banner */}
           <div className={`p-4 rounded-lg border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${readiness.badgeColor}`}>
             <div>
@@ -527,7 +527,7 @@ export const PersonnelDetailModal: React.FC<PersonnelDetailModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 bg-slate-100 rounded-b-xl border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
+        <div className="px-4 sm:px-6 py-3 bg-slate-100 rounded-b-xl border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-slate-500">
           <span>PMC ID: {empId} &bull; Sample Personnel Record (Unverified)</span>
           <button
             onClick={onClose}
