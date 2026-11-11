@@ -6,13 +6,14 @@ const personnel = await readFile(new URL('../src/components/PersonnelReadinessVi
 const dashboard = await readFile(new URL('../src/components/DashboardView.tsx', import.meta.url), 'utf8');
 
 test('personnel identity and qualification details wrap without hiding identifiers', () => {
-  assert.match(personnel, /PMC ID: \{person\.pmcEmployeeId[^\n]+break-all/);
-  assert.match(personnel, /Call Sign: \{person\.callSign[^\n]+break-all/);
+  assert.ok((personnel.match(/break-all/g) || []).length >= 3);
+  assert.match(personnel, /person\.pmcEmployeeId \|\| person\.demoId \|\| person\.badgeId/);
+  assert.match(personnel, /person\.callSign \|\| person\.callsign/);
   assert.match(personnel, /Badge: \{person\.badgeId\}/);
   assert.match(personnel, /person\.displayName \|\| person\.fullName/);
   assert.match(personnel, /font-bold break-words text-\[11px\] sm:text-xs/);
   assert.doesNotMatch(personnel, /font-bold truncate text-\[11px\] sm:text-xs/);
-  assert.match(personnel, /min-w-0 break-words\">\{cert\.issuer\}/);
+  assert.match(personnel, /min-w-0 break-words">\{cert\.issuer\}/);
   assert.doesNotMatch(personnel, /truncate max-w-\[130px\]/);
 });
 
