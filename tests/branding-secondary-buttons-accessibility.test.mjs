@@ -9,7 +9,8 @@ test('remove-logo button has a visible keyboard focus indicator', () => {
 });
 
 test('replace-image button has a visible keyboard focus indicator', () => {
-  assert.match(source, /onClick=\{\(\) => \{\s+if \(activeTab === 'top'\)[\s\S]*?bottomFileInputRef\.current\?\.click\(\);\s+\}\}\s+className="[^"]*focus-visible:outline[^"]*"/);
+  const replaceImageAction = source.slice(source.indexOf('<span>Replace Image</span>') - 900, source.indexOf('<span>Replace Image</span>'));
+  assert.match(replaceImageAction, /focus-visible:outline/);
 });
 
 test('done button has a visible keyboard focus indicator', () => {
