@@ -115,6 +115,9 @@ jobs:
       - name: Long-content operational readability tests
         run: npm run test:long-content-reflow
 
+      - name: Checklist and cyber content readability tests
+        run: npm run test:checklist-cyber-content
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
