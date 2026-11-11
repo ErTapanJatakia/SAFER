@@ -139,6 +139,9 @@ jobs:
       - name: Mobile navigation accessibility tests
         run: npm run test:navbar-mobile-accessibility
 
+      - name: Theme preset keyboard accessibility tests
+        run: npm run test:theme-preset-accessibility
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
