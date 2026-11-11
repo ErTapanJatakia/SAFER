@@ -12,6 +12,7 @@
     "test:firestore-rules": "firebase emulators:exec --only firestore --project demo-safer \"node --test tests/firestore-rules.test.mjs\"",
     "test:tenant-membership": "firebase emulators:exec --only firestore --project demo-safer \"tsx --test src/lib/tenantMembership.test.ts\"",
     "test:auth-membership-ui": "vitest run src/components/AuthGate.test.tsx",
+    "test:accessibility-preferences": "vitest run src/components/AccessibilityMenuModal.test.tsx",
     "test:data-boundary": "tsx --test src/lib/dataBoundary.test.ts",
     "test:session-lifecycle": "tsx --test src/lib/sessionLifecycle.test.ts",
     "test:session-invalidation": "vitest run src/lib/sessionInvalidation.test.ts",
