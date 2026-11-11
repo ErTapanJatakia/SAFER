@@ -148,7 +148,7 @@ jobs:
       - name: Branding logo upload accessibility tests
         run: npm run test:branding-logo-upload-accessibility
 
-      - name: Operational data-boundary unit tests
+      - name: Branding settings form accessibility tests\n        run: npm run test:branding-settings-form-accessibility\n\n      - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
       - name: Demo Guest repository tests
