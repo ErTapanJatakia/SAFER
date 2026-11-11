@@ -124,7 +124,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
       {/* Section Header */}
       <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Users className="w-5 h-5 text-blue-900" />
             <h2 className="text-lg font-bold text-slate-900">
               Personnel Administrative Readiness & Qualifications
@@ -353,45 +353,45 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
               >
                 {/* Header Strip: Identification, Role, Specialisation, Indicators */}
                 <div className="p-4 sm:p-5 flex flex-col md:flex-row md:items-start justify-between gap-4 border-b border-slate-100">
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 min-w-0">
                     {/* PMC ID, Full Name, Call Sign, Badge ID */}
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-900 text-slate-100 border border-slate-800">
+                      <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-900 text-slate-100 border border-slate-800 break-all">
                         PMC ID: {person.pmcEmployeeId || person.demoId || person.badgeId}
                       </span>
-                      <span className="font-bold text-base text-slate-900">
+                      <span className="font-bold text-base text-slate-900 break-words min-w-0">
                         {person.displayName || person.fullName}
                       </span>
-                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold">
+                      <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold break-all">
                         Call Sign: {person.callSign || person.callsign}
                       </span>
-                      <span className="text-xs font-mono text-slate-400">
+                      <span className="text-xs font-mono text-slate-400 break-all">
                         Badge: {person.badgeId}
                       </span>
                     </div>
 
                     {/* Role(s) & Professional Specialisation(s) */}
                     <div className="text-xs text-slate-700 flex flex-wrap items-center gap-x-3 gap-y-1">
-                      <span className="font-bold text-blue-950">
+                      <span className="font-bold text-blue-950 break-words min-w-0">
                         {person.roles && person.roles.length > 0 ? person.roles.join(', ') : person.role}
                       </span>
                       <span>&bull;</span>
-                      <span className="font-medium text-slate-800">
+                      <span className="font-medium text-slate-800 min-w-0 break-words">
                         Specialisation:{' '}
-                        <strong className="font-semibold text-slate-900">
+                        <strong className="font-semibold text-slate-900 break-words">
                           {person.specialisations && person.specialisations.length > 0
                             ? person.specialisations.join('; ')
                             : person.specialisation}
                         </strong>
                       </span>
                       <span>&bull;</span>
-                      <span className="text-slate-500">{person.assignmentSector}</span>
+                      <span className="text-slate-500 min-w-0 break-words">{person.assignmentSector}</span>
                     </div>
                   </div>
 
                   {/* Clear Indicators: Valid / Expiring / Expired / Unverified + Verification Badge */}
                   <div className="flex flex-col sm:items-end justify-center shrink-0 space-y-1">
-                    <div className="flex items-center space-x-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span
                         className={`text-xs font-bold px-2.5 py-0.5 rounded-full border shadow-2xs flex items-center space-x-1 ${readiness.indicatorBadgeColor}`}
                       >
@@ -415,7 +415,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
                       </span>
                     </div>
 
-                    <div className="text-[11px] font-medium text-slate-600 sm:text-right">
+                    <div className="text-[11px] font-medium text-slate-600 sm:text-right break-words">
                       {readiness.label}
                     </div>
                   </div>
@@ -445,11 +445,11 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
                               : 'bg-white border-slate-200 text-slate-900'
                           }`}
                         >
-                          <div className="font-bold truncate text-[11px] sm:text-xs" title={cert.name}>
+                          <div className="font-bold break-words text-[11px] sm:text-xs">
                             {cert.name}
                           </div>
-                          <div className="flex items-center justify-between text-[10px] text-slate-500">
-                            <span>Completed: {cert.completionDate}</span>
+                          <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1 text-[10px] text-slate-500">
+                            <span className="min-w-0 break-words">Completed: {cert.completionDate}</span>
                             <span
                               className={`font-semibold ${
                                 isExpired
@@ -468,8 +468,8 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
                                 : `Exp: ${cert.expiryDate}`}
                             </span>
                           </div>
-                          <div className="text-[10px] text-slate-400 flex items-center justify-between pt-0.5 border-t border-slate-100">
-                            <span className="truncate max-w-[130px]">{cert.issuer}</span>
+                          <div className="text-[10px] text-slate-400 flex flex-wrap items-start justify-between gap-1 pt-0.5 border-t border-slate-100">
+                            <span className="min-w-0 break-words">{cert.issuer}</span>
                             <span className="font-mono text-[9px] px-1 py-0.2 bg-slate-100 rounded">
                               {cert.verificationStatus}
                             </span>
