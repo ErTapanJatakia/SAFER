@@ -91,6 +91,9 @@ jobs:
       - name: Accessibility text scaling tests
         run: npm run test:text-scaling
 
+      - name: Responsive operational form layout tests
+        run: npm run test:responsive-forms
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
