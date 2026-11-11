@@ -136,6 +136,9 @@ jobs:
       - name: Cyber hygiene briefing narrow-screen readability tests
         run: npm run test:cyber-hygiene-briefing
 
+      - name: Mobile navigation accessibility tests
+        run: npm run test:navbar-mobile-accessibility
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
