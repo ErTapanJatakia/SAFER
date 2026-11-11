@@ -127,6 +127,9 @@ jobs:
       - name: Incident report content readability tests
         run: npm run test:incident-report-content
 
+      - name: Header banner narrow-screen readability tests
+        run: npm run test:header-banner-reflow
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
