@@ -106,8 +106,8 @@ export const ReadinessSummaryModal: React.FC<ReadinessSummaryModalProps> = ({
         </div>
 
         {/* View Switcher & Action Bar */}
-        <div className="px-6 py-3 bg-slate-100 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex items-center space-x-2">
+        <div className="px-4 sm:px-6 py-3 bg-slate-100 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs min-w-0">
+          <div className="flex flex-wrap items-center gap-2 min-w-0">
             {selectedPerson && (
               <button
                 onClick={() => setViewMode('individual')}
@@ -135,7 +135,7 @@ export const ReadinessSummaryModal: React.FC<ReadinessSummaryModalProps> = ({
             </button>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2 min-w-0">
             <button
               onClick={handleCopy}
               className="px-3 py-1.5 bg-white border border-slate-300 text-slate-800 hover:bg-slate-50 rounded-md font-semibold flex items-center space-x-1.5 transition shadow-2xs"
@@ -155,9 +155,9 @@ export const ReadinessSummaryModal: React.FC<ReadinessSummaryModalProps> = ({
         </div>
 
         {/* Mandatory Scope Boundary Banner */}
-        <div className="p-4 bg-amber-50/90 border-b border-amber-200 text-amber-900 text-xs flex items-start space-x-3">
+        <div className="p-4 bg-amber-50/90 border-b border-amber-200 text-amber-900 text-xs flex items-start gap-3 min-w-0">
           <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-          <div className="space-y-0.5">
+          <div className="space-y-0.5 min-w-0 break-words">
             <span className="font-bold text-[11px] uppercase tracking-wider text-amber-800">
               Mandatory Administrative Scope Boundary
             </span>
