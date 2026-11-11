@@ -88,6 +88,9 @@ jobs:
       - name: Screen-reader live announcement tests
         run: npm run test:live-announcer
 
+      - name: Accessibility text scaling tests
+        run: npm run test:text-scaling
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
