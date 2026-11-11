@@ -350,12 +350,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="mt-3 space-y-3">
               {incidentList.slice(0, 2).map((inc) => (
                 <div key={inc.id} className="text-xs space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-slate-900 truncate max-w-[190px]">
+                  <div className="flex flex-wrap items-start gap-2">
+                    <span className="font-semibold text-slate-900 min-w-0 flex-1 break-words">
                       {inc.title}
                     </span>
                     <span
-                      className={`text-[9px] px-1.5 py-0.2 rounded font-semibold ${
+                      className={`text-[9px] px-1.5 py-0.2 rounded font-semibold shrink-0 ${
                         inc.priority === 'High Attention'
                           ? 'bg-rose-100 text-rose-800'
                           : 'bg-slate-100 text-slate-700'
@@ -364,7 +364,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       {inc.priority}
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-500 line-clamp-1">{inc.summary}</p>
+                  <p className="text-[11px] text-slate-500 line-clamp-2 break-words">{inc.summary}</p>
                 </div>
               ))}
             </div>
