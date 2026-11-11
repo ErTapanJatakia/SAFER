@@ -162,6 +162,9 @@ jobs:
       - name: Branding modal button accessibility tests
         run: npm run test:branding-modal-buttons
 
+      - name: Branding secondary button accessibility tests
+        run: npm run test:branding-secondary-buttons
+
 
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary

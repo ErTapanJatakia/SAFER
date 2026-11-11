@@ -366,7 +366,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
                     <button
                       type="button"
                       onClick={() => updateCurrent({ dataUrl: null, fileName: undefined })}
-                      className="text-xs text-rose-700 hover:text-rose-900 flex items-center space-x-1"
+                      className="text-xs text-rose-700 hover:text-rose-900 flex items-center space-x-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-700"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       <span>Remove Logo</span>
@@ -395,7 +395,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
                           bottomFileInputRef.current?.click();
                         }
                       }}
-                      className="px-3 py-1 bg-white border border-slate-300 rounded text-slate-700 hover:bg-slate-100 font-semibold text-xs flex items-center space-x-1"
+                      className="px-3 py-1 bg-white border border-slate-300 rounded text-slate-700 hover:bg-slate-100 font-semibold text-xs flex items-center space-x-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
                     >
                       <Upload className="w-3.5 h-3.5" />
                       <span>Replace Image</span>
@@ -503,7 +503,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 bg-blue-900 hover:bg-blue-800 text-white font-semibold rounded-md text-xs shadow-xs"
+            className="px-4 py-1.5 bg-blue-900 hover:bg-blue-800 text-white font-semibold rounded-md text-xs shadow-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
           >
             Done
           </button>

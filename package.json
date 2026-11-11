@@ -43,7 +43,8 @@
     "test:branding-announcements": "node --test tests/branding-announcements-accessibility.test.mjs",
     "test:branding-tab-state": "node --test tests/branding-tab-state-accessibility.test.mjs",
     "test:branding-corner-position": "node --test tests/branding-corner-position-accessibility.test.mjs",
-    "test:branding-modal-buttons": "node --test tests/branding-modal-buttons-accessibility.test.mjs"
+    "test:branding-modal-buttons": "node --test tests/branding-modal-buttons-accessibility.test.mjs",
+    "test:branding-secondary-buttons": "node --test tests/branding-secondary-buttons-accessibility.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
