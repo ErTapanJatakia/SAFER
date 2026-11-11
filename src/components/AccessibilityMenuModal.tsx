@@ -112,7 +112,7 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
                 Accessibility Preferences & Assistive Controls
               </h2>
               <p className="text-xs text-slate-400">
-                WCAG 2.2 AA alignment features: text scaling, contrast, dyslexia font, and focus indicators
+                Text scaling, spacing, motion preferences, focus visibility, and control sizing
               </p>
             </div>
           </div>
@@ -130,7 +130,7 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
         <div className="px-6 py-2.5 bg-teal-50 border-b border-teal-200 text-teal-900 text-xs flex items-start space-x-2 shrink-0">
           <Shield className="w-4 h-4 text-teal-700 mt-0.5 shrink-0" />
           <div className="text-[11px] leading-relaxed">
-            <strong>Assistive Design Mandate:</strong> This interface implements WCAG 2.2 AA accessibility practices including semantic landmarks, keyboard focus management, screen-reader live updates, non-color-dependent status indicators, and responsive reflow up to 200% zoom.
+            <strong>Assistive Design Mandate:</strong> These preferences adjust selected presentation and interaction settings. They do not certify WCAG conformance or replace testing with browsers and assistive technologies.
           </div>
         </div>
 
@@ -201,10 +201,10 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
             <div className="space-y-1.5">
               <label className="font-bold text-xs text-slate-900 flex items-center space-x-2">
                 <Sun className="w-4 h-4 text-blue-900" />
-                <span>Color Display Mode</span>
+                <span>Browser Control Color Scheme</span>
               </label>
               <p className="text-[11px] text-slate-500">
-                Choose light, dark, or theme-controlled color scheme.
+                Sets the browser's native form-control scheme; the SAFER theme palette remains unchanged.
               </p>
               <div className="grid grid-cols-3 gap-1.5 pt-1">
                 {(['auto', 'light', 'dark'] as const).map((mode) => (
@@ -212,6 +212,7 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
                     key={mode}
                     type="button"
                     onClick={() => onUpdateSettings({ colorMode: mode })}
+                    aria-pressed={settings.colorMode === mode}
                     className={`py-1.5 px-2 rounded-md font-semibold text-xs border capitalize transition ${
                       settings.colorMode === mode
                         ? 'bg-blue-900 text-white border-blue-900'
@@ -268,6 +269,7 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
                     key={spacing}
                     type="button"
                     onClick={() => onUpdateSettings({ lineSpacing: spacing })}
+                    aria-pressed={settings.lineSpacing === spacing}
                     className={`py-1.5 px-2 rounded-md font-semibold text-xs border capitalize transition ${
                       settings.lineSpacing === spacing
                         ? 'bg-blue-900 text-white border-blue-900'
@@ -295,6 +297,7 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
                 <button
                   type="button"
                   onClick={() => onUpdateSettings({ letterSpacing: 'normal' })}
+                  aria-pressed={settings.letterSpacing === 'normal'}
                   className={`px-3 py-1.5 rounded-md font-semibold text-xs border transition ${
                     settings.letterSpacing === 'normal'
                       ? 'bg-blue-900 text-white border-blue-900'
@@ -306,6 +309,7 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
                 <button
                   type="button"
                   onClick={() => onUpdateSettings({ letterSpacing: 'wide' })}
+                  aria-pressed={settings.letterSpacing === 'wide'}
                   className={`px-3 py-1.5 rounded-md font-semibold text-xs border transition ${
                     settings.letterSpacing === 'wide'
                       ? 'bg-blue-900 text-white border-blue-900'
