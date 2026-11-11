@@ -59,7 +59,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* Top Banner Notice: Scope & Safety with SAFER Wordmark */}
       <div className="bg-white border border-slate-200 border-l-4 border-l-emerald-600 shadow-xs p-5 rounded-r-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
         <SaferWordmark variant="hero" />
-        <div className="flex items-center space-x-2 shrink-0 self-start md:self-auto">
+        <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
           <button
             onClick={onOpenAddPersonnel}
             className="inline-flex items-center px-3.5 py-2 text-xs font-semibold rounded-md bg-blue-900 text-white hover:bg-blue-800 transition shadow-xs"
@@ -172,16 +172,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Urgent Human Review Queue (2 Columns) */}
         <div className="lg:col-span-2 bg-white border border-slate-200 rounded-lg shadow-xs overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+          <div className="px-4 sm:px-5 py-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center space-x-2 min-w-0">
               <UserCheck className="w-4 h-4 text-slate-700" />
-              <h3 className="font-bold text-sm text-slate-900">
+              <h3 className="font-bold text-sm text-slate-900 min-w-0 break-words">
                 Personnel Items Requiring Human Review ({urgentPersonnel.length})
               </h3>
             </div>
             <button
               onClick={() => onNavigate('personnel')}
-              className="text-xs font-medium text-blue-900 hover:text-blue-700 flex items-center"
+              className="text-xs font-medium text-blue-900 hover:text-blue-700 flex items-center self-start sm:self-auto shrink-0"
             >
               Manage in Roster <ArrowRight className="w-3.5 h-3.5 ml-1" />
             </button>
@@ -207,8 +207,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     className="p-4 hover:bg-slate-50/80 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                   >
                     <div className="space-y-1">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-semibold text-slate-900 text-sm">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="font-semibold text-slate-900 text-sm break-words">
                           {person.fullName}
                         </span>
                         <span className="text-xs font-mono text-slate-500">
