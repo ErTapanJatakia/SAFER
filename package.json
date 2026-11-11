@@ -26,7 +26,8 @@
     "test:responsive-modals": "node --test tests/responsive-modal-layout.test.mjs",
     "test:responsive-settings-modals": "node --test tests/responsive-settings-modal-layout.test.mjs",
     "test:responsive-detail-modals": "node --test tests/responsive-detail-modal-layout.test.mjs",
-    "test:responsive-readiness-incident-actions": "node --test tests/responsive-readiness-incident-actions.test.mjs"
+    "test:responsive-readiness-incident-actions": "node --test tests/responsive-readiness-incident-actions.test.mjs",
+    "test:long-content-reflow": "node --test tests/long-content-reflow.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
