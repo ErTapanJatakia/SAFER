@@ -169,29 +169,29 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
           {activeTab === 'structured' ? (
             <div className="space-y-6">
               {/* Scenario Context Card */}
-              <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs space-y-2">
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs space-y-2 min-w-0">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
-                  <span className="font-bold text-slate-900 text-sm">
+                  <span className="font-bold text-slate-900 text-sm min-w-0 break-words">
                     {scenario?.codename || 'Operation Pacific Horizon (Administrative Demo)'}
                   </span>
-                  <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-900 font-medium">
+                  <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-900 font-medium break-words">
                     Demonstration Operational Scenario
                   </span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-slate-600 pt-1">
-                  <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-slate-600 pt-1 min-w-0">
+                  <div className="min-w-0 break-words">
                     <span className="font-semibold text-slate-700">Mission Subject: </span>
                     {scenario?.title}
                   </div>
-                  <div>
+                  <div className="min-w-0 break-words">
                     <span className="font-semibold text-slate-700">Demonstration Venue: </span>
                     {scenario?.fictionalVenue}
                   </div>
-                  <div>
+                  <div className="min-w-0 break-words">
                     <span className="font-semibold text-slate-700">Jurisdiction: </span>
                     {scenario?.fictionalJurisdiction}
                   </div>
-                  <div>
+                  <div className="min-w-0 break-words">
                     <span className="font-semibold text-slate-700">Target Dates: </span>
                     {scenario?.startDate} to {scenario?.targetEndDate}
                   </div>
@@ -342,19 +342,19 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
 
               {/* Human Supervisor Determination Sign-Off Form */}
               <div className="border border-blue-900/20 bg-blue-50/50 rounded-lg p-4 space-y-3">
-                <div className="flex items-center space-x-2 text-blue-900">
+                <div className="flex flex-wrap items-start gap-2 min-w-0 text-blue-900">
                   <UserCheck className="w-5 h-5 text-blue-900" />
-                  <h3 className="font-bold text-sm text-slate-900">
+                  <h3 className="font-bold text-sm text-slate-900 min-w-0 break-words">
                     Human Supervisory Review Record
                   </h3>
                 </div>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-slate-600 break-words">
                   Record the supervisory review determination for operational archives.
                 </p>
 
-                <form onSubmit={handleConfirmSignOff} className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                  <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
+                <form onSubmit={handleConfirmSignOff} className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs min-w-0">
+                  <div className="min-w-0">
+                    <label className="block font-semibold text-slate-700 mb-1 break-words">
                       Supervisor Name & Title
                     </label>
                     <input
@@ -367,7 +367,7 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
+                    <label className="block font-semibold text-slate-700 mb-1 break-words">
                       Determination
                     </label>
                     <select
@@ -387,7 +387,7 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
                     </select>
                   </div>
 
-                  <div className="flex items-end">
+                  <div className="flex items-end min-w-0">
                     <button
                       type="submit"
                       className="w-full px-4 py-2 bg-blue-900 hover:bg-blue-800 text-white font-semibold rounded-md transition shadow-2xs flex items-center justify-center space-x-1"

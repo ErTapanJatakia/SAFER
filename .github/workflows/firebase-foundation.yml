@@ -121,6 +121,9 @@ jobs:
       - name: Pre-deployment summary content readability tests
         run: npm run test:predeployment-summary-content
 
+      - name: Readiness scenario and sign-off readability tests
+        run: npm run test:readiness-scenario-signoff
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
