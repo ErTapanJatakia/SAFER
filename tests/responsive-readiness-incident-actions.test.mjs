@@ -17,7 +17,7 @@ test('readiness summary view and export controls reflow on narrow screens', () =
 test('incident draft generation and draft toolbar actions wrap', () => {
   assert.match(incident, /flex flex-col sm:flex-row sm:items-center justify-between gap-3/);
   assert.match(incident, /flex flex-wrap items-center gap-2/);
-  assert.match(incident, /flex flex-col sm:flex-row sm:items-center justify-between gap-2/);
+  assert.match(incident, /flex flex-col sm:flex-row sm:items-center justify-between gap-3/);
   assert.match(incident, /flex flex-wrap items-center gap-2 text-\[11px\] text-slate-600 min-w-0/);
   assert.match(incident, /min-w-0 flex-1/);
 });
