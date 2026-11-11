@@ -56,6 +56,18 @@ describe('AccessibilityMenuModal preferences', () => {
     expect(host.textContent).toContain("the SAFER theme palette remains unchanged");
   });
 
+  it('describes visual preferences without implying certified outcomes', () => {
+    expect(host.textContent).toContain('Choose a scale and check each screen');
+    expect(host.textContent).toContain('Thicker Borders');
+    expect(host.textContent).toContain('does not verify text or background contrast');
+    expect(host.textContent).toContain('Alternative Font Presentation');
+    expect(host.textContent).toContain('not a dyslexia-specific typeface');
+    expect(host.textContent).toContain('Larger Control Targets');
+    expect(host.textContent).toContain('Actual target dimensions vary by control and layout');
+    expect(host.textContent).not.toContain('without loss of functionality');
+    expect(host.textContent).not.toContain('≥44px');
+  });
+
   it('states that preferences do not certify WCAG conformance', () => {
     expect(host.textContent).toContain('do not certify WCAG conformance');
     expect(host.textContent).not.toContain('This interface implements WCAG 2.2 AA accessibility practices');
