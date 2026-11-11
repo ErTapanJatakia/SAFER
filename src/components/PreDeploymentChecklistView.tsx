@@ -439,7 +439,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
             <input
               type="text"
-              placeholder="Search checklist tasks, notes, or assigned staff..."
+              aria-label="Search checklist tasks, notes, and assigned staff" placeholder="Search checklist tasks, notes, or assigned staff..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-3 py-1.5 text-xs border border-slate-300 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-blue-900 focus:border-blue-900"
@@ -739,7 +739,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                 </label>
                 <input
                   type="text"
-                  value={reviewerName}
+                  aria-label="Reviewer name" value={reviewerName}
                   onChange={(e) => setReviewerName(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-md bg-white text-slate-900"
                   required
@@ -793,7 +793,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                 <label className="block font-semibold text-slate-700 mb-1">Task Title</label>
                 <input
                   type="text"
-                  value={newTaskTitle}
+                  aria-label="Task title" value={newTaskTitle}
                   onChange={(e) => setNewTaskTitle(e.target.value)}
                   placeholder="e.g. Trauma Medical Evacuation Protocol Handshake"
                   className="w-full px-3 py-2 border border-slate-300 rounded-md"
@@ -805,7 +805,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">Category (8 Domains)</label>
                   <select
-                    value={newTaskCategory}
+                    aria-label="Task category" value={newTaskCategory}
                     onChange={(e) => setNewTaskCategory(e.target.value as PreDeploymentCategory)}
                     className="w-full px-2.5 py-2 border border-slate-300 rounded-md bg-white text-slate-900"
                   >
@@ -820,7 +820,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">Initial Status</label>
                   <select
-                    value={newTaskStatus}
+                    aria-label="Task status" value={newTaskStatus}
                     onChange={(e) => setNewTaskStatus(e.target.value as PreDeploymentStatus)}
                     className="w-full px-2.5 py-2 border border-slate-300 rounded-md bg-white text-slate-900"
                   >
@@ -835,7 +835,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">Priority</label>
                   <select
-                    value={newTaskPriority}
+                    aria-label="Task priority" value={newTaskPriority}
                     onChange={(e) => setNewTaskPriority(e.target.value as 'High' | 'Medium' | 'Low')}
                     className="w-full px-2.5 py-2 border border-slate-300 rounded-md bg-white text-slate-900"
                   >
@@ -849,7 +849,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                   <label className="block font-semibold text-slate-700 mb-1">Target Deadline</label>
                   <input
                     type="date"
-                    value={newTaskDeadline}
+                    aria-label="Task deadline" value={newTaskDeadline}
                     onChange={(e) => setNewTaskDeadline(e.target.value)}
                     className="w-full px-2.5 py-2 border border-slate-300 rounded-md"
                   />
@@ -860,7 +860,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                 <label className="block font-semibold text-slate-700 mb-1">Assigned Role or Person</label>
                 <input
                   type="text"
-                  value={newTaskAssigned}
+                  aria-label="Assigned staff member" value={newTaskAssigned}
                   onChange={(e) => setNewTaskAssigned(e.target.value)}
                   placeholder="e.g. Comms Specialist (Lucas Meyer)"
                   className="w-full px-3 py-2 border border-slate-300 rounded-md"
@@ -871,7 +871,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                 <label className="block font-semibold text-slate-700 mb-1">Description & Criteria</label>
                 <textarea
                   rows={2}
-                  value={newTaskDesc}
+                  aria-label="Task description" value={newTaskDesc}
                   onChange={(e) => setNewTaskDesc(e.target.value)}
                   placeholder="Verification parameters and administrative instructions..."
                   className="w-full px-3 py-2 border border-slate-300 rounded-md"
@@ -882,7 +882,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                 <label className="block font-semibold text-slate-700 mb-1">Verification / Compliance Notes</label>
                 <textarea
                   rows={2}
-                  value={newTaskNotes}
+                  aria-label="Task notes" value={newTaskNotes}
                   onChange={(e) => setNewTaskNotes(e.target.value)}
                   placeholder="Current findings, permits on file, or pending approvals..."
                   className="w-full px-3 py-2 border border-slate-300 rounded-md"
