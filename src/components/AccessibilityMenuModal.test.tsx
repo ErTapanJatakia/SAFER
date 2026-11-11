@@ -5,11 +5,12 @@ import { JSDOM } from 'jsdom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AccessibilityMenuModal } from './AccessibilityMenuModal';
 import { DEFAULT_ACCESSIBILITY_SETTINGS } from '../utils/themePresets';
+import type { AccessibilitySettings } from '../types/theme';
 
 let dom: JSDOM;
 let root: Root;
 let host: HTMLDivElement;
-let onUpdateSettings: ReturnType<typeof vi.fn>;
+let onUpdateSettings: ReturnType<typeof vi.fn<(newSettings: Partial<AccessibilitySettings>) => void>>;
 
 beforeEach(() => {
   dom = new JSDOM('<!doctype html><html><body></body></html>', { url: 'http://localhost' });
@@ -23,7 +24,7 @@ beforeEach(() => {
   host = document.createElement('div');
   document.body.appendChild(host);
   root = createRoot(host);
-  onUpdateSettings = vi.fn();
+  onUpdateSettings = vi.fn<(newSettings: Partial<AccessibilitySettings>) => void>();
   act(() => root.render(
     <AccessibilityMenuModal
       isOpen
