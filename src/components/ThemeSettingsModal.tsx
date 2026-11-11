@@ -157,10 +157,12 @@ export const ThemeSettingsModal: React.FC<ThemeSettingsModalProps> = ({
               {filteredPresets.map((preset) => {
                 const isSelected = !isCustomActive && currentThemeId === preset.id;
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={preset.id}
                     onClick={() => onSelectTheme(preset.id)}
-                    className={`rounded-lg border-2 p-4 cursor-pointer transition flex flex-col justify-between space-y-3 relative hover:shadow-md ${
+                    aria-pressed={isSelected}
+                    className={`w-full text-left focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 rounded-lg border-2 p-4 cursor-pointer transition flex flex-col justify-between space-y-3 relative hover:shadow-md ${
                       isSelected
                         ? 'border-blue-900 bg-blue-50/40 ring-2 ring-blue-900/30 shadow-xs'
                         : 'border-slate-200 bg-white hover:border-slate-400'
@@ -265,7 +267,7 @@ export const ThemeSettingsModal: React.FC<ThemeSettingsModalProps> = ({
                         )}
                       </div>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
