@@ -133,6 +133,9 @@ jobs:
       - name: Structured incident draft content readability tests
         run: npm run test:incident-draft-content
 
+      - name: Cyber hygiene briefing narrow-screen readability tests
+        run: npm run test:cyber-hygiene-briefing
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
