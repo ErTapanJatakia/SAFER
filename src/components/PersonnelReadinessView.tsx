@@ -482,10 +482,10 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
 
                 {/* Outstanding Administrative Requirements List */}
                 <div className="p-4 sm:p-5 bg-white border-b border-slate-100 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex items-start gap-2 min-w-0">
                       <AlertCircle className={`w-3.5 h-3.5 ${reqs.length > 0 ? 'text-amber-600' : 'text-teal-600'}`} />
-                      <span className="text-[11px] uppercase font-bold text-slate-700 tracking-wider">
+                      <span className="text-[11px] uppercase font-bold text-slate-700 tracking-wider break-words">
                         Outstanding Administrative Requirements ({reqs.length})
                       </span>
                     </div>
@@ -506,16 +506,16 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
                       {reqs.map((req, idx) => (
                         <li
                           key={idx}
-                          className="flex items-center justify-between text-xs text-slate-800 bg-amber-50/50 border border-amber-200/80 px-3 py-1.5 rounded"
+                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-slate-800 bg-amber-50/50 border border-amber-200/80 px-3 py-1.5 rounded"
                         >
-                          <div className="flex items-center space-x-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-600 shrink-0"></span>
+                          <div className="flex items-start space-x-2 min-w-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-600 shrink-0 mt-1"></span>
                             <span>{req}</span>
                           </div>
                           {onResolveRequirement && (
                             <button
                               onClick={() => onResolveRequirement(person.id, req)}
-                              className="text-[10px] text-blue-900 font-semibold hover:underline shrink-0 ml-3"
+                              className="text-[10px] text-blue-900 font-semibold hover:underline shrink-0 self-start sm:self-auto"
                             >
                               Resolve
                             </button>
@@ -539,7 +539,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex items-center space-x-2 shrink-0">
+                  <div className="flex flex-wrap items-center gap-2 shrink-0 self-start lg:self-auto">
                     {/* Individual Plain-English Summary Button */}
                     <button
                       onClick={() => onOpenReadinessSummary(person)}
