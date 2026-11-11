@@ -89,7 +89,7 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
               <h2 className="text-base font-bold text-white tracking-tight break-words">
                 Pre-Deployment Readiness Summary for Human Review
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-400 break-words">
                 Administrative & Safety-Readiness Review &bull; Demonstration Operational Scenario
               </p>
             </div>
@@ -106,7 +106,7 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
         {/* Mandatory Safety Notice Banner */}
         <div className="bg-amber-50 border-b border-amber-200 px-4 sm:px-6 py-2.5 text-xs text-amber-900 flex items-start space-x-2.5">
           <AlertTriangle className="w-4 h-4 text-amber-700 mt-0.5 shrink-0" />
-          <p className="leading-relaxed">
+          <p className="leading-relaxed break-words">
             <strong>Mandatory Human Supervisory Mandate:</strong> This checklist provides administrative and safety-readiness tracking only. The application and this report <strong>must never state or imply that any person or deployment is approved solely because checklist items are complete</strong>. Final deployment authorization requires affirmative, independent human supervisory review.
           </p>
         </div>
@@ -245,9 +245,9 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
 
               {/* Prominent Outstanding Items */}
               <div className="border border-amber-300 bg-amber-50/70 rounded-lg p-4 space-y-3">
-                <div className="flex items-center space-x-2 text-amber-900">
+                <div className="flex items-start gap-2 min-w-0 text-amber-900">
                   <AlertCircle className="w-5 h-5 text-amber-700" />
-                  <h3 className="font-bold text-sm uppercase tracking-wide">
+                  <h3 className="font-bold text-sm uppercase tracking-wide min-w-0 break-words">
                     Outstanding Issues Requiring Human Supervisor Attention ({metrics.outstandingItems.length})
                   </h3>
                 </div>
@@ -263,8 +263,8 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
                         key={item.id}
                         className="bg-white border border-amber-200 rounded-md p-3 text-xs space-y-1 shadow-2xs"
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-bold text-slate-900">
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <span className="font-bold text-slate-900 min-w-0 break-words">
                             {index + 1}. {item.task}
                           </span>
                           <span
@@ -277,7 +277,7 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
                             {item.priority} Priority
                           </span>
                         </div>
-                        <div className="text-[11px] text-slate-500 font-medium">
+                        <div className="text-[11px] text-slate-500 font-medium min-w-0 break-words">
                           Category: <span className="text-slate-700">{item.category}</span>
                           {item.assignedRoleOrPerson && (
                             <span> &bull; Assigned: {item.assignedRoleOrPerson}</span>
@@ -286,9 +286,9 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
                             <span> &bull; Target: {item.targetDeadline}</span>
                           )}
                         </div>
-                        <p className="text-slate-600 leading-relaxed">{item.description}</p>
+                        <p className="text-slate-600 leading-relaxed break-words">{item.description}</p>
                         {item.complianceNotes && (
-                          <div className="mt-1 p-2 bg-slate-50 border border-slate-200 rounded text-[11px] text-slate-700">
+                          <div className="mt-1 p-2 bg-slate-50 border border-slate-200 rounded text-[11px] text-slate-700 break-words">
                             <strong>Compliance Note:</strong> {item.complianceNotes}
                           </div>
                         )}
@@ -319,7 +319,7 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
                           {cat.complete}/{cat.total}
                         </span>
                       </div>
-                      <div className="flex items-center space-x-3 text-[11px] text-slate-500">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
                         <span className="flex items-center text-teal-700">
                           <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-teal-600" />
                           {cat.complete} Complete
@@ -410,7 +410,7 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-slate-500">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500">
                 <span>Text report formatted for copy, export, or audit records:</span>
                 <span className="font-mono">Plaintext Format &bull; UTF-8</span>
               </div>
