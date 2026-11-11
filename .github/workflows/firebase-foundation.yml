@@ -153,6 +153,9 @@ jobs:
       - name: Branding upload announcement accessibility tests
         run: npm run test:branding-announcements
 
+      - name: Branding tab selected-state accessibility tests
+        run: npm run test:branding-tab-state
+
 
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary

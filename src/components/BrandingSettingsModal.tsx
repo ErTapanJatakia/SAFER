@@ -199,6 +199,8 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
         <div className="px-4 sm:px-6 pt-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex flex-wrap gap-2 min-w-0">
             <button
+              type="button"
+              aria-pressed={activeTab === 'top'}
               onClick={() => {
                 setActiveTab('top');
                 setErrorMsg(null);
@@ -214,6 +216,8 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
               {topLogo.dataUrl && <span className="ml-1.5 text-teal-600">&bull; Active</span>}
             </button>
             <button
+              type="button"
+              aria-pressed={activeTab === 'bottom'}
               onClick={() => {
                 setActiveTab('bottom');
                 setErrorMsg(null);
