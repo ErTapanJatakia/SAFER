@@ -285,18 +285,20 @@ export const ThemeSettingsModal: React.FC<ThemeSettingsModalProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div>
-                  <label className="block font-semibold text-slate-800 mb-1">
+                  <label htmlFor="safer-custom-theme-primary-value" className="block font-semibold text-slate-800 mb-1">
                     Primary Accent Color
                   </label>
                   <div className="flex items-center space-x-2">
                     <input
                       type="color"
+                      aria-label="Primary Accent Color picker"
                       value={customTheme.primary}
                       onChange={(e) => onUpdateCustomTheme({ primary: e.target.value })}
                       className="w-9 h-9 rounded cursor-pointer border border-slate-300"
                     />
                     <input
                       type="text"
+                      id="safer-custom-theme-primary-value"
                       value={customTheme.primary}
                       onChange={(e) => onUpdateCustomTheme({ primary: e.target.value })}
                       className="w-28 px-2 py-1.5 border border-slate-300 rounded text-xs font-mono"
@@ -305,18 +307,20 @@ export const ThemeSettingsModal: React.FC<ThemeSettingsModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-800 mb-1">
+                  <label htmlFor="safer-custom-theme-background-value" className="block font-semibold text-slate-800 mb-1">
                     Background Color
                   </label>
                   <div className="flex items-center space-x-2">
                     <input
                       type="color"
+                      aria-label="Background Color picker"
                       value={customTheme.bg}
                       onChange={(e) => onUpdateCustomTheme({ bg: e.target.value })}
                       className="w-9 h-9 rounded cursor-pointer border border-slate-300"
                     />
                     <input
                       type="text"
+                      id="safer-custom-theme-background-value"
                       value={customTheme.bg}
                       onChange={(e) => onUpdateCustomTheme({ bg: e.target.value })}
                       className="w-28 px-2 py-1.5 border border-slate-300 rounded text-xs font-mono"
@@ -325,18 +329,20 @@ export const ThemeSettingsModal: React.FC<ThemeSettingsModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-800 mb-1">
+                  <label htmlFor="safer-custom-theme-surface-value" className="block font-semibold text-slate-800 mb-1">
                     Card Surface Color
                   </label>
                   <div className="flex items-center space-x-2">
                     <input
                       type="color"
+                      aria-label="Card Surface Color picker"
                       value={customTheme.surface}
                       onChange={(e) => onUpdateCustomTheme({ surface: e.target.value })}
                       className="w-9 h-9 rounded cursor-pointer border border-slate-300"
                     />
                     <input
                       type="text"
+                      id="safer-custom-theme-surface-value"
                       value={customTheme.surface}
                       onChange={(e) => onUpdateCustomTheme({ surface: e.target.value })}
                       className="w-28 px-2 py-1.5 border border-slate-300 rounded text-xs font-mono"
@@ -345,18 +351,20 @@ export const ThemeSettingsModal: React.FC<ThemeSettingsModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-800 mb-1">
+                  <label htmlFor="safer-custom-theme-text-value" className="block font-semibold text-slate-800 mb-1">
                     Text Color
                   </label>
                   <div className="flex items-center space-x-2">
                     <input
                       type="color"
+                      aria-label="Text Color picker"
                       value={customTheme.text}
                       onChange={(e) => onUpdateCustomTheme({ text: e.target.value })}
                       className="w-9 h-9 rounded cursor-pointer border border-slate-300"
                     />
                     <input
                       type="text"
+                      id="safer-custom-theme-text-value"
                       value={customTheme.text}
                       onChange={(e) => onUpdateCustomTheme({ text: e.target.value })}
                       className="w-28 px-2 py-1.5 border border-slate-300 rounded text-xs font-mono"
