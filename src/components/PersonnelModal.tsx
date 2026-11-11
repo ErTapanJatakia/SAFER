@@ -475,12 +475,12 @@ export const PersonnelModal: React.FC<PersonnelModalProps> = ({
       aria-modal="true"
       aria-labelledby="personnel-modal-title"
     >
-      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full border border-slate-300 overflow-hidden flex flex-col max-h-[92vh] my-6">
+      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full border border-slate-300 overflow-hidden flex flex-col max-h-[92vh] min-w-0 my-3 sm:my-6">
         {/* Modal Header */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800 shrink-0">
-          <div className="flex items-center space-x-2">
-            <User className="w-5 h-5 text-blue-400" />
-            <h3 id="personnel-modal-title" className="font-bold text-base text-white">
+        <div className="bg-slate-900 text-white px-4 sm:px-6 py-4 flex items-start justify-between gap-3 border-b border-slate-800 shrink-0">
+          <div className="flex items-start space-x-2 min-w-0">
+            <User className="w-5 h-5 text-blue-400 shrink-0" />
+            <h3 id="personnel-modal-title" className="font-bold text-base text-white break-words">
               {isEditing ? 'Edit Personnel Profile & Credentials' : 'Create Personnel Record'}
             </h3>
           </div>
@@ -495,7 +495,7 @@ export const PersonnelModal: React.FC<PersonnelModalProps> = ({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-6 text-xs text-slate-700">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 overflow-y-auto space-y-6 text-xs text-slate-700 min-w-0">
           {errorMsg && (
             <div className="p-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-md flex items-center space-x-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
@@ -1309,11 +1309,11 @@ export const PersonnelModal: React.FC<PersonnelModalProps> = ({
           </div>
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-slate-200">
             <span className="text-[11px] text-slate-500 font-mono">
               Sensitive Personal Details Stored Locally In Browser
             </span>
-            <div className="flex items-center space-x-3">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={onClose}
