@@ -390,7 +390,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
                   </div>
 
                   {/* Clear Indicators: Valid / Expiring / Expired / Unverified + Verification Badge */}
-                  <div className="flex flex-col sm:items-end justify-center shrink-0 space-y-1">
+                  <div className="flex flex-col sm:items-end justify-center min-w-0 sm:shrink-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span
                         className={`text-xs font-bold px-2.5 py-0.5 rounded-full border shadow-2xs flex items-center space-x-1 ${readiness.indicatorBadgeColor}`}
@@ -403,7 +403,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
                       </span>
 
                       <span
-                        className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${
+                        className={`text-[11px] font-semibold px-2 py-0.5 rounded border break-words ${
                           person.verificationStatus === 'Verified'
                             ? 'bg-teal-50 text-teal-800 border-teal-300'
                             : person.verificationStatus === 'Pending Verification'
@@ -451,7 +451,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
                           <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1 text-[10px] text-slate-500">
                             <span className="min-w-0 break-words">Completed: {cert.completionDate}</span>
                             <span
-                              className={`font-semibold ${
+                              className={`font-semibold break-words ${
                                 isExpired
                                   ? 'text-rose-700'
                                   : isExpiringSoon
@@ -470,7 +470,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
                           </div>
                           <div className="text-[10px] text-slate-400 flex flex-wrap items-start justify-between gap-1 pt-0.5 border-t border-slate-100">
                             <span className="min-w-0 break-words">{cert.issuer}</span>
-                            <span className="font-mono text-[9px] px-1 py-0.2 bg-slate-100 rounded">
+                            <span className="font-mono text-[9px] px-1 py-0.2 bg-slate-100 rounded break-words">
                               {cert.verificationStatus}
                             </span>
                           </div>
