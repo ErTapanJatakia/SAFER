@@ -53,6 +53,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     (i) => i.status === 'Incomplete'
   ).length;
   const totalChecklistCount = checklistItems.length;
+  const representedSectorCount = new Set(
+    personnelList.map((person) => person.assignmentSector.trim()).filter(Boolean)
+  ).size;
+  const checklistCompletionPercent = totalChecklistCount === 0
+    ? 0
+    : Math.min(100, Math.round((completedChecklistCount / totalChecklistCount) * 100));
 
   return (
     <div className="space-y-6 pb-12">
@@ -89,7 +95,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
           <div className="mt-3 flex items-baseline justify-between">
             <div className="text-2xl font-bold text-slate-900">{metrics.totalPersonnel}</div>
-            <span className="text-xs text-slate-500 font-medium">4 Sectors Active</span>
+            <span className="text-xs text-slate-500 font-medium">{representedSectorCount} Sectors Represented</span>
           </div>
           <div className="mt-2 text-xs text-slate-600 border-t border-slate-100 pt-2 flex items-center justify-between">
             <span>Current Documentation:</span>
@@ -159,7 +165,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               {metrics.totalTasksCompleted} / {metrics.totalTasksCompleted + metrics.totalTasksOutstanding} Completed
             </span>
           </div>
-          <div className="mt-2 w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+          <div
+            className="mt-2 w-full bg-slate-100 h-2 rounded-full overflow-hidden"
+            role="progressbar"
+            aria-label="Administrative task completion"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={metrics.overallTaskCompletionRate}
+          >
             <div
               className="bg-blue-900 h-full rounded-full transition-all duration-500"
               style={{ width: `${metrics.overallTaskCompletionRate}%` }}
@@ -305,10 +318,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   {completedChecklistCount} of {totalChecklistCount} verified
                 </span>
               </div>
-              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+              <div
+                className="w-full bg-slate-100 h-2 rounded-full overflow-hidden"
+                role="progressbar"
+                aria-label="Pre-deployment checklist verification"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={checklistCompletionPercent}
+              >
                 <div
                   className="bg-teal-600 h-full rounded-full transition-all"
-                  style={{ width: `${(completedChecklistCount / totalChecklistCount) * 100}%` }}
+                  style={{ width: `${checklistCompletionPercent}%` }}
                 ></div>
               </div>
             </div>
