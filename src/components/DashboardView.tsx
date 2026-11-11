@@ -64,17 +64,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     <div className="space-y-6 pb-12">
       {/* Top Banner Notice: Scope & Safety with SAFER Wordmark */}
       <div className="bg-white border border-slate-200 border-l-4 border-l-emerald-600 shadow-xs p-5 rounded-r-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <SaferWordmark variant="hero" />
-        <div className="flex flex-wrap items-center gap-2 shrink-0 self-start md:self-auto">
+        <SaferWordmark variant="hero" className="min-w-0 flex-1" />
+        <div className="w-full md:w-auto flex flex-wrap items-center gap-2 shrink-0 self-start md:self-auto">
           <button
             onClick={onOpenAddPersonnel}
-            className="inline-flex items-center px-3.5 py-2 text-xs font-semibold rounded-md bg-blue-900 text-white hover:bg-blue-800 transition shadow-xs"
+            className="inline-flex flex-1 sm:flex-none justify-center items-center px-3.5 py-2 text-sm font-semibold rounded-md bg-blue-900 text-white hover:bg-blue-800 transition shadow-xs"
           >
             + Add Personnel Record
           </button>
           <button
             onClick={() => onNavigate('personnel')}
-            className="inline-flex items-center px-3.5 py-2 text-xs font-semibold rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 transition"
+            className="inline-flex flex-1 sm:flex-none justify-center items-center px-3.5 py-2 text-sm font-semibold rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 transition"
           >
             View Roster
           </button>
