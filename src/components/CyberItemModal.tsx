@@ -106,9 +106,9 @@ export const CyberItemModal: React.FC<CyberItemModalProps> = ({
         {/* Form Body */}
         <form onSubmit={handleSubmit} noValidate className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 text-xs min-w-0">
           {errorMsg && (
-            <div className="p-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-md flex items-center space-x-2">
+            <div className="p-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-md flex items-start gap-2 min-w-0">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-              <span>{errorMsg}</span>
+              <span className="min-w-0 break-words">{errorMsg}</span>
             </div>
           )}
 
@@ -234,7 +234,7 @@ export const CyberItemModal: React.FC<CyberItemModalProps> = ({
           </div>
 
           {/* Footer Actions */}
-          <div className="pt-4 border-t border-slate-200 flex items-center justify-end space-x-3">
+          <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
