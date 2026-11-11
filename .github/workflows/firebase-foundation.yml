@@ -112,6 +112,9 @@ jobs:
       - name: Responsive readiness and incident action tests
         run: npm run test:responsive-readiness-incident-actions
 
+      - name: Long-content operational readability tests
+        run: npm run test:long-content-reflow
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
