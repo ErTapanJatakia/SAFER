@@ -31,7 +31,8 @@
     "test:checklist-cyber-content": "node --test tests/checklist-cyber-content.test.mjs",
     "test:predeployment-summary-content": "node --test tests/predeployment-summary-content.test.mjs",
     "test:readiness-scenario-signoff": "node --test tests/readiness-scenario-signoff.test.mjs",
-    "test:incident-report-content": "node --test tests/incident-report-content.test.mjs"
+    "test:incident-report-content": "node --test tests/incident-report-content.test.mjs",
+    "test:header-banner-reflow": "node --test tests/header-banner-reflow.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
