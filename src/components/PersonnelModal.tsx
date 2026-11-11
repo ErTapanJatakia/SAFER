@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useModalFocus } from '../hooks/useModalFocus.ts';
 import type {
   PersonnelRecord,
   QualificationItem,
@@ -57,6 +58,8 @@ export const PersonnelModal: React.FC<PersonnelModalProps> = ({
   onSave,
   initialRecord,
 }) => {
+  const modalRef = useModalFocus<HTMLDivElement>(isOpen, onClose);
+
   const isEditing = Boolean(initialRecord);
 
   // Identity States
@@ -471,6 +474,8 @@ export const PersonnelModal: React.FC<PersonnelModalProps> = ({
   return (
     <div
       className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+      ref={modalRef}
+      tabIndex={-1}
       role="dialog"
       aria-modal="true"
       aria-labelledby="personnel-modal-title"
