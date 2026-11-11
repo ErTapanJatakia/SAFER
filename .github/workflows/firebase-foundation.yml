@@ -118,6 +118,9 @@ jobs:
       - name: Checklist and cyber content readability tests
         run: npm run test:checklist-cyber-content
 
+      - name: Pre-deployment summary content readability tests
+        run: npm run test:predeployment-summary-content
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
