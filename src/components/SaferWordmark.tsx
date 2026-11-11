@@ -120,22 +120,22 @@ export const SaferWordmark: React.FC<SaferWordmarkProps> = ({
 
   if (variant === 'footer') {
     return (
-      <div className={`flex items-center space-x-3 ${className}`}>
+      <div className={`flex min-w-0 flex-wrap items-center gap-3 ${className}`}>
         {insigniaIcon}
-        <div className="space-y-0.5 text-left">
-          <div className="flex items-center space-x-2">
+        <div className="min-w-0 space-y-0.5 text-left">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="font-extrabold tracking-wider text-white text-sm font-sans flex items-center">
               SAFER
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 ml-1" />
             </span>
-            <span className="text-[10px] text-slate-400 font-mono">
+            <span className="text-xs text-slate-400 font-mono">
               AI-Assisted Security Operations Platform
             </span>
           </div>
-          <div className="text-[11px] text-slate-300">
+          <div className="text-xs leading-relaxed text-slate-300">
             Security Administration, Field Readiness, Evidence &amp; Reporting
           </div>
-          <div className="text-[10px] text-emerald-400 font-mono font-medium">
+          <div className="text-xs text-emerald-400 font-mono font-medium">
             Prepared. Accountable. Secure.
           </div>
         </div>
