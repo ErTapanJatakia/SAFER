@@ -78,15 +78,15 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/75 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full border border-slate-200 overflow-hidden my-auto max-h-[92vh] flex flex-col">
+      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full border border-slate-200 overflow-hidden my-auto max-h-[92vh] min-w-0 flex flex-col">
         {/* Modal Header */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
-          <div className="flex items-center space-x-3">
+        <div className="bg-slate-900 text-white px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-slate-800">
+          <div className="flex items-start space-x-3 min-w-0">
             <div className="w-9 h-9 rounded-lg bg-blue-600/30 text-blue-300 border border-blue-500/30 flex items-center justify-center">
               <ClipboardList className="w-5 h-5 text-blue-300" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white tracking-tight">
+              <h2 className="text-base font-bold text-white tracking-tight break-words">
                 Pre-Deployment Readiness Summary for Human Review
               </h2>
               <p className="text-xs text-slate-400">
@@ -104,7 +104,7 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
         </div>
 
         {/* Mandatory Safety Notice Banner */}
-        <div className="bg-amber-50 border-b border-amber-200 px-6 py-2.5 text-xs text-amber-900 flex items-start space-x-2.5">
+        <div className="bg-amber-50 border-b border-amber-200 px-4 sm:px-6 py-2.5 text-xs text-amber-900 flex items-start space-x-2.5">
           <AlertTriangle className="w-4 h-4 text-amber-700 mt-0.5 shrink-0" />
           <p className="leading-relaxed">
             <strong>Mandatory Human Supervisory Mandate:</strong> This checklist provides administrative and safety-readiness tracking only. The application and this report <strong>must never state or imply that any person or deployment is approved solely because checklist items are complete</strong>. Final deployment authorization requires affirmative, independent human supervisory review.
@@ -113,7 +113,7 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
 
         {/* View Switcher Tabs & Actions */}
         <div className="bg-slate-50 px-6 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setActiveTab('structured')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${
@@ -136,7 +136,7 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
             </button>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={handleCopy}
               className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition shadow-2xs"
@@ -165,7 +165,7 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="p-6 overflow-y-auto space-y-6 flex-1 text-slate-800">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 text-slate-800 min-w-0">
           {activeTab === 'structured' ? (
             <div className="space-y-6">
               {/* Scenario Context Card */}
@@ -425,7 +425,7 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
         </div>
 
         {/* Modal Footer */}
-        <div className="bg-slate-50 px-6 py-3 border-t border-slate-200 flex items-center justify-between">
+        <div className="bg-slate-50 px-4 sm:px-6 py-3 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="text-[11px] text-slate-500">
             Sample Demonstration &bull; Non-Tactical Administrative Review
           </div>
