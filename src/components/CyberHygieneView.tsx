@@ -381,7 +381,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center space-x-2 shrink-0">
+              <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
                 <button
                   onClick={handleOpenAdd}
                   className="inline-flex items-center space-x-1.5 px-3 py-2 rounded-md text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white transition shadow-xs"
@@ -428,7 +428,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
                 value={domainFilter}
                 onChange={(e) => setDomainFilter(e.target.value as any)}
                 aria-label="Filter by Defensive Domain"
-                className="px-2.5 py-1 text-xs border border-slate-300 rounded-md bg-white text-slate-700 font-medium max-w-full sm:max-w-[220px] truncate"
+                className="px-2.5 py-1 text-xs border border-slate-300 rounded-md bg-white text-slate-700 font-medium w-full sm:w-auto sm:max-w-[220px]"
               >
                 <option value="All">All 10 Domains</option>
                 {ALL_CYBER_DOMAINS.map((dom) => (
@@ -645,8 +645,8 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
                     : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
                 }`}
               >
-                <div className="font-bold truncate">Scenario {idx + 1}</div>
-                <div className={`text-[11px] line-clamp-2 ${selectedPhishIndex === idx ? 'text-blue-100' : 'text-slate-500'}`}>
+                <div className="font-bold">Scenario {idx + 1}</div>
+                <div className={`text-[11px] break-words ${selectedPhishIndex === idx ? 'text-blue-100' : 'text-slate-500'}`}>
                   {phish.scenarioName}
                 </div>
               </button>
@@ -656,14 +656,14 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
           {/* Email Simulation Display */}
           <div className="bg-white border border-slate-300 rounded-xl shadow-md overflow-hidden">
             {/* Fake Email Client Toolbar */}
-            <div className="bg-slate-100 border-b border-slate-200 px-5 py-3 flex items-center justify-between">
+            <div className="bg-slate-100 border-b border-slate-200 px-4 sm:px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
               <div className="flex items-center space-x-2">
                 <div className="flex space-x-1.5">
                   <div className="w-3 h-3 rounded-full bg-slate-300" />
                   <div className="w-3 h-3 rounded-full bg-slate-300" />
                   <div className="w-3 h-3 rounded-full bg-slate-300" />
                 </div>
-                <span className="text-xs font-semibold text-slate-600 ml-2">
+                <span className="text-xs font-semibold text-slate-600 ml-2 min-w-0 break-words">
                   Mail Client Preview &bull; Awareness Training Scenario #{selectedPhishIndex + 1}
                 </span>
               </div>
@@ -691,7 +691,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
                     From:
                   </span>
                   <span className="font-bold text-slate-900">{currentPhish.senderName}</span>
-                  <span className="text-slate-500 font-mono text-[11px]">
+                  <span className="text-slate-500 font-mono text-[11px] break-all">
                     &lt;{currentPhish.senderAddress}&gt;
                   </span>
                 </div>
@@ -702,14 +702,14 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
                 <span className="font-bold text-slate-500 uppercase tracking-wider text-[11px]">
                   To:
                 </span>
-                <span className="text-slate-700">ops-team-duty@prot-ops.example.org</span>
+                <span className="text-slate-700 min-w-0 break-all">ops-team-duty@prot-ops.example.org</span>
               </div>
 
               <div className="flex items-start space-x-2 pt-1 border-t border-slate-200/60">
                 <span className="font-bold text-slate-500 uppercase tracking-wider text-[11px] shrink-0 mt-0.5">
                   Subject:
                 </span>
-                <span className="font-bold text-slate-900 text-sm">{currentPhish.subject}</span>
+                <span className="font-bold text-slate-900 text-sm min-w-0 break-words">{currentPhish.subject}</span>
               </div>
             </div>
 
