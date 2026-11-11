@@ -81,6 +81,9 @@ jobs:
       - name: AuthGate membership UI tests
         run: npm run test:auth-membership-ui
 
+      - name: Personnel export modal accessibility tests
+        run: npm run test:export-modal-a11y
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
