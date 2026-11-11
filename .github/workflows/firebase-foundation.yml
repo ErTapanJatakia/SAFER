@@ -85,6 +85,9 @@ jobs:
       - name: Accessibility preferences UI tests
         run: npm run test:accessibility-preferences
 
+      - name: Screen-reader live announcement tests
+        run: npm run test:live-announcer
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
