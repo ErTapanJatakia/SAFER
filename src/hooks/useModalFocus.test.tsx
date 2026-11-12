@@ -1,4 +1,4 @@
-import React, { act, useState } from 'react';
+import React, { act, useRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { JSDOM } from 'jsdom';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -9,7 +9,7 @@ let root: Root;
 let host: HTMLDivElement;
 
 function ModalHarness() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = React.useState(false);
   const modalRef = useModalFocus<HTMLDivElement>(isOpen, () => setIsOpen(false));
 
   return (
@@ -33,6 +33,17 @@ function InitiallyOpenModalHarness() {
   return (
     <div ref={modalRef} role="dialog" aria-modal="true" tabIndex={-1}>
       <button type="button">Modal action</button>
+    </div>
+  );
+}
+
+function CustomInitialFocusHarness() {
+  const initialFocusRef = useRef<HTMLButtonElement>(null);
+  const modalRef = useModalFocus<HTMLDivElement>(true, () => undefined, initialFocusRef);
+  return (
+    <div ref={modalRef} role="dialog" aria-modal="true" tabIndex={-1}>
+      <button type="button">Close</button>
+      <button ref={initialFocusRef} type="button">I Understand</button>
     </div>
   );
 }
@@ -86,6 +97,12 @@ describe('useModalFocus', () => {
     first.focus();
     act(() => document.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true })));
     expect(document.activeElement).toBe(last);
+  });
+
+  it('honours a valid custom initial-focus target inside the modal', () => {
+    act(() => root.render(<CustomInitialFocusHarness />));
+    expect(document.activeElement).toBe(host.querySelector('button:nth-of-type(2)'));
+    expect(document.activeElement?.textContent).toBe('I Understand');
   });
 
   it('restores focus to a connected opener when the modal component unmounts', () => {

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useModalFocus } from '../hooks/useModalFocus.ts';
 import type { PersonnelRecord } from '../types/index.ts';
 import {
   evaluatePersonnelReadiness,
@@ -50,6 +51,7 @@ export const PersonnelDetailModal: React.FC<PersonnelDetailModalProps> = ({
   const [showSignOffForm, setShowSignOffForm] = useState(false);
   const [supervisorName, setSupervisorName] = useState('Director S. Holloway');
   const [reviewNote, setReviewNote] = useState('');
+  const modalRef = useModalFocus<HTMLDivElement>(isOpen && !!person, onClose);
 
   if (!isOpen || !person) return null;
 
@@ -76,7 +78,7 @@ export const PersonnelDetailModal: React.FC<PersonnelDetailModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[92vh] flex flex-col border border-slate-300">
+      <div ref={modalRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="personnel-detail-dialog-title" className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[92vh] flex flex-col border border-slate-300">
         {/* Modal Top Header */}
         <div className="px-6 py-4 bg-slate-900 text-white rounded-t-xl flex items-center justify-between border-b border-slate-800 shrink-0">
           <div className="flex items-center space-x-3">
@@ -85,7 +87,7 @@ export const PersonnelDetailModal: React.FC<PersonnelDetailModalProps> = ({
             </div>
             <div>
               <div className="flex items-center space-x-2 flex-wrap">
-                <h3 className="font-bold text-base text-white">
+                <h3 className="font-bold text-base text-white" id="personnel-detail-dialog-title">
                   {person.displayName || person.fullName}
                 </h3>
                 <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-200 border border-slate-700">

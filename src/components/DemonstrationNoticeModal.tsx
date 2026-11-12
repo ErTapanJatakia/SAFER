@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { ShieldAlert, X, Check, FileText } from 'lucide-react';
+import { useModalFocus } from '../hooks/useModalFocus';
 
 interface DemonstrationNoticeModalProps {
   isOpen: boolean;
@@ -10,52 +11,8 @@ export const DemonstrationNoticeModal: React.FC<DemonstrationNoticeModalProps> =
   isOpen,
   onClose,
 }) => {
-  const modalRef = useRef<HTMLDivElement>(null);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const understandButtonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    // Focus understand button on open
-    const timer = setTimeout(() => {
-      understandButtonRef.current?.focus();
-    }, 50);
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose();
-      }
-      // Trap focus
-      if (e.key === 'Tab' && modalRef.current) {
-        const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        );
-        if (focusableElements.length === 0) return;
-        const firstElement = focusableElements[0];
-        const lastElement = focusableElements[focusableElements.length - 1];
-
-        if (e.shiftKey) {
-          if (document.activeElement === firstElement) {
-            e.preventDefault();
-            lastElement.focus();
-          }
-        } else {
-          if (document.activeElement === lastElement) {
-            e.preventDefault();
-            firstElement.focus();
-          }
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen, onClose]);
+  const modalRef = useModalFocus<HTMLDivElement>(isOpen, onClose, understandButtonRef);
 
   if (!isOpen) return null;
 
@@ -68,6 +25,7 @@ export const DemonstrationNoticeModal: React.FC<DemonstrationNoticeModalProps> =
     >
       <div
         ref={modalRef}
+        tabIndex={-1}
         className="bg-white rounded-xl shadow-2xl max-w-3xl w-full border border-slate-300 overflow-hidden flex flex-col max-h-[90vh] my-8 text-slate-900"
       >
         {/* Header */}
@@ -86,7 +44,7 @@ export const DemonstrationNoticeModal: React.FC<DemonstrationNoticeModalProps> =
             </div>
           </div>
           <button
-            ref={closeButtonRef}
+            type="button"
             onClick={onClose}
             className="text-slate-400 hover:text-white p-1.5 rounded-md hover:bg-slate-800 transition"
             aria-label="Close Demonstration Notice"

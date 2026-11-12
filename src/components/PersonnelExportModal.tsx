@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useModalFocus } from '../hooks/useModalFocus.ts';
 import type { PersonnelRecord } from '../types/index.ts';
 import {
   type ExportFormat,
@@ -78,6 +79,7 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
 
   // Redacted field keys state
   const [redactedKeys, setRedactedKeys] = useState<Set<string>>(new Set());
+  const modalRef = useModalFocus<HTMLDivElement>(isOpen, onClose);
 
   // Initialize with sensitive defaults when opening
   useEffect(() => {
@@ -87,18 +89,6 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
       setActiveTab('redact');
     }
   }, [isOpen, defaultSensitiveKeys]);
-
-  // Keyboard navigation & Escape key handling
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
 
   // Toggle single field redaction
   const toggleFieldRedaction = (key: string) => {
@@ -222,9 +212,11 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
 
   return (
     <div
+      ref={modalRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="export-modal-title"
+      tabIndex={-1}
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-xs overflow-y-auto"
     >
       <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col border border-slate-300">
