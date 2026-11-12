@@ -12,10 +12,12 @@ const FOCUSABLE_SELECTOR = [
 /**
  * Keeps keyboard focus within an open modal, dismisses on Escape, and restores
  * focus to the element that opened it when the modal closes or unmounts.
+ * An optional initial target supports dialogs with a required acknowledgement action.
  */
 export function useModalFocus<T extends HTMLElement>(
   isOpen: boolean,
-  onClose: () => void
+  onClose: () => void,
+  initialFocusRef?: { current: HTMLElement | null }
 ) {
   const modalRef = useRef<T>(null);
   const openerRef = useRef<HTMLElement | null>(null);
@@ -47,7 +49,13 @@ export function useModalFocus<T extends HTMLElement>(
         );
 
     const focusable = getFocusable();
-    (focusable[0] ?? modal).focus();
+    const requestedInitialTarget = initialFocusRef?.current;
+    const initialTarget = requestedInitialTarget &&
+      modal.contains(requestedInitialTarget) &&
+      focusable.includes(requestedInitialTarget)
+      ? requestedInitialTarget
+      : focusable[0] ?? modal;
+    initialTarget.focus();
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -83,7 +91,7 @@ export function useModalFocus<T extends HTMLElement>(
       if (openerRef.current?.isConnected) openerRef.current.focus();
       openerRef.current = null;
     };
-  }, [isOpen]);
+  }, [isOpen, initialFocusRef]);
 
   return modalRef;
 }
