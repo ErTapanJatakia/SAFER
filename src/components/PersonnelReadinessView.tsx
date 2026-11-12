@@ -255,6 +255,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
             <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
             <input
               type="text"
+              aria-label="Search personnel records"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search name, demo ID, role, qual..."
@@ -265,6 +266,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
           {/* Indicator Status Filter */}
           <div>
             <select
+              aria-label="Filter personnel by qualification indicator"
               value={selectedIndicatorFilter}
               onChange={(e) => setSelectedIndicatorFilter(e.target.value)}
               className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-xs bg-white text-slate-700 focus:ring-1 focus:ring-blue-900 focus:outline-none font-medium"
@@ -280,6 +282,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
           {/* Verification Status Filter */}
           <div>
             <select
+              aria-label="Filter personnel by verification status"
               value={selectedVerificationFilter}
               onChange={(e) => setSelectedVerificationFilter(e.target.value)}
               className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-xs bg-white text-slate-700 focus:ring-1 focus:ring-blue-900 focus:outline-none"
@@ -295,6 +298,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
           {/* Role Filter */}
           <div>
             <select
+              aria-label="Filter personnel by role"
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value)}
               className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-xs bg-white text-slate-700 focus:ring-1 focus:ring-blue-900 focus:outline-none"
