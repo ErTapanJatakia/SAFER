@@ -47,7 +47,7 @@ const hasNumber = (record: Record<string, unknown>, key: string): boolean =>
 const hasBoolean = (record: Record<string, unknown>, key: string): boolean =>
   typeof record[key] === 'boolean';
 
-function hasUniqueIds(records: unknown[]): boolean {
+function hasUniqueIds(records: readonly unknown[]): boolean {
   const ids = new Set<string>();
   for (const value of records) {
     if (!isObject(value) || !hasString(value, 'id') || ids.has(value.id as string)) return false;
@@ -142,51 +142,78 @@ export function createDemoRepository(storage: DemoStorage): DemoRepository & {
     checklist: readList(storage, KEYS.checklist, INITIAL_CHECKLIST, isChecklistItem),
   });
 
-  const save = <T,>(key: string, value: T): void => {
-    storage.setItem(key, JSON.stringify(value));
+  const save = <T,>(
+    key: string,
+    value: readonly T[],
+    isValid: (entry: unknown) => entry is T,
+  ): void => {
+    if (!Array.isArray(value) || !value.every(isValid) || !hasUniqueIds(value)) {
+      throw new Error(`Refusing to persist invalid Demo Guest records for ${key}.`);
+    }
+
+    let serialized: string;
+    try {
+      serialized = JSON.stringify(value);
+    } catch (error) {
+      throw new Error(`Unable to serialize Demo Guest records for ${key}.`, { cause: error });
+    }
+
+    try {
+      storage.setItem(key, serialized);
+    } catch (error) {
+      throw new Error(`Unable to write Demo Guest storage key: ${key}. Check browser storage availability and available space.`, { cause: error });
+    }
+
+    try {
+      if (storage.getItem(key) !== serialized) {
+        throw new Error('Stored value did not match the submitted value.');
+      }
+    } catch (error) {
+      throw new Error(`Unable to verify Demo Guest storage key after writing: ${key}.`, { cause: error });
+    }
   };
 
   return Object.freeze({
     kind: 'demo' as const,
     loadSnapshot,
     listPersonnel: async () => loadSnapshot().personnel,
-    replacePersonnel: async (records: readonly PersonnelRecord[]) => { save(KEYS.personnel, records); },
+    replacePersonnel: async (records: readonly PersonnelRecord[]) => { save(KEYS.personnel, records, isPersonnelRecord); },
     savePersonnel: async (record: PersonnelRecord) => {
       const current = [...loadSnapshot().personnel];
       const index = current.findIndex((item) => item.id === record.id);
       if (index < 0) current.unshift(record);
       else current[index] = record;
-      save(KEYS.personnel, current);
+      save(KEYS.personnel, current, isPersonnelRecord);
     },
     deletePersonnel: async (recordId: string) => {
-      save(KEYS.personnel, loadSnapshot().personnel.filter((item) => item.id !== recordId));
+      save(KEYS.personnel, loadSnapshot().personnel.filter((item) => item.id !== recordId), isPersonnelRecord);
     },
     listIncidents: async () => loadSnapshot().incidents,
-    replaceIncidents: async (records: readonly IncidentReport[]) => { save(KEYS.incidents, records); },
+    replaceIncidents: async (records: readonly IncidentReport[]) => { save(KEYS.incidents, records, isIncidentReport); },
     saveIncident: async (record: IncidentReport) => {
       const current = [...loadSnapshot().incidents];
       const index = current.findIndex((item) => item.id === record.id);
       if (index < 0) current.unshift(record);
       else current[index] = record;
-      save(KEYS.incidents, current);
+      save(KEYS.incidents, current, isIncidentReport);
     },
     listCyberHygiene: async () => loadSnapshot().cyberHygiene,
-    replaceCyberHygiene: async (items: readonly CyberHygieneItem[]) => { save(KEYS.cyberHygiene, items); },
+    replaceCyberHygiene: async (items: readonly CyberHygieneItem[]) => { save(KEYS.cyberHygiene, items, isCyberHygieneItem); },
     saveCyberHygiene: async (item: CyberHygieneItem) => {
       const current = [...loadSnapshot().cyberHygiene];
       const index = current.findIndex((entry) => entry.id === item.id);
       if (index < 0) current.unshift(item);
       else current[index] = item;
-      save(KEYS.cyberHygiene, current);
+      save(KEYS.cyberHygiene, current, isCyberHygieneItem);
     },
     listChecklist: async () => loadSnapshot().checklist,
-    replaceChecklist: async (items: readonly PreDeploymentChecklistItem[]) => { save(KEYS.checklist, items); },
+    replaceChecklist: async (items: readonly PreDeploymentChecklistItem[]) => { save(KEYS.checklist, items, isChecklistItem); },
     saveChecklist: async (item: PreDeploymentChecklistItem) => {
       const current = [...loadSnapshot().checklist];
       const index = current.findIndex((entry) => entry.id === item.id);
       if (index < 0) current.unshift(item);
       else current[index] = item;
-      save(KEYS.checklist, current);
+      save(KEYS.checklist, current, isChecklistItem);
     },
     reset: () => {
       const failedKeys: string[] = [];
