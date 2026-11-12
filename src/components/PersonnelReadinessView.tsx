@@ -315,7 +315,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
 
         {/* Results Counter & Reset */}
         <div className="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100">
-          <span>
+          <span role="status" aria-live="polite" aria-atomic="true" data-personnel-filter-results>
             Showing <strong>{filteredPersonnel.length}</strong> of <strong>{personnelList.length}</strong> personnel records
           </span>
           {(searchQuery || selectedRole !== 'ALL' || selectedIndicatorFilter !== 'ALL' || selectedVerificationFilter !== 'ALL' || selectedSectorFilter !== 'ALL') && (
