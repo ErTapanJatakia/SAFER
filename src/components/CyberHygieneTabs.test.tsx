@@ -81,6 +81,7 @@ describe('Cyber Hygiene tabs accessibility', () => {
   });
   it('exposes phishing scenarios as labelled pressed-state controls and announces selection', () => {
     renderView();
+    act(() => tab('phishing').dispatchEvent(new MouseEvent('click', { bubbles: true })));
     const group = host.querySelector('[role="group"][aria-label="Phishing training scenarios"]');
     expect(group).not.toBeNull();
 
@@ -98,6 +99,7 @@ describe('Cyber Hygiene tabs accessibility', () => {
 
   it('announces phishing analysis and simulated reporting state to assistive technology', () => {
     renderView();
+    act(() => tab('phishing').dispatchEvent(new MouseEvent('click', { bubbles: true })));
     const inspect = host.querySelector<HTMLButtonElement>('button[aria-label="Inspect phishing indicators"]');
     expect(inspect).not.toBeNull();
     expect(inspect?.getAttribute('aria-expanded')).toBe('false');
