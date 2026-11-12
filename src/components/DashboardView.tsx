@@ -376,15 +376,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="flex items-center space-x-2">
                 <ShieldAlert className="w-4 h-4 text-teal-400" />
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200">
-                  Defensive Cyber Posture
+                  Defensive Cyber Hygiene Guidance
                 </h4>
               </div>
               <span className="text-[10px] font-mono bg-teal-900/60 text-teal-300 border border-teal-700/60 px-1.5 py-0.5 rounded">
-                AUDITED
+                DEMO REFERENCE
               </span>
             </div>
             <p className="text-xs text-slate-300 mt-2">
-              Hardware token 2FA enforced, encrypted Signal/Matrix protocols verified. Zero automated targeting or offensive capabilities.
+              Illustrative defensive hygiene guidance only. This prototype does not verify MFA enforcement or audit external messaging configurations.
             </p>
             <button
               onClick={() => onNavigate('cybersecurity')}
