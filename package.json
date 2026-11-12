@@ -24,7 +24,8 @@
     "test:demo-workspace": "tsx --test src/lib/demoWorkspace.test.ts",
     "test:dashboard-ui": "vitest run src/components/DashboardView.test.tsx",
     "test:modal-focus-a11y": "vitest run src/hooks/useModalFocus.test.tsx",
-    "test:cyber-item-modal-focus": "node --test tests/cyber-item-modal-focus.test.mjs"
+    "test:cyber-item-modal-focus": "node --test tests/cyber-item-modal-focus.test.mjs",
+    "test:operational-form-accessible-names": "node --test tests/operational-form-accessible-names.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
