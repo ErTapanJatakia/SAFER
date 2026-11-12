@@ -96,7 +96,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   aria-current={isActive ? 'page' : undefined}
                 >
                   <Icon className={`w-4 h-4 ${isActive ? 'text-blue-300' : 'text-slate-400'}`} />
-                  <span>{item.label}</span>
+                  <span className="min-w-0 break-words [overflow-wrap:anywhere] text-left">{item.label}</span>
                   {item.badge !== null && (
                     <span
                       className={`text-[10px] font-semibold px-1.5 py-0.2 rounded-full border ${item.badgeColor || 'bg-slate-700 text-slate-200'}`}
@@ -110,9 +110,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Current Active Indicator for Small Viewports */}
-          <div className="md:hidden flex items-center space-x-2 text-white font-medium text-sm">
+          <div className="md:hidden flex items-center gap-2 text-white font-medium text-sm min-w-0 flex-1">
             <span className="text-slate-400 text-xs">Section:</span>
-            <span className="font-semibold text-slate-100">
+            <span className="font-semibold text-slate-100 min-w-0 break-words [overflow-wrap:anywhere]">
               {navItems.find((n) => n.id === activeSection)?.label}
             </span>
           </div>
@@ -142,20 +142,20 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 key={item.id}
                 onClick={() => handleSelect(item.id)}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-md text-sm font-medium ${
+                className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-md text-sm font-medium ${
                   isActive
                     ? 'bg-blue-900 text-white font-semibold'
                     : 'text-slate-300 hover:text-white hover:bg-slate-800'
                 }`}
                 aria-current={isActive ? 'page' : undefined}
               >
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center gap-3 min-w-0">
                   <Icon className={`w-5 h-5 ${isActive ? 'text-blue-300' : 'text-slate-400'}`} />
                   <span>{item.label}</span>
                 </div>
                 {item.badge !== null && (
                   <span
-                    className={`text-xs px-2 py-0.5 rounded-full border ${item.badgeColor || 'bg-slate-800 text-slate-200'}`}
+                    className={`text-xs px-2 py-0.5 rounded-full border shrink-0 ${item.badgeColor || 'bg-slate-800 text-slate-200'}`}
                   >
                     {item.badge}
                   </span>
