@@ -31,9 +31,24 @@ function AuthorizedDemoGuestWorkspace({ accessState, children }: { accessState: 
   }, []);
 
   const repository = useMemo(() => {
-    const browserRepository = createDemoRepository(window.localStorage);
-    return createRevocableDemoRepository(browserRepository, () => activeRef.current);
+    try {
+      const browserRepository = createDemoRepository(window.localStorage);
+      // Probe all four reads before mounting the workspace. A blocked storage
+      // API must not be mistaken for an empty workspace and overwritten later.
+      browserRepository.loadSnapshot();
+      return createRevocableDemoRepository(browserRepository, () => activeRef.current);
+    } catch {
+      return null;
+    }
   }, []);
+  if (!repository) {
+    return (
+      <main role="alert" aria-live="assertive">
+        Browser storage is unavailable. SAFER cannot safely open the Demo Guest workspace in this browser.
+        Enable site storage or use a browser profile that permits local storage, then reload.
+      </main>
+    );
+  }
   const selection = selectDemoWorkspaceRepository(accessState, repository);
   if (selection.kind !== 'demo') {
     return <main role="alert">The operational workspace is unavailable for this session.</main>;
