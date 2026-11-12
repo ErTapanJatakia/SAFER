@@ -90,6 +90,9 @@ jobs:
       - name: Live announcement accessibility tests
         run: npm run test:live-announcer
 
+      - name: Filter control accessibility tests
+        run: npm run test:filter-control-accessibility
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
