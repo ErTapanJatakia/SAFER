@@ -329,3 +329,43 @@ Actions taken: Sentenced to summary termination and court martial.
   // 4. Mark missing witness information cleanly
   assert.ok(draft.witnessInformation?.includes('[NO WITNESS INFORMATION PROVIDED'));
 });
+
+test('SEC-07A: XLSX single-record and roster exports preserve field-level redactions', () => {
+  const person = INDIAN_PERSONNEL_DATA[0];
+  assert.ok(person.workExperience?.length, 'Fixture must include work experience for export coverage');
+  assert.ok(person.certifications?.length, 'Fixture must include qualifications for export coverage');
+  const originalCopy = JSON.parse(JSON.stringify(person));
+  const redactedKeys = new Set([
+    'personalEmail',
+    'healthParticulars',
+    'residenceAddress',
+    'workExperience.employerAddress',
+    'certifications.issuers',
+  ]);
+
+  const assertRedacted = (sheet: XLSX.WorkSheet, address: string, label: string) => {
+    const cell = sheet[address];
+    assert.ok(cell, `${label} must be present in the generated workbook`);
+    assert.equal(cell.v, '[REDACTED]', `${label} must retain its field-level redaction`);
+    assert.equal(cell.f, undefined, `${label} must remain a literal value`);
+  };
+
+  // Single-record export: verify personal, health, address, employment, and issuer fields.
+  const singleWorkbook = XLSX.read(generateXlsxExport(person, redactedKeys), { type: 'array' });
+  assertRedacted(singleWorkbook.Sheets['Personnel Overview'], 'B17', 'Personal email');
+  assertRedacted(singleWorkbook.Sheets['Personnel Overview'], 'B21', 'Health particulars');
+  assertRedacted(singleWorkbook.Sheets['Personnel Overview'], 'B24', 'Residence address line');
+  assertRedacted(singleWorkbook.Sheets['Work Experience'], 'C2', 'Employer address');
+  assertRedacted(singleWorkbook.Sheets['Qualifications'], 'E2', 'Qualification issuer');
+  assertRedacted(singleWorkbook.Sheets['Qualifications'], 'F2', 'Qualification verification ID');
+
+  // Full-roster export: the same redactions must survive the alternate workbook layout.
+  const rosterWorkbook = XLSX.read(generateXlsxExport([person], redactedKeys), { type: 'array' });
+  assertRedacted(rosterWorkbook.Sheets['Personnel Roster'], 'I2', 'Roster personal email');
+  assertRedacted(rosterWorkbook.Sheets['Personnel Roster'], 'M2', 'Roster health particulars');
+  assertRedacted(rosterWorkbook.Sheets['All Work Experience'], 'D2', 'Roster employer address');
+  assertRedacted(rosterWorkbook.Sheets['All Qualifications'], 'F2', 'Roster qualification issuer');
+
+  assert.deepEqual(person, originalCopy, 'Generating redacted XLSX exports must not mutate the source record');
+});
+
