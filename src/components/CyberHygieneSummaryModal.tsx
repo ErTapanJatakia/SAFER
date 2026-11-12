@@ -46,10 +46,10 @@ export const CyberHygieneSummaryModal: React.FC<CyberHygieneSummaryModalProps> =
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
       <div ref={modalRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="cyber-hygiene-summary-dialog-title" className="bg-white rounded-xl shadow-2xl max-w-3xl w-full border border-slate-200 overflow-hidden flex flex-col max-h-[90vh] min-w-0">
         {/* Header */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <ShieldCheck className="w-5 h-5 text-teal-400" />
-            <div>
+        <div className="bg-slate-900 text-white px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
+          <div className="flex items-start gap-2 min-w-0">
+            <ShieldCheck className="w-5 h-5 text-teal-400 shrink-0" />
+            <div className="min-w-0">
               <h3 className="font-bold text-base text-white break-words [overflow-wrap:anywhere]" id="cyber-hygiene-summary-dialog-title">
                 Cybersecurity Hygiene Executive Briefing
               </h3>
