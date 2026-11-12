@@ -87,6 +87,9 @@ jobs:
       - name: Navbar accessibility tests
         run: npm run test:navbar-accessibility
 
+      - name: Live announcement accessibility tests
+        run: npm run test:live-announcer
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
