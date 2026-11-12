@@ -48,3 +48,22 @@ test('CSP permits only the external origins required by the current app', () => 
   assert.ok(directives.get('frame-src')?.includes('https://accounts.google.com'));
   assert.ok(directives.get('frame-src')?.includes('https://safer-2026.firebaseapp.com'));
 });
+
+
+test('Vercel automatic deployments are restricted to the production branch', () => {
+  assert.deepEqual(config.git?.deploymentEnabled, {
+    '*': false,
+    main: true,
+  });
+});
+
+test('non-production branches do not receive an explicit deployment enablement', () => {
+  const deploymentPolicy = config.git?.deploymentEnabled ?? {};
+  assert.equal(deploymentPolicy['*'], false);
+  assert.equal(deploymentPolicy.main, true);
+  assert.equal(
+    Object.entries(deploymentPolicy).some(([branch, enabled]) => branch !== '*' && branch !== 'main' && enabled === true),
+    false,
+    'only main may be explicitly enabled for automatic deployments',
+  );
+});
