@@ -125,6 +125,26 @@ test('SEC-03: Image Data URL & SVG Sanitization Defense (CWE-434, CWE-79)', () =
   // Valid clean SVG
   const validCleanSvg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="blue" width="100" height="100"/></svg>';
   assert.equal(isSafeImageDataUrl(validCleanSvg), true);
+
+  // Strict allowlisting: valid SVG text and shapes remain usable.
+  const validTextSvg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><text x="2" y="12">Safe label</text></svg>';
+  assert.equal(isSafeImageDataUrl(validTextSvg), true);
+
+  // External references, CSS, unsupported elements, and malformed XML are rejected.
+  const externalSvgImage = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><image href="https://attacker.example/pixel.png"/></svg>';
+  assert.equal(isSafeImageDataUrl(externalSvgImage), false);
+  const styledSvg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><rect style="fill:url(https://attacker.example/a.svg#x)" width="10" height="10"/></svg>';
+  assert.equal(isSafeImageDataUrl(styledSvg), false);
+  const unsafeSvgUrl = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><rect fill="url(https://attacker.example/a.svg#x)" width="10" height="10"/></svg>';
+  assert.equal(isSafeImageDataUrl(unsafeSvgUrl), false);
+  const malformedSvg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><rect width="10"></svg>';
+  assert.equal(isSafeImageDataUrl(malformedSvg), false);
+  const unsupportedSvgElement = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><image/></svg>';
+  assert.equal(isSafeImageDataUrl(unsupportedSvgElement), false);
+
+  // Payload caps and strict raster Base64 syntax prevent oversized/malformed inputs.
+  assert.equal(isSafeImageDataUrl(`data:image/png;base64,${'A'.repeat(2_850_001)}`), false);
+  assert.equal(isSafeImageDataUrl('data:image/png;base64,%%%'), false);
 });
 
 // ============================================================================
