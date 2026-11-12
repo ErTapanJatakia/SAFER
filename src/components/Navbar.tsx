@@ -147,6 +147,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     ? 'bg-blue-900 text-white font-semibold'
                     : 'text-slate-300 hover:text-white hover:bg-slate-800'
                 }`}
+                aria-current={isActive ? 'page' : undefined}
               >
                 <div className="flex items-center space-x-3">
                   <Icon className={`w-5 h-5 ${isActive ? 'text-blue-300' : 'text-slate-400'}`} />
