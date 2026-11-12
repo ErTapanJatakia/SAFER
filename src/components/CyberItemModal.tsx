@@ -92,14 +92,14 @@ export const CyberItemModal: React.FC<CyberItemModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="cyber-item-modal-title"
-      className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-4"
     >
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden flex flex-col max-h-[90vh] min-w-0">
         {/* Header */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
+        <div className="bg-slate-900 text-white px-4 sm:px-6 py-4 flex items-start justify-between gap-3">
+          <div className="flex items-start space-x-2 min-w-0">
             <ShieldCheck className="w-5 h-5 text-teal-400" />
-            <h3 id="cyber-item-modal-title" className="font-bold text-base text-white">
+            <h3 id="cyber-item-modal-title" className="font-bold text-base text-white break-words">
               {itemToEdit ? 'Edit Defensive Control' : 'Add Defensive Control / Finding'}
             </h3>
           </div>
@@ -114,11 +114,11 @@ export const CyberItemModal: React.FC<CyberItemModalProps> = ({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} noValidate className="p-6 overflow-y-auto flex-1 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} noValidate className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 text-xs min-w-0">
           {errorMsg && (
-            <div className="p-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-md flex items-center space-x-2">
+            <div className="p-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-md flex items-start gap-2 min-w-0">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-              <span>{errorMsg}</span>
+              <span className="min-w-0 break-words">{errorMsg}</span>
             </div>
           )}
 
@@ -244,7 +244,7 @@ export const CyberItemModal: React.FC<CyberItemModalProps> = ({
           </div>
 
           {/* Footer Actions */}
-          <div className="pt-4 border-t border-slate-200 flex items-center justify-end space-x-3">
+          <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
