@@ -55,11 +55,29 @@ describe('Demo Guest repository', () => {
     assert.ok(storage.getItem('prot_ops_checklist_v2'));
   });
 
-  it('reset removes only the four operational demo data keys', async () => {
+  it('reset removes all four operational demo keys while preserving unrelated preferences', async () => {
     const storage = memoryStorage();
     const repository = createDemoRepository(storage);
-    await repository.savePersonnel(INITIAL_PERSONNEL[0]);
+    const operationalKeys = [
+      'prot_ops_personnel_v2',
+      'prot_ops_incidents_v2',
+      'prot_ops_cyber_v2',
+      'prot_ops_checklist_v2',
+    ];
+    const preferenceKey = 'prot_ops_theme_v2';
+
+    for (const key of operationalKeys) storage.setItem(key, 'demo-records');
+    storage.setItem(preferenceKey, 'midnight-navy');
+
     repository.reset();
+
+    for (const key of operationalKeys) {
+      assert.equal(storage.getItem(key), null, `reset must remove ${key}`);
+    }
+    assert.equal(storage.getItem(preferenceKey), 'midnight-navy', 'reset must preserve unrelated device preferences');
     assert.deepEqual(repository.loadSnapshot().personnel, INITIAL_PERSONNEL);
+
+    assert.doesNotThrow(() => repository.reset(), 'reset should be safe to repeat');
+    assert.equal(storage.getItem(preferenceKey), 'midnight-navy');
   });
 });

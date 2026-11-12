@@ -180,6 +180,21 @@ Any future migration must be a separate, opt-in project after rules and the repo
 
 No migration tool, upload path, background sync, or import API is authorised by this design.
 
+### 8.1 Current Demo Guest retention and reset behaviour
+
+The current browser-local Demo Guest repository has **no automatic expiry or retention timer**. Operational demo records remain in the same browser profile's local storage after a tab closes, the browser restarts, or the user signs out. Session revocation prevents a retained repository capability from being used; it does not erase the stored records.
+
+The application provides a **Reset Records** action. It removes only the four operational demo keys:
+
+- `prot_ops_personnel_v2`
+- `prot_ops_incidents_v2`
+- `prot_ops_cyber_v2`
+- `prot_ops_checklist_v2`
+
+It restores the bundled synthetic baseline on the next load. Theme, accessibility and branding preferences are intentionally outside this reset operation. Clearing site data through the browser is a separate user-controlled action and may remove those preferences as well.
+
+This is a prototype lifecycle, not a formal retention or secure-erasure guarantee. Browser profiles, backups, extensions, developer tools, operating-system snapshots and other browser-managed copies are outside the application's control. Users must continue to enter synthetic data only. A future retention policy must define an explicit period, user notice, expiry behaviour, recovery expectations and deletion verification before automatic cleanup is implemented. No silent expiry or sign-out wipe is introduced by this change.
+
 ## 9. Release gates before any tenant operational data access
 
 All of the following must be independently satisfied:
