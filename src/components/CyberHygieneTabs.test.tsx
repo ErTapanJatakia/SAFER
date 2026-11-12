@@ -95,6 +95,7 @@ describe('Cyber Hygiene tabs accessibility', () => {
     expect(scenarios[0].getAttribute('aria-pressed')).toBe('false');
     expect(scenarios[1].getAttribute('aria-pressed')).toBe('true');
     expect(host.querySelector('[role="status"][aria-live="polite"]')?.textContent).toContain('Scenario 2 of');
+    expect(host.querySelector('[role="status"][aria-live="polite"]')?.getAttribute('aria-atomic')).toBe('true');
   });
 
   it('announces phishing analysis and simulated reporting state to assistive technology', () => {
