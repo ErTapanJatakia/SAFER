@@ -29,6 +29,41 @@ describe('Demo Guest repository', () => {
     assert.deepEqual(repository.loadSnapshot().personnel, INITIAL_PERSONNEL);
   });
 
+  it('fails closed when valid JSON contains malformed personnel records', () => {
+    const storage = memoryStorage();
+    storage.setItem('prot_ops_personnel_v2', JSON.stringify([{ id: 7, fullName: null }]));
+    const repository = createDemoRepository(storage);
+    assert.throws(() => repository.loadSnapshot(), /Invalid Demo Guest records in prot_ops_personnel_v2/);
+  });
+
+  it('rejects duplicate record identifiers rather than silently updating the wrong record', () => {
+    const storage = memoryStorage();
+    const duplicate = { ...INITIAL_INCIDENTS[0] };
+    storage.setItem('prot_ops_incidents_v2', JSON.stringify([duplicate, duplicate]));
+    const repository = createDemoRepository(storage);
+    assert.throws(() => repository.loadSnapshot(), /Invalid Demo Guest records in prot_ops_incidents_v2/);
+  });
+
+  it('validates required fields in each operational record collection', () => {
+    const cases = [
+      ['prot_ops_incidents_v2', [{ id: 'incident-1', title: 'incomplete' }]],
+      ['prot_ops_cyber_v2', [{ id: 'cyber-1', domain: 'incomplete' }]],
+      ['prot_ops_checklist_v2', [{ id: 'checklist-1', task: 'incomplete' }]],
+    ] as const;
+    for (const [key, records] of cases) {
+      const storage = memoryStorage();
+      storage.setItem(key, JSON.stringify(records));
+      assert.throws(() => createDemoRepository(storage).loadSnapshot(), /Invalid Demo Guest records/);
+    }
+  });
+
+  it('rejects malformed nested personnel qualifications', () => {
+    const storage = memoryStorage();
+    const record = { ...INITIAL_PERSONNEL[0], certifications: [{ id: 'qualification-1' }] };
+    storage.setItem('prot_ops_personnel_v2', JSON.stringify([record]));
+    assert.throws(() => createDemoRepository(storage).loadSnapshot(), /Invalid Demo Guest records/);
+  });
+
   it('does not silently replace data when browser storage reads are blocked', () => {
     const storage: DemoStorage = {
       getItem: () => { throw new Error('SecurityError: storage access denied'); },
