@@ -76,7 +76,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <nav className="bg-slate-800 border-b border-slate-700 sticky top-0 z-30 shadow-md">
+    <nav aria-label="Primary navigation" className="bg-slate-800 border-b border-slate-700 sticky top-0 z-30 shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14">
           {/* Desktop Nav Tabs */}
@@ -124,6 +124,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="p-2 rounded-md text-slate-300 hover:text-white hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               aria-label="Toggle navigation menu"
               aria-expanded={mobileMenuOpen}
+              aria-controls={mobileMenuOpen ? 'safer-mobile-navigation' : undefined}
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -133,7 +134,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile Nav Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-slate-900 border-b border-slate-700 px-2 pt-2 pb-3 space-y-1">
+        <div id="safer-mobile-navigation" className="md:hidden bg-slate-900 border-b border-slate-700 px-2 pt-2 pb-3 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeSection === item.id;
