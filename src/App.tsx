@@ -519,9 +519,12 @@ export default function App() {
     // records after the user has explicitly reset the workspace.
     await Promise.all([personnelQueue.current, incidentsQueue.current, cyberQueue.current, checklistQueue.current]);
     try {
-      demoRepository.reset();
-    } catch {
-      showToast('Browser storage blocked part of the reset. Some records may remain; retry or clear this site’s browser data.');
+      if (crossTabConflictRef.current) throw new Error('Cross-tab conflict: reload required.');
+      await demoRepository.reset();
+    } catch (error) {
+      showToast(error instanceof Error && error.message.includes('Cross-tab conflict')
+        ? 'Reset paused because another SAFER tab changed records. Export any needed work, then reload this tab before resetting.'
+        : 'Browser storage blocked part of the reset. Some records may remain; retry or clear this site’s browser data.');
       return;
     }
     personnelRef.current = [...INITIAL_PERSONNEL];
