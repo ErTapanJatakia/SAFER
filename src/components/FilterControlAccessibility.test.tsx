@@ -21,6 +21,7 @@ describe('Filter control accessible names', () => {
     expect(html).toContain('aria-label="Filter personnel by qualification indicator"');
     expect(html).toContain('aria-label="Filter personnel by verification status"');
     expect(html).toContain('aria-label="Filter personnel by role"');
+    expect(html).toContain('role="status" aria-live="polite" aria-atomic="true" data-personnel-filter-results');
   });
 
   it('names the cyber hygiene search field', () => {
