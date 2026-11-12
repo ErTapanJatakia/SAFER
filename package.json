@@ -22,7 +22,9 @@
     "test:session-invalidation": "vitest run src/lib/sessionInvalidation.test.ts",
     "test:demo-repository": "tsx --test src/lib/demoRepository.test.ts",
     "test:demo-workspace": "tsx --test src/lib/demoWorkspace.test.ts",
-    "test:dashboard-ui": "vitest run src/components/DashboardView.test.tsx"
+    "test:dashboard-ui": "vitest run src/components/DashboardView.test.tsx",
+    "test:modal-focus-a11y": "vitest run src/hooks/useModalFocus.test.tsx",
+    "test:cyber-item-modal-focus": "node --test tests/cyber-item-modal-focus.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
