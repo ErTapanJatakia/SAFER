@@ -126,6 +126,9 @@ jobs:
       - name: Live announcement accessibility tests
         run: npm run test:live-announcer
 
+      - name: Accessibility text scaling tests
+        run: npm run test:text-scaling
+
       - name: Filter control accessibility tests
         run: npm run test:filter-control-accessibility
 
