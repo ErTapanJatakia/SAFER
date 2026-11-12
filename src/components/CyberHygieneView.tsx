@@ -678,11 +678,15 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
             </p>
           </div>
 
-          {/* Scenario Selector Tabs */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          {/* Scenario Selector */}
+          <div role="group" aria-label="Phishing training scenarios" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
             {INITIAL_SUSPICIOUS_EMAILS.map((phish, idx) => (
               <button
                 key={phish.id}
+                type="button"
+                data-phish-scenario={idx}
+                aria-label={`Load scenario ${idx + 1}: ${phish.scenarioName}`}
+                aria-pressed={selectedPhishIndex === idx}
                 onClick={() => {
                   setSelectedPhishIndex(idx);
                   setShowPhishIndicators(false);
@@ -702,6 +706,10 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
             ))}
           </div>
 
+          <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+            Scenario {selectedPhishIndex + 1} of {INITIAL_SUSPICIOUS_EMAILS.length}: {currentPhish.scenarioName} selected.
+          </p>
+
           {/* Email Simulation Display */}
           <div className="bg-white border border-slate-300 rounded-xl shadow-md overflow-hidden">
             {/* Fake Email Client Toolbar */}
@@ -719,6 +727,10 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
 
               <div className="flex items-center space-x-2">
                 <button
+                  type="button"
+                  aria-label="Inspect phishing indicators"
+                  aria-expanded={showPhishIndicators}
+                  aria-controls="phishing-indicators"
                   onClick={() => setShowPhishIndicators(!showPhishIndicators)}
                   className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition shadow-2xs ${
                     showPhishIndicators
@@ -772,6 +784,8 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
               <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200">
                 <div className="flex items-center space-x-2">
                   <button
+                    type="button"
+                    data-phish-report
                     onClick={() => {
                       setReportedPhishMsg(true);
                       setTimeout(() => setReportedPhishMsg(false), 4000);
@@ -783,6 +797,10 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
                   </button>
 
                   <button
+                    type="button"
+                    aria-label="Show phishing indicators"
+                    aria-expanded={showPhishIndicators}
+                    aria-controls="phishing-indicators"
                     onClick={() => setShowPhishIndicators(!showPhishIndicators)}
                     className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-md text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 transition"
                   >
@@ -796,7 +814,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
               </div>
 
               {reportedPhishMsg && (
-                <div className="p-3 bg-teal-50 border border-teal-300 text-teal-800 rounded-md text-xs flex items-center space-x-2">
+                <div role="status" aria-live="polite" aria-atomic="true" className="p-3 bg-teal-50 border border-teal-300 text-teal-800 rounded-md text-xs flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 shrink-0 text-teal-600" />
                   <span>
                     Excellent defensive reaction! Simulated report submitted to Security Operations Cell (SOC).
@@ -807,7 +825,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
 
             {/* Revealed Red Flags & Threat Breakdown */}
             {showPhishIndicators && (
-              <div className="bg-amber-50/70 border-t-2 border-amber-500 p-6 space-y-4">
+              <div id="phishing-indicators" role="region" aria-label="Phishing indicators and recommended response" className="bg-amber-50/70 border-t-2 border-amber-500 p-6 space-y-4">
                 <div className="flex items-center space-x-2 text-amber-900">
                   <AlertTriangle className="w-5 h-5 text-amber-600" />
                   <h4 className="font-bold text-sm">
