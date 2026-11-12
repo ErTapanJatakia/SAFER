@@ -213,7 +213,7 @@ describe('Demo Guest repository', () => {
     assert.equal(writes, 0, 'unsupported browsers must not fall back to unsafe cross-tab writes');
   });
 
-  it('reset attempts every operational key even when one removal fails', () => {
+  it('reset attempts every operational key even when one removal fails', async () => {
     const attempted: string[] = [];
     const storage: DemoStorage = {
       getItem: () => null,
@@ -224,7 +224,7 @@ describe('Demo Guest repository', () => {
       },
     };
     const repository = createDemoRepository(storage);
-    assert.throws(() => repository.reset(), /incidents/);
+    await assert.rejects(repository.reset(), /incidents/);
     assert.deepEqual(attempted, [
       'prot_ops_personnel_v2',
       'prot_ops_incidents_v2',
@@ -247,7 +247,7 @@ describe('Demo Guest repository', () => {
     for (const key of operationalKeys) storage.setItem(key, 'demo-records');
     storage.setItem(preferenceKey, 'midnight-navy');
 
-    repository.reset();
+    await repository.reset();
 
     for (const key of operationalKeys) {
       assert.equal(storage.getItem(key), null, `reset must remove ${key}`);
@@ -255,7 +255,7 @@ describe('Demo Guest repository', () => {
     assert.equal(storage.getItem(preferenceKey), 'midnight-navy', 'reset must preserve unrelated device preferences');
     assert.deepEqual(repository.loadSnapshot().personnel, INITIAL_PERSONNEL);
 
-    assert.doesNotThrow(() => repository.reset(), 'reset should be safe to repeat');
+    await assert.doesNotReject(repository.reset(), 'reset should be safe to repeat');
     assert.equal(storage.getItem(preferenceKey), 'midnight-navy');
   });
 });
