@@ -205,8 +205,8 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
             <div className="w-9 h-9 rounded-lg bg-blue-900 flex items-center justify-center text-blue-200 border border-blue-700">
               <FileText className="w-5 h-5" />
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2 min-w-0">
                 <h3 className="font-bold text-base text-white break-words" id="incident-draft-dialog-title">
                   Structured Incident Draft Generator
                 </h3>
@@ -214,7 +214,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
                   10-Point Schema
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-400 break-words">
                 Transforms rough operational notes into structured, factual administrative records.
               </p>
             </div>
