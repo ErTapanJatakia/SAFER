@@ -153,7 +153,7 @@ Protection operations coordinators, supervisors, and administrative officers fac
 
 ## 4. Privacy, Data Handling & Security Boundaries
 
-- **Demo Guest operational records:** Personnel, incident, cyber-hygiene, and checklist records are stored in this browser's `localStorage` for the explicit Demo Guest experience. They are not synced to a tenant database. Browser-local storage is not a secure vault; use synthetic demonstration records only.
+- **Demo Guest operational records:** Personnel, incident, cyber-hygiene, and checklist records are stored in this browser's `localStorage` for the explicit Demo Guest experience. They are not synced to a tenant database and have no automatic expiry; closing the tab, restarting the browser, or signing out does not erase them. Use the **Reset Records** action to clear the four operational record sets and restore the bundled synthetic baseline. Theme, accessibility, and branding preferences are preserved. This is not a secure-erasure guarantee; exported files and browser/device backups are outside this reset. Browser-local storage is not a secure vault; use synthetic demonstration records only.
 - **No real operational data in Demo Guest:** Do not enter real personal information, health particulars, employee records, incident evidence, credentials, or sensitive operational notes. Other scripts running on the same origin may be able to access browser storage.
 - **Browser preferences:** Theme, custom branding, logos, and accessibility preferences are also persisted in browser-local storage.
 - **Exports:** Report and roster exports are generated in the browser and downloaded by the user. Review redactions and the destination device before sharing an export.
