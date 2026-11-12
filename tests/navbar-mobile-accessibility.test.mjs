@@ -6,7 +6,7 @@ const navbar = await readFile(new URL('../src/components/Navbar.tsx', import.met
 
 test('primary navigation and mobile menu expose an explicit accessible relationship', () => {
   assert.match(navbar, /<nav aria-label="Primary navigation"/);
-  assert.match(navbar, /aria-label="Toggle navigation menu"[\s\S]*aria-expanded=\{mobileMenuOpen\}[\s\S]*aria-controls="safer-mobile-navigation"/);
+  assert.match(navbar, /aria-label="Toggle navigation menu"[\s\S]*aria-expanded=\{mobileMenuOpen\}[\s\S]*aria-controls=\{mobileMenuOpen \? 'safer-mobile-navigation' : undefined\}/);
   assert.match(navbar, /id="safer-mobile-navigation"/);
 });
 
