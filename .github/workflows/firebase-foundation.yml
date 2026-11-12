@@ -86,6 +86,9 @@ jobs:
       - name: Modal focus accessibility tests
         run: npm run test:modal-focus-a11y
 
+      - name: Incident and pre-deployment modal focus tests
+        run: npm run test:incident-predeployment-modal-focus
+
       - name: Cyber Hygiene control editor modal focus tests
         run: npm run test:cyber-item-modal-focus
 
