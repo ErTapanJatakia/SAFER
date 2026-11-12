@@ -150,7 +150,7 @@ function readList<T>(storage: DemoStorage, key: string, fallback: readonly T[], 
 /** Browser-local repository for synthetic Demo Guest records only. */
 export function createDemoRepository(storage: DemoStorage, options: DemoRepositoryOptions = {}): DemoRepository & {
   loadSnapshot(): DemoSnapshot;
-  reset(): void;
+  reset(): Promise<void>;
 } {
   const expectedRaw = new Map<string, string | null>();
   const localQueues = new Map<string, Promise<void>>();
@@ -165,17 +165,23 @@ export function createDemoRepository(storage: DemoStorage, options: DemoReposito
   };
 
   const loadSnapshot = (): DemoSnapshot => {
-    const snapshot = Object.freeze({
-      personnel: readList(storage, KEYS.personnel, INITIAL_PERSONNEL, isPersonnelRecord),
-      incidents: readList(storage, KEYS.incidents, INITIAL_INCIDENTS, isIncidentReport),
-      cyberHygiene: readList(storage, KEYS.cyberHygiene, INITIAL_CYBER_ITEMS, isCyberHygieneItem),
-      checklist: readList(storage, KEYS.checklist, INITIAL_CHECKLIST, isChecklistItem),
-    });
     if (!baselineLoaded) {
+      // The baseline and parsed snapshot must use the exact same bytes; otherwise
+      // a cross-tab write between two reads could be mistaken for our own state.
       Object.values(KEYS).forEach((key) => expectedRaw.set(key, readRaw(key)));
       baselineLoaded = true;
     }
-    return snapshot;
+    const baselineStorage: DemoStorage = {
+      getItem: (key) => expectedRaw.has(key) ? (expectedRaw.get(key) ?? null) : readRaw(key),
+      setItem: () => { throw new Error('Snapshot storage is read-only.'); },
+      removeItem: () => { throw new Error('Snapshot storage is read-only.'); },
+    };
+    return Object.freeze({
+      personnel: readList(baselineStorage, KEYS.personnel, INITIAL_PERSONNEL, isPersonnelRecord),
+      incidents: readList(baselineStorage, KEYS.incidents, INITIAL_INCIDENTS, isIncidentReport),
+      cyberHygiene: readList(baselineStorage, KEYS.cyberHygiene, INITIAL_CYBER_ITEMS, isCyberHygieneItem),
+      checklist: readList(baselineStorage, KEYS.checklist, INITIAL_CHECKLIST, isChecklistItem),
+    });
   };
 
   const withDomainLock = async <T,>(domain: keyof typeof KEYS, operation: () => Promise<T>): Promise<T> => {
@@ -281,18 +287,25 @@ export function createDemoRepository(storage: DemoStorage, options: DemoReposito
       else current[index] = item;
       await save(KEYS.checklist, current, isChecklistItem, 'checklist');
     },
-    reset: () => {
-      const failedKeys: string[] = [];
-      Object.entries(KEYS).forEach(([domain, key]) => {
-        try {
-          storage.removeItem(key);
-        } catch {
-          failedKeys.push(domain);
+    reset: async () => {
+      const domains = Object.keys(KEYS) as (keyof typeof KEYS)[];
+      const removeAllUnderLocks = async (index: number): Promise<void> => {
+        if (index < domains.length) {
+          await withDomainLock(domains[index], () => removeAllUnderLocks(index + 1));
+          return;
         }
-      });
-      if (failedKeys.length > 0) {
-        throw new Error(`Unable to clear all Demo Guest records. Storage removal failed for: ${failedKeys.join(', ')}.`);
-      }
+        const failedKeys: string[] = [];
+        domains.forEach((domain) => {
+          const key = KEYS[domain];
+          try { storage.removeItem(key); }
+          catch { failedKeys.push(domain); }
+        });
+        if (failedKeys.length > 0) {
+          throw new Error(`Unable to clear all Demo Guest records. Storage removal failed for: ${failedKeys.join(', ')}.`);
+        }
+        domains.forEach((domain) => expectedRaw.set(KEYS[domain], null));
+      };
+      await removeAllUnderLocks(0);
     },
   });
 }
