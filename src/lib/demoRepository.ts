@@ -186,7 +186,7 @@ export function createDemoRepository(storage: DemoStorage): DemoRepository & {
       save(KEYS.personnel, current, isPersonnelRecord);
     },
     deletePersonnel: async (recordId: string) => {
-      save(KEYS.personnel, loadSnapshot().personnel.filter((item) => item.id !== recordId));
+      save(KEYS.personnel, loadSnapshot().personnel.filter((item) => item.id !== recordId), isPersonnelRecord);
     },
     listIncidents: async () => loadSnapshot().incidents,
     replaceIncidents: async (records: readonly IncidentReport[]) => { save(KEYS.incidents, records, isIncidentReport); },
