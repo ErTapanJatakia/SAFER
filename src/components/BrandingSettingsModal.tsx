@@ -174,15 +174,15 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
       aria-modal="true"
       aria-labelledby="branding-modal-title"
     >
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full border border-slate-300 overflow-hidden flex flex-col max-h-[92vh] text-slate-900">
+      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full border border-slate-300 overflow-hidden flex flex-col max-h-[92vh] min-w-0 text-slate-900">
         {/* Header */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
-          <div className="flex items-center space-x-3">
+        <div className="bg-slate-900 text-white px-4 sm:px-6 py-4 flex items-start justify-between gap-3 border-b border-slate-800">
+          <div className="flex items-start space-x-3 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-blue-900/60 border border-blue-700/60 flex items-center justify-center text-blue-300">
               <Building2 className="w-5 h-5" />
             </div>
             <div>
-              <h2 id="branding-modal-title" className="font-bold text-base text-white">
+              <h2 id="branding-modal-title" className="font-bold text-base text-white break-words">
                 Organisation Branding & Presentation Settings
               </h2>
               <p className="text-xs text-slate-400">
@@ -191,8 +191,9 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-md"
+            className="text-slate-400 hover:text-white p-1 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             aria-label="Close Branding Settings"
           >
             <X className="w-5 h-5" />
@@ -200,9 +201,11 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
         </div>
 
         {/* Tab selection: Top Logo vs Bottom Logo */}
-        <div className="px-6 pt-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-          <div className="flex space-x-2">
+        <div className="px-4 sm:px-6 pt-4 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex flex-wrap gap-2 min-w-0">
             <button
+              type="button"
+              aria-pressed={activeTab === 'top'}
               onClick={() => {
                 setActiveTab('top');
                 setErrorMsg(null);
@@ -218,6 +221,8 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
               {topLogo.dataUrl && <span className="ml-1.5 text-teal-600">&bull; Active</span>}
             </button>
             <button
+              type="button"
+              aria-pressed={activeTab === 'bottom'}
               onClick={() => {
                 setActiveTab('bottom');
                 setErrorMsg(null);
@@ -235,11 +240,12 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
           </div>
 
           <button
+            type="button"
             onClick={() => {
               onResetLogos();
               setSuccessMsg('Restored default branding layout.');
             }}
-            className="text-xs text-slate-600 hover:text-slate-900 flex items-center space-x-1 px-2.5 py-1 rounded border border-slate-300 hover:bg-slate-100 mb-2 transition"
+            className="text-xs text-slate-600 hover:text-slate-900 flex items-center space-x-1 px-2.5 py-1 rounded border border-slate-300 hover:bg-slate-100 mb-2 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
             title="Restore default branding layout"
           >
             <RotateCcw className="w-3 h-3" />
@@ -248,16 +254,16 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-5 text-xs text-slate-700">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-5 text-xs text-slate-700 min-w-0">
           {errorMsg && (
-            <div className="p-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-md flex items-center space-x-2">
+            <div role="alert" className="p-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-md flex items-center space-x-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           {successMsg && (
-            <div className="p-3 bg-teal-50 border border-teal-300 text-teal-800 rounded-md flex items-center space-x-2">
+            <div role="status" aria-live="polite" aria-atomic="true" className="p-3 bg-teal-50 border border-teal-300 text-teal-800 rounded-md flex items-center space-x-2">
               <Check className="w-4 h-4 shrink-0 text-teal-600" />
               <span>{successMsg}</span>
             </div>
@@ -286,14 +292,15 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
 
             {/* Corner Selector */}
             <div className="space-y-1.5">
-              <label className="block font-semibold text-slate-800">
+              <div id="branding-corner-position-label" className="block font-semibold text-slate-800">
                 Display Corner Position
-              </label>
-              <div className="grid grid-cols-2 gap-3">
+              </div>
+              <div role="group" aria-labelledby="branding-corner-position-label" className="grid grid-cols-2 gap-3">
                 {activeTab === 'top' ? (
                   <>
                     <button
                       type="button"
+                      aria-pressed={topLogo.position === 'top-left'}
                       onClick={() => updateCurrent({ position: 'top-left' })}
                       className={`p-2.5 rounded-lg border text-center font-semibold text-xs transition ${
                         topLogo.position === 'top-left'
@@ -305,6 +312,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
                     </button>
                     <button
                       type="button"
+                      aria-pressed={topLogo.position === 'top-right'}
                       onClick={() => updateCurrent({ position: 'top-right' })}
                       className={`p-2.5 rounded-lg border text-center font-semibold text-xs transition ${
                         topLogo.position === 'top-right'
@@ -319,6 +327,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
                   <>
                     <button
                       type="button"
+                      aria-pressed={bottomLogo.position === 'bottom-left'}
                       onClick={() => updateCurrent({ position: 'bottom-left' })}
                       className={`p-2.5 rounded-lg border text-center font-semibold text-xs transition ${
                         bottomLogo.position === 'bottom-left'
@@ -330,6 +339,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
                     </button>
                     <button
                       type="button"
+                      aria-pressed={bottomLogo.position === 'bottom-right'}
                       onClick={() => updateCurrent({ position: 'bottom-right' })}
                       className={`p-2.5 rounded-lg border text-center font-semibold text-xs transition ${
                         bottomLogo.position === 'bottom-right'
@@ -347,7 +357,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
             {/* Upload & Preview Box */}
             <div className="space-y-2">
               <label className="block font-semibold text-slate-800">
-                Logo Image (PNG, JPG/JPEG, WebP — Up to 10 MB)
+                Logo Image (PNG, JPG/JPEG, WebP, SVG — Up to 2 MB)
               </label>
 
               {currentLogo.dataUrl ? (
@@ -360,7 +370,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
                     <button
                       type="button"
                       onClick={() => updateCurrent({ dataUrl: null, fileName: undefined })}
-                      className="text-xs text-rose-700 hover:text-rose-900 flex items-center space-x-1"
+                      className="text-xs text-rose-700 hover:text-rose-900 flex items-center space-x-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-700"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       <span>Remove Logo</span>
@@ -389,7 +399,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
                           bottomFileInputRef.current?.click();
                         }
                       }}
-                      className="px-3 py-1 bg-white border border-slate-300 rounded text-slate-700 hover:bg-slate-100 font-semibold text-xs flex items-center space-x-1"
+                      className="px-3 py-1 bg-white border border-slate-300 rounded text-slate-700 hover:bg-slate-100 font-semibold text-xs flex items-center space-x-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
                     >
                       <Upload className="w-3.5 h-3.5" />
                       <span>Replace Image</span>
@@ -397,7 +407,9 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
                   </div>
                 </div>
               ) : (
-                <div
+                <button
+                  type="button"
+                  aria-controls={activeTab === 'top' ? 'top-logo-file-input' : 'bottom-logo-file-input'}
                   onClick={() => {
                     if (activeTab === 'top') {
                       topFileInputRef.current?.click();
@@ -405,7 +417,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
                       bottomFileInputRef.current?.click();
                     }
                   }}
-                  className="border-2 border-dashed border-slate-300 hover:border-blue-700 bg-slate-50 hover:bg-blue-50/50 rounded-lg p-6 text-center cursor-pointer transition space-y-2"
+                  className="w-full border-2 border-dashed border-slate-300 hover:border-blue-700 bg-slate-50 hover:bg-blue-50/50 rounded-lg p-6 text-center cursor-pointer transition space-y-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
                 >
                   <div className="w-10 h-10 mx-auto rounded-full bg-blue-100 text-blue-900 flex items-center justify-center">
                     <Upload className="w-5 h-5" />
@@ -415,25 +427,27 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
                       Click to upload {activeTab === 'top' ? 'Top' : 'Bottom'} Logo
                     </span>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      PNG, JPG, or WebP. Maximum size 10 MB.
+                      PNG, JPG, WebP, or SVG. Maximum size 2 MB.
                     </p>
                   </div>
-                </div>
+                </button>
               )}
 
               {/* Hidden file inputs */}
               <input
+                id="top-logo-file-input"
                 ref={topFileInputRef}
                 type="file"
-                accept="image/png, image/jpeg, image/jpg, image/webp"
+                accept="image/png, image/jpeg, image/jpg, image/webp, image/svg+xml"
                 onChange={(e) => handleFileUpload(e, true)}
                 className="hidden"
                 aria-label="Upload Top Logo Image"
               />
               <input
+                id="bottom-logo-file-input"
                 ref={bottomFileInputRef}
                 type="file"
-                accept="image/png, image/jpeg, image/jpg, image/webp"
+                accept="image/png, image/jpeg, image/jpg, image/webp, image/svg+xml"
                 onChange={(e) => handleFileUpload(e, false)}
                 className="hidden"
                 aria-label="Upload Bottom Logo Image"
@@ -443,7 +457,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
             {/* Display Size Slider */}
             <div className="space-y-1.5 pt-2">
               <div className="flex items-center justify-between">
-                <label className="font-semibold text-slate-800 flex items-center space-x-1.5">
+                <label htmlFor="branding-logo-height" className="font-semibold text-slate-800 flex items-center space-x-1.5">
                   <Sliders className="w-3.5 h-3.5 text-blue-900" />
                   <span>Display Height: {currentLogo.height}px</span>
                 </label>
@@ -452,6 +466,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
                 </span>
               </div>
               <input
+                id="branding-logo-height"
                 type="range"
                 min="24"
                 max="80"
@@ -469,10 +484,11 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
 
             {/* Alternative Text */}
             <div className="space-y-1 pt-1">
-              <label className="block font-semibold text-slate-800">
+              <label htmlFor="branding-logo-alt-text" className="block font-semibold text-slate-800">
                 Accessible Alternative Text (for Screen Readers)
               </label>
               <input
+                id="branding-logo-alt-text"
                 type="text"
                 value={currentLogo.altText}
                 onChange={(e) => updateCurrent({ altText: e.target.value })}
@@ -484,14 +500,14 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="bg-slate-50 px-6 py-3.5 border-t border-slate-200 flex items-center justify-between">
+        <div className="bg-slate-50 px-4 sm:px-6 py-3.5 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <span className="text-[11px] text-slate-500">
             Settings persist locally across browser sessions
           </span>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 bg-blue-900 hover:bg-blue-800 text-white font-semibold rounded-md text-xs shadow-xs"
+            className="px-4 py-1.5 bg-blue-900 hover:bg-blue-800 text-white font-semibold rounded-md text-xs shadow-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
           >
             Done
           </button>
