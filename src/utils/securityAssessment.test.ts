@@ -462,3 +462,54 @@ test('SEC-07B: PDF and DOCX exports preserve field-level redactions in generated
 
   assert.deepEqual(person, originalCopy, 'PDF and DOCX redaction must not mutate the source record');
 });
+
+test('SEC-07C: TXT and CSV exports preserve field-level redactions for all sensitive sentinels', () => {
+  const basePerson = INDIAN_PERSONNEL_DATA[0];
+  const markers = {
+    personalEmail: 'PRIVATE-PERSONAL-EMAIL-SEC07C',
+    healthParticulars: 'PRIVATE-HEALTH-SEC07C',
+    residenceAddress: 'PRIVATE-RESIDENCE-SEC07C',
+    employerAddress: 'PRIVATE-EMPLOYER-ADDRESS-SEC07C',
+    issuer: 'PRIVATE-QUALIFICATION-ISSUER-SEC07C',
+  };
+  assert.ok(basePerson.workExperience?.length, 'Fixture must include work experience');
+  assert.ok(basePerson.certifications?.length, 'Fixture must include qualifications');
+
+  const person: PersonnelRecord = {
+    ...basePerson,
+    personalEmail: markers.personalEmail,
+    healthParticulars: markers.healthParticulars,
+    residenceAddress: {
+      ...basePerson.residenceAddress!,
+      addressLine: markers.residenceAddress,
+    },
+    workExperience: basePerson.workExperience!.map((entry, index) =>
+      index === 0 ? { ...entry, employerAddress: markers.employerAddress } : entry
+    ),
+    certifications: basePerson.certifications!.map((entry, index) =>
+      index === 0 ? { ...entry, issuer: markers.issuer } : entry
+    ),
+  };
+  const originalCopy = JSON.parse(JSON.stringify(person));
+  const redactedKeys = new Set([
+    'personalEmail',
+    'healthParticulars',
+    'residenceAddress',
+    'workExperience.employerAddress',
+    'certifications.issuers',
+  ]);
+
+  const outputs = [
+    { format: 'TXT', content: generateTxtExport(person, redactedKeys) },
+    { format: 'CSV', content: generateCsvExport(person, redactedKeys) },
+  ];
+
+  for (const { format, content: output } of outputs) {
+    assert.ok(output.includes('[REDACTED]'), `${format} export must visibly retain redaction markers`);
+    for (const marker of Object.values(markers)) {
+      assert.ok(!output.includes(marker), `${format} export must not disclose ${marker}`);
+    }
+  }
+
+  assert.deepEqual(person, originalCopy, 'TXT and CSV redaction must not mutate the source record');
+});
