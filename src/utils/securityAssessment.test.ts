@@ -352,7 +352,7 @@ test('SEC-07A: XLSX single-record and roster exports preserve field-level redact
 
   // Single-record export: verify personal, health, address, employment, and issuer fields.
   const singleWorkbook = XLSX.read(generateXlsxExport(person, redactedKeys), { type: 'array' });
-  assertRedacted(singleWorkbook.Sheets['Personnel Overview'], 'B17', 'Personal email');
+  assertRedacted(singleWorkbook.Sheets['Personnel Overview'], 'B16', 'Personal email');
   assertRedacted(singleWorkbook.Sheets['Personnel Overview'], 'B21', 'Health particulars');
   assertRedacted(singleWorkbook.Sheets['Personnel Overview'], 'B24', 'Residence address line');
   assertRedacted(singleWorkbook.Sheets['Work Experience'], 'C2', 'Employer address');
