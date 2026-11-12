@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { useModalFocus } from '../hooks/useModalFocus.ts';
+import { getCurrentISODate } from '../utils/dateUtils.ts';
 import type { CyberHygieneItem } from '../types/index.ts';
 import { generateCyberHygieneSummary } from '../utils/cyberHygieneSummary.ts';
 import { copyToClipboard } from '../utils/clipboard.ts';
-import { getCurrentISODate } from '../utils/dateUtils.ts';
 import { X, Copy, Check, Download, ShieldCheck, AlertCircle } from 'lucide-react';
 
 interface CyberHygieneSummaryModalProps {
@@ -17,6 +18,7 @@ export const CyberHygieneSummaryModal: React.FC<CyberHygieneSummaryModalProps> =
   items,
 }) => {
   const [copied, setCopied] = useState(false);
+  const modalRef = useModalFocus<HTMLDivElement>(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -42,13 +44,13 @@ export const CyberHygieneSummaryModal: React.FC<CyberHygieneSummaryModalProps> =
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+      <div ref={modalRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="cyber-hygiene-summary-dialog-title" className="bg-white rounded-xl shadow-2xl max-w-3xl w-full border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <ShieldCheck className="w-5 h-5 text-teal-400" />
             <div>
-              <h3 className="font-bold text-base text-white">
+              <h3 className="font-bold text-base text-white" id="cyber-hygiene-summary-dialog-title">
                 Cybersecurity Hygiene Executive Briefing
               </h3>
               <p className="text-[11px] text-slate-300">
