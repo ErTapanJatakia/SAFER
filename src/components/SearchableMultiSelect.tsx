@@ -139,7 +139,6 @@ export const SearchableMultiSelect: React.FC<SearchableMultiSelectProps> = ({
         aria-labelledby={labelId}
         aria-expanded={isOpen}
         aria-controls={isOpen ? panelId : undefined}
-        aria-haspopup="true"
         aria-required={required}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? errorId : undefined}
