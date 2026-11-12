@@ -29,6 +29,16 @@ describe('Demo Guest repository', () => {
     assert.deepEqual(repository.loadSnapshot().personnel, INITIAL_PERSONNEL);
   });
 
+  it('does not silently replace data when browser storage reads are blocked', () => {
+    const storage: DemoStorage = {
+      getItem: () => { throw new Error('SecurityError: storage access denied'); },
+      setItem: () => { throw new Error('QuotaExceededError'); },
+      removeItem: () => { throw new Error('SecurityError'); },
+    };
+    const repository = createDemoRepository(storage);
+    assert.throws(() => repository.loadSnapshot(), /Unable to read Demo Guest storage key/);
+  });
+
   it('persists and reloads personnel through the repository contract', async () => {
     const repository = createDemoRepository(memoryStorage());
     const record = { ...INITIAL_PERSONNEL[0], id: 'demo-repository-test' };
@@ -53,6 +63,26 @@ describe('Demo Guest repository', () => {
     assert.ok(storage.getItem('prot_ops_incidents_v2'));
     assert.ok(storage.getItem('prot_ops_cyber_v2'));
     assert.ok(storage.getItem('prot_ops_checklist_v2'));
+  });
+
+  it('reset attempts every operational key even when one removal fails', () => {
+    const attempted: string[] = [];
+    const storage: DemoStorage = {
+      getItem: () => null,
+      setItem: () => undefined,
+      removeItem: (key) => {
+        attempted.push(key);
+        if (key === 'prot_ops_incidents_v2') throw new Error('SecurityError');
+      },
+    };
+    const repository = createDemoRepository(storage);
+    assert.throws(() => repository.reset(), /incidents/);
+    assert.deepEqual(attempted, [
+      'prot_ops_personnel_v2',
+      'prot_ops_incidents_v2',
+      'prot_ops_cyber_v2',
+      'prot_ops_checklist_v2',
+    ]);
   });
 
   it('reset removes all four operational demo keys while preserving unrelated preferences', async () => {
