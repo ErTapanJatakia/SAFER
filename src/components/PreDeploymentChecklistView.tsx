@@ -387,7 +387,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                 className="bg-white border border-amber-200 rounded-lg p-3 text-xs space-y-2 shadow-2xs"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <span className="font-bold text-slate-900">{item.task}</span>
+                  <span className="font-bold text-slate-900 min-w-0 break-words">{item.task}</span>
                   <span
                     className={`text-[10px] px-2 py-0.5 rounded font-bold border shrink-0 ${
                       item.priority === 'High'
@@ -404,17 +404,17 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                     <span> &bull; Due: {item.targetDeadline}</span>
                   )}
                 </div>
-                <p className="text-slate-600 line-clamp-2">{item.description}</p>
+                <p className="text-slate-600 break-words">{item.description}</p>
                 {item.complianceNotes && (
-                  <p className="text-[11px] text-amber-900 font-medium bg-amber-50/80 p-1.5 rounded border border-amber-200">
+                  <p className="text-[11px] text-amber-900 font-medium bg-amber-50/80 p-1.5 rounded border border-amber-200 break-words">
                     <strong>Issue Note:</strong> {item.complianceNotes}
                   </p>
                 )}
 
                 {/* Quick Status Buttons */}
-                <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                <div className="flex flex-wrap items-start justify-between gap-2 pt-1 border-t border-slate-100">
                   <span className="text-[11px] text-slate-400 font-mono">Status: Incomplete</span>
-                  <div className="flex items-center space-x-1">
+                  <div className="flex flex-wrap items-center gap-1">
                     <button
                       onClick={() => onUpdateStatus(item.id, 'Complete')}
                       className="px-2 py-1 text-[11px] font-semibold bg-teal-50 text-teal-800 border border-teal-300 rounded hover:bg-teal-100"
@@ -451,7 +451,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
           </div>
 
           {/* Status Filter Buttons */}
-          <div className="flex items-center space-x-1 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+          <div className="flex flex-wrap items-center gap-1 w-full sm:w-auto pb-1 sm:pb-0">
             <span className="text-xs text-slate-500 font-semibold mr-1 shrink-0 flex items-center">
               <Filter className="w-3.5 h-3.5 mr-1" />
               Status:
@@ -465,7 +465,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
               <button
                 key={st.id}
                 onClick={() => setSelectedStatusFilter(st.id)}
-                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition whitespace-nowrap ${
+                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition ${
                   selectedStatusFilter === st.id
                     ? st.id === 'OUTSTANDING'
                       ? 'bg-amber-800 text-white'
@@ -612,7 +612,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
 
                     {/* Task Title */}
                     <h3
-                      className={`font-bold text-sm leading-snug ${
+                      className={`font-bold text-sm leading-snug break-words ${
                         isComplete ? 'text-slate-800' : isIncomplete ? 'text-slate-900' : 'text-slate-500'
                       }`}
                     >
@@ -620,7 +620,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                     </h3>
 
                     {/* Task Description */}
-                    <p className="text-xs text-slate-600 leading-relaxed">
+                    <p className="text-xs text-slate-600 leading-relaxed break-words">
                       {item.description}
                     </p>
 
@@ -630,7 +630,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                         <span className="font-semibold text-slate-800 block text-[11px]">
                           Audit & Verification Record:
                         </span>
-                        <p>{item.complianceNotes}</p>
+                        <p className="break-words">{item.complianceNotes}</p>
                       </div>
                     )}
 
@@ -648,12 +648,12 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                         </span>
                       )}
                       {item.reviewedBy ? (
-                        <span className="text-teal-700 font-semibold flex items-center">
+                        <span className="text-teal-700 font-semibold flex items-start min-w-0 break-words">
                           <UserCheck className="w-3.5 h-3.5 mr-1" />
                           Supervisory Sign-Off: {item.reviewedBy} ({item.reviewDate || getCurrentISODate()})
                         </span>
                       ) : item.requiresHumanReview ? (
-                        <span className="text-amber-800 font-semibold flex items-center">
+                        <span className="text-amber-800 font-semibold flex items-start min-w-0 break-words">
                           <AlertCircle className="w-3.5 h-3.5 mr-1" />
                           Awaiting Supervisor Human Sign-off
                         </span>
@@ -662,16 +662,16 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                   </div>
 
                   {/* Right Column: Status Switcher & Sign-off */}
-                  <div className="flex sm:flex-col items-end justify-between gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
+                  <div className="flex flex-col items-stretch sm:items-end justify-between gap-3 min-w-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
                     {/* Status Pill Switcher */}
-                    <div className="space-y-1 text-right">
+                    <div className="space-y-1 text-left sm:text-right min-w-0">
                       <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">
                         Mark Status:
                       </span>
-                      <div className="inline-flex rounded-md shadow-2xs border border-slate-300 overflow-hidden bg-white">
+                      <div className="inline-flex flex-wrap rounded-md shadow-2xs border border-slate-300 overflow-hidden bg-white max-w-full">
                         <button
                           onClick={() => onUpdateStatus(item.id, 'Complete')}
-                          className={`px-2.5 py-1 text-xs font-semibold transition ${
+                          className={`px-2 py-1.5 text-xs font-semibold transition ${
                             item.status === 'Complete'
                               ? 'bg-teal-700 text-white'
                               : 'text-slate-700 hover:bg-slate-100'
@@ -682,7 +682,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                         </button>
                         <button
                           onClick={() => onUpdateStatus(item.id, 'Incomplete')}
-                          className={`px-2.5 py-1 text-xs font-semibold border-l border-r border-slate-300 transition ${
+                          className={`px-2 py-1.5 text-xs font-semibold border-l border-r border-slate-300 transition ${
                             item.status === 'Incomplete'
                               ? 'bg-amber-800 text-white'
                               : 'text-slate-700 hover:bg-slate-100'
@@ -693,7 +693,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                         </button>
                         <button
                           onClick={() => onUpdateStatus(item.id, 'Not Applicable')}
-                          className={`px-2.5 py-1 text-xs font-semibold transition ${
+                          className={`px-2 py-1.5 text-xs font-semibold transition ${
                             item.status === 'Not Applicable'
                               ? 'bg-slate-700 text-white'
                               : 'text-slate-600 hover:bg-slate-100'

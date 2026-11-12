@@ -81,18 +81,18 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/75 backdrop-blur-xs overflow-y-auto">
-      <div ref={modalRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="predeployment-summary-dialog-title" className="bg-white rounded-xl shadow-2xl max-w-4xl w-full border border-slate-200 overflow-hidden my-auto max-h-[92vh] flex flex-col">
+      <div ref={modalRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="predeployment-summary-dialog-title" className="bg-white rounded-xl shadow-2xl max-w-4xl w-full border border-slate-200 overflow-hidden my-auto max-h-[92vh] min-w-0 flex flex-col">
         {/* Modal Header */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
-          <div className="flex items-center space-x-3">
+        <div className="bg-slate-900 text-white px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-slate-800">
+          <div className="flex items-start space-x-3 min-w-0">
             <div className="w-9 h-9 rounded-lg bg-blue-600/30 text-blue-300 border border-blue-500/30 flex items-center justify-center">
               <ClipboardList className="w-5 h-5 text-blue-300" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white tracking-tight" id="predeployment-summary-dialog-title">
+              <h2 className="text-base font-bold text-white tracking-tight break-words" id="predeployment-summary-dialog-title">
                 Pre-Deployment Readiness Summary for Human Review
               </h2>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-400 break-words">
                 Administrative & Safety-Readiness Review &bull; Demonstration Operational Scenario
               </p>
             </div>
@@ -107,16 +107,16 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
         </div>
 
         {/* Mandatory Safety Notice Banner */}
-        <div className="bg-amber-50 border-b border-amber-200 px-6 py-2.5 text-xs text-amber-900 flex items-start space-x-2.5">
+        <div className="bg-amber-50 border-b border-amber-200 px-4 sm:px-6 py-2.5 text-xs text-amber-900 flex items-start space-x-2.5">
           <AlertTriangle className="w-4 h-4 text-amber-700 mt-0.5 shrink-0" />
-          <p className="leading-relaxed">
+          <p className="leading-relaxed break-words">
             <strong>Mandatory Human Supervisory Mandate:</strong> This checklist provides administrative and safety-readiness tracking only. The application and this report <strong>must never state or imply that any person or deployment is approved solely because checklist items are complete</strong>. Final deployment authorization requires affirmative, independent human supervisory review.
           </p>
         </div>
 
         {/* View Switcher Tabs & Actions */}
         <div className="bg-slate-50 px-6 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setActiveTab('structured')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${
@@ -139,7 +139,7 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
             </button>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={handleCopy}
               className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition shadow-2xs"
@@ -168,33 +168,33 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="p-6 overflow-y-auto space-y-6 flex-1 text-slate-800">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 text-slate-800 min-w-0">
           {activeTab === 'structured' ? (
             <div className="space-y-6">
               {/* Scenario Context Card */}
-              <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs space-y-2">
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs space-y-2 min-w-0">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
-                  <span className="font-bold text-slate-900 text-sm">
+                  <span className="font-bold text-slate-900 text-sm min-w-0 break-words">
                     {scenario?.codename || 'Operation Pacific Horizon (Administrative Demo)'}
                   </span>
-                  <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-900 font-medium">
+                  <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-900 font-medium break-words">
                     Demonstration Operational Scenario
                   </span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-slate-600 pt-1">
-                  <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-slate-600 pt-1 min-w-0">
+                  <div className="min-w-0 break-words">
                     <span className="font-semibold text-slate-700">Mission Subject: </span>
                     {scenario?.title}
                   </div>
-                  <div>
+                  <div className="min-w-0 break-words">
                     <span className="font-semibold text-slate-700">Demonstration Venue: </span>
                     {scenario?.fictionalVenue}
                   </div>
-                  <div>
+                  <div className="min-w-0 break-words">
                     <span className="font-semibold text-slate-700">Jurisdiction: </span>
                     {scenario?.fictionalJurisdiction}
                   </div>
-                  <div>
+                  <div className="min-w-0 break-words">
                     <span className="font-semibold text-slate-700">Target Dates: </span>
                     {scenario?.startDate} to {scenario?.targetEndDate}
                   </div>
@@ -248,9 +248,9 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
 
               {/* Prominent Outstanding Items */}
               <div className="border border-amber-300 bg-amber-50/70 rounded-lg p-4 space-y-3">
-                <div className="flex items-center space-x-2 text-amber-900">
+                <div className="flex items-start gap-2 min-w-0 text-amber-900">
                   <AlertCircle className="w-5 h-5 text-amber-700" />
-                  <h3 className="font-bold text-sm uppercase tracking-wide">
+                  <h3 className="font-bold text-sm uppercase tracking-wide min-w-0 break-words">
                     Outstanding Issues Requiring Human Supervisor Attention ({metrics.outstandingItems.length})
                   </h3>
                 </div>
@@ -266,8 +266,8 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
                         key={item.id}
                         className="bg-white border border-amber-200 rounded-md p-3 text-xs space-y-1 shadow-2xs"
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-bold text-slate-900">
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <span className="font-bold text-slate-900 min-w-0 break-words">
                             {index + 1}. {item.task}
                           </span>
                           <span
@@ -280,7 +280,7 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
                             {item.priority} Priority
                           </span>
                         </div>
-                        <div className="text-[11px] text-slate-500 font-medium">
+                        <div className="text-[11px] text-slate-500 font-medium min-w-0 break-words">
                           Category: <span className="text-slate-700">{item.category}</span>
                           {item.assignedRoleOrPerson && (
                             <span> &bull; Assigned: {item.assignedRoleOrPerson}</span>
@@ -289,9 +289,9 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
                             <span> &bull; Target: {item.targetDeadline}</span>
                           )}
                         </div>
-                        <p className="text-slate-600 leading-relaxed">{item.description}</p>
+                        <p className="text-slate-600 leading-relaxed break-words">{item.description}</p>
                         {item.complianceNotes && (
-                          <div className="mt-1 p-2 bg-slate-50 border border-slate-200 rounded text-[11px] text-slate-700">
+                          <div className="mt-1 p-2 bg-slate-50 border border-slate-200 rounded text-[11px] text-slate-700 break-words">
                             <strong>Compliance Note:</strong> {item.complianceNotes}
                           </div>
                         )}
@@ -322,7 +322,7 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
                           {cat.complete}/{cat.total}
                         </span>
                       </div>
-                      <div className="flex items-center space-x-3 text-[11px] text-slate-500">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
                         <span className="flex items-center text-teal-700">
                           <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-teal-600" />
                           {cat.complete} Complete
@@ -345,19 +345,19 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
 
               {/* Human Supervisor Determination Sign-Off Form */}
               <div className="border border-blue-900/20 bg-blue-50/50 rounded-lg p-4 space-y-3">
-                <div className="flex items-center space-x-2 text-blue-900">
+                <div className="flex flex-wrap items-start gap-2 min-w-0 text-blue-900">
                   <UserCheck className="w-5 h-5 text-blue-900" />
-                  <h3 className="font-bold text-sm text-slate-900">
+                  <h3 className="font-bold text-sm text-slate-900 min-w-0 break-words">
                     Human Supervisory Review Record
                   </h3>
                 </div>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-slate-600 break-words">
                   Record the supervisory review determination for operational archives.
                 </p>
 
-                <form onSubmit={handleConfirmSignOff} className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                  <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
+                <form onSubmit={handleConfirmSignOff} className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs min-w-0">
+                  <div className="min-w-0">
+                    <label className="block font-semibold text-slate-700 mb-1 break-words">
                       Supervisor Name & Title
                     </label>
                     <input
@@ -370,7 +370,7 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
+                    <label className="block font-semibold text-slate-700 mb-1 break-words">
                       Determination
                     </label>
                     <select
@@ -390,7 +390,7 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
                     </select>
                   </div>
 
-                  <div className="flex items-end">
+                  <div className="flex items-end min-w-0">
                     <button
                       type="submit"
                       className="w-full px-4 py-2 bg-blue-900 hover:bg-blue-800 text-white font-semibold rounded-md transition shadow-2xs flex items-center justify-center space-x-1"
@@ -413,7 +413,7 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-slate-500">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500">
                 <span>Text report formatted for copy, export, or audit records:</span>
                 <span className="font-mono">Plaintext Format &bull; UTF-8</span>
               </div>
@@ -428,7 +428,7 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
         </div>
 
         {/* Modal Footer */}
-        <div className="bg-slate-50 px-6 py-3 border-t border-slate-200 flex items-center justify-between">
+        <div className="bg-slate-50 px-4 sm:px-6 py-3 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="text-[11px] text-slate-500">
             Sample Demonstration &bull; Non-Tactical Administrative Review
           </div>
