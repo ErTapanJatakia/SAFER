@@ -81,6 +81,64 @@ describe('Demo Guest repository', () => {
     assert.equal((await repository.listPersonnel()).some((item) => item.id === record.id), true);
   });
 
+  it('reports quota failures without claiming a successful write', async () => {
+    const storage: DemoStorage = {
+      getItem: () => null,
+      setItem: () => { throw new DOMException('Storage quota exceeded', 'QuotaExceededError'); },
+      removeItem: () => undefined,
+    };
+    const repository = createDemoRepository(storage);
+    await assert.rejects(
+      repository.replacePersonnel(INITIAL_PERSONNEL),
+      /Unable to write Demo Guest storage key: prot_ops_personnel_v2/,
+    );
+  });
+
+  it('verifies persisted bytes after a successful storage write', async () => {
+    let stored = '';
+    const storage: DemoStorage = {
+      getItem: () => stored ? 'different-value' : null,
+      setItem: (_key, value) => { stored = value; },
+      removeItem: () => undefined,
+    };
+    const repository = createDemoRepository(storage);
+    await assert.rejects(
+      repository.replacePersonnel(INITIAL_PERSONNEL),
+      /Unable to verify Demo Guest storage key after writing/,
+    );
+  });
+
+  it('rejects invalid outbound records before writing them', async () => {
+    let writes = 0;
+    const storage: DemoStorage = {
+      getItem: () => null,
+      setItem: () => { writes += 1; },
+      removeItem: () => undefined,
+    };
+    const repository = createDemoRepository(storage);
+    await assert.rejects(
+      repository.replacePersonnel([{ id: 'incomplete' } as PersonnelRecord]),
+      /Refusing to persist invalid Demo Guest records/,
+    );
+    assert.equal(writes, 0, 'invalid records must be rejected before storage is touched');
+  });
+
+  it('rejects duplicate identifiers before replacing a collection', async () => {
+    let writes = 0;
+    const storage: DemoStorage = {
+      getItem: () => null,
+      setItem: () => { writes += 1; },
+      removeItem: () => undefined,
+    };
+    const duplicate = { ...INITIAL_INCIDENTS[0] };
+    const repository = createDemoRepository(storage);
+    await assert.rejects(
+      repository.replaceIncidents([duplicate, { ...duplicate }]),
+      /Refusing to persist invalid Demo Guest records/,
+    );
+    assert.equal(writes, 0);
+  });
+
   it('deletes personnel through the repository contract', async () => {
     const repository = createDemoRepository(memoryStorage());
     const record = { ...INITIAL_PERSONNEL[0], id: 'demo-delete-test' };
