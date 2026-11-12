@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { createDemoRepository, type DemoStorage } from './demoRepository.ts';
+import { createDemoRepository, DemoWriteConflictError, type DemoStorage, type DemoLockManager } from './demoRepository.ts';
 import type { PersonnelRecord } from '../types/index.ts';
 import { INITIAL_PERSONNEL, INITIAL_INCIDENTS, INITIAL_CYBER_ITEMS, INITIAL_CHECKLIST } from '../data/mockData.ts';
 
@@ -157,6 +157,60 @@ describe('Demo Guest repository', () => {
     assert.ok(storage.getItem('prot_ops_incidents_v2'));
     assert.ok(storage.getItem('prot_ops_cyber_v2'));
     assert.ok(storage.getItem('prot_ops_checklist_v2'));
+  });
+
+
+  it('rejects a stale second-tab write after another repository instance commits', async () => {
+    const values = new Map<string, string>();
+    const sharedStorage: DemoStorage = {
+      getItem: (key) => values.get(key) ?? null,
+      setItem: (key, value) => { values.set(key, value); },
+      removeItem: (key) => { values.delete(key); },
+    };
+    const lockTails = new Map<string, Promise<void>>();
+    const locks: DemoLockManager = {
+      async request<T>(name: string, callback: () => Promise<T>): Promise<T> {
+        const previous = lockTails.get(name) ?? Promise.resolve();
+        let release!: () => void;
+        const held = new Promise<void>((resolve) => { release = resolve; });
+        lockTails.set(name, previous.then(() => held));
+        await previous;
+        try { return await callback(); }
+        finally { release(); }
+      },
+    };
+    const firstTab = createDemoRepository(sharedStorage, { locks, requireCrossTabLock: true });
+    const secondTab = createDemoRepository(sharedStorage, { locks, requireCrossTabLock: true });
+    firstTab.loadSnapshot();
+    secondTab.loadSnapshot();
+
+    const firstTabRecords = [...firstTab.loadSnapshot().personnel];
+    firstTabRecords[0] = { ...firstTabRecords[0], administrativeNotes: 'Updated in first tab' };
+    await firstTab.replacePersonnel(firstTabRecords);
+
+    const staleTabRecords = [...secondTab.loadSnapshot().personnel];
+    staleTabRecords[0] = { ...staleTabRecords[0], administrativeNotes: 'Stale update from second tab' };
+    await assert.rejects(
+      secondTab.replacePersonnel(staleTabRecords),
+      (error: unknown) => error instanceof DemoWriteConflictError && /Reload the workspace/.test(error.message),
+    );
+    assert.equal(JSON.parse(values.get('prot_ops_personnel_v2')!)[0].administrativeNotes, 'Updated in first tab');
+  });
+
+  it('fails closed for writes when cross-tab locking is required but unavailable', async () => {
+    let writes = 0;
+    const storage: DemoStorage = {
+      getItem: () => null,
+      setItem: () => { writes += 1; },
+      removeItem: () => undefined,
+    };
+    const repository = createDemoRepository(storage, { requireCrossTabLock: true });
+    repository.loadSnapshot();
+    await assert.rejects(
+      repository.replacePersonnel(INITIAL_PERSONNEL),
+      /Web Locks API is not supported/,
+    );
+    assert.equal(writes, 0, 'unsupported browsers must not fall back to unsafe cross-tab writes');
   });
 
   it('reset attempts every operational key even when one removal fails', () => {
