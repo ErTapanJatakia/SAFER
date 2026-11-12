@@ -503,6 +503,10 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
             </div>
           </div>
 
+          <p data-cyber-filter-results role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+            Showing {filteredItems.length} of {items.length} defensive controls.
+          </p>
+
           {/* Controls List */}
           {filteredItems.length === 0 ? (
             <div className="bg-white border border-slate-200 rounded-lg p-10 text-center space-y-3">
