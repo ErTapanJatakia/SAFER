@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useModalFocus } from '../hooks/useModalFocus.ts';
 import type { PersonnelRecord } from '../types/index.ts';
 import {
   generatePlainEnglishPersonnelSummary,
@@ -36,6 +37,7 @@ export const ReadinessSummaryModal: React.FC<ReadinessSummaryModalProps> = ({
     selectedPerson ? 'individual' : 'roster'
   );
   const [copied, setCopied] = useState(false);
+  const modalRef = useModalFocus<HTMLDivElement>(isOpen, onClose);
 
   React.useEffect(() => {
     if (isOpen) {
@@ -79,7 +81,7 @@ export const ReadinessSummaryModal: React.FC<ReadinessSummaryModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col border border-slate-300">
+      <div ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="readiness-summary-title" tabIndex={-1} className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col border border-slate-300">
         {/* Header */}
         <div className="px-6 py-4 bg-slate-900 text-white rounded-t-xl flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center space-x-2.5">
@@ -87,7 +89,7 @@ export const ReadinessSummaryModal: React.FC<ReadinessSummaryModalProps> = ({
               <FileText className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-white">
+              <h3 id="readiness-summary-title" className="font-bold text-sm text-white">
                 Plain-English Administrative Readiness Summary
               </h3>
               <p className="text-[11px] text-slate-400">
