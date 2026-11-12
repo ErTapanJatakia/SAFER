@@ -81,7 +81,7 @@ function isPersonnelRecord(value: unknown): value is PersonnelRecord {
   if (value.workExperience !== undefined && (!Array.isArray(value.workExperience) ||
       !value.workExperience.every((entry) => isObject(entry) &&
         hasString(entry, 'id') && hasString(entry, 'employerName') &&
-        hasString(entry, 'startDate') && hasString(entry, 'endDate') &&
+        hasString(entry, 'startDate') && typeof entry.endDate === 'string' &&
         hasBoolean(entry, 'currentlyWorkingHere') && hasString(entry, 'workDescription')))) return false;
   return true;
 }
