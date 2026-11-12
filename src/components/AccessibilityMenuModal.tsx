@@ -1,4 +1,5 @@
 import React from 'react';
+import { useModalFocus } from '../hooks/useModalFocus.ts';
 import type { AccessibilitySettings } from '../types/theme.ts';
 import {
   Eye,
@@ -33,10 +34,14 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
   onUpdateSettings,
   onResetSettings,
 }) => {
+  const modalRef = useModalFocus<HTMLDivElement>(isOpen, onClose);
+
   if (!isOpen) return null;
 
   return (
     <div
+      ref={modalRef}
+      tabIndex={-1}
       className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
@@ -59,6 +64,7 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="text-slate-400 hover:text-white p-1 rounded-md"
             aria-label="Close Accessibility Preferences"
