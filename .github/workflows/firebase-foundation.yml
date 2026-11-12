@@ -88,6 +88,9 @@ jobs:
       - name: AuthGate membership UI tests
         run: npm run test:auth-membership-ui
 
+      - name: Dashboard accessibility and empty-state tests
+        run: npm run test:dashboard-ui
+
       - name: Searchable multi-select accessibility tests
         run: npm run test:searchable-multiselect
 

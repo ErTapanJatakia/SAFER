@@ -91,22 +91,22 @@ export const SaferWordmark: React.FC<SaferWordmarkProps> = ({
 
   if (variant === 'hero') {
     return (
-      <div className={`flex flex-col sm:flex-row sm:items-center gap-4 ${className}`}>
+      <div className={`flex min-w-0 flex-col sm:flex-row sm:items-center gap-4 ${className}`}>
         {insigniaIcon}
-        <div className="space-y-1">
+        <div className="min-w-0 space-y-1">
           <div className="flex items-center gap-2.5 flex-wrap">
             <span className="text-2xl sm:text-3xl font-black tracking-wider text-slate-900 font-sans flex items-center">
               SAFER
               <span className="inline-block w-2 h-2 rounded-full bg-emerald-600 ml-1.5 self-center" />
             </span>
-            <span className="text-xs uppercase font-mono font-bold tracking-wider px-2.5 py-0.5 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-md">
+            <span className="max-w-full whitespace-normal break-words text-xs leading-snug uppercase font-mono font-bold tracking-wider px-2.5 py-1 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-md">
               AI-Assisted Security Operations Platform
             </span>
           </div>
-          <div className="text-xs font-semibold text-slate-800 tracking-wide">
+          <div className="text-sm leading-relaxed font-semibold text-slate-800 tracking-wide">
             Security Administration, Field Readiness, Evidence &amp; Reporting
           </div>
-          <div className="text-[11px] font-mono font-medium text-emerald-700 flex items-center space-x-1.5 pt-0.5">
+          <div className="text-xs font-mono font-medium text-emerald-700 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 pt-0.5">
             <span>Prepared.</span>
             <span>&bull;</span>
             <span>Accountable.</span>
@@ -120,22 +120,22 @@ export const SaferWordmark: React.FC<SaferWordmarkProps> = ({
 
   if (variant === 'footer') {
     return (
-      <div className={`flex items-center space-x-3 ${className}`}>
+      <div className={`flex min-w-0 flex-wrap items-center gap-3 ${className}`}>
         {insigniaIcon}
-        <div className="space-y-0.5 text-left">
-          <div className="flex items-center space-x-2">
+        <div className="min-w-0 space-y-0.5 text-left">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="font-extrabold tracking-wider text-white text-sm font-sans flex items-center">
               SAFER
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 ml-1" />
             </span>
-            <span className="text-[10px] text-slate-400 font-mono">
+            <span className="text-xs text-slate-400 font-mono">
               AI-Assisted Security Operations Platform
             </span>
           </div>
-          <div className="text-[11px] text-slate-300">
+          <div className="text-xs leading-relaxed text-slate-300">
             Security Administration, Field Readiness, Evidence &amp; Reporting
           </div>
-          <div className="text-[10px] text-emerald-400 font-mono font-medium">
+          <div className="text-xs text-emerald-400 font-mono font-medium">
             Prepared. Accountable. Secure.
           </div>
         </div>
