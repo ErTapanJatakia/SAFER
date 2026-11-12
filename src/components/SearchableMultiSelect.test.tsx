@@ -21,13 +21,14 @@ const renderControl = (overrides: Partial<React.ComponentProps<typeof Searchable
   });
 };
 
-const trigger = () => host.querySelector('button[aria-haspopup="true"]') as HTMLButtonElement;
+const trigger = () => host.querySelector('button[aria-expanded]') as HTMLButtonElement;
 
 beforeEach(() => {
   host = document.createElement('div');
   document.body.append(host);
   root = createRoot(host);
   onChange = vi.fn();
+  (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 });
 
 afterEach(() => {
@@ -102,16 +103,12 @@ describe('SearchableMultiSelect accessibility and interaction', () => {
     ) as HTMLButtonElement;
     act(() => addCustom.click());
     const custom = host.querySelector('input[placeholder="Enter custom title..."]') as HTMLInputElement;
-    act(() => {
-      custom.value = 'Incident Coordinator';
-      custom.dispatchEvent(new Event('input', { bubbles: true }));
-    });
-    // React's controlled input event is dispatched through the native setter in jsdom.
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
     if (setter) {
       act(() => {
         setter.call(custom, 'Incident Coordinator');
         custom.dispatchEvent(new Event('input', { bubbles: true }));
+        custom.dispatchEvent(new Event('change', { bubbles: true }));
       });
     }
     const add = [...host.querySelectorAll('button')].find((button) => button.textContent?.trim() === 'Add') as HTMLButtonElement;
