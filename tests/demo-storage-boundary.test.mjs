@@ -12,7 +12,10 @@ test('Demo Guest provider fails closed when browser storage cannot be acquired o
   assert.match(provider, /role="alert"[\s\S]*?Browser storage is unavailable/i);
 });
 
-test('Reset Records reports partial storage failure instead of claiming success', () => {
-  assert.match(app, /const handleResetDemoData = \(\) => \{\s*try\s*\{\s*demoRepository\.reset\(\);\s*\}\s*catch\s*\{[\s\S]*?Some records may remain/i);
-  assert.match(app, /setPersonnelList\(INITIAL_PERSONNEL\)[\s\S]*?showToast\('Reset all demonstration data to baseline prototype state\.'\)/);
+test('Reset Records drains pending writes and reports partial storage failure', () => {
+  assert.match(app, /const handleResetDemoData = async \(\) => \{/);
+  assert.match(app, /await Promise\.all\(\[personnelQueue\.current, incidentsQueue\.current, cyberQueue\.current, checklistQueue\.current\]\)/);
+  assert.match(app, /try\s*\{\s*demoRepository\.reset\(\);\s*\}\s*catch\s*\{[\s\S]*?Some records may remain/i);
+  assert.match(app, /demoRepository\.reset\(\);[\s\S]*?setPersonnelList\(\[\.\.\.INITIAL_PERSONNEL\]\)/);
+  assert.match(app, /showToast\('Reset all demonstration data to baseline prototype state\.'\)/);
 });
