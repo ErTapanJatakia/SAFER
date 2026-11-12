@@ -221,6 +221,23 @@ export default function App() {
   const incidentsQueue = useRef<Promise<void>>(Promise.resolve());
   const cyberQueue = useRef<Promise<void>>(Promise.resolve());
   const checklistQueue = useRef<Promise<void>>(Promise.resolve());
+  const crossTabConflictRef = useRef(false);
+
+  useEffect(() => {
+    const operationalKeys = new Set([
+      'prot_ops_personnel_v2',
+      'prot_ops_incidents_v2',
+      'prot_ops_cyber_v2',
+      'prot_ops_checklist_v2',
+    ]);
+    const handleExternalStorageChange = (event: StorageEvent) => {
+      if (event.storageArea !== window.localStorage || (event.key !== null && !operationalKeys.has(event.key))) return;
+      crossTabConflictRef.current = true;
+      showToast('Another SAFER tab changed operational records. Editing is paused here to prevent overwriting newer data. Export any work you need, then reload this tab.');
+    };
+    window.addEventListener('storage', handleExternalStorageChange);
+    return () => window.removeEventListener('storage', handleExternalStorageChange);
+  }, []);
 
   const commitCollection = async <T,>(
     queue: React.MutableRefObject<Promise<void>>,
@@ -232,6 +249,7 @@ export default function App() {
     successMessage?: string,
   ): Promise<boolean> => {
     const operation = queue.current.then(async () => {
+      if (crossTabConflictRef.current) throw new Error('Cross-tab conflict: reload required.');
       const next = update(current.current);
       await persist(next);
       current.current = next;
@@ -242,8 +260,13 @@ export default function App() {
     try {
       await operation;
       return true;
-    } catch {
-      showToast(errorMessage);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Cross-tab conflict')) {
+        crossTabConflictRef.current = true;
+        showToast('A cross-tab conflict was detected. Your previous records remain unchanged. Export any needed work, then reload this tab.');
+      } else {
+        showToast(errorMessage);
+      }
       return false;
     }
   };
