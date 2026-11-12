@@ -47,7 +47,7 @@ const hasNumber = (record: Record<string, unknown>, key: string): boolean =>
 const hasBoolean = (record: Record<string, unknown>, key: string): boolean =>
   typeof record[key] === 'boolean';
 
-function hasUniqueIds(records: unknown[]): boolean {
+function hasUniqueIds(records: readonly unknown[]): boolean {
   const ids = new Set<string>();
   for (const value of records) {
     if (!isObject(value) || !hasString(value, 'id') || ids.has(value.id as string)) return false;
