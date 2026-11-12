@@ -79,4 +79,40 @@ describe('Cyber Hygiene tabs accessibility', () => {
     expect(document.activeElement).toBe(tab('checklist'));
     expect(tab('checklist').getAttribute('aria-selected')).toBe('true');
   });
+  it('exposes phishing scenarios as labelled pressed-state controls and announces selection', () => {
+    renderView();
+    const group = host.querySelector('[role="group"][aria-label="Phishing training scenarios"]');
+    expect(group).not.toBeNull();
+
+    const scenarios = Array.from(host.querySelectorAll<HTMLButtonElement>('[data-phish-scenario]'));
+    expect(scenarios.length).toBeGreaterThan(1);
+    expect(scenarios[0].getAttribute('aria-pressed')).toBe('true');
+    expect(scenarios[1].getAttribute('aria-pressed')).toBe('false');
+    expect(scenarios[1].getAttribute('aria-label')).toMatch(/^Load scenario 2:/);
+
+    act(() => scenarios[1].dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    expect(scenarios[0].getAttribute('aria-pressed')).toBe('false');
+    expect(scenarios[1].getAttribute('aria-pressed')).toBe('true');
+    expect(host.querySelector('[role="status"][aria-live="polite"]')?.textContent).toContain('Scenario 2 of');
+  });
+
+  it('announces phishing analysis and simulated reporting state to assistive technology', () => {
+    renderView();
+    const inspect = host.querySelector<HTMLButtonElement>('button[aria-label="Inspect phishing indicators"]');
+    expect(inspect).not.toBeNull();
+    expect(inspect?.getAttribute('aria-expanded')).toBe('false');
+    expect(inspect?.getAttribute('aria-controls')).toBe('phishing-indicators');
+
+    act(() => inspect?.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    expect(inspect?.getAttribute('aria-expanded')).toBe('true');
+    expect(host.querySelector('#phishing-indicators[role="region"][aria-label="Phishing indicators and recommended response"]')).not.toBeNull();
+
+    const report = host.querySelector<HTMLButtonElement>('[data-phish-report]');
+    expect(report?.textContent).toContain('Report as Phishing to Ops SOC');
+    act(() => report?.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    const feedback = Array.from(host.querySelectorAll('[role="status"][aria-live="polite"]'))
+      .find((element) => element.textContent?.includes('Simulated report submitted'));
+    expect(feedback).not.toBeUndefined();
+  });
+
 });
