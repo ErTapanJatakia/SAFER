@@ -11,7 +11,7 @@ const FOCUSABLE_SELECTOR = [
 
 /**
  * Keeps keyboard focus within an open modal, dismisses on Escape, and restores
- * focus to the element that opened it when the modal closes.
+ * focus to the element that opened it when the modal closes or unmounts.
  */
 export function useModalFocus<T extends HTMLElement>(
   isOpen: boolean,
@@ -27,7 +27,7 @@ export function useModalFocus<T extends HTMLElement>(
 
   useEffect(() => {
     if (!isOpen) {
-      openerRef.current?.focus();
+      if (openerRef.current?.isConnected) openerRef.current.focus();
       openerRef.current = null;
       return;
     }
@@ -41,7 +41,10 @@ export function useModalFocus<T extends HTMLElement>(
 
     const getFocusable = () =>
       Array.from(modal.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
-        .filter((element) => element.getAttribute('aria-hidden') !== 'true');
+        .filter((element) =>
+          !element.matches(':disabled') &&
+          !element.closest('[hidden], [inert], [aria-hidden="true"]')
+        );
 
     const focusable = getFocusable();
     (focusable[0] ?? modal).focus();
@@ -75,7 +78,11 @@ export function useModalFocus<T extends HTMLElement>(
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      if (openerRef.current?.isConnected) openerRef.current.focus();
+      openerRef.current = null;
+    };
   }, [isOpen]);
 
   return modalRef;

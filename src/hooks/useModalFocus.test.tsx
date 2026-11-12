@@ -17,11 +17,23 @@ function ModalHarness() {
       <button type="button" onClick={() => setIsOpen(true)}>Open settings</button>
       {isOpen && (
         <div ref={modalRef} role="dialog" aria-modal="true" tabIndex={-1}>
+          <button type="button" disabled>Disabled action</button>
+          <button type="button" hidden>Hidden action</button>
+          <div aria-hidden="true"><button type="button">Hidden from assistive technology</button></div>
           <button type="button">First action</button>
           <button type="button">Last action</button>
         </div>
       )}
     </>
+  );
+}
+
+function InitiallyOpenModalHarness() {
+  const modalRef = useModalFocus<HTMLDivElement>(true, () => undefined);
+  return (
+    <div ref={modalRef} role="dialog" aria-modal="true" tabIndex={-1}>
+      <button type="button">Modal action</button>
+    </div>
   );
 }
 
@@ -46,27 +58,26 @@ afterEach(async () => {
 });
 
 describe('useModalFocus', () => {
-  it('moves focus into the modal and restores it to the opener on close', () => {
+  it('moves focus to the first eligible control and restores it to the opener on close', () => {
     const opener = host.querySelector('button')!;
     opener.focus();
     act(() => opener.click());
 
     const actions = host.querySelectorAll<HTMLButtonElement>('[role="dialog"] button');
-    expect(document.activeElement).toBe(actions[0]);
+    expect(document.activeElement).toBe(actions[3]);
 
-    act(() => actions[1].click());
     act(() => document.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
 
     expect(host.querySelector('[role="dialog"]')).toBeNull();
     expect(document.activeElement).toBe(opener);
   });
 
-  it('wraps Tab and Shift+Tab at the modal boundaries', () => {
+  it('wraps Tab and Shift+Tab across eligible modal controls', () => {
     const opener = host.querySelector('button')!;
     act(() => opener.click());
     const actions = host.querySelectorAll<HTMLButtonElement>('[role="dialog"] button');
-    const first = actions[0];
-    const last = actions[1];
+    const first = actions[3];
+    const last = actions[4];
 
     last.focus();
     act(() => document.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Tab', bubbles: true })));
@@ -75,5 +86,20 @@ describe('useModalFocus', () => {
     first.focus();
     act(() => document.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true })));
     expect(document.activeElement).toBe(last);
+  });
+
+  it('restores focus to a connected opener when the modal component unmounts', () => {
+    const externalOpener = document.createElement('button');
+    externalOpener.textContent = 'Open modal';
+    document.body.appendChild(externalOpener);
+    externalOpener.focus();
+
+    act(() => root.render(<InitiallyOpenModalHarness />));
+    expect(document.activeElement).toBe(host.querySelector('[role="dialog"] button'));
+
+    act(() => root.render(null));
+    expect(document.activeElement).toBe(externalOpener);
+
+    externalOpener.remove();
   });
 });
