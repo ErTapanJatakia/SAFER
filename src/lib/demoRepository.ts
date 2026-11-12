@@ -33,9 +33,15 @@ const KEYS = Object.freeze({
 });
 
 function readList<T>(storage: DemoStorage, key: string, fallback: readonly T[]): T[] {
+  let raw: string | null;
   try {
-    const raw = storage.getItem(key);
-    if (!raw) return [...fallback];
+    raw = storage.getItem(key);
+  } catch (error) {
+    throw new Error(`Unable to read Demo Guest storage key: ${key}`, { cause: error });
+  }
+  if (!raw) return [...fallback];
+
+  try {
     const parsed: unknown = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed as T[] : [...fallback];
   } catch {
@@ -102,7 +108,17 @@ export function createDemoRepository(storage: DemoStorage): DemoRepository & {
       save(KEYS.checklist, current);
     },
     reset: () => {
-      Object.values(KEYS).forEach((key) => storage.removeItem(key));
+      const failedKeys: string[] = [];
+      Object.entries(KEYS).forEach(([domain, key]) => {
+        try {
+          storage.removeItem(key);
+        } catch {
+          failedKeys.push(domain);
+        }
+      });
+      if (failedKeys.length > 0) {
+        throw new Error(`Unable to clear all Demo Guest records. Storage removal failed for: ${failedKeys.join(', ')}.`);
+      }
     },
   });
 }

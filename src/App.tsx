@@ -534,11 +534,16 @@ export default function App() {
   };
 
   const handleResetDemoData = () => {
+    try {
+      demoRepository.reset();
+    } catch {
+      showToast('Browser storage blocked part of the reset. Some records may remain; retry or clear this site’s browser data.');
+      return;
+    }
     setPersonnelList(INITIAL_PERSONNEL);
     setIncidentList(INITIAL_INCIDENTS);
     setCyberItems(INITIAL_CYBER_ITEMS);
     setChecklistItems(INITIAL_CHECKLIST);
-    demoRepository.reset();
     showToast('Reset all demonstration data to baseline prototype state.');
   };
 

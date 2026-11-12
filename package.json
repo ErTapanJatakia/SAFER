@@ -58,7 +58,8 @@
     "test:branding-modal-buttons": "node --test tests/branding-modal-buttons-accessibility.test.mjs",
     "test:branding-secondary-buttons": "node --test tests/branding-secondary-buttons-accessibility.test.mjs",
     "test:security-assessment": "tsx --test src/utils/securityAssessment.test.ts",
-    "test:demo-retention-notice": "node --test tests/demo-retention-notice.test.mjs"
+    "test:demo-retention-notice": "node --test tests/demo-retention-notice.test.mjs",
+    "test:demo-storage-boundary": "tsx --test src/lib/demoRepository.test.ts && node --test tests/demo-storage-boundary.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
