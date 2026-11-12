@@ -93,7 +93,7 @@ jobs:
       - name: Filter control accessibility tests
         run: npm run test:filter-control-accessibility
 
-      - name: Cyber Hygiene tabs and phishing lab accessibility tests
+      - name: Cyber Hygiene tabs, phishing lab, and filter accessibility tests
         run: npm run test:cyber-hygiene-tabs
 
       - name: Operational data-boundary unit tests
