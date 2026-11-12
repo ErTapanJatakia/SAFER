@@ -60,6 +60,45 @@ test('SEC-01: Formula Injection Neutralization in CSV & Spreadsheet Cells (CWE-1
   assert.equal(escapeCsvCell('Normal Text'), '"Normal Text"');
 });
 
+test('SEC-02A: Multi-person roster XLSX export neutralizes formulas in every data sheet', () => {
+  const basePerson = INDIAN_PERSONNEL_DATA[0];
+  const maliciousRosterPerson: PersonnelRecord = {
+    ...basePerson,
+    fullName: '=HYPERLINK("https://attacker.example/name","Open")',
+    callSign: '@SUM(1,1)',
+    certifications: (basePerson.certifications || []).map((cert, index) =>
+      index === 0 ? { ...cert, name: '+cmd|\'/C calc\'!A0' } : cert
+    ),
+    workExperience: (basePerson.workExperience || []).map((entry, index) =>
+      index === 0 ? { ...entry, workDescription: '-2+5' } : entry
+    ),
+  };
+
+  const xlsxBytes = generateXlsxExport([maliciousRosterPerson], new Set());
+  assert.ok(xlsxBytes.length > 0, 'Roster XLSX export must generate binary data successfully');
+
+  const workbook = XLSX.read(xlsxBytes, { type: 'array' });
+  const cases = [
+    { sheetName: 'Personnel Roster', address: 'C2', expected: maliciousRosterPerson.fullName },
+    { sheetName: 'Personnel Roster', address: 'E2', expected: maliciousRosterPerson.callSign },
+    { sheetName: 'All Qualifications', address: 'C2', expected: maliciousRosterPerson.certifications?.[0]?.name },
+    { sheetName: 'All Work Experience', address: 'H2', expected: maliciousRosterPerson.workExperience?.[0]?.workDescription },
+  ];
+
+  for (const { sheetName, address, expected } of cases) {
+    const sheet = workbook.Sheets[sheetName];
+    assert.ok(sheet, `Roster workbook must include the ${sheetName} sheet`);
+    const cell = sheet[address];
+    assert.ok(cell, `${sheetName}!${address} must exist`);
+    assert.equal(cell.f, undefined, `${sheetName}!${address} must not be serialized as a formula`);
+    assert.equal(
+      cell.v,
+      sanitizeSpreadsheetFormula(expected),
+      `${sheetName}!${address} must contain the neutralized literal value`
+    );
+  }
+});
+
 test('SEC-02: Export Document CSV & XLSX Generates Formula-Safe Content', () => {
   const basePerson = INDIAN_PERSONNEL_DATA[0];
   const maliciousPerson: PersonnelRecord = {
