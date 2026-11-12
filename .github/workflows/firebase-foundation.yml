@@ -90,6 +90,9 @@ jobs:
       - name: AuthGate membership UI tests
         run: npm run test:auth-membership-ui
 
+      - name: Accessibility preferences UI tests
+        run: npm run test:accessibility-preferences
+
       - name: Modal focus accessibility tests
         run: npm run test:modal-focus-a11y
 
