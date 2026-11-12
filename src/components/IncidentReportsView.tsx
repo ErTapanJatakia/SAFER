@@ -198,7 +198,7 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
           <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
           <input
             type="text"
-            value={search}
+            aria-label="Search incidents" value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search reference, title, location, reporter..."
             className="w-full pl-9 pr-3 py-1.5 border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-blue-900 focus:outline-none"
@@ -208,7 +208,7 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
         <div className="w-full sm:w-auto flex items-center space-x-2">
           <label className="text-xs font-medium text-slate-600">Category:</label>
           <select
-            value={filterType}
+            aria-label="Filter incidents by type" value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
             className="px-2.5 py-1.5 border border-slate-300 rounded-md text-xs bg-white text-slate-700 font-medium"
           >
@@ -379,7 +379,7 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
                 </label>
                 <input
                   type="text"
-                  value={title}
+                  aria-label="Incident title" value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Primary SatCom Unit Low Battery Warning"
                   className="w-full px-3 py-2 border border-slate-300 rounded-md"
@@ -391,7 +391,7 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">Incident Category</label>
                   <select
-                    value={incidentType}
+                    aria-label="Incident type" value={incidentType}
                     onChange={(e) => setIncidentType(e.target.value as IncidentReport['incidentType'])}
                     className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md bg-white"
                   >
@@ -407,7 +407,7 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">Priority Attention</label>
                   <select
-                    value={priority}
+                    aria-label="Incident priority" value={priority}
                     onChange={(e) => setPriority(e.target.value as IncidentReport['priority'])}
                     className="w-full px-2.5 py-1.5 border border-slate-300 rounded-md bg-white"
                   >
@@ -423,7 +423,7 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
                   <label className="block font-semibold text-slate-700 mb-1">Location / Post</label>
                   <input
                     type="text"
-                    value={location}
+                    aria-label="Incident location" value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder="e.g. Sector Charlie Gate 2"
                     className="w-full px-3 py-2 border border-slate-300 rounded-md"
@@ -434,7 +434,7 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
                   <label className="block font-semibold text-slate-700 mb-1">Reported By</label>
                   <input
                     type="text"
-                    value={reportedBy}
+                    aria-label="Reported by" value={reportedBy}
                     onChange={(e) => setReportedBy(e.target.value)}
                     placeholder="e.g. Duty Officer"
                     className="w-full px-3 py-2 border border-slate-300 rounded-md"
@@ -448,7 +448,7 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
                 </label>
                 <textarea
                   rows={3}
-                  value={summary}
+                  aria-label="Incident summary" value={summary}
                   onChange={(e) => setSummary(e.target.value)}
                   placeholder="Detail factual observations, immediate corrective steps taken, and supervisor notifications..."
                   className="w-full px-3 py-2 border border-slate-300 rounded-md"
