@@ -93,12 +93,18 @@ export const DemonstrationNoticeModal: React.FC<DemonstrationNoticeModalProps> =
           </section>
 
           <section className="space-y-1">
-            <h3 className="font-bold text-sm text-slate-900">Data storage and exports</h3>
+            <h3 className="font-bold text-sm text-slate-900">Data storage, retention and exports</h3>
             <p>
-              Information may be retained within the browser or device, depending on the application's implementation. Browser-local storage is not equivalent to a secure records-management system. Other users of a shared or compromised device may be able to access stored data or exported files.
+              In Demo Guest mode, personnel, incident, cyber-hygiene and checklist records are stored in this browser profile's local storage. They are not synced to a tenant database. These records have no automatic expiry: closing a tab, restarting the browser or signing out does not erase them.
             </p>
             <p>
-              Check all redaction settings before exporting records. Exported files may contain personal or sensitive information. Store, transfer and delete exported files responsibly.
+              Use the application's <strong>Reset Records</strong> action to remove the four operational Demo Guest record sets and restore the bundled synthetic baseline on the next load. This reset does not remove theme, accessibility or branding preferences. Clearing this site's browser data is a separate browser-level action and may also remove those preferences.
+            </p>
+            <p>
+              Resetting browser storage is not a guarantee of secure erasure from browser backups, device snapshots or other copies. Browser-local storage is not a secure records-management system; other scripts on this origin and users of a shared or compromised device may be able to access stored data.
+            </p>
+            <p>
+              Check all redaction settings before exporting records. Exported files are downloaded to a location controlled by the user and are not removed by Reset Records. Store, transfer and delete exported files responsibly.
             </p>
           </section>
 
