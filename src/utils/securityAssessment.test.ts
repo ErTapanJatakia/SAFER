@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { inflateRawSync } from 'node:zlib';
 import assert from 'node:assert/strict';
 import * as XLSX from 'xlsx';
 import {
@@ -22,6 +23,45 @@ import {
 import { INDIAN_PERSONNEL_DATA } from '../data/indianPersonnel.ts';
 import { generateStructuredIncidentDraft } from './incidentDraftGenerator.ts';
 import type { PersonnelRecord } from '../types/index.ts';
+
+function extractZipEntry(zipBytes: Uint8Array, entryName: string): string {
+  const zip = Buffer.from(zipBytes);
+  const eocdSignature = 0x06054b50;
+  let eocdOffset = -1;
+  for (let offset = zip.length - 22; offset >= Math.max(0, zip.length - 65_557); offset--) {
+    if (zip.readUInt32LE(offset) === eocdSignature) {
+      eocdOffset = offset;
+      break;
+    }
+  }
+  assert.notEqual(eocdOffset, -1, 'DOCX must contain a valid ZIP end-of-central-directory record');
+
+  const entryCount = zip.readUInt16LE(eocdOffset + 10);
+  let cursor = zip.readUInt32LE(eocdOffset + 16);
+  for (let index = 0; index < entryCount; index++) {
+    assert.equal(zip.readUInt32LE(cursor), 0x02014b50, 'DOCX central directory entry must be valid');
+    const method = zip.readUInt16LE(cursor + 10);
+    const compressedSize = zip.readUInt32LE(cursor + 20);
+    const nameLength = zip.readUInt16LE(cursor + 28);
+    const extraLength = zip.readUInt16LE(cursor + 30);
+    const commentLength = zip.readUInt16LE(cursor + 32);
+    const localHeaderOffset = zip.readUInt32LE(cursor + 42);
+    const name = zip.toString('utf8', cursor + 46, cursor + 46 + nameLength);
+
+    if (name === entryName) {
+      assert.equal(zip.readUInt32LE(localHeaderOffset), 0x04034b50, 'DOCX local file header must be valid');
+      const localNameLength = zip.readUInt16LE(localHeaderOffset + 26);
+      const localExtraLength = zip.readUInt16LE(localHeaderOffset + 28);
+      const dataStart = localHeaderOffset + 30 + localNameLength + localExtraLength;
+      const compressed = zip.subarray(dataStart, dataStart + compressedSize);
+      if (method === 0) return compressed.toString('utf8');
+      if (method === 8) return inflateRawSync(compressed).toString('utf8');
+      assert.fail(`Unsupported DOCX ZIP compression method: ${method}`);
+    }
+    cursor += 46 + nameLength + extraLength + commentLength;
+  }
+  assert.fail(`DOCX archive is missing ${entryName}`);
+}
 
 // ============================================================================
 // 1. CSV / SPREADSHEET FORMULA INJECTION DEFENSE (CWE-1236 / OWASP A03)
@@ -369,3 +409,56 @@ test('SEC-07A: XLSX single-record and roster exports preserve field-level redact
   assert.deepEqual(person, originalCopy, 'Generating redacted XLSX exports must not mutate the source record');
 });
 
+
+test('SEC-07B: PDF and DOCX exports preserve field-level redactions in generated document content', async () => {
+  const basePerson = INDIAN_PERSONNEL_DATA[0];
+  const markers = {
+    personalEmail: 'PRIVATE-PERSONAL-EMAIL-SEC07B',
+    healthParticulars: 'PRIVATE-HEALTH-SEC07B',
+    residenceAddress: 'PRIVATE-RESIDENCE-SEC07B',
+    employerAddress: 'PRIVATE-EMPLOYER-ADDRESS-SEC07B',
+    issuer: 'PRIVATE-QUALIFICATION-ISSUER-SEC07B',
+  };
+  assert.ok(basePerson.workExperience?.length, 'Fixture must include work experience');
+  assert.ok(basePerson.certifications?.length, 'Fixture must include qualifications');
+
+  const person: PersonnelRecord = {
+    ...basePerson,
+    personalEmail: markers.personalEmail,
+    healthParticulars: markers.healthParticulars,
+    residenceAddress: {
+      ...basePerson.residenceAddress!,
+      addressLine: markers.residenceAddress,
+    },
+    workExperience: basePerson.workExperience!.map((entry, index) =>
+      index === 0 ? { ...entry, employerAddress: markers.employerAddress } : entry
+    ),
+    certifications: basePerson.certifications!.map((entry, index) =>
+      index === 0 ? { ...entry, issuer: markers.issuer } : entry
+    ),
+  };
+  const originalCopy = JSON.parse(JSON.stringify(person));
+  const redactedKeys = new Set([
+    'personalEmail',
+    'healthParticulars',
+    'residenceAddress',
+    'workExperience.employerAddress',
+    'certifications.issuers',
+  ]);
+
+  const pdfText = Buffer.from(generatePdfExport(person, redactedKeys)).toString('latin1');
+  assert.ok(pdfText.startsWith('%PDF-'), 'PDF export must produce a valid PDF document');
+  assert.ok(pdfText.includes('[REDACTED]'), 'PDF must visibly retain redaction markers');
+  for (const marker of Object.values(markers)) {
+    assert.ok(!pdfText.includes(marker), `PDF must not disclose ${marker}`);
+  }
+
+  const docxBlob = await generateDocxExport(person, redactedKeys);
+  const documentXml = extractZipEntry(new Uint8Array(await docxBlob.arrayBuffer()), 'word/document.xml');
+  assert.ok(documentXml.includes('[REDACTED]'), 'DOCX document XML must retain redaction markers');
+  for (const marker of Object.values(markers)) {
+    assert.ok(!documentXml.includes(marker), `DOCX must not disclose ${marker}`);
+  }
+
+  assert.deepEqual(person, originalCopy, 'PDF and DOCX redaction must not mutate the source record');
+});
