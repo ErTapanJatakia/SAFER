@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { createDemoRepository, type DemoStorage } from './demoRepository.ts';
+import type { PersonnelRecord } from '../types/index.ts';
 import { INITIAL_PERSONNEL, INITIAL_INCIDENTS, INITIAL_CYBER_ITEMS, INITIAL_CHECKLIST } from '../data/mockData.ts';
 
 function memoryStorage(): DemoStorage {
