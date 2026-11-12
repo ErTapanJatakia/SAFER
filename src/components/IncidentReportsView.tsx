@@ -327,6 +327,9 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
                       </>
                     )}
                   </button>
+                  <span className="sr-only" role="status" aria-live="polite">
+                    {copiedId === inc.id ? 'Incident draft copied to clipboard.' : ''}
+                  </span>
 
                   {inc.status !== 'Documented & Filed' ? (
                     <button
@@ -364,7 +367,7 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
 
             <form onSubmit={handleCreate} noValidate className="p-6 space-y-4 text-xs">
               {formError && (
-                <div className="p-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-md flex items-center space-x-2">
+                <div role="alert" className="p-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-md flex items-center space-x-2">
                   <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
                   <span>{formError}</span>
                 </div>

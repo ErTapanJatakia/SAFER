@@ -81,6 +81,21 @@ jobs:
       - name: AuthGate membership UI tests
         run: npm run test:auth-membership-ui
 
+      - name: Searchable multi-select accessibility tests
+        run: npm run test:searchable-multiselect
+
+      - name: Navbar accessibility tests
+        run: npm run test:navbar-accessibility
+
+      - name: Live announcement accessibility tests
+        run: npm run test:live-announcer
+
+      - name: Filter control accessibility tests
+        run: npm run test:filter-control-accessibility
+
+      - name: Cyber Hygiene tabs, phishing lab, and filter accessibility tests
+        run: npm run test:cyber-hygiene-tabs
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 

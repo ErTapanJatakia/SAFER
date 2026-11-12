@@ -199,6 +199,9 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
               </>
             )}
           </button>
+          <span className="sr-only" role="status" aria-live="polite">
+            {copiedQuick ? 'Pre-deployment checklist report copied to clipboard.' : ''}
+          </span>
 
           <button
             onClick={() => setShowAddModal(true)}
@@ -784,7 +787,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
 
             <form onSubmit={handleCreateTask} noValidate className="space-y-3 text-xs">
               {taskFormError && (
-                <div className="p-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-md flex items-center space-x-2">
+                <div role="alert" className="p-3 bg-rose-50 border border-rose-300 text-rose-800 rounded-md flex items-center space-x-2">
                   <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
                   <span>{taskFormError}</span>
                 </div>

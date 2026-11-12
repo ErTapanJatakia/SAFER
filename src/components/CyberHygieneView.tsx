@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import type { CyberHygieneItem, CyberHygieneDomain, CyberItemClassification, FictionalSuspiciousEmail } from '../types/index.ts';
 import { INITIAL_SUSPICIOUS_EMAILS } from '../data/mockData.ts';
 import {
@@ -57,6 +57,27 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
 }) => {
   // Navigation sub-tabs
   const [activeTab, setActiveTab] = useState<'checklist' | 'phishing' | 'summary'>('checklist');
+  const tablistRef = useRef<HTMLDivElement>(null);
+
+  const handleTabKeyDown = (
+    event: React.KeyboardEvent<HTMLDivElement>,
+    currentTab: 'checklist' | 'phishing' | 'summary'
+  ) => {
+    const tabs = ['checklist', 'phishing', 'summary'] as const;
+    const currentIndex = tabs.indexOf(currentTab);
+    let nextIndex = currentIndex;
+
+    if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % tabs.length;
+    else if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+    else if (event.key === 'Home') nextIndex = 0;
+    else if (event.key === 'End') nextIndex = tabs.length - 1;
+    else return;
+
+    event.preventDefault();
+    const nextTab = tabs[nextIndex];
+    setActiveTab(nextTab);
+    tablistRef.current?.querySelector<HTMLButtonElement>(`[data-cyber-tab="${nextTab}"]`)?.focus();
+  };
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -316,8 +337,23 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
       </div>
 
       {/* Navigation Sub-Tabs */}
-      <div className="flex border-b border-slate-200 bg-white rounded-t-lg px-3 pt-2 space-x-2">
+      <div
+        ref={tablistRef}
+        role="tablist"
+        aria-label="Cyber hygiene sections"
+        onKeyDown={(event) => {
+          const focusedTab = (event.target as HTMLElement).closest<HTMLButtonElement>('[role="tab"]')?.dataset.cyberTab as 'checklist' | 'phishing' | 'summary' | undefined;
+          if (focusedTab) handleTabKeyDown(event, focusedTab);
+        }}
+        className="flex border-b border-slate-200 bg-white rounded-t-lg px-3 pt-2 space-x-2"
+      >
         <button
+          id="cyber-tab-checklist"
+          data-cyber-tab="checklist"
+          role="tab"
+          aria-selected={activeTab === 'checklist'}
+          aria-controls="cyber-panel-checklist"
+          tabIndex={activeTab === 'checklist' ? 0 : -1}
           onClick={() => setActiveTab('checklist')}
           className={`px-4 py-2.5 text-xs font-bold border-b-2 transition flex items-center space-x-2 ${
             activeTab === 'checklist'
@@ -335,6 +371,12 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
         </button>
 
         <button
+          id="cyber-tab-phishing"
+          data-cyber-tab="phishing"
+          role="tab"
+          aria-selected={activeTab === 'phishing'}
+          aria-controls="cyber-panel-phishing"
+          tabIndex={activeTab === 'phishing' ? 0 : -1}
           onClick={() => setActiveTab('phishing')}
           className={`px-4 py-2.5 text-xs font-bold border-b-2 transition flex items-center space-x-2 ${
             activeTab === 'phishing'
@@ -350,6 +392,12 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
         </button>
 
         <button
+          id="cyber-tab-summary"
+          data-cyber-tab="summary"
+          role="tab"
+          aria-selected={activeTab === 'summary'}
+          aria-controls="cyber-panel-summary"
+          tabIndex={activeTab === 'summary' ? 0 : -1}
           onClick={() => setActiveTab('summary')}
           className={`px-4 py-2.5 text-xs font-bold border-b-2 transition flex items-center space-x-2 ${
             activeTab === 'summary'
@@ -364,7 +412,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
 
       {/* TAB 1: DEFENSIVE CHECKLIST */}
       {activeTab === 'checklist' && (
-        <div className="space-y-4">
+        <div id="cyber-panel-checklist" role="tabpanel" aria-labelledby="cyber-tab-checklist" tabIndex={0} className="space-y-4">
           {/* Controls & Filter Bar */}
           <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-xs space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -373,6 +421,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
                 <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
                 <input
                   type="text"
+                  aria-label="Search defensive controls and audit notes"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search controls, plain-English rationales, domains, or audit notes..."
@@ -453,6 +502,10 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
               )}
             </div>
           </div>
+
+          <p data-cyber-filter-results role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+            Showing {filteredItems.length} of {items.length} defensive controls.
+          </p>
 
           {/* Controls List */}
           {filteredItems.length === 0 ? (
@@ -615,7 +668,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
 
       {/* TAB 2: PHISHING AWARENESS TRAINING LAB */}
       {activeTab === 'phishing' && (
-        <div className="space-y-6">
+        <div id="cyber-panel-phishing" role="tabpanel" aria-labelledby="cyber-tab-phishing" tabIndex={0} className="space-y-6">
           {/* Header Explanation */}
           <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs space-y-2">
             <div className="flex items-center space-x-2">
@@ -629,11 +682,15 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
             </p>
           </div>
 
-          {/* Scenario Selector Tabs */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          {/* Scenario Selector */}
+          <div role="group" aria-label="Phishing training scenarios" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
             {INITIAL_SUSPICIOUS_EMAILS.map((phish, idx) => (
               <button
                 key={phish.id}
+                type="button"
+                data-phish-scenario={idx}
+                aria-label={`Load scenario ${idx + 1}: ${phish.scenarioName}`}
+                aria-pressed={selectedPhishIndex === idx}
                 onClick={() => {
                   setSelectedPhishIndex(idx);
                   setShowPhishIndicators(false);
@@ -653,6 +710,10 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
             ))}
           </div>
 
+          <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+            Scenario {selectedPhishIndex + 1} of {INITIAL_SUSPICIOUS_EMAILS.length}: {currentPhish.scenarioName} selected.
+          </p>
+
           {/* Email Simulation Display */}
           <div className="bg-white border border-slate-300 rounded-xl shadow-md overflow-hidden">
             {/* Fake Email Client Toolbar */}
@@ -670,6 +731,10 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
 
               <div className="flex items-center space-x-2">
                 <button
+                  type="button"
+                  aria-label="Inspect phishing indicators"
+                  aria-expanded={showPhishIndicators}
+                  aria-controls="phishing-indicators"
                   onClick={() => setShowPhishIndicators(!showPhishIndicators)}
                   className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition shadow-2xs ${
                     showPhishIndicators
@@ -723,6 +788,8 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
               <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200">
                 <div className="flex items-center space-x-2">
                   <button
+                    type="button"
+                    data-phish-report
                     onClick={() => {
                       setReportedPhishMsg(true);
                       setTimeout(() => setReportedPhishMsg(false), 4000);
@@ -734,6 +801,10 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
                   </button>
 
                   <button
+                    type="button"
+                    aria-label="Show phishing indicators"
+                    aria-expanded={showPhishIndicators}
+                    aria-controls="phishing-indicators"
                     onClick={() => setShowPhishIndicators(!showPhishIndicators)}
                     className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-md text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 transition"
                   >
@@ -747,7 +818,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
               </div>
 
               {reportedPhishMsg && (
-                <div className="p-3 bg-teal-50 border border-teal-300 text-teal-800 rounded-md text-xs flex items-center space-x-2">
+                <div role="status" aria-live="polite" aria-atomic="true" className="p-3 bg-teal-50 border border-teal-300 text-teal-800 rounded-md text-xs flex items-center space-x-2">
                   <CheckCircle className="w-4 h-4 shrink-0 text-teal-600" />
                   <span>
                     Excellent defensive reaction! Simulated report submitted to Security Operations Cell (SOC).
@@ -758,7 +829,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
 
             {/* Revealed Red Flags & Threat Breakdown */}
             {showPhishIndicators && (
-              <div className="bg-amber-50/70 border-t-2 border-amber-500 p-6 space-y-4">
+              <div id="phishing-indicators" role="region" aria-label="Phishing indicators and recommended response" className="bg-amber-50/70 border-t-2 border-amber-500 p-6 space-y-4">
                 <div className="flex items-center space-x-2 text-amber-900">
                   <AlertTriangle className="w-5 h-5 text-amber-600" />
                   <h4 className="font-bold text-sm">
@@ -805,7 +876,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
 
       {/* TAB 3: EXECUTIVE HYGIENE BRIEFING */}
       {activeTab === 'summary' && (
-        <div className="space-y-4">
+        <div id="cyber-panel-summary" role="tabpanel" aria-labelledby="cyber-tab-summary" tabIndex={0} className="space-y-4">
           <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h3 className="font-bold text-sm text-slate-900">
