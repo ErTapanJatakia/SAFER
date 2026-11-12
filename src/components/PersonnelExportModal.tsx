@@ -219,16 +219,16 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
       tabIndex={-1}
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-xs overflow-y-auto"
     >
-      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col border border-slate-300">
+      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[92vh] min-w-0 flex flex-col border border-slate-300">
         {/* Top Header */}
-        <div className="px-6 py-4 bg-slate-900 text-white rounded-t-xl flex items-center justify-between border-b border-slate-800 shrink-0">
-          <div className="flex items-center space-x-3">
+        <div className="px-4 sm:px-6 py-4 bg-slate-900 text-white rounded-t-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 shrink-0">
+          <div className="flex items-start space-x-3 min-w-0">
             <div className="w-10 h-10 rounded-lg bg-blue-900 flex items-center justify-center text-blue-200 border border-blue-700 shrink-0">
               <Download className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h3 id="export-modal-title" className="font-bold text-base text-white">
+                <h3 id="export-modal-title" className="font-bold text-base text-white break-words">
                   {isRosterExport ? 'Export Entire Personnel Roster' : 'Export Personnel Record'}
                 </h3>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-950 text-blue-200 border border-blue-800 uppercase tracking-wider">
@@ -250,7 +250,7 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
         </div>
 
         {/* Warning & Instructions Banner */}
-        <div className="bg-amber-50 border-b border-amber-200 px-6 py-3 text-xs text-amber-900 shrink-0">
+        <div className="bg-amber-50 border-b border-amber-200 px-4 sm:px-6 py-3 text-xs text-amber-900 shrink-0">
           <div className="flex items-start space-x-2.5">
             <ShieldAlert className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
             <div className="space-y-0.5">
@@ -270,7 +270,7 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
 
         {/* Format Selector Bar */}
         <div className="px-6 py-3 bg-slate-100/90 border-b border-slate-200 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0">
             <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
               Export Format:
             </span>
@@ -303,7 +303,7 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
           </div>
 
           {/* Tab Switcher: Redactions vs Preview */}
-          <div className="flex items-center bg-slate-200/80 p-0.5 rounded-lg border border-slate-300">
+          <div className="flex flex-wrap items-center bg-slate-200/80 p-0.5 rounded-lg border border-slate-300 max-w-full">
             <button
               onClick={() => setActiveTab('redact')}
               className={`px-3 py-1 text-xs font-semibold rounded-md transition flex items-center space-x-1.5 ${
@@ -330,7 +330,7 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
         </div>
 
         {/* Modal Main Body */}
-        <div className="p-6 overflow-y-auto flex-1 space-y-4">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 min-w-0">
           {exportSuccessMsg && (
             <div className="p-3 bg-teal-50 border border-teal-300 rounded-lg flex items-center space-x-2 text-xs font-semibold text-teal-900">
               <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
@@ -475,7 +475,7 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
           ) : (
             /* Live Preview Tab */
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-slate-600 bg-slate-50 p-2.5 rounded border border-slate-200">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-600 bg-slate-50 p-2.5 rounded border border-slate-200">
                 <div className="flex items-center space-x-2">
                   <Info className="w-4 h-4 text-blue-700" />
                   <span>
@@ -488,7 +488,7 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
                 </span>
               </div>
 
-              <div className="border border-slate-300 rounded-lg overflow-hidden bg-slate-950 text-slate-100 font-mono text-xs p-4 max-h-[460px] overflow-y-auto whitespace-pre leading-relaxed select-text shadow-inner">
+              <div className="border border-slate-300 rounded-lg overflow-x-auto overflow-y-auto bg-slate-950 text-slate-100 font-mono text-xs p-3 sm:p-4 max-h-[460px] whitespace-pre-wrap break-words leading-relaxed select-text shadow-inner">
                 {previewContent}
               </div>
             </div>
@@ -496,7 +496,7 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="px-6 py-4 bg-slate-100 border-t border-slate-200 rounded-b-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+        <div className="px-4 sm:px-6 py-4 bg-slate-100 border-t border-slate-200 rounded-b-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
           <div className="flex items-center space-x-2 text-xs text-slate-600 font-mono truncate max-w-sm">
             <span className="font-bold text-slate-700">Filename:</span>
             <span className="text-blue-900 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 truncate">
@@ -504,7 +504,7 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center space-x-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
             <button
               onClick={onClose}
               className="px-4 py-2 text-xs font-semibold rounded-md border border-slate-300 text-slate-700 hover:bg-slate-200 transition"
