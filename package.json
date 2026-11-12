@@ -15,6 +15,7 @@
     "test:searchable-multiselect": "vitest run src/components/SearchableMultiSelect.test.tsx",
     "test:navbar-accessibility": "vitest run src/components/Navbar.test.tsx",
     "test:live-announcer": "vitest run src/components/LiveAnnouncer.test.tsx",
+    "test:filter-control-accessibility": "vitest run src/components/FilterControlAccessibility.test.tsx",
     "test:data-boundary": "tsx --test src/lib/dataBoundary.test.ts",
     "test:session-lifecycle": "tsx --test src/lib/sessionLifecycle.test.ts",
     "test:session-invalidation": "vitest run src/lib/sessionInvalidation.test.ts",
