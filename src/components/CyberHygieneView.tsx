@@ -373,6 +373,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
                 <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
                 <input
                   type="text"
+                  aria-label="Search defensive controls and audit notes"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search controls, plain-English rationales, domains, or audit notes..."
