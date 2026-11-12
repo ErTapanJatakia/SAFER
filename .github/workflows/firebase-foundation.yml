@@ -228,6 +228,9 @@ jobs:
       - name: Cross-tab session invalidation tests
         run: npm run test:session-invalidation
 
+      - name: Security assessment and export regression tests
+        run: npm run test:security-assessment
+
       - name: Dependency security audit
         run: npm audit --omit=dev --audit-level=high
 
