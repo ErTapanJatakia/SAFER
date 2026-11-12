@@ -30,6 +30,7 @@ on:
       - "firestore.rules"
       - "firebase.json"
       - "vercel.json"
+      - "public/**"
       - "docs/**"
       - "README.md"
       - ".github/workflows/firebase-foundation.yml"
