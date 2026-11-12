@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { CyberHygieneItem, CyberHygieneDomain, CyberItemClassification } from '../types/index.ts';
 import { ALL_CYBER_DOMAINS } from '../utils/cyberHygieneSummary.ts';
-import { getCurrentISODate } from '../utils/dateUtils.ts';
+import { useModalFocus } from '../hooks/useModalFocus.ts';
 import { X, ShieldCheck, AlertCircle } from 'lucide-react';
 
 interface CyberItemModalProps {
@@ -17,6 +17,7 @@ export const CyberItemModal: React.FC<CyberItemModalProps> = ({
   onSave,
   itemToEdit,
 }) => {
+  const modalRef = useModalFocus<HTMLDivElement>(isOpen, onClose);
   const [domain, setDomain] = useState<CyberHygieneDomain>('Device and operating-system updates');
   const [itemType, setItemType] = useState<CyberItemClassification>('General Recommendation');
   const [title, setTitle] = useState('');
@@ -76,7 +77,7 @@ export const CyberItemModal: React.FC<CyberItemModalProps> = ({
       plainEnglishExplanation: plainEnglishExplanation.trim(),
       status,
       findingNotes: findingNotes.trim(),
-      lastChecked: getCurrentISODate(),
+      lastChecked: '2026-10-15',
       verifiedBy: verifiedBy.trim() || null,
     };
 
@@ -85,17 +86,25 @@ export const CyberItemModal: React.FC<CyberItemModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div
+      ref={modalRef}
+      tabIndex={-1}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="cyber-item-modal-title"
+      className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+    >
       <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <ShieldCheck className="w-5 h-5 text-teal-400" />
-            <h3 className="font-bold text-base text-white">
+            <h3 id="cyber-item-modal-title" className="font-bold text-base text-white">
               {itemToEdit ? 'Edit Defensive Control' : 'Add Defensive Control / Finding'}
             </h3>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="text-slate-400 hover:text-white p-1 rounded-md transition"
             aria-label="Close modal"
