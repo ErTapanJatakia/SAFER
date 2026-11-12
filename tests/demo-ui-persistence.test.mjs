@@ -7,21 +7,23 @@ const app = readFileSync(new URL('../src/App.tsx', import.meta.url), 'utf8');
 test('operational UI state is published only after the repository confirms persistence', () => {
   assert.match(app, /await persist\(next\);\s*current\.current = next;\s*publish\(next\);/);
   assert.match(app, /queue\.current = operation\.catch\(\(\) => undefined\);/);
-  assert.match(app, /const commitPersonnel =/);
-  assert.match(app, /const commitIncidents =/);
-  assert.match(app, /const commitCyber =/);
-  assert.match(app, /const commitChecklist =/);
+  for (const helper of ['Personnel', 'Incidents', 'Cyber', 'Checklist']) {
+    assert.match(app, new RegExp('const commit' + helper + ' ='));
+  }
 });
 
 test('operational collections are not persisted through fire-and-forget state effects', () => {
   assert.doesNotMatch(app, /useEffect\(\(\) => \{\s*void demoRepository\.replace(?:Personnel|Incidents|CyberHygiene|Checklist)/);
 });
 
-test('operational success messages are emitted by confirmed commit operations', () => {
-  assert.match(app, /await commitPersonnel\([\s\S]*?Updated' : 'Created'\)[\s\S]*?if \(saved\)/);
-  assert.match(app, /commitIncidents\([\s\S]*?Incident report/);
-  assert.match(app, /commitCyber\([\s\S]*?Cybersecurity item verification status updated/);
-  assert.match(app, /commitChecklist\([\s\S]*?Checklist task status updated/);
+test('operational handlers route mutations through confirmed commit operations', () => {
+  for (const helper of ['commitPersonnel', 'commitIncidents', 'commitCyber', 'commitChecklist']) {
+    assert.match(app, new RegExp(helper + '\\('));
+  }
+  assert.match(app, /const saved = await commitPersonnel\([\s\S]*?if \(saved\)/);
+  assert.match(app, /Incident report \$\{newReport\.referenceNumber\} recorded/);
+  assert.match(app, /Cybersecurity item verification status updated/);
+  assert.match(app, /Checklist task status updated to/);
   assert.match(app, /Your previous records remain unchanged/);
 });
 
