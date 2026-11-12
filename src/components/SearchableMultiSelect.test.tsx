@@ -5,7 +5,7 @@ import { SearchableMultiSelect } from './SearchableMultiSelect';
 
 let host: HTMLDivElement;
 let root: Root;
-let onChange: ReturnType<typeof vi.fn>;
+let onChange: (selected: string[]) => void;
 
 const renderControl = (overrides: Partial<React.ComponentProps<typeof SearchableMultiSelect>> = {}) => {
   act(() => {
@@ -27,7 +27,7 @@ beforeEach(() => {
   host = document.createElement('div');
   document.body.append(host);
   root = createRoot(host);
-  onChange = vi.fn();
+  onChange = vi.fn<(selected: string[]) => void>();
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 });
 
