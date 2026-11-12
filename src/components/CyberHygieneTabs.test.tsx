@@ -6,11 +6,11 @@ import { CyberHygieneView } from './CyberHygieneView';
 let host: HTMLDivElement;
 let root: Root;
 
-const renderView = () => {
+const renderView = (items: React.ComponentProps<typeof CyberHygieneView>['items'] = []) => {
   act(() => {
     root.render(
       <CyberHygieneView
-        items={[]}
+        items={items}
         onUpdateStatus={vi.fn()}
         onRunAudit={vi.fn()}
       />
@@ -116,6 +116,36 @@ describe('Cyber Hygiene tabs accessibility', () => {
     const feedback = Array.from(host.querySelectorAll('[role="status"][aria-live="polite"]'))
       .find((element) => element.textContent?.includes('Simulated report submitted'));
     expect(feedback).not.toBeUndefined();
+  });
+
+  it('announces live result counts when defensive control filters change', () => {
+    const items = [{
+      id: 'cyber-a11y-01',
+      domain: 'Multi-factor authentication' as const,
+      title: 'MFA enforcement',
+      recommendation: 'Require MFA for privileged accounts.',
+      plainEnglishExplanation: 'MFA adds a second verification factor.',
+      status: 'Completed' as const,
+      itemType: 'General Recommendation' as const,
+      findingNotes: '',
+      lastChecked: '12-11-2026',
+      verifiedBy: null,
+    }];
+    renderView(items);
+
+    const resultStatus = host.querySelector('[data-cyber-filter-results][role="status"][aria-live="polite"]');
+    expect(resultStatus?.textContent).toContain('Showing 1 of 1 defensive controls');
+    expect(resultStatus?.getAttribute('aria-atomic')).toBe('true');
+
+    const statusFilter = host.querySelector<HTMLSelectElement>('select[aria-label="Filter by Status"]');
+    expect(statusFilter).not.toBeNull();
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set;
+      setter?.call(statusFilter, 'Outstanding');
+      statusFilter?.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    expect(resultStatus?.textContent).toContain('Showing 0 of 1 defensive controls');
   });
 
 });
