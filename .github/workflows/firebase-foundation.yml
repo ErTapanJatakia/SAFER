@@ -14,6 +14,7 @@ on:
       - "firestore.rules"
       - "firebase.json"
       - "vercel.json"
+      - "public/**"
       - "docs/**"
       - ".github/workflows/firebase-foundation.yml"
   pull_request:
@@ -28,6 +29,7 @@ on:
       - "firestore.rules"
       - "firebase.json"
       - "vercel.json"
+      - "public/**"
       - "docs/**"
       - ".github/workflows/firebase-foundation.yml"
 
@@ -35,7 +37,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: safer-dependency-validation-${{ github.ref }}
+  group: safer-dependency-validation-\${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -45,8 +47,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref || github.ref_name }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: \${{ github.head_ref || github.ref_name }}
+          token: \${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -71,6 +73,9 @@ jobs:
 
       - name: Vercel browser security header policy tests
         run: node --test tests/vercel-security-headers.test.mjs
+
+      - name: Cloudflare Pages browser security header policy tests
+        run: node --test tests/cloudflare-security-headers.test.mjs
 
       - name: Firestore Security Rules Emulator tests
         run: npm run test:firestore-rules
