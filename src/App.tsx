@@ -360,24 +360,26 @@ export default function App() {
     );
   };
 
-  const handleSavePersonnel = (savedPerson: PersonnelRecord) => {
-    if (editingPerson) {
-      setPersonnelList((prev) =>
-        prev.map((p) => (p.id === savedPerson.id ? savedPerson : p))
-      );
-      showToast(`Updated record for ${savedPerson.displayName || savedPerson.fullName}`);
-    } else {
-      setPersonnelList((prev) => [savedPerson, ...prev]);
-      showToast(`Created record for ${savedPerson.displayName || savedPerson.fullName}`);
+  const handleSavePersonnel = async (savedPerson: PersonnelRecord) => {
+    const wasEditing = Boolean(editingPerson);
+    const saved = await commitPersonnel(
+      (records) => wasEditing
+        ? records.map((person) => person.id === savedPerson.id ? savedPerson : person)
+        : [savedPerson, ...records],
+      `${wasEditing ? 'Updated' : 'Created'} record for ${savedPerson.displayName || savedPerson.fullName}`,
+    );
+    if (saved) {
+      setIsPersonnelModalOpen(false);
+      setEditingPerson(null);
     }
-    setIsPersonnelModalOpen(false);
-    setEditingPerson(null);
   };
 
-  const handleDeletePersonnel = (id: string) => {
-    setPersonnelList((prev) => prev.filter((p) => p.id !== id));
-    showToast('Personnel record removed from demonstration roster.');
-    if (detailPerson?.id === id) {
+  const handleDeletePersonnel = async (id: string) => {
+    const saved = await commitPersonnel(
+      (records) => records.filter((person) => person.id !== id),
+      'Personnel record removed from demonstration roster.',
+    );
+    if (saved && detailPerson?.id === id) {
       setIsDetailModalOpen(false);
       setDetailPerson(null);
     }
@@ -389,190 +391,124 @@ export default function App() {
     reviewNotes: string
   ) => {
     const today = getCurrentISODate();
-    setPersonnelList((prev) =>
-      prev.map((p) => {
-        if (p.id === personId) {
-          return {
-            ...p,
-            lastSupervisorReviewDate: today,
-            reviewedBy: supervisorName,
-            requiresReview: false,
-            notes: p.notes
-              ? `${p.notes}\n[${today} - ${supervisorName}]: ${reviewNotes}`
-              : `[${today} - ${supervisorName}]: ${reviewNotes}`,
-            administrativeNotes: p.administrativeNotes
-              ? `${p.administrativeNotes}\n[${today} - ${supervisorName}]: ${reviewNotes}`
-              : `[${today} - ${supervisorName}]: ${reviewNotes}`,
-          };
-        }
-        return p;
-      })
-    );
-
-    setDetailPerson((prev) =>
-      prev && prev.id === personId
-        ? {
-            ...prev,
-            lastSupervisorReviewDate: today,
-            reviewedBy: supervisorName,
-            requiresReview: false,
-            notes: prev.notes
-              ? `${prev.notes}\n[${today} - ${supervisorName}]: ${reviewNotes}`
-              : `[${today} - ${supervisorName}]: ${reviewNotes}`,
-          }
-        : prev
-    );
-
-    showToast(`Supervisory review logged by ${supervisorName}`);
+    void commitPersonnel((records) => records.map((person) => person.id === personId ? {
+      ...person,
+      lastSupervisorReviewDate: today,
+      reviewedBy: supervisorName,
+      requiresReview: false,
+      notes: person.notes ? `${person.notes}\n[${today} - ${supervisorName}]: ${reviewNotes}` : `[${today} - ${supervisorName}]: ${reviewNotes}`,
+      administrativeNotes: person.administrativeNotes ? `${person.administrativeNotes}\n[${today} - ${supervisorName}]: ${reviewNotes}` : `[${today} - ${supervisorName}]: ${reviewNotes}`,
+    } : person).map((person) => person), `Supervisory review logged by ${supervisorName}`).then((saved) => {
+      if (saved) setDetailPerson((prev) => prev && prev.id === personId ? {
+        ...prev,
+        lastSupervisorReviewDate: today,
+        reviewedBy: supervisorName,
+        requiresReview: false,
+        notes: prev.notes ? `${prev.notes}\n[${today} - ${supervisorName}]: ${reviewNotes}` : `[${today} - ${supervisorName}]: ${reviewNotes}`,
+      } : prev);
+    });
   };
 
   const handleResolveRequirement = (personId: string, requirementText: string) => {
-    setPersonnelList((prev) =>
-      prev.map((p) => {
-        if (p.id === personId) {
-          const updated = (p.outstandingRequirements || []).filter((r) => r !== requirementText);
-          return {
-            ...p,
-            outstandingRequirements: updated,
-            tasksCompleted: (p.tasksCompleted || 0) + 1,
-            tasksOutstanding: Math.max(0, (p.tasksOutstanding || 1) - 1),
-          };
-        }
-        return p;
-      })
-    );
-
-    setDetailPerson((prev) =>
-      prev && prev.id === personId
-        ? {
-            ...prev,
-            outstandingRequirements: (prev.outstandingRequirements || []).filter(
-              (r) => r !== requirementText
-            ),
-            tasksCompleted: (prev.tasksCompleted || 0) + 1,
-            tasksOutstanding: Math.max(0, (prev.tasksOutstanding || 1) - 1),
-          }
-        : prev
-    );
-
-    showToast(`Marked requirement resolved: "${requirementText.slice(0, 32)}..."`);
+    void commitPersonnel((records) => records.map((person) => person.id === personId ? {
+      ...person,
+      outstandingRequirements: (person.outstandingRequirements || []).filter((item) => item !== requirementText),
+      tasksCompleted: (person.tasksCompleted || 0) + 1,
+      tasksOutstanding: Math.max(0, (person.tasksOutstanding || 1) - 1),
+    } : person), `Marked requirement resolved: "${requirementText.slice(0, 32)}..."`).then((saved) => {
+      if (saved) setDetailPerson((prev) => prev && prev.id === personId ? {
+        ...prev,
+        outstandingRequirements: (prev.outstandingRequirements || []).filter((item) => item !== requirementText),
+        tasksCompleted: (prev.tasksCompleted || 0) + 1,
+        tasksOutstanding: Math.max(0, (prev.tasksOutstanding || 1) - 1),
+      } : prev);
+    });
   };
 
   // Handlers for Incidents
   const handleAddIncident = (newReport: IncidentReport) => {
-    setIncidentList((prev) => [newReport, ...prev]);
-    showToast(`Incident report ${newReport.referenceNumber} recorded.`);
+    void commitIncidents((records) => [newReport, ...records], `Incident report ${newReport.referenceNumber} recorded.`);
   };
 
   const handleUpdateIncidentStatus = (id: string, status: IncidentReport['status']) => {
-    setIncidentList((prev) =>
-      prev.map((inc) => (inc.id === id ? { ...inc, status } : inc))
-    );
-    showToast(`Incident status updated to: ${status}`);
+    void commitIncidents((records) => records.map((incident) => incident.id === id ? { ...incident, status } : incident), `Incident status updated to: ${status}`);
   };
 
   // Handlers for Cybersecurity Hygiene
   const handleUpdateCyberStatus = (id: string, status: CyberHygieneItem['status']) => {
-    setCyberItems((prev) =>
-      prev.map((item) => {
-        if (item.id === id) {
-          const completed = status === 'Completed';
-          return {
-            ...item,
-            completed,
-            status,
-            lastChecked: getCurrentISODate(),
-          };
-        }
-        return item;
-      })
-    );
-    showToast('Cybersecurity item verification status updated.');
+    void commitCyber((records) => records.map((item) => item.id === id ? {
+      ...item,
+      completed: status === 'Completed',
+      status,
+      lastChecked: getCurrentISODate(),
+    } : item), 'Cybersecurity item verification status updated.');
   };
 
   const handleRunCyberAudit = () => {
     const today = getCurrentISODate();
-    setCyberItems((prev) =>
-      prev.map((item) => ({
-        ...item,
-        lastAuditedDate: today,
-        auditedBy: 'Ops Security Team (Automated Session)',
-      }))
-    );
-    showToast('Cybersecurity administrative audit completed across all 10 operational domains.');
+    void commitCyber((records) => records.map((item) => ({
+      ...item,
+      lastAuditedDate: today,
+      auditedBy: 'Ops Security Team (Automated Session)',
+    })), 'Cybersecurity administrative audit completed across all 10 operational domains.');
   };
 
   const handleSaveCyberItem = (item: CyberHygieneItem) => {
-    setCyberItems((prev) => {
-      const exists = prev.some((i) => i.id === item.id);
-      if (exists) {
-        return prev.map((i) => (i.id === item.id ? item : i));
-      }
-      return [item, ...prev];
-    });
-    showToast(`Saved cybersecurity record: ${item.domain}`);
+    void commitCyber((records) => records.some((entry) => entry.id === item.id)
+      ? records.map((entry) => entry.id === item.id ? item : entry)
+      : [item, ...records], `Saved cybersecurity record: ${item.domain}`);
   };
 
   const handleDeleteCyberItem = (id: string) => {
-    setCyberItems((prev) => prev.filter((i) => i.id !== id));
-    showToast('Cybersecurity requirement removed.');
+    void commitCyber((records) => records.filter((item) => item.id !== id), 'Cybersecurity requirement removed.');
   };
 
   // Handlers for Pre-Deployment Checklist
   const handleUpdateChecklistStatus = (id: string, status: PreDeploymentStatus) => {
-    setChecklistItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              status,
-              completed: status === 'Complete',
-            }
-          : item
-      )
-    );
-    showToast(`Checklist task status updated to ${status}.`);
+    void commitChecklist((records) => records.map((item) => item.id === id ? {
+      ...item,
+      status,
+      completed: status === 'Complete',
+    } : item), `Checklist task status updated to ${status}.`);
   };
 
   const handleSignOffChecklistTask = (id: string, reviewerName: string) => {
-    setChecklistItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              status: 'Complete',
-              completed: true,
-              requiresHumanReview: false,
-              reviewedBy: reviewerName,
-              reviewDate: getCurrentISODate(),
-            }
-          : item
-      )
-    );
-    showToast(`Task reviewed and signed off by ${reviewerName}.`);
+    void commitChecklist((records) => records.map((item) => item.id === id ? {
+      ...item,
+      status: 'Complete',
+      completed: true,
+      requiresHumanReview: false,
+      reviewedBy: reviewerName,
+      reviewDate: getCurrentISODate(),
+    } : item), `Task reviewed and signed off by ${reviewerName}.`);
   };
 
   const handleAddChecklistTask = (newTask: PreDeploymentChecklistItem) => {
-    setChecklistItems((prev) => [newTask, ...prev]);
-    showToast(`Checklist task "${newTask.task}" added.`);
+    void commitChecklist((records) => [newTask, ...records], `Checklist task "${newTask.task}" added.`);
   };
 
   const handleResetChecklistScenario = () => {
-    setChecklistItems(INITIAL_CHECKLIST);
-    showToast('Pre-deployment checklist reset to standard deployment scenario.');
+    void commitChecklist(() => [...INITIAL_CHECKLIST], 'Pre-deployment checklist reset to standard deployment scenario.');
   };
 
-  const handleResetDemoData = () => {
+  const handleResetDemoData = async () => {
+    // Drain queued writes before reset so an older pending save cannot restore
+    // records after the user has explicitly reset the workspace.
+    await Promise.all([personnelQueue.current, incidentsQueue.current, cyberQueue.current, checklistQueue.current]);
     try {
       demoRepository.reset();
     } catch {
       showToast('Browser storage blocked part of the reset. Some records may remain; retry or clear this site’s browser data.');
       return;
     }
-    setPersonnelList(INITIAL_PERSONNEL);
-    setIncidentList(INITIAL_INCIDENTS);
-    setCyberItems(INITIAL_CYBER_ITEMS);
-    setChecklistItems(INITIAL_CHECKLIST);
+    personnelRef.current = [...INITIAL_PERSONNEL];
+    incidentsRef.current = [...INITIAL_INCIDENTS];
+    cyberItemsRef.current = [...INITIAL_CYBER_ITEMS];
+    checklistRef.current = [...INITIAL_CHECKLIST];
+    setPersonnelList([...INITIAL_PERSONNEL]);
+    setIncidentList([...INITIAL_INCIDENTS]);
+    setCyberItems([...INITIAL_CYBER_ITEMS]);
+    setChecklistItems([...INITIAL_CHECKLIST]);
     showToast('Reset all demonstration data to baseline prototype state.');
   };
 
