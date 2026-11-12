@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useModalFocus } from '../hooks/useModalFocus.ts';
 import { THEME_PRESETS } from '../utils/themePresets.ts';
 import type { ThemePreset, CustomThemeSettings } from '../types/theme.ts';
 import {
@@ -38,6 +39,7 @@ export const ThemeSettingsModal: React.FC<ThemeSettingsModalProps> = ({
   const [activeCategory, setActiveCategory] = useState<
     'all' | 'standard' | 'high_vis' | 'camouflage' | 'custom'
   >('all');
+  const modalRef = useModalFocus<HTMLDivElement>(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -49,6 +51,8 @@ export const ThemeSettingsModal: React.FC<ThemeSettingsModalProps> = ({
   return (
     <div
       className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4"
+      ref={modalRef}
+      tabIndex={-1}
       role="dialog"
       aria-modal="true"
       aria-labelledby="theme-modal-title"

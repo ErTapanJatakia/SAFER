@@ -5,6 +5,7 @@ on:
     branches:
       - "feature/*"
       - "security/*"
+      - "fix/*"
     paths:
       - "package.json"
       - "package-lock.json"
@@ -21,6 +22,7 @@ on:
   pull_request:
     branches:
       - main
+      - "fix/*"
     paths:
       - "package.json"
       - "package-lock.json"
@@ -87,6 +89,12 @@ jobs:
 
       - name: AuthGate membership UI tests
         run: npm run test:auth-membership-ui
+
+      - name: Modal focus accessibility tests
+        run: npm run test:modal-focus-a11y
+
+      - name: Cyber Hygiene control editor modal focus tests
+        run: npm run test:cyber-item-modal-focus
 
       - name: Dashboard accessibility and empty-state tests
         run: npm run test:dashboard-ui

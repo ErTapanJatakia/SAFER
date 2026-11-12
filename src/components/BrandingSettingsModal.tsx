@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useModalFocus } from '../hooks/useModalFocus.ts';
 import type { LogoConfig } from '../types/theme.ts';
 import { isSafeImageDataUrl } from '../utils/securitySanitizer.ts';
 import {
@@ -39,6 +40,7 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
 
   const topFileInputRef = useRef<HTMLInputElement>(null);
   const bottomFileInputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useModalFocus<HTMLDivElement>(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -166,6 +168,8 @@ export const BrandingSettingsModal: React.FC<BrandingSettingsModalProps> = ({
   return (
     <div
       className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4"
+      ref={modalRef}
+      tabIndex={-1}
       role="dialog"
       aria-modal="true"
       aria-labelledby="branding-modal-title"
