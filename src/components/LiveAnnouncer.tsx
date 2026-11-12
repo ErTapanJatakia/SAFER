@@ -7,6 +7,7 @@ interface LiveAnnouncerProps {
 export const LiveAnnouncer: React.FC<LiveAnnouncerProps> = ({ announcement }) => {
   return (
     <div
+      role="status"
       aria-live="polite"
       aria-atomic="true"
       className="sr-only"
