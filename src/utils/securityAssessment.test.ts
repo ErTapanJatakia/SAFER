@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import * as XLSX from 'xlsx';
 import {
   sanitizeSpreadsheetFormula,
   sanitizeCsvCell,
@@ -84,9 +85,36 @@ test('SEC-02: Export Document CSV & XLSX Generates Formula-Safe Content', () => 
     'CSV export must neutralize formula in notes'
   );
 
-  // 2. Test XLSX export binary generation with sanitized formula
+  // 2. Read the generated workbook back and verify exported cells are values, not formulas.
   const xlsxBytes = generateXlsxExport(maliciousPerson, new Set());
   assert.ok(xlsxBytes.length > 0, 'XLSX export must generate binary data successfully');
+
+  const workbook = XLSX.read(xlsxBytes, { type: 'array' });
+  const overview = workbook.Sheets['Personnel Overview'];
+  const audit = workbook.Sheets['Administrative Audit'];
+  assert.ok(overview, 'XLSX export must include the personnel overview sheet');
+  assert.ok(audit, 'XLSX export must include the administrative audit sheet');
+
+  for (const [sheet, address, label] of [
+    [overview, 'B7', 'fullName'],
+    [overview, 'B9', 'callSign'],
+    [audit, 'B4', 'administrativeNotes'],
+    [audit, 'B5', 'notes'],
+  ] as const) {
+    const cell = sheet[address];
+    assert.ok(cell, `XLSX export must include the ${label} cell`);
+    assert.equal(cell.f, undefined, `XLSX ${label} must not be serialized as a formula`);
+    assert.equal(
+      cell.v,
+      sanitizeSpreadsheetFormula(
+        label === 'fullName' ? maliciousPerson.fullName :
+        label === 'callSign' ? maliciousPerson.callSign :
+        label === 'administrativeNotes' ? maliciousPerson.administrativeNotes :
+        maliciousPerson.notes
+      ),
+      `XLSX ${label} must contain the neutralized literal value`
+    );
+  }
 });
 
 // ============================================================================
