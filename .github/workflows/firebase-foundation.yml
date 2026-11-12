@@ -222,6 +222,9 @@ jobs:
       - name: Demo Guest storage failure-boundary tests
         run: npm run test:demo-storage-boundary
 
+      - name: Demo Guest confirmed UI persistence tests
+        run: npm run test:demo-ui-persistence
+
       - name: Demo Guest retention notice tests
         run: npm run test:demo-retention-notice
 
