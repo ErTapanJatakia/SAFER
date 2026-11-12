@@ -96,6 +96,9 @@ jobs:
       - name: Cyber Hygiene tab accessibility tests
         run: npm run test:cyber-hygiene-tabs
 
+      - name: Cyber Hygiene phishing lab accessibility tests
+        run: npm run test:cyber-hygiene-tabs
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
