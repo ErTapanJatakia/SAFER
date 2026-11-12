@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useModalFocus } from '../hooks/useModalFocus.ts';
 import type { StructuredIncidentDraft, IncidentReport } from '../types/index.ts';
 import {
   generateStructuredIncidentDraft,
@@ -55,6 +56,9 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
   const [selectedPresetId, setSelectedPresetId] = useState<string>(
     initialDraft ? '' : 'preset-1'
   );
+
+
+  const modalRef = useModalFocus<HTMLDivElement>(isOpen, onClose);
 
   // Generated draft state
   const [draft, setDraft] = useState<StructuredIncidentDraft | null>(
@@ -193,7 +197,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/75 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[94vh] flex flex-col border border-slate-300">
+      <div ref={modalRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby="incident-draft-dialog-title" className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[94vh] flex flex-col border border-slate-300">
         {/* Modal Header */}
         <div className="px-6 py-4 bg-slate-900 text-white rounded-t-xl flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center space-x-3">
@@ -202,7 +206,7 @@ export const IncidentDraftModal: React.FC<IncidentDraftModalProps> = ({
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <h3 className="font-bold text-base text-white">
+                <h3 className="font-bold text-base text-white" id="incident-draft-dialog-title">
                   Structured Incident Draft Generator
                 </h3>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800">
