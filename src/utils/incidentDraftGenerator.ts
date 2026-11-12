@@ -1,4 +1,5 @@
 import type { StructuredIncidentDraft } from '../types/index.ts';
+import { getCurrentISODate } from './dateUtils.ts';
 
 export const INCIDENT_LEGAL_DISCLAIMER =
   'ADMINISTRATIVE INCIDENT DRAFT: This document structures factual observations as reported. It does not establish legal conclusions, determine liability, or automate disciplinary determinations. All items require verified human supervisory review.';
@@ -331,7 +332,7 @@ export function generateStructuredIncidentDraft(
     followUpActionsRequiringHumanReview: followUpActions,
     unverifiedClaims: unverifiedClaims.length > 0 ? unverifiedClaims : undefined,
     rawNotesProvided: text,
-    lastEditedTimestamp: '2026-10-15',
+    lastEditedTimestamp: getCurrentISODate(),
   };
 }
 

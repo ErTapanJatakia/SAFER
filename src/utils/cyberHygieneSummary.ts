@@ -1,4 +1,5 @@
 import type { CyberHygieneItem, CyberHygieneDomain } from '../types/index.ts';
+import { getCurrentISODate } from './dateUtils.ts';
 
 export interface CyberHygieneMetrics {
   totalCount: number;
@@ -87,7 +88,7 @@ export function computeCyberHygieneMetrics(items: CyberHygieneItem[]): CyberHygi
  */
 export function generateCyberHygieneSummary(
   items: CyberHygieneItem[],
-  generatedDate: string = '2026-10-15'
+  generatedDate: string = getCurrentISODate()
 ): string {
   const metrics = computeCyberHygieneMetrics(items);
   const outstandingItems = items.filter((i) => i.status === 'Outstanding');

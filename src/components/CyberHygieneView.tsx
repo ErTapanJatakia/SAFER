@@ -7,6 +7,7 @@ import {
   generateCyberHygieneSummary,
 } from '../utils/cyberHygieneSummary.ts';
 import { CyberHygieneSummaryModal } from './CyberHygieneSummaryModal.tsx';
+import { getCurrentISODate } from '../utils/dateUtils.ts';
 import { CyberItemModal } from './CyberItemModal.tsx';
 import {
   ShieldCheck,
@@ -119,7 +120,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
   };
 
   const handleCopySummary = async () => {
-    const text = generateCyberHygieneSummary(items, '2026-10-15');
+    const text = generateCyberHygieneSummary(items);
     try {
       await navigator.clipboard.writeText(text);
       setCopyFeedback(true);
@@ -131,12 +132,12 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
   };
 
   const handleDownloadSummary = () => {
-    const text = generateCyberHygieneSummary(items, '2026-10-15');
+    const text = generateCyberHygieneSummary(items);
     const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Cybersecurity-Hygiene-Briefing-2026-10-15.txt`;
+    link.download = `Cybersecurity-Hygiene-Briefing-${getCurrentISODate()}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -916,7 +917,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
           </div>
 
           <div className="bg-slate-900 text-slate-100 p-6 rounded-lg border border-slate-800 font-mono text-xs leading-relaxed overflow-x-auto whitespace-pre-wrap selection:bg-blue-600 selection:text-white">
-            {generateCyberHygieneSummary(items, '2026-10-15')}
+            {generateCyberHygieneSummary(items)}
           </div>
         </div>
       )}
