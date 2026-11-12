@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type {
   PersonnelRecord,
   IncidentReport,
@@ -211,22 +211,51 @@ export default function App() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Operational persistence is routed through the Demo Guest repository only.
-  useEffect(() => {
-    void demoRepository.replacePersonnel(personnelList).catch(() => showToast('Unable to save demonstration personnel data in this browser.'));
-  }, [demoRepository, personnelList]);
+  // Persist first, then publish the new UI state. Per-collection queues prevent
+  // overlapping edits from overwriting one another while a browser write is pending.
+  const personnelRef = useRef(personnelList);
+  const incidentsRef = useRef(incidentList);
+  const cyberItemsRef = useRef(cyberItems);
+  const checklistRef = useRef(checklistItems);
+  const personnelQueue = useRef<Promise<void>>(Promise.resolve());
+  const incidentsQueue = useRef<Promise<void>>(Promise.resolve());
+  const cyberQueue = useRef<Promise<void>>(Promise.resolve());
+  const checklistQueue = useRef<Promise<void>>(Promise.resolve());
 
-  useEffect(() => {
-    void demoRepository.replaceIncidents(incidentList).catch(() => showToast('Unable to save demonstration incident data in this browser.'));
-  }, [demoRepository, incidentList]);
+  const commitCollection = async <T,>(
+    queue: React.MutableRefObject<Promise<void>>,
+    current: React.MutableRefObject<T[]>,
+    update: (records: T[]) => T[],
+    persist: (records: readonly T[]) => Promise<void>,
+    publish: React.Dispatch<React.SetStateAction<T[]>>,
+    errorMessage: string,
+    successMessage?: string,
+  ): Promise<boolean> => {
+    const operation = queue.current.then(async () => {
+      const next = update(current.current);
+      await persist(next);
+      current.current = next;
+      publish(next);
+      if (successMessage) showToast(successMessage);
+    });
+    queue.current = operation.catch(() => undefined);
+    try {
+      await operation;
+      return true;
+    } catch {
+      showToast(errorMessage);
+      return false;
+    }
+  };
 
-  useEffect(() => {
-    void demoRepository.replaceCyberHygiene(cyberItems).catch(() => showToast('Unable to save demonstration cyber hygiene data in this browser.'));
-  }, [demoRepository, cyberItems]);
-
-  useEffect(() => {
-    void demoRepository.replaceChecklist(checklistItems).catch(() => showToast('Unable to save demonstration checklist data in this browser.'));
-  }, [demoRepository, checklistItems]);
+  const commitPersonnel = (update: (records: PersonnelRecord[]) => PersonnelRecord[], success?: string) =>
+    commitCollection(personnelQueue, personnelRef, update, (records) => demoRepository.replacePersonnel(records), setPersonnelList, 'Unable to save demonstration personnel data. Your previous records remain unchanged.', success);
+  const commitIncidents = (update: (records: IncidentReport[]) => IncidentReport[], success?: string) =>
+    commitCollection(incidentsQueue, incidentsRef, update, (records) => demoRepository.replaceIncidents(records), setIncidentList, 'Unable to save demonstration incident data. Your previous records remain unchanged.', success);
+  const commitCyber = (update: (records: CyberHygieneItem[]) => CyberHygieneItem[], success?: string) =>
+    commitCollection(cyberQueue, cyberItemsRef, update, (records) => demoRepository.replaceCyberHygiene(records), setCyberItems, 'Unable to save demonstration cyber hygiene data. Your previous records remain unchanged.', success);
+  const commitChecklist = (update: (records: PreDeploymentChecklistItem[]) => PreDeploymentChecklistItem[], success?: string) =>
+    commitCollection(checklistQueue, checklistRef, update, (records) => demoRepository.replaceChecklist(records), setChecklistItems, 'Unable to save demonstration checklist data. Your previous records remain unchanged.', success);
 
   useEffect(() => {
     try {
