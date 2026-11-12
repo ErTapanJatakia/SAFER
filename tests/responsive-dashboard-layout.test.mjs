@@ -12,7 +12,10 @@ const checklist = await readFile(
 );
 
 test('dashboard banner actions wrap instead of forcing a single row', () => {
-  assert.match(dashboard, /flex flex-wrap items-center gap-2 self-start md:self-auto/);
+  const actionContainer = dashboard.match(/<div className="([^"]*self-start md:self-auto[^"]*)">/)?.[1] ?? '';
+  for (const className of ['flex', 'flex-wrap', 'items-center', 'gap-2', 'self-start', 'md:self-auto']) {
+    assert.ok(actionContainer.split(/\\s+/).includes(className), `Missing responsive class: ${className}`);
+  }
   assert.doesNotMatch(dashboard, /flex items-center space-x-2 shrink-0 self-start md:self-auto/);
 });
 
