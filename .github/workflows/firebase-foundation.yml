@@ -89,6 +89,9 @@ jobs:
       - name: Cyber Hygiene control editor modal focus tests
         run: npm run test:cyber-item-modal-focus
 
+      - name: Summary modal focus tests
+        run: npm run test:summary-modal-focus
+
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
