@@ -28,7 +28,8 @@
     "test:accessibility-modal-focus": "vitest run src/components/AccessibilityMenuModal.test.tsx",
     "test:personnel-export-modal-focus": "vitest run src/components/PersonnelExportModalFocus.test.tsx",
     "test:summary-modal-focus": "vitest run src/components/SummaryModalFocus.test.tsx",
-    "test:incident-predeployment-modal-focus": "vitest run src/components/IncidentAndPreDeploymentModalFocus.test.tsx"
+    "test:incident-predeployment-modal-focus": "vitest run src/components/IncidentAndPreDeploymentModalFocus.test.tsx",
+    "test:operational-form-accessible-names": "node --test tests/operational-form-accessible-names.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
