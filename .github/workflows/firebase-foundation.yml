@@ -14,6 +14,7 @@ on:
       - "firestore.rules"
       - "firebase.json"
       - "vercel.json"
+      - "public/**"
       - "docs/**"
       - "README.md"
       - ".github/workflows/firebase-foundation.yml"
@@ -29,6 +30,7 @@ on:
       - "firestore.rules"
       - "firebase.json"
       - "vercel.json"
+      - "public/**"
       - "docs/**"
       - "README.md"
       - ".github/workflows/firebase-foundation.yml"
@@ -73,6 +75,9 @@ jobs:
 
       - name: Vercel browser security header policy tests
         run: node --test tests/vercel-security-headers.test.mjs
+
+      - name: Cloudflare Pages browser security header policy tests
+        run: node --test tests/cloudflare-security-headers.test.mjs
 
       - name: Firestore Security Rules Emulator tests
         run: npm run test:firestore-rules
