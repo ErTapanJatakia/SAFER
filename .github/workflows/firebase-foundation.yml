@@ -99,6 +99,9 @@ jobs:
       - name: Dashboard accessibility and empty-state tests
         run: npm run test:dashboard-ui
 
+      - name: Operational form accessible-name tests
+        run: npm run test:operational-form-accessible-names
+
       - name: Searchable multi-select accessibility tests
         run: npm run test:searchable-multiselect
 
