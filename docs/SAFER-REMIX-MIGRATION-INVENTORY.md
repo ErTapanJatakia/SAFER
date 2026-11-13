@@ -41,7 +41,7 @@ The Remix tree contains the candidate modules listed above. SAFER already contai
 - [x] Structural feature inventory initiated.
 - [ ] Corrected INR 0 budget policy inspector (first functional port; local-only).
 - [ ] Authentication/account lifecycle comparison and isolated implementation plan.
-- [ ] Profile, preferences, accessibility and account-settings reconciliation.
+- [x] Profile, preferences, accessibility and account-settings reconciliation (existing local-only settings and authenticated security flows retained; global regional-format application remains deferred).
 - [ ] Privacy notice and privacy-request workflow review and selective port.
 - [ ] Multi-organisation data model and RBAC threat model.
 - [ ] Emulator-backed Firestore rules and tenant-isolation tests.
@@ -54,6 +54,37 @@ The Remix tree contains the candidate modules listed above. SAFER already contai
 
 A Remix capability is considered migrated only when SAFER contains the reviewed implementation, relevant automated regression/security tests pass, documentation matches actual behavior, and the feature is usable in SAFER without relying on the Remix repository. The Remix repository must remain available until every candidate is classified as **ported**, **already present**, or **explicitly rejected/deferred with rationale**.
 
+
+## Account menu and settings reconciliation
+
+**Review basis:** Remix `AccountMenuDropdown`, `MyAccountSettingsView`, `accountSettingsHelpers`, and `userSettingsService`, compared with canonical `HeaderBanner`, `AccountSettingsModal`, `accountSettings.ts`, and the authenticated account-security lifecycle already integrated into SAFER.
+
+### Already represented in canonical SAFER
+
+- Account/profile entry point is available from the canonical header; a second dropdown menu is not required to expose the same destination.
+- Browser-local profile fields (display name, call sign, bio), bounded regional preferences, JSON export, and scoped reset are already implemented in the canonical Account Settings modal.
+- The canonical modal clearly distinguishes local preferences from authenticated identity and credentials.
+- Authenticated credential lifecycle is handled by the separately reviewed canonical account-security implementation, including re-authentication for sensitive changes and session invalidation. Do not duplicate that flow inside a second settings screen.
+
+### Rejected or deferred Remix behaviour
+
+- The Remix account menu defaults to a `demo_guest` role and displays fallback demo identity text. Do not migrate these defaults into canonical account identity or session UI.
+- Remix `userSettingsService` caches authenticated settings in localStorage before remote persistence and can return `success: true` after Firestore persistence fails. This is an unsafe success contract for account settings and is not to be ported.
+- The Remix settings document mixes profile/preferences with broader security and privacy workflows. Canonical SAFER keeps local preferences, authenticated credentials, and synthetic privacy operations as separate boundaries.
+- Theme and accessibility settings remain in their dedicated canonical controls; do not introduce duplicate preference stores.
+- Remix's display-format helpers are not yet evidence that the selected regional preferences are applied consistently across every SAFER screen. Canonical UI correctly labels these preferences as future formatting integration; global application remains a separate implementation slice.
+
+### Disposition
+
+| Capability | Disposition |
+|---|---|
+| Account menu entry point | Already present as the canonical header Account control |
+| Personal profile and call sign | Already implemented in local-only Account Settings |
+| Regional date/time/timezone/number preferences | Already stored and exported locally; global formatting integration deferred |
+| Settings JSON export and scoped reset | Already implemented with explicit data-boundary messaging |
+| Authenticated password/email lifecycle | Already handled by canonical account-security implementation |
+| Firestore user-settings sync/cache fallback | Rejected as-is; unsafe cache-first and false-success behavior |
+| Duplicate account dropdown / second settings screen | Not needed; avoid duplicate navigation and settings state |
 
 ## Deep review: Remix organisation/RBAC and provisioning artifacts
 
