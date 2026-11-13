@@ -64,3 +64,16 @@ No Remix sample organisation names, old Firebase IDs, or alternate role vocabula
 - No production tenant creation, role assignment, or membership mutation.
 - No operational-record migration or synchronization.
 - No claim that every Remix RBAC screen or workflow has been migrated.
+
+## Membership lifecycle policy model (not enabled)
+
+A pure, non-persistent policy model has been added in `src/lib/membershipLifecycle.ts`. It describes safe future transitions without creating invitations, changing membership documents, or granting client write access.
+
+- Invitation states are `draft`, `issued`, `accepted`, `expired`, and `revoked`; terminal states cannot be reused.
+- Invitation metadata accepts a SHA-256 token digest only (never a raw token), binds the invitation to an organisation, invited email, inviter UID, and non-owner role, and caps validity at seven days.
+- Acceptance requires a separate trusted service to authenticate the recipient and verify the token digest and verified email. The client-side transition helper is not proof of either.
+- The advisory membership policy forbids self-modification, client owner assignment, admin management of owners/administrators, reactivation of revoked memberships, and removal/demotion/suspension of the final active owner.
+- Owner bootstrap/transfer, invitation issue/accept, membership writes, and append-only audit events are explicitly reserved for a trusted authority. No such authority is implemented in this slice.
+- The model is not authorization. Existing Firestore Rules remain unchanged and continue to deny membership writes and audit access.
+
+Regression tests are registered as `test:membership-lifecycle`; they have been added but intentionally not executed before the consolidated validation milestone.
