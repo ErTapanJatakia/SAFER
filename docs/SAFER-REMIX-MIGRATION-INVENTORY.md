@@ -223,3 +223,73 @@ Regression cases have been authored for:
 The UI directs users to close and reopen the Privacy Console to load the latest saved workspace after a conflict. No automatic merge, overwrite, or destructive recovery is attempted.
 
 **Scope limitation:** this is stale-snapshot detection for sequentially observed changes, not an atomic cross-tab lock or a guarantee against two truly simultaneous read/write races. It remains a browser-local synthetic-data safeguard and does not alter Firebase, operational records, or tenant authorization. Consolidated execution of these regression tests remains pending the agreed validation milestone.
+
+## Full source-to-destination component and utility reconciliation
+
+Comparison basis: current main directory listings for SAFER-Remix and canonical SAFER, followed by direct source comparison of representative operational components. Matching filenames are not treated as proof of equivalent behavior; canonical implementations and their stronger safeguards remain authoritative.
+
+### Component reconciliation
+
+| Remix component | Canonical SAFER disposition |
+|---|---|
+| AccessibilityMenuModal | Already present; canonical accessibility preferences and assistive behavior retained |
+| AccountMenuDropdown | No separate port; canonical HeaderBanner account entry avoids duplicate navigation |
+| AuthGatewayView | Rejected as-is; canonical AuthGate has stronger verified-email, password and session boundaries |
+| BrandingSettingsModal | Already present; canonical implementation includes modal focus management and existing SVG/image hardening |
+| BudgetPolicyModal | Already present; canonical fail-closed advisory-only INR 0 policy |
+| CyberHygieneSummaryModal / CyberHygieneView / CyberItemModal | Already present; canonical cyber-hygiene views and summary are retained |
+| DashboardView | Already present; canonical dashboard includes its own accessibility and security-claim refinements |
+| DemonstrationNoticeModal | Already present; canonical explicit Demo Guest notice and retention boundary |
+| HeaderBanner / Navbar | Already present; canonical navigation retained, no duplicate header |
+| IncidentDraftModal / IncidentReportsView | Already present; canonical structured incident drafting and incident workflow retained |
+| LiveAnnouncer | Already present; canonical live announcements retained |
+| MyAccountSettingsView | Replaced by canonical local-only AccountSettingsModal plus separate authenticated Account Security panel |
+| OrganisationModal | Selectively reconciled into canonical verified organisation workspace/profile panels; no fake tenants or unsupported controls |
+| PersonnelDetailModal / PersonnelExportModal / PersonnelModal | Already present; canonical field-level redaction and export safeguards retained |
+| PersonnelReadinessView / ReadinessSummaryModal | Already present; canonical readiness evaluation and summary retained |
+| PreDeploymentChecklistView / PreDeploymentSummaryModal | Already present; canonical checklist and summary retained |
+| PrivacyConsoleModal | Already present; canonical synthetic-only privacy console retained and hardened |
+| PrivacyNoticeModal | No separate modal; safe legal-boundary concept integrated into canonical Privacy Console |
+| SaferWordmark | Already present |
+| SearchableMultiSelect | Already present; canonical version includes generated accessible IDs, focus-on-open, and stronger keyboard/assistive behavior |
+| ThemeSettingsModal | Already present; canonical 20-theme and accessibility-aware theme system retained |
+
+### Utility and domain reconciliation
+
+| Remix utility | Canonical SAFER disposition |
+|---|---|
+| accountSettingsHelpers | No blind port; canonical accountSettings.ts provides bounded local-only profile/preferences, export and scoped reset. Helper-level behavior is covered by canonical tests |
+| authValidation / firebaseAuth | No blind port; canonical AuthGate/account-security lifecycle is authoritative and stronger |
+| budgetPolicy | Already present; canonical implementation is fail-closed for unknown providers |
+| clipboard | Already present |
+| cyberHygieneRules / cyberHygieneSummary | Already present |
+| dateUtils | Already present; canonical date handling is used in operational screens |
+| firestoreService | Rejected as a client-side service transplant; canonical direct repository boundaries, tenant resolver and Firestore Rules are independently designed |
+| incidentDraftGenerator | Already present |
+| indianContextAndSafety | Already present |
+| multiOrgRbac mock tests | Not migrated as authorization proof; canonical emulator-backed Rules tests and pure policy tests are the authoritative suites |
+| personnelExport | Already present; canonical export/redaction implementation has security regression coverage |
+| preDeploymentSummary | Already present |
+| privacyService | Replaced by canonical privacyRepository, privacyExport, and synthetic workspace contracts; Remix persistence semantics rejected |
+| readinessRules | Already present |
+| rolesAndSpecialisations | Already present |
+| securityAssessment | Already present in canonical security assessment suite |
+| securitySanitizer | Already present and hardened; canonical SVG allowlist and data-URL validation remain authoritative |
+| themePresets | Already present |
+| userSettingsService | Rejected as-is; cache-first Firestore sync and false-success persistence are not imported. Canonical account preferences remain local-only |
+
+### Reconciliation result
+
+- All 29 Remix component filenames have a documented disposition. Components without a same-named canonical file are deliberately replaced by canonical architecture or rejected as duplicates/unsafe.
+- All 35 Remix utility filenames have a documented disposition. Missing same-named utilities are not assumed missing features; each has an explicit canonical replacement, rejection, or deferral.
+- The unique operational feature families (cyber hygiene, readiness, pre-deployment checklist, incident drafting, personnel export/redaction, branding, themes, accessibility) are present in canonical SAFER.
+- No direct file copy is warranted for the reviewed component/utility inventory. Canonical implementations include additional safeguards and should not be overwritten with the older Remix versions.
+- This directory-level reconciliation does not yet prove runtime parity or release readiness. The final gate remains the consolidated regression/security run, manual review of any residual UX differences, and confirmation that every deferred capability is explicitly dispositioned.
+
+### Remaining migration closure items
+
+1. Review the reference repository's provisioning documentation for unnecessary personal/project identifiers and redact only with separate repository-owner approval.
+2. Execute the consolidated canonical test, browser, Firestore emulator, accessibility, export, and security suites after implementation batch completion.
+3. Fix any failures without weakening or deleting tests; apply the three-consecutive-failure redesign rule.
+4. Complete final runtime/source reconciliation and update this inventory with actual validation results.
+5. Keep SAFER-Remix available until the user explicitly approves retirement after all candidates are classified and validated.
