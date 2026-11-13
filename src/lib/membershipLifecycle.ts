@@ -56,6 +56,15 @@ const SHA256_HEX = /^[a-f0-9]{64}$/i;
 const INVITATION_ID = /^[A-Za-z0-9_-]{1,128}$/;
 const UID = /^[A-Za-z0-9_-]{1,128}$/;
 
+/** Only owners may delegate administrator invitations. */
+export function canIssueInvitation(
+  actorRole: TenantRole,
+  invitedRole: Exclude<TenantRole, 'owner'>,
+): boolean {
+  if (actorRole === 'owner') return true;
+  return actorRole === 'admin' && invitedRole !== 'admin';
+}
+
 export function isInvitationStatus(value: unknown): value is InvitationStatus {
   return value === 'draft' || value === 'issued' || value === 'accepted'
     || value === 'expired' || value === 'revoked';
@@ -145,7 +154,7 @@ export function evaluateMembershipChange(
     && activeOwnerCount <= 1
   ) return { allowed: false, reason: 'owner-protection' };
 
-  if (actorRole === 'admin' && (currentRole === 'owner' || currentRole === 'admin')) {
+  if (actorRole === 'admin' && (currentRole === 'owner' || currentRole === 'admin' || nextRole === 'admin')) {
     return { allowed: false, reason: 'admin-cannot-manage-admin' };
   }
   if (currentStatus === 'revoked' && nextStatus !== 'revoked') {
