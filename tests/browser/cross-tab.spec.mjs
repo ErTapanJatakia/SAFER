@@ -27,9 +27,11 @@ test('two same-origin tabs serialize real repository writes and reject the stale
 
     expect(outcomes.filter((outcome) => outcome.status === 'fulfilled')).toHaveLength(1);
     expect(outcomes.filter((outcome) => outcome.status === 'rejected')).toHaveLength(1);
-    const rejected = outcomes.find((outcome) => outcome.status === 'rejected');
+    const rejectedIndex = outcomes.findIndex((outcome) => outcome.status === 'rejected');
+    const rejected = outcomes[rejectedIndex];
     expect(rejected.message).toMatch(/Cross-tab conflict/);
-    await expect.poll(() => secondTab.evaluate(() => window.saferBrowserHarness.externalChange)).not.toBeNull();
+    const losingTab = rejectedIndex === 0 ? firstTab : secondTab;
+    await expect.poll(() => losingTab.evaluate(() => window.saferBrowserHarness.externalChange)).not.toBeNull();
 
     const persisted = await firstTab.evaluate(() => window.saferBrowserHarness.listPersonnel());
     const acceptedIds = ['browser-tab-a', 'browser-tab-b'].filter((id) => persisted.some((record) => record.id === id));
