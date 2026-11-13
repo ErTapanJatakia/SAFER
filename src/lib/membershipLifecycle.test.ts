@@ -1,0 +1,115 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  canTransitionInvitation,
+  evaluateMembershipChange,
+  isInvitationStatus,
+  validateInvitationForIssuance,
+  type MembershipInvitation,
+  type MembershipChangeProposal,
+} from './membershipLifecycle.ts';
+
+const DAY = 24 * 60 * 60 * 1000;
+const now = 1_800_000_000_000;
+
+function invitation(overrides: Partial<MembershipInvitation> = {}): MembershipInvitation {
+  return {
+    invitationId: 'invite-001',
+    orgId: 'org-001',
+    invitedEmail: 'member@example.test',
+    role: 'manager',
+    invitedByUid: 'owner-001',
+    status: 'draft',
+    createdAt: now - 1_000,
+    expiresAt: now + DAY,
+    tokenDigest: 'a'.repeat(64),
+    ...overrides,
+  };
+}
+
+function proposal(overrides: Partial<MembershipChangeProposal> = {}): MembershipChangeProposal {
+  return {
+    actorUid: 'owner-001',
+    actorRole: 'owner',
+    targetUid: 'member-001',
+    currentRole: 'manager',
+    nextRole: 'viewer',
+    currentStatus: 'active',
+    nextStatus: 'active',
+    activeOwnerCount: 1,
+    ...overrides,
+  };
+}
+
+test('invitation status parser accepts only known lifecycle states', () => {
+  for (const value of ['draft', 'issued', 'accepted', 'expired', 'revoked']) {
+    assert.equal(isInvitationStatus(value), true);
+  }
+  for (const value of ['pending', 'deleted', null, 1]) {
+    assert.equal(isInvitationStatus(value), false);
+  }
+});
+
+test('issuance metadata requires bounded expiry and a SHA-256 digest, never a raw secret', () => {
+  assert.equal(validateInvitationForIssuance(invitation(), now), true);
+  assert.equal(validateInvitationForIssuance(invitation({ expiresAt: now + 8 * DAY }), now), false);
+  assert.equal(validateInvitationForIssuance(invitation({ tokenDigest: 'raw-token' }), now), false);
+  assert.equal(validateInvitationForIssuance(invitation({ role: 'owner' as 'manager' }), now), false);
+  assert.equal(validateInvitationForIssuance(invitation({ status: 'issued' }), now), false);
+});
+
+test('invitation transitions enforce one-way states and expiry boundaries', () => {
+  assert.equal(canTransitionInvitation('draft', 'issue', now, now + DAY), true);
+  assert.equal(canTransitionInvitation('issued', 'accept', now, now + DAY), true);
+  assert.equal(canTransitionInvitation('issued', 'accept', now + DAY, now + DAY), false);
+  assert.equal(canTransitionInvitation('issued', 'expire', now + DAY, now + DAY), true);
+  assert.equal(canTransitionInvitation('accepted', 'revoke', now, now + DAY), false);
+  assert.equal(canTransitionInvitation('revoked', 'accept', now, now + DAY), false);
+});
+
+test('owner may propose ordinary non-owner role and status changes', () => {
+  assert.deepEqual(evaluateMembershipChange(proposal()), {
+    allowed: true,
+    reason: 'owner-policy',
+  });
+});
+
+test('admin cannot manage owners or other administrators', () => {
+  assert.equal(evaluateMembershipChange(proposal({
+    actorRole: 'admin', currentRole: 'admin',
+  })).reason, 'admin-cannot-manage-admin');
+  assert.equal(evaluateMembershipChange(proposal({
+    actorRole: 'admin', currentRole: 'owner',
+  })).reason, 'admin-cannot-manage-admin');
+});
+
+test('client policy never permits owner assignment or self-modification', () => {
+  assert.equal(evaluateMembershipChange(proposal({ nextRole: 'owner' })).reason,
+    'owner-assignment-requires-trusted-bootstrap');
+  assert.equal(evaluateMembershipChange(proposal({
+    actorUid: 'member-001',
+  })).reason, 'self-modification-forbidden');
+});
+
+test('last active owner cannot be suspended, revoked or demoted', () => {
+  for (const change of [
+    { nextRole: 'admin' as const, nextStatus: 'active' as const },
+    { nextRole: 'owner' as const, nextStatus: 'suspended' as const },
+    { nextRole: 'owner' as const, nextStatus: 'revoked' as const },
+  ]) {
+    assert.equal(evaluateMembershipChange(proposal({
+      currentRole: 'owner',
+      ...change,
+      activeOwnerCount: 1,
+    })).reason, 'owner-protection');
+  }
+});
+
+test('revoked memberships cannot be reactivated and non-admins cannot manage membership', () => {
+  assert.equal(evaluateMembershipChange(proposal({
+    currentStatus: 'revoked', nextStatus: 'active',
+  })).reason, 'invalid-transition');
+  assert.equal(evaluateMembershipChange(proposal({
+    actorRole: 'manager',
+  })).reason, 'actor-not-authorised');
+});
