@@ -226,7 +226,7 @@ describe('Demo Guest repository', () => {
     updated[0] = { ...updated[0], administrativeNotes: 'Keep this newer value' };
     await firstTab.replacePersonnel(updated);
 
-    await assert.rejects(secondTab.reset(), /Cross-tab write conflict detected for personnel/);
+    await assert.rejects(secondTab.reset(), /Cross-tab conflict detected for personnel/);
     assert.equal(JSON.parse(values.get('prot_ops_personnel_v2')!)[0].administrativeNotes, 'Keep this newer value');
   });
 
