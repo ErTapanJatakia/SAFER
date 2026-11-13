@@ -108,6 +108,7 @@ describe('AuthGate membership session handling',()=>{
   await act(async()=>{submit(form);});
   await flush();
   expect(resolveTenantMembership).toHaveBeenCalledTimes(2);
+  expect(host.querySelector('[role="status"]')?.textContent).toContain('Checking the exact membership record');
 
   await act(async()=>finishSecond({uid:'user-a',orgId:'org-a',role:'manager',status:'active'}));
   await flush();
