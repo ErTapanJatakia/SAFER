@@ -88,6 +88,58 @@ describe('OrganisationProfilePanel', () => {
     expect(host.textContent).not.toContain('Stale Alpha Profile');
   });
 
+
+  it('ignores a pending profile response after the organisation changes', async () => {
+    let finishAlpha!: (value: {orgId: string; displayName: string; status: 'active'; schemaVersion: 1}) => void;
+    vi.mocked(readOrganisationProfile)
+      .mockReturnValueOnce(new Promise((resolve) => { finishAlpha = resolve; }))
+      .mockResolvedValueOnce({
+        orgId: 'org-beta', displayName: 'Beta Operations', status: 'active', schemaVersion: 1,
+      });
+
+    await act(async () => root.render(
+      <OrganisationProfilePanel database={database} membership={member('owner')} />,
+    ));
+    expect(host.textContent).toContain('Loading verified organisation profile');
+
+    await act(async () => root.render(
+      <OrganisationProfilePanel database={database} membership={{...member('owner'), orgId: 'org-beta'}} />,
+    ));
+    expect(host.textContent).toContain('Beta Operations');
+    expect(host.textContent).not.toContain('Alpha Operations');
+
+    await act(async () => finishAlpha({
+      orgId: 'org-alpha', displayName: 'Stale Alpha Operations', status: 'active', schemaVersion: 1,
+    }));
+    expect(host.textContent).toContain('Beta Operations');
+    expect(host.textContent).not.toContain('Stale Alpha Operations');
+  });
+
+  it('does not publish an owner profile after the membership role is downgraded', async () => {
+    let finish!: (value: {orgId: string; displayName: string; status: 'active'; schemaVersion: 1}) => void;
+    vi.mocked(readOrganisationProfile).mockReturnValueOnce(
+      new Promise((resolve) => { finish = resolve; }),
+    );
+
+    await act(async () => root.render(
+      <OrganisationProfilePanel database={database} membership={member('owner')} />,
+    ));
+    expect(readOrganisationProfile).toHaveBeenCalledTimes(1);
+
+    await act(async () => root.render(
+      <OrganisationProfilePanel database={database} membership={member('manager')} />,
+    ));
+    expect(host.textContent).toContain('not available to this role');
+    expect(host.textContent).not.toContain('Loading verified organisation profile');
+    expect(readOrganisationProfile).toHaveBeenCalledTimes(1);
+
+    await act(async () => finish({
+      orgId: 'org-alpha', displayName: 'Stale Privileged Profile', status: 'active', schemaVersion: 1,
+    }));
+    expect(host.textContent).not.toContain('Stale Privileged Profile');
+    expect(host.textContent).toContain('not available to this role');
+  });
+
   it('fails closed when the Firestore database is unavailable', async () => {
     await act(async () => root.render(<OrganisationProfilePanel database={null} membership={member('owner')} />));
     expect(readOrganisationProfile).not.toHaveBeenCalled();
