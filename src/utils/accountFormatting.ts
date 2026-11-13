@@ -29,6 +29,22 @@ function parseCalendarDate(value: string): { year: number; month: number; day: n
     ? { year, month, day } : null;
 }
 
+
+function parseDisplayDateTime(value: string): Date | null {
+  const local = value.trim().match(/^(\\d{4})-(\\d{2})-(\\d{2})[ T](\\d{2}):(\\d{2})$/);
+  if (!local) {
+    const parsed = new Date(value);
+    return Number.isFinite(parsed.getTime()) ? parsed : null;
+  }
+  const [, yearText, monthText, dayText, hourText, minuteText] = local;
+  const year = Number(yearText), month = Number(monthText), day = Number(dayText);
+  const hour = Number(hourText), minute = Number(minuteText);
+  const date = new Date(year, month - 1, day, hour, minute);
+  return date.getFullYear() === year && date.getMonth() === month - 1
+    && date.getDate() === day && date.getHours() === hour && date.getMinutes() === minute
+    ? date : null;
+}
+
 function dateParts(date: Date, timezone: AccountPreferences['timezone']): { year: number; month: number; day: number } {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit',
@@ -54,8 +70,8 @@ export function formatAccountDate(
     const calendarDate = parseCalendarDate(value.trim());
     if (calendarDate) parts = calendarDate;
     else {
-      const timestamp = new Date(value);
-      if (!Number.isFinite(timestamp.getTime())) return fallback;
+      const timestamp = parseDisplayDateTime(value);
+      if (!timestamp) return fallback;
       parts = dateParts(timestamp, preferences.timezone);
     }
   }
@@ -71,8 +87,8 @@ export function formatAccountTime(
   fallback = '—',
 ): string {
   if (value === null || value === undefined || value === '') return fallback;
-  const date = value instanceof Date ? value : new Date(value);
-  if (!Number.isFinite(date.getTime())) return fallback;
+  const date = value instanceof Date ? value : parseDisplayDateTime(value);
+  if (!date || !Number.isFinite(date.getTime())) return fallback;
   return new Intl.DateTimeFormat('en-US', {
     timeZone: preferences.timezone,
     hour: '2-digit',
