@@ -52,7 +52,8 @@ describe('authenticated account security lifecycle',()=>{
   expect(updateProfile).toHaveBeenCalledWith(user,{displayName:'Updated Operator'});
   expect(reload).toHaveBeenCalledWith(user);
   expect(host.textContent).toContain('Display name updated.');
-  expect(sessionInvalidation.publishSessionInvalidation).toHaveBeenCalledTimes(1);
+  // A display-name edit does not change credentials or session authority.
+  expect(sessionInvalidation.publishSessionInvalidation).not.toHaveBeenCalled();
  });
  it('rejects weak passwords without attempting re-authentication',async()=>{
   change(input('Current password'),'CurrentPass!123');change(input('New password'),'short');change(input('Confirm new password'),'short');
