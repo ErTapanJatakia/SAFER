@@ -13,8 +13,8 @@ This document tracks capabilities present in SAFER-Remix that are not represente
 
 | Capability | Remix reference | Initial assessment | Migration gate |
 |---|---|---|---|
-| Strict INR 0 budget policy and cost inspector | `BUDGET_POLICY.md`, `src/utils/budgetPolicy.ts`, `src/utils/budgetPolicy.test.ts`, `src/components/BudgetPolicyModal.tsx` | Strong first candidate; local-only and useful as a visible project guardrail. Existing evaluator is fail-open for unknown service names and must be redesigned; UI must not claim it can inspect or prevent cloud billing. | Port a corrected policy model, conservative unknown-service handling, accurate labels, unit tests and accessible UI. |
-| Authentication gateway and account lifecycle | `src/components/AuthGatewayView.tsx`, `src/utils/firebaseAuth.ts`, `src/utils/authValidation.ts`, `src/utils/authValidation.test.ts` | Candidate; SAFER has related authentication/session foundations. | Compare behavior; verify password policy, email verification/reset, session invalidation, error handling, and no credential exposure. Do not enable sign-in or configure production Firebase in this migration PR. |
+| Strict INR 0 budget policy and cost inspector | `BUDGET_POLICY.md`, `src/utils/budgetPolicy.ts`, `src/utils/budgetPolicy.test.ts`, `src/components/BudgetPolicyModal.tsx` | Already represented by canonical SAFER's fail-closed INR 0 budget policy inspector and provider allowlist; do not duplicate it. | Keep the canonical advisory-only model; no claim of billing enforcement or live price/quota inspection. |
+| Authentication gateway and account lifecycle | `src/components/AuthGatewayView.tsx`, `src/utils/firebaseAuth.ts`, `src/utils/authValidation.ts`, `src/utils/authValidation.test.ts` | Core lifecycle already represented by canonical AuthGate, Firebase Auth integration, verified-email gate, Account Security panel, and session invalidation. Remix has weaker password validation and unsafe demo/acknowledgement coupling. | Retain canonical implementation; do not port the Remix gateway or Firebase configuration. Any additional provider/UI changes require a separate review and Firebase configuration gate. |
 | Account profile and settings | `src/components/MyAccountSettingsView.tsx`, `src/components/AccountMenuDropdown.tsx`, `src/utils/accountSettingsHelpers.ts`, `src/utils/userSettingsService.ts`, related tests and `src/types/settings.ts` | Candidate; theme/accessibility preferences already exist in SAFER and must remain the source of truth. | Merge only missing capabilities; preserve SAFER's 20-theme system, accessibility behavior, and local Demo Guest boundary. Validate all persisted settings at runtime. |
 | Organisation administration and multi-organisation RBAC | `src/components/OrganisationModal.tsx`, `src/types/multiorg.ts`, `src/utils/multiOrgRbac.test.ts` | High-value but security-sensitive; current test file includes mock rule evaluation and does not by itself prove Firestore enforcement. | Design tenant model independently; add emulator-backed Firestore rules tests for default-deny, cross-tenant isolation, self-promotion, revoked membership, read-only auditor, Demo Guest isolation, and immutable audit events. No operational collection migration. |
 | Privacy console, notice and rights-request workflow | `src/components/PrivacyConsoleModal.tsx`, `src/components/PrivacyNoticeModal.tsx`, `src/utils/privacyService.ts`, `src/utils/privacyService.test.ts`, `src/types/privacy.ts` | Core synthetic workflows already exist in canonical SAFER; Remix notice and service contain fictional identities, unsupported legal assertions, and unsafe persistence/deletion semantics. | Reconcile existing capabilities; migrate only safe workflow concepts and explicit legal-boundary wording. Keep real notices, submissions, consent, deadlines, and deletion out of scope until separately reviewed and authorized. |
@@ -39,8 +39,8 @@ The Remix tree contains the candidate modules listed above. SAFER already contai
 ## Migration order
 
 - [x] Structural feature inventory initiated.
-- [ ] Corrected INR 0 budget policy inspector (first functional port; local-only).
-- [ ] Authentication/account lifecycle comparison and isolated implementation plan.
+- [x] Corrected INR 0 budget policy inspector (already implemented canonically; fail-closed and advisory-only).
+- [x] Authentication/account lifecycle comparison (canonical AuthGate and account-security lifecycle retained; Remix implementation rejected as-is).
 - [x] Profile, preferences, accessibility and account-settings reconciliation (existing local-only settings and authenticated security flows retained; global regional-format application remains deferred).
 - [x] Privacy notice and privacy-request workflow review and selective port (synthetic console already migrated; legal/compliance boundary added; unsafe Remix defaults rejected).
 - [ ] Multi-organisation data model and RBAC threat model.
@@ -85,6 +85,47 @@ A Remix capability is considered migrated only when SAFER contains the reviewed 
 | Authenticated password/email lifecycle | Already handled by canonical account-security implementation |
 | Firestore user-settings sync/cache fallback | Rejected as-is; unsafe cache-first and false-success behavior |
 | Duplicate account dropdown / second settings screen | Not needed; avoid duplicate navigation and settings state |
+
+## Authentication gateway and budget inspector reconciliation
+
+**Review basis:** Remix `AuthGatewayView`, `firebaseAuth`, and `authValidation`, compared with canonical SAFER `AuthGate`, Firebase configuration boundary, `AccountSecurityPanel`, session lifecycle/invalidation, and the canonical INR 0 budget inspector.
+
+### Authentication: canonical implementation retained
+
+- Canonical SAFER enforces a 12–128 character password policy with uppercase, lowercase, numeric, and special characters. Remix's gateway accepts passwords from six characters.
+- Canonical registration sends verification and signs the newly created user out; an unverified account is not admitted into an authenticated workspace. Remix registers, attempts to record a privacy acknowledgement in localStorage, then immediately invokes the authenticated callback even if email verification is incomplete.
+- Canonical sign-in re-checks verified email status, supports password reset and Google sign-in, and fails closed when Firebase session observation is uncertain.
+- Canonical session transitions invalidate stale membership lookups and Demo Guest capabilities across tabs. The Remix gateway's callback-driven account handoff does not replace this lifecycle.
+- Canonical authenticated sessions remain separated from the local Demo Guest workspace. A demo identity must never be treated as a real Firebase user or assigned a real tenant membership.
+- Canonical account security handles sensitive credential changes with re-authentication and session invalidation; do not duplicate it in a second gateway.
+
+### Remix authentication behaviour rejected or not portable
+
+1. The six-character password minimum is below the canonical policy and must not be imported.
+2. The registration path treats a localStorage privacy acknowledgement as part of account creation, but the service can return an acknowledgement object even when persistence fails. It is not a reliable consent or notice evidence mechanism.
+3. The gateway uses hard-coded synthetic identities and a demo fast-track callback. Canonical Demo Guest is intentionally isolated from Firebase identity and tenant membership.
+4. The Remix Firebase helper can fall back to a legacy project ID and imports a separate app configuration. Neither configuration nor fallback is portable to SAFER.
+5. Its auth observer warning suggests offline/cache resilience while returning a null user on observer error. Canonical SAFER explicitly revokes local capabilities when account state becomes uncertain.
+6. Its success copy says a verification email was dispatched even though the helper catches verification-send failure and continues. Canonical flow reports account creation separately and requires a fresh verified sign-in.
+
+### Budget inspector: already migrated
+
+Canonical SAFER already contains the corrected INR 0 budget policy inspector. It uses an explicit allowlist and routes unknown providers/invalid inputs to manual review; it is advisory and does not technically prevent billing or inspect live provider prices/quotas. No Remix budget code or duplicate UI is required.
+
+### Disposition
+
+| Capability | Disposition |
+|---|---|
+| Email/password, Google sign-in, password reset | Already represented in canonical AuthGate |
+| Verified-email admission gate | Canonical implementation retained; Remix early authenticated callback rejected |
+| Password strength policy | Canonical 12–128 character complexity policy retained; Remix six-character minimum rejected |
+| Account/session invalidation | Canonical cross-tab/session lifecycle retained |
+| Demo Guest entry | Canonical isolated local-only path retained; Remix hard-coded demo identity rejected |
+| Privacy acknowledgement at registration | Rejected as proof of consent/notice delivery; localStorage acknowledgement is not a trusted record |
+| Firebase project/app configuration | Never copy Remix configuration or fallback project ID |
+| INR 0 budget inspector | Already migrated in canonical SAFER; no duplicate implementation |
+
+No Firebase configuration, provider settings, authentication rules, production account state, or billing settings were changed in this reconciliation.
 
 ## Privacy notice and privacy-request workflow reconciliation
 
