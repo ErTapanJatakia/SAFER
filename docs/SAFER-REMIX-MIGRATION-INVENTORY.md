@@ -524,3 +524,11 @@ The canonical application already provides separate theme and accessibility cont
 - The listener ignores unrelated localStorage keys and other storage areas, and unregisters on unmount.
 - This is a presentation refresh only. It does not synchronize authenticated identity, alter operational records, or bypass the existing cross-tab operational-record conflict protections.
 - Cross-tab refresh behavior is authored but remains pending consolidated validation.
+
+
+### Organisation governance assurance follow-up
+
+- The organisation capability matrix now uses **“Permitted by current Rules”** rather than “Granted”, and explicitly distinguishes Rules-level permission from a SAFER screen or workflow being released. Authenticated operational workspace access remains unavailable in the current UI.
+- The audit-event structural validator now correctly accepts the documented optional `targetUid` field when it is omitted, while continuing to reject unknown fields and malformed values. Regression coverage includes both cases.
+- Repaired a missing test-block closure in the membership lifecycle suite discovered during source review. The test remains intact and has not been executed; no assertion was removed or weakened.
+- These changes clarify contracts and test readiness only. No Rules, tenant data, Firebase configuration, or trusted execution path changed. Consolidated validation remains pending.
