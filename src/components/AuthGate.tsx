@@ -345,6 +345,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
                   {membershipBusy ? 'Checking…' : 'Verify membership'}
                 </button>
               </form>
+              {membershipBusy && <p role="status" aria-live="polite" className="text-xs text-blue-200">Checking the exact membership record…</p>}
               <p id="organisation-id-help" className="text-[11px] text-slate-400">The ID is a locator, not a password or access token. Membership status is held in memory only.</p>
               {membershipError && <p role="alert" className="text-xs text-red-300">{membershipError}</p>}
               {membership && <OrganisationWorkspacePanel database={db} membership={membership} />}
