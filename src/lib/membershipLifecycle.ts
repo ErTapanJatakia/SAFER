@@ -113,19 +113,24 @@ export function canAcceptInvitationForRecipient(
   now: number,
 ): boolean {
   if (
-    !UID.test(authenticatedUid)
+    !invitation || typeof invitation !== 'object'
+    || !UID.test(authenticatedUid)
     || !Number.isSafeInteger(now)
     || invitation.status !== 'issued'
     || invitation.acceptedByUid !== undefined
     || !Number.isSafeInteger(invitation.expiresAt)
     || now >= invitation.expiresAt
     || !Number.isSafeInteger(invitation.createdAt)
+    || invitation.createdAt > now
     || invitation.expiresAt <= invitation.createdAt
     || invitation.expiresAt - invitation.createdAt > MAX_INVITATION_LIFETIME_MS
     || !UID.test(invitation.invitedByUid)
     || !INVITATION_ID.test(invitation.invitationId)
     || !INVITATION_ID.test(invitation.orgId)
     || !SHA256_HEX.test(invitation.tokenDigest)
+    || !['admin', 'manager', 'viewer'].includes(invitation.role)
+    || typeof invitation.invitedEmail !== 'string'
+    || invitation.invitedEmail.length > 254
     || typeof verifiedEmail !== 'string'
     || verifiedEmail.length > 254
   ) return false;
