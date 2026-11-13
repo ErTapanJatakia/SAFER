@@ -37,6 +37,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [error, setError] = useState<string | null>(null);
   const [storageReady, setStorageReady] = useState(false);
+  const [demoAcknowledged, setDemoAcknowledged] = useState(false);
   const [activityPurpose, setActivityPurpose] = useState('');
   const [activityCategories, setActivityCategories] = useState('');
   const [activityRecipients, setActivityRecipients] = useState('');
@@ -64,6 +65,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
 
   useEffect(() => {
     if (!isOpen) return;
+    setDemoAcknowledged(false);
     if (!repository) {
       setStorageReady(false);
       setError('Browser storage is unavailable. The privacy console is read-only until storage access is restored.');
@@ -117,8 +119,8 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
   if (!isOpen) return null;
 
   const persist = (next: PrivacyDemoWorkspace): boolean => {
-    if (!repository || !storageReady) {
-      setError('The privacy workspace has not passed its storage and integrity checks. No changes were saved.');
+    if (!repository || !storageReady || !demoAcknowledged) {
+      setError('Acknowledge the synthetic-data boundary and pass storage checks before making changes. No changes were saved.');
       return false;
     }
     try {
@@ -214,8 +216,8 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
   };
 
   const exportWorkspace = () => {
-    if (!repository || !storageReady) {
-      setError('The privacy workspace has not passed its storage and integrity checks. No export was created.');
+    if (!repository || !storageReady || !demoAcknowledged) {
+      setError('Acknowledge the synthetic-data boundary and pass storage checks before exporting. No export was created.');
       return;
     }
     try {
@@ -228,7 +230,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
       document.body.appendChild(link);
       link.click();
       link.remove();
-      URL.revokeObjectURL(objectUrl);
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
       setWorkspace(latestWorkspace);
       setError(null);
     } catch (cause) {
@@ -279,6 +281,12 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
             <p><strong>Demonstration workspace only.</strong> All records are synthetic and stored in this browser. Entries are not statutory submissions, legally operative notices or proof of valid consent. Do not enter real personal or sensitive information.</p>
           </div>
         </div>
+        <div className="border-b border-slate-700 bg-slate-900 px-5 py-3 text-xs text-slate-200">
+          <label className="flex items-start gap-2">
+            <input type="checkbox" className="mt-0.5 accent-teal-500" checked={demoAcknowledged} onChange={(event) => setDemoAcknowledged(event.target.checked)} />
+            <span><strong>I will use synthetic examples only.</strong> I will not enter real personal, confidential or sensitive information. This acknowledgement is a workflow safeguard, not a PII detector or guarantee that entered text is synthetic.</span>
+          </label>
+        </div>
 
         <nav aria-label="Privacy console sections" className="flex gap-1 overflow-x-auto border-b border-slate-700 bg-slate-950/60 px-4 py-2">
           {tabs.map((tab) => <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)}
@@ -316,7 +324,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
                 </select>
               </label>
               <p className="text-xs text-amber-200">This is an internal tracking label only. It does not establish a lawful basis, necessity, proportionality or legal compliance.</p>
-              <button className={primaryButtonClass} type="submit" disabled={!storageReady}>Save synthetic activity</button>
+              <button className={primaryButtonClass} type="submit" disabled={!storageReady || !demoAcknowledged}>Save synthetic activity</button>
             </form>
             {workspace.processingActivities.map((activity) => <article key={activity.id} className="rounded-xl border border-slate-700 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2"><strong className="text-sm">{activity.purpose}</strong><span className="text-xs text-amber-300">{activity.legalAssessment === 'not-assessed' ? 'Not assessed' : 'Marked reviewed'}</span></div>
@@ -410,7 +418,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
         <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-700 bg-slate-950 px-5 py-3">
           <span className="text-[11px] text-slate-500">Synthetic Demo Guest data · Browser-local storage</span>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={exportWorkspace} className={buttonClass} disabled={!storageReady}><Download className="mr-1 inline h-3.5 w-3.5" />Export JSON</button>
+            <button type="button" onClick={exportWorkspace} className={buttonClass} disabled={!storageReady || !demoAcknowledged}><Download className="mr-1 inline h-3.5 w-3.5" />Export JSON</button>
             <button type="button" onClick={onClose} className={buttonClass}>Close</button>
           </div>
         </footer>
