@@ -26,6 +26,10 @@ export interface MembershipInvitation {
 export type TenantRole = 'owner' | 'admin' | 'manager' | 'viewer';
 export type ManagedMembershipStatus = 'active' | 'suspended' | 'revoked';
 
+export type OwnerTransferAssessment =
+  | { readonly eligible: true; readonly disposition: 'trusted-authority-required' }
+  | { readonly eligible: false; readonly reason: 'invalid-context' | 'actor-not-owner' | 'self-transfer-forbidden' | 'target-not-active' | 'target-already-owner' };
+
 export interface MembershipChangeProposal {
   readonly actorUid: string;
   readonly actorRole: TenantRole;
@@ -55,6 +59,8 @@ const MAX_INVITATION_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
 const SHA256_HEX = /^[a-f0-9]{64}$/i;
 const INVITATION_ID = /^[A-Za-z0-9_-]{1,128}$/;
 const UID = /^[A-Za-z0-9_-]{1,128}$/;
+const TENANT_ROLES: readonly TenantRole[] = ['owner', 'admin', 'manager', 'viewer'];
+const MEMBERSHIP_STATUSES: readonly ManagedMembershipStatus[] = ['active', 'suspended', 'revoked'];
 
 /** Only owners may delegate administrator invitations. */
 export function canIssueInvitation(
@@ -121,6 +127,28 @@ export function canTransitionInvitation(
 }
 
 /**
+ * Assess whether an existing active non-owner is a valid transfer candidate.
+ * A positive result is NOT permission to transfer: the operation must be
+ * atomic and executed by the separately approved trusted administration plane.
+ */
+export function assessOwnerTransfer(input: {
+  readonly actorUid: string;
+  readonly actorRole: TenantRole;
+  readonly targetUid: string;
+  readonly targetRole: TenantRole;
+  readonly targetStatus: ManagedMembershipStatus;
+}): OwnerTransferAssessment {
+  if (!UID.test(input.actorUid) || !UID.test(input.targetUid)) {
+    return { eligible: false, reason: 'invalid-context' };
+  }
+  if (input.actorRole !== 'owner') return { eligible: false, reason: 'actor-not-owner' };
+  if (input.actorUid === input.targetUid) return { eligible: false, reason: 'self-transfer-forbidden' };
+  if (input.targetStatus !== 'active') return { eligible: false, reason: 'target-not-active' };
+  if (input.targetRole === 'owner') return { eligible: false, reason: 'target-already-owner' };
+  return { eligible: true, disposition: 'trusted-authority-required' };
+}
+
+/**
  * Advisory policy for a future trusted membership-management service.
  * It is deliberately stricter than the currently deployed Firestore Rules
  * and grants no client permission to write membership documents.
@@ -134,9 +162,11 @@ export function evaluateMembershipChange(
   } = proposal;
 
   if (
-    !UID.test(actorUid) || !UID.test(targetUid) || actorUid === ''
-    || targetUid === '' || !Number.isSafeInteger(activeOwnerCount)
-    || activeOwnerCount < 0
+    !UID.test(actorUid) || !UID.test(targetUid)
+    || !TENANT_ROLES.includes(actorRole) || !TENANT_ROLES.includes(currentRole)
+    || !TENANT_ROLES.includes(nextRole)
+    || !MEMBERSHIP_STATUSES.includes(currentStatus) || !MEMBERSHIP_STATUSES.includes(nextStatus)
+    || !Number.isSafeInteger(activeOwnerCount) || activeOwnerCount < 0
   ) return { allowed: false, reason: 'invalid-context' };
 
   if (actorRole !== 'owner' && actorRole !== 'admin') {
