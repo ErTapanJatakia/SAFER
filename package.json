@@ -63,7 +63,8 @@
     "test:demo-ui-persistence": "node --test tests/demo-ui-persistence.test.mjs",
     "test:demo-conflict-export": "tsx --test src/lib/demoConflictExport.test.ts",
     "test:browser-cross-tab": "playwright test --config=playwright.config.mjs",
-    "test:budget-policy": "vitest run src/utils/budgetPolicy.test.ts"
+    "test:budget-policy": "vitest run src/utils/budgetPolicy.test.ts",
+    "test:account-security": "vitest run src/components/AccountSecurityPanel.test.tsx"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
