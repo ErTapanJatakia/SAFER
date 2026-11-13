@@ -409,3 +409,14 @@ The first account-settings candidate has now been implemented on the organisatio
 - Added normalization, redaction mapping, and UI regression tests. Tests have been authored but intentionally not executed pending the consolidated validation milestone.
 
 This is a local preference only. It does not automatically export data, change source records, bypass per-field review, or upload settings to Firebase. The implementation is on the feature branch and is not merged or deployed.
+
+### Notification settings source validation
+
+The Remix notification tab was reviewed at implementation level. It stores checkbox/radio preferences and provides a user-triggered audio test, but the inspected code does not establish a complete event-driven notification pipeline for every advertised event. In particular, membership/audit event alerts, dispatch/muster transitions, and a batched digest are not demonstrated by the settings UI itself. Its delivery claims must not be treated as proof of those features.
+
+Canonical SAFER currently exposes live status indicators, navigation badges, toast announcements, and accessibility announcements, but has no equivalent notification preference/event contract. Therefore:
+- Do not port the Remix tab or its claims as-is.
+- Do not add toggles that appear to control alerts when no corresponding event source or behavior exists.
+- Any future notification work must first define real event sources, severity, deduplication, persistence, user-visible delivery, accessibility behavior, and which critical security/session warnings cannot be suppressed.
+- Browser Web Audio may be considered only as an optional, user-initiated/in-app enhancement; it must respect browser gesture/autoplay restrictions and never be represented as guaranteed delivery.
+- External email, SMS, push, background delivery, and membership/audit events remain out of scope unless their trusted infrastructure and cost boundary are separately approved.
