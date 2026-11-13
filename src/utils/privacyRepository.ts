@@ -83,7 +83,7 @@ export function createPrivacyDemoRepository(storage: PrivacyStorage) {
   const loadWorkspace = (): PrivacyDemoWorkspace => {
     const raw = readRaw();
     if (raw === null) return cloneEmptyWorkspace();
-    if (raw.length > MAX_SERIALIZED_CHARS) {
+    if (new TextEncoder().encode(raw).byteLength > MAX_SERIALIZED_CHARS) {
       throw new Error('Stored privacy demo workspace exceeds the 1 MB safety limit; no data was replaced.');
     }
 
@@ -104,7 +104,7 @@ export function createPrivacyDemoRepository(storage: PrivacyStorage) {
       throw new Error('Refusing to persist invalid or oversized privacy demo data.');
     }
     const serialized = JSON.stringify(workspace);
-    if (serialized.length > MAX_SERIALIZED_CHARS) {
+    if (new TextEncoder().encode(serialized).byteLength > MAX_SERIALIZED_CHARS) {
       throw new Error('Privacy demo workspace exceeds the 1 MB storage safety limit.');
     }
     try {
