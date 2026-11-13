@@ -163,3 +163,14 @@ A component-level regression case has been added for switching the panel from on
 ## Credential-operation request isolation
 
 Account security actions capture the Firebase UID that initiated the operation. Before a follow-on sensitive mutation or UI update, the component checks that the same UID still owns the mounted panel. A stale re-authentication completion therefore cannot proceed to a password or email mutation after the panel has moved to another identity. If a password update itself has already succeeded remotely, its content-free cross-tab invalidation signal is still published even if the initiating panel was replaced before the response returned. This is a client-side stale-work guard, not server-side cancellation or proof that Firebase revoked other sessions.
+
+
+## Invitation recipient binding and audit sequence checks
+
+The pure invitation policy now includes `canAcceptInvitationForRecipient`. It checks that the invitation is still issued and unexpired, has a bounded lifetime and digest-shaped token reference, has not already recorded an accepting UID, and that the authenticated UID is well-formed. It compares the invited address with the supplied verified account email after trimming and case-normalising, and rejects malformed runtime input.
+
+This helper is only a local consistency guard. It does not establish that Firebase has verified the email, prove possession of the invitation secret, verify the digest, prevent concurrent replay, or create a membership. A future trusted service must perform those checks and the single-use membership write atomically. No invitation UI or client write has been enabled.
+
+The audit-chain structural verifier now also rejects duplicate event IDs and sequences that mix organisation IDs. Equal millisecond timestamps remain acceptable because timestamps alone cannot provide a unique total order; the supplied array position and previous-hash links provide the sequence relationship being checked. The verifier still does not recompute hashes, authenticate writers, verify signatures, or establish immutable storage.
+
+Regression cases have been authored for recipient mismatch, whitespace/case normalization, exact expiry boundary, accepted/replayed invitations, malformed digest/context, duplicate audit IDs, cross-organisation chains, and equal-timestamp linked events. They remain pending consolidated validation; no tests or CI were run for this implementation slice.
