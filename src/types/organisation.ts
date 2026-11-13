@@ -83,12 +83,48 @@ export function isTenantRole(value: unknown): value is TenantRole {
 
 /** Shape/provenance check for UI decisions; not a security authorization. */
 export function isCurrentUserActiveMember(
-  membership: OrganisationMembership,
+  membership: unknown,
   authenticatedUid: string,
   expectedOrgId: string,
 ): boolean {
-  return membership.uid === authenticatedUid &&
-    membership.orgId === expectedOrgId &&
-    membership.status === 'active' &&
-    isTenantRole(membership.role);
+  // Treat the adapter boundary as untrusted at runtime: reject nulls,
+  // arrays, exotic objects, missing/extra keys, and accessor properties.
+  try {
+    if (
+      membership === null ||
+      typeof membership !== 'object' ||
+      Array.isArray(membership) ||
+      (Object.getPrototypeOf(membership) !== Object.prototype &&
+        Object.getPrototypeOf(membership) !== null)
+    ) {
+      return false;
+    }
+
+    const keys = Reflect.ownKeys(membership);
+    const expectedKeys = ['orgId', 'role', 'status', 'uid'];
+    if (
+      keys.length !== expectedKeys.length ||
+      keys.some((key) => typeof key !== 'string' || !expectedKeys.includes(key))
+    ) {
+      return false;
+    }
+
+    const descriptors = Object.getOwnPropertyDescriptors(membership);
+    if (expectedKeys.some((key) => !('value' in descriptors[key]))) {
+      return false;
+    }
+
+    const candidate = membership as Record<string, unknown>;
+    return typeof authenticatedUid === 'string' &&
+      authenticatedUid.length > 0 &&
+      typeof expectedOrgId === 'string' &&
+      expectedOrgId.length > 0 &&
+      candidate.uid === authenticatedUid &&
+      candidate.orgId === expectedOrgId &&
+      candidate.status === 'active' &&
+      isTenantRole(candidate.role);
+  } catch {
+    // Proxies or unusual objects must never crash the authentication gate.
+    return false;
+  }
 }
