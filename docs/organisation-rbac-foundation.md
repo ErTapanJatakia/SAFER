@@ -153,3 +153,9 @@ The authenticated membership check remains an explicit, user-initiated exact-doc
 The session lifecycle issues a fresh request token for each lookup. Only the newest token in the unchanged UID/organisation context may publish a result; account, organisation, sign-out, and peer-tab transitions invalidate older tokens. Overlapping duplicate requests are therefore last-request-wins, even if an earlier network response arrives later. The UI does not automatically retry, cache membership, or grant authority from a stale result. Firestore Rules remain authoritative for each database operation.
 
 Regression coverage has been authored for overlapping lookups and the accessible pending state. These tests remain pending the consolidated validation milestone.
+
+## Account security form identity boundary
+
+The authenticated account security panel clears current/new password fields, email-change inputs, pending messages, errors, and busy presentation whenever the Firebase UID changes. This prevents credential material or account-specific feedback entered for one identity from remaining visible in the next identity's form. It does not change Firebase credentials, session tokens, or server-side account state. Sensitive account changes continue to require provider-aware re-authentication; email changes remain pending until Firebase verification completes.
+
+A component-level regression case has been added for switching the panel from one UID to another while credential fields contain values. Validation remains deferred to the consolidated milestone.
