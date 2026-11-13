@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ClipboardList, Database, Download, ShieldCheck, X } from 'lucide-react';
+import { AlertTriangle, ClipboardList, Download, ShieldCheck, X } from 'lucide-react';
 import {
   EMPTY_PRIVACY_DEMO_WORKSPACE,
   type PrivacyDemoWorkspace,
