@@ -364,7 +364,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
             <section className="mx-auto max-w-3xl rounded-xl border border-amber-700 bg-slate-900 p-6">
               <h1 className="text-lg font-semibold">Account verified — workspace not yet released</h1>
               <p className="mt-2 text-sm text-slate-300">Your account session is active, but SAFER tenant operational access has not been released. The operational workspace is intentionally unavailable in authenticated sessions.</p>
-              <p className="mt-3 text-xs text-amber-200">No personnel, incident, checklist or other operational browser data is loaded or written in this session. Membership verification alone does not grant access. Production Firestore rules remain deny-all.</p>
+              <p className="mt-3 text-xs text-amber-200">No personnel, incident, checklist or other operational browser data is loaded or written by this authenticated UI session. Membership verification does not release an operational screen. Current Firestore Rules independently permit only the explicitly modelled owner/admin operations; those Rules remain authoritative and are not bypassed by this UI.</p>
             </section>
           </main>
         )}
