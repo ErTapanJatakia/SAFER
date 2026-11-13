@@ -43,9 +43,9 @@ The Remix tree contains the candidate modules listed above. SAFER already contai
 - [x] Authentication/account lifecycle comparison (canonical AuthGate and account-security lifecycle retained; Remix implementation rejected as-is).
 - [x] Profile, preferences, accessibility and account-settings reconciliation (existing local-only settings and authenticated security flows retained; global regional-format application remains deferred).
 - [x] Privacy notice and privacy-request workflow review and selective port (synthetic console already migrated; legal/compliance boundary added; unsafe Remix defaults rejected).
-- [ ] Multi-organisation data model and RBAC threat model.
-- [ ] Emulator-backed Firestore rules and tenant-isolation tests.
-- [ ] Trusted provisioning documentation rewritten for SAFER.
+- [x] Canonical organisation data model and RBAC threat model (aligned to existing four-role Firestore Rules; no unsupported Remix roles).
+- [x] Emulator-backed Firestore Rules and tenant-isolation test scenarios authored; execution and CI pass remain pending the consolidated validation milestone.
+- [x] Trusted provisioning documentation rewritten for SAFER in `docs/TRUSTED-ORGANISATION-PROVISIONING-ADR.md` (manual owner-operated provisioning only; no client writes or paid backend).
 - [ ] End-to-end regression and security review of every migrated capability.
 - [ ] Final source-to-destination reconciliation.
 - [ ] Archive/delete SAFER-Remix only after all approved features are verified in SAFER and the owner explicitly confirms retirement.
