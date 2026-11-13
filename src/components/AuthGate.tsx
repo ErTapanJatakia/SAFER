@@ -347,7 +347,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
               </form>
               <p id="organisation-id-help" className="text-[11px] text-slate-400">The ID is a locator, not a password or access token. Membership status is held in memory only.</p>
               {membershipError && <p role="alert" className="text-xs text-red-300">{membershipError}</p>}
-              {membership && <OrganisationWorkspacePanel membership={membership} />}
+              {membership && <OrganisationWorkspacePanel database={db} membership={membership} />}
             </div>
           </section>
           </>
