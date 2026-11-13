@@ -67,6 +67,20 @@ describe('PersonnelExportModal focus management', () => {
     expect(document.activeElement).toBe(opener);
   });
 
+  it('loads validated local export format and redaction defaults when opened', () => {
+    window.localStorage.setItem('safer_account_settings_v1', JSON.stringify({
+      preferences: { defaultExportFormat: 'pdf', defaultRedactionLevel: 'strict' },
+    }));
+    const opener = host.querySelector<HTMLButtonElement>('button')!;
+    act(() => opener.click());
+
+    const dialog = host.querySelector<HTMLElement>('[role="dialog"]')!;
+    const pdfButton = [...dialog.querySelectorAll<HTMLButtonElement>('button')]
+      .find((button) => button.textContent?.includes('.PDF'));
+    expect(pdfButton?.className).toContain('bg-blue-900');
+    expect(dialog.textContent).toContain('Reset to Saved Defaults');
+  });
+
   it('wraps forward and reverse keyboard focus within the export dialog', () => {
     const opener = host.querySelector<HTMLButtonElement>('button')!;
     act(() => opener.click());
