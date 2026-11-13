@@ -40,32 +40,52 @@ export async function readOrganisationProfile(
   if (!snapshot.exists()) throw new OrganisationProfileError('unavailable');
 
   const data: unknown = snapshot.data();
-  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+  try {
+    if (
+      data === null ||
+      typeof data !== 'object' ||
+      Array.isArray(data) ||
+      (Object.getPrototypeOf(data) !== Object.prototype &&
+        Object.getPrototypeOf(data) !== null)
+    ) {
+      throw new OrganisationProfileError('invalid-profile');
+    }
+
+    const keys = Reflect.ownKeys(data);
+    if (
+      keys.length !== PROFILE_KEYS.length ||
+      keys.some((key) => typeof key !== 'string' || !PROFILE_KEYS.includes(key as typeof PROFILE_KEYS[number]))
+    ) {
+      throw new OrganisationProfileError('invalid-profile');
+    }
+
+    const descriptors = Object.getOwnPropertyDescriptors(data);
+    if (PROFILE_KEYS.some((key) => {
+      const descriptor = descriptors[key];
+      return !descriptor || !('value' in descriptor) || descriptor.enumerable !== true;
+    })) {
+      throw new OrganisationProfileError('invalid-profile');
+    }
+
+    const record = data as Record<string, unknown>;
+    if (
+      record.orgId !== membership.orgId ||
+      record.status !== 'active' ||
+      typeof record.displayName !== 'string' ||
+      record.displayName.trim().length === 0 ||
+      record.displayName.length > 120 ||
+      record.schemaVersion !== 1
+    ) {
+      throw new OrganisationProfileError('invalid-profile');
+    }
+
+    return Object.freeze({
+      orgId: membership.orgId,
+      displayName: record.displayName,
+      status: 'active',
+      schemaVersion: 1,
+    });
+  } catch {
     throw new OrganisationProfileError('invalid-profile');
   }
-
-  const record = data as Record<string, unknown>;
-  const keys = Object.keys(record).sort();
-  const expectedKeys = [...PROFILE_KEYS].sort();
-  const exactKeys = keys.length === expectedKeys.length
-    && keys.every((key, index) => key === expectedKeys[index]);
-
-  if (
-    !exactKeys
-    || record.orgId !== membership.orgId
-    || record.status !== 'active'
-    || typeof record.displayName !== 'string'
-    || record.displayName.trim().length === 0
-    || record.displayName.length > 120
-    || record.schemaVersion !== 1
-  ) {
-    throw new OrganisationProfileError('invalid-profile');
-  }
-
-  return Object.freeze({
-    orgId: membership.orgId,
-    displayName: record.displayName,
-    status: 'active',
-    schemaVersion: 1,
-  });
 }
