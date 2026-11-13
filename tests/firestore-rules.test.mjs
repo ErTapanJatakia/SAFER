@@ -360,6 +360,7 @@ test("membership, restricted records, audit events, and unapproved organisation 
   await assertFails(setDoc(doc(db, "organisations/org-a", "members", "attacker"), {
     uid: "attacker", orgId: "org-a", role: "owner", status: "active",
   }));
+  await assertFails(getDoc(doc(db, "organisations/org-a", "auditEvents", "event-a")));
   await assertFails(getDoc(doc(db, "organisations/org-a", "personnelPrivate", "person-a")));
   await assertFails(setDoc(doc(db, "organisations/org-a", "incidentRestricted", "incident-a"), {}));
   await assertFails(setDoc(doc(db, "organisations/org-a", "auditEvents", "event-a"), {}));
@@ -394,6 +395,11 @@ test("membership mutation attempts fail for every role, including cross-user and
     const orgId = "mutation-org-" + role;
     await seedTenant({ orgId, uid, role });
     await seedTenant({ orgId: orgId + "-other", uid: "other-member" });
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "organisations/" + orgId + "/members/other-member"), {
+        uid: "other-member", orgId, role: "viewer", status: "active",
+      });
+    });
     const db = dbFor(uid);
 
     await assertFails(setDoc(doc(db, "organisations/" + orgId + "/members/new-member"), {
