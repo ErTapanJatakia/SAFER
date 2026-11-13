@@ -16,17 +16,27 @@ test('tenant role vocabulary matches the existing Firestore Rules model', () => 
   }
 });
 
-test('UI hints do not advertise unimplemented manager or viewer access', () => {
-  for (const role of ['manager', 'viewer'] as const) {
-    assert.equal(TENANT_ROLE_UI_CAPABILITIES[role].canReadPersonnel, false);
-    assert.equal(TENANT_ROLE_UI_CAPABILITIES[role].canReadIncidents, false);
-    assert.equal(TENANT_ROLE_UI_CAPABILITIES[role].canManageMemberships, false);
-    assert.equal(TENANT_ROLE_UI_CAPABILITIES[role].canReadAuditEvents, false);
-  }
+test('UI capability hints match the current four-role Rules grants and denials', () => {
   for (const role of ['owner', 'admin'] as const) {
-    assert.equal(TENANT_ROLE_UI_CAPABILITIES[role].canReadPersonnel, true);
-    assert.equal(TENANT_ROLE_UI_CAPABILITIES[role].canWritePersonnel, true);
-    assert.equal(TENANT_ROLE_UI_CAPABILITIES[role].canReadIncidents, true);
+    const capabilities = TENANT_ROLE_UI_CAPABILITIES[role];
+    assert.equal(capabilities.canReadOrganisation, true);
+    assert.equal(capabilities.canReadPersonnel, true);
+    assert.equal(capabilities.canWritePersonnel, true);
+    assert.equal(capabilities.canReadIncidents, true);
+    assert.equal(capabilities.canCreateIncidents, true);
+    assert.equal(capabilities.canUpdateIncidents, true);
+    assert.equal(capabilities.canReadEvidence, true);
+    assert.equal(capabilities.canDeletePersonnel, false);
+    assert.equal(capabilities.canDeleteIncidents, false);
+    assert.equal(capabilities.canWriteEvidence, false);
+    assert.equal(capabilities.canManageMemberships, false);
+    assert.equal(capabilities.canReadAuditEvents, false);
+    assert.equal(capabilities.canWriteAuditEvents, false);
+  }
+
+  for (const role of ['manager', 'viewer'] as const) {
+    const capabilities = TENANT_ROLE_UI_CAPABILITIES[role];
+    assert.equal(Object.values(capabilities).every((allowed) => allowed === false), true);
   }
 });
 
@@ -42,7 +52,6 @@ test('active membership helper binds UID, organisation and status exactly', () =
   assert.equal(isCurrentUserActiveMember(membership, 'synthetic-user-a', 'synthetic-org-b'), false);
   assert.equal(isCurrentUserActiveMember({ ...membership, status: 'suspended' } as OrganisationMembership, 'synthetic-user-a', 'synthetic-org-a'), false);
 });
-
 
 test('active membership boundary rejects malformed runtime values without throwing', () => {
   const valid = {
