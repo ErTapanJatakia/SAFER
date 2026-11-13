@@ -874,7 +874,7 @@ export default function App() {
         >
           <p className="font-semibold">{crossTabConflictMessage}</p>
           <p className="mt-1 text-xs">
-            Download includes this tab’s last confirmed records only. Unsubmitted form fields are not included.
+            Download includes this tab’s last confirmed records only; unsubmitted form fields are not included. The JSON is unencrypted and may contain personal, health, contact, or employer details entered into these records. Store it securely.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button
