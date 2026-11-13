@@ -88,7 +88,7 @@ export const OrganisationWorkspacePanel: React.FC<OrganisationWorkspacePanelProp
                       <td className="py-2 pr-3 text-slate-200">{label}</td>
                       <td className="py-2 text-right">
                         <span className={granted ? 'font-medium text-emerald-300' : 'font-medium text-slate-400'}>
-                          {granted ? 'Granted by current rules' : 'Not granted'}
+                          {granted ? 'Permitted by current Rules' : 'Not permitted by current Rules'}
                         </span>
                         <span className="sr-only">{granted ? 'Capability is granted in the current rules model' : 'Capability is not granted in the current rules model'}</span>
                       </td>
@@ -114,7 +114,7 @@ export const OrganisationWorkspacePanel: React.FC<OrganisationWorkspacePanelProp
             </ul>
           </div>
           <p className="mt-3 text-[11px] leading-relaxed text-amber-200/80">
-            This matrix is informational UI guidance, not authorization. Firestore Security Rules remain authoritative. No audit feed or simulated activity is displayed.
+            “Permitted” describes the current Firestore Rules model only; it does not mean the corresponding SAFER screen or workflow is released. This matrix is informational UI guidance, not authorization. Firestore Security Rules remain authoritative. No audit feed or simulated activity is displayed.
           </p>
         </aside>
       </div>
