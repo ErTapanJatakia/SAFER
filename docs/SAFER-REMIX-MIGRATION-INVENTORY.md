@@ -210,3 +210,16 @@ The privacy migration review is complete for the currently identified Remix priv
 - [ ] Review the reference repository's provisioning documentation for unnecessary personal/project identifiers and redact if appropriate.
 - [x] Reconcile the OrganisationModal presentation patterns into the canonical verified workspace without importing fake tenant data or unsupported permissions.
 - [ ] Complete the consolidated emulator and project CI validation milestone before opening a review PR.
+
+## Privacy workspace stale-snapshot protection
+
+The canonical synthetic Privacy Console repository now keeps the exact serialized storage value last loaded or verified by each repository instance. Before a save or clear, it compares the current browser-storage value with that baseline. If another tab/session has already changed the workspace, the stale operation is rejected and the existing bytes are preserved. Successful writes and clears advance the instance baseline only after read-back verification.
+
+Regression cases have been authored for:
+- a stale second-instance save after a newer save;
+- a stale clear after a newer save;
+- successive verified saves by the same repository instance.
+
+The UI directs users to close and reopen the Privacy Console to load the latest saved workspace after a conflict. No automatic merge, overwrite, or destructive recovery is attempted.
+
+**Scope limitation:** this is stale-snapshot detection for sequentially observed changes, not an atomic cross-tab lock or a guarantee against two truly simultaneous read/write races. It remains a browser-local synthetic-data safeguard and does not alter Firebase, operational records, or tenant authorization. Consolidated execution of these regression tests remains pending the agreed validation milestone.
