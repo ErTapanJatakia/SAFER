@@ -171,6 +171,8 @@ The pure invitation policy now includes `canAcceptInvitationForRecipient`. It ch
 
 This helper is only a local consistency guard. It does not establish that Firebase has verified the email, prove possession of the invitation secret, verify the digest, prevent concurrent replay, or create a membership. A future trusted service must perform those checks and the single-use membership write atomically. No invitation UI or client write has been enabled.
 
+The owner-transfer candidate assessment also validates actor/target roles and membership status against runtime allowlists; malformed values return `invalid-context` rather than being treated as an eligible non-owner target. This remains an advisory check and cannot perform or authorize a transfer.
+
 The audit-chain structural verifier now also rejects duplicate event IDs and sequences that mix organisation IDs. Equal millisecond timestamps remain acceptable because timestamps alone cannot provide a unique total order; the supplied array position and previous-hash links provide the sequence relationship being checked. The verifier still does not recompute hashes, authenticate writers, verify signatures, or establish immutable storage.
 
 Regression cases have been authored for recipient mismatch, whitespace/case normalization, exact expiry boundary, accepted/replayed invitations, malformed digest/context, duplicate audit IDs, cross-organisation chains, and equal-timestamp linked events. They remain pending consolidated validation; no tests or CI were run for this implementation slice.
