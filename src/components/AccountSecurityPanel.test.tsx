@@ -33,7 +33,7 @@ const makeUser=(providers:string[]=['password'])=>({
   providerData:providers.map(providerId=>({providerId})),
   reload:vi.fn(),
 }) as any;
-const input=(label:string)=>[...host.querySelectorAll('label')].find(node=>node.textContent?.includes(label))?.querySelector('input') as HTMLInputElement;
+const input=(label:string,formHeading?:string)=>{const scope=formHeading?[...host.querySelectorAll('form')].find(node=>node.textContent?.includes(formHeading)):host;return [...(scope?.querySelectorAll('label')||[])].find(node=>node.textContent?.includes(label))?.querySelector('input') as HTMLInputElement;};
 const change=(el:HTMLInputElement,value:string)=>{const setter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')?.set;if(setter)setter.call(el,value);el.dispatchEvent(new dom.window.Event('input',{bubbles:true}));el.dispatchEvent(new dom.window.Event('change',{bubbles:true}));};
 const submit=(heading:string)=>{const form=[...host.querySelectorAll('form')].find(node=>node.textContent?.includes(heading)) as HTMLFormElement;form.dispatchEvent(new dom.window.Event('submit',{bubbles:true,cancelable:true}));};
 const flush=async()=>{await act(async()=>{await Promise.resolve();await Promise.resolve();});};
@@ -88,14 +88,14 @@ describe('authenticated account security lifecycle',()=>{
   expect(host.textContent).toContain('verification link has been sent');
  });
  it('reauthenticates password users before requesting a verified email change',async()=>{
-  change(input('Current password'),'CurrentPass!123');
+  change(input('Current password','Change email address'),'CurrentPass!123');
   change(input('New email address'),'new-address@example.test');submit('Change email address');await flush();
   expect(reauthenticateWithCredential).toHaveBeenCalledTimes(1);
   expect(verifyBeforeUpdateEmail).toHaveBeenCalledWith(user,'new-address@example.test');
  });
  it('does not request an email change if re-authentication fails',async()=>{
   vi.mocked(reauthenticateWithCredential).mockRejectedValueOnce({code:'auth/wrong-password'});
-  change(input('Current password'),'WrongPass!123');change(input('New email address'),'new-address@example.test');submit('Change email address');await flush();
+  change(input('Current password','Change email address'),'WrongPass!123');change(input('New email address'),'new-address@example.test');submit('Change email address');await flush();
   expect(verifyBeforeUpdateEmail).not.toHaveBeenCalled();
  });
  it('does not expose password change for Google-only accounts',async()=>{
@@ -104,6 +104,11 @@ describe('authenticated account security lifecycle',()=>{
   expect(host.textContent).toContain('no email/password provider');
   expect(host.querySelector('button[type="submit"]')).not.toBeNull();
   expect(host.textContent).not.toContain('Current password');
+ });
+ it('refreshes account details after an email-verification link is completed',async()=>{
+  submit('Refresh account details');await flush();
+  expect(reload).toHaveBeenCalledWith(user);
+  expect(host.textContent).toContain('Account details refreshed from Firebase.');
  });
  it('rejects malformed and unchanged email addresses',async()=>{
   change(input('New email address'),'not-an-email');submit('Change email address');await flush();

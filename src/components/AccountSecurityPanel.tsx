@@ -106,7 +106,15 @@ export const AccountSecurityPanel: React.FC<AccountSecurityPanelProps> = ({user,
       onUserUpdated?.(user);
       setDisplayName(user.displayName || normalized);
       setMessage('Display name updated.');
-      publishSessionInvalidation();
+    });
+  };
+
+  const refreshAccountDetails = () => {
+    void run(async () => {
+      await reload(user);
+      onUserUpdated?.(user);
+      setDisplayName(user.displayName || '');
+      setMessage('Account details refreshed from Firebase.');
     });
   };
 
@@ -176,6 +184,10 @@ export const AccountSecurityPanel: React.FC<AccountSecurityPanelProps> = ({user,
           <button type="submit" disabled={busy} className="rounded-lg border border-slate-600 px-4 py-2 text-xs font-semibold hover:bg-slate-800 disabled:opacity-50">Save profile</button>
         </form>
 
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[11px] text-slate-400">Signed-in email: {user.email || 'Not available'}</p>
+          <button type="button" onClick={refreshAccountDetails} disabled={busy} className="rounded border border-slate-600 px-3 py-1.5 text-xs hover:bg-slate-800 disabled:opacity-50">Refresh account details</button>
+        </div>
         <div className="grid gap-4 lg:grid-cols-2">
           <form onSubmit={(event) => {event.preventDefault(); changePassword();}} className="space-y-2 rounded-lg border border-slate-700 p-3">
             <h3 className="text-xs font-semibold">Change password</h3>
