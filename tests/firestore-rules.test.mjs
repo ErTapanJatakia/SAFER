@@ -431,10 +431,13 @@ test("evidence metadata is read-only and deletes remain disabled", async () => {
     });
   });
   const db = dbFor("owner-a");
-  await assertSucceeds(getDoc(doc(db, "organisations/org-a", "evidence", "evidence-a")));
+  const evidence = doc(db, "organisations/org-a", "evidence", "evidence-a");
+  await assertSucceeds(getDoc(evidence));
   await assertFails(setDoc(doc(db, "organisations/org-a", "evidence", "evidence-b"), {
     evidenceId: "evidence-b", orgId: "org-a",
   }));
+  await assertFails(updateDoc(evidence, {reviewStatus: "approved"}));
+  await assertFails(deleteDoc(evidence));
 });
 
 
