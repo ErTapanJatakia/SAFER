@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {
   EmailAuthProvider,
   GoogleAuthProvider,
@@ -61,6 +61,16 @@ export const AccountSecurityPanel: React.FC<AccountSecurityPanelProps> = ({user,
   const hasPasswordProvider = providerIds.has('password');
   const hasGoogleProvider = providerIds.has('google.com');
   const canReauthenticate = hasPasswordProvider || hasGoogleProvider;
+  const activeUidRef = useRef(user.uid);
+
+  useEffect(() => {
+    activeUidRef.current = user.uid;
+    return () => {
+      // Async operations started for this identity must not continue into a
+      // later account session after this panel is replaced or unmounted.
+      if (activeUidRef.current === user.uid) activeUidRef.current = '';
+    };
+  }, [user.uid]);
 
   useEffect(() => {
     setDisplayName(user.displayName || '');
@@ -78,16 +88,19 @@ export const AccountSecurityPanel: React.FC<AccountSecurityPanelProps> = ({user,
     setBusy(false);
   }, [user.uid]);
 
-  const run = async (action: () => Promise<void>) => {
+  const run = async (action: (isCurrent: () => boolean) => Promise<void>) => {
+    const requestUid = user.uid;
+    const isCurrent = () => activeUidRef.current === requestUid;
+    if (!isCurrent()) return;
     setBusy(true);
     setError('');
     setMessage('');
     try {
-      await action();
+      await action(isCurrent);
     } catch (failure) {
-      setError(errorMessage(failure));
+      if (isCurrent()) setError(errorMessage(failure));
     } finally {
-      setBusy(false);
+      if (isCurrent()) setBusy(false);
     }
   };
 
