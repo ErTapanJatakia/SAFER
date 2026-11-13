@@ -11,6 +11,7 @@ import {
   Eye,
   Info,
   Wallet,
+  UserRound,
 } from 'lucide-react';
 
 interface HeaderBannerProps {
@@ -21,6 +22,7 @@ interface HeaderBannerProps {
   onOpenTheme: () => void;
   onOpenAccessibility: () => void;
   onOpenBudget: () => void;
+  onOpenAccount: () => void;
   topLogo: LogoConfig;
   themeCamoPattern?: string;
 }
@@ -33,6 +35,7 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
   onOpenTheme,
   onOpenAccessibility,
   onOpenBudget,
+  onOpenAccount,
   topLogo,
   themeCamoPattern,
 }) => {
@@ -102,6 +105,17 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
           >
             <Wallet className="w-3.5 h-3.5" />
             <span className="font-semibold text-[11px]">Budget</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onOpenAccount}
+            className="inline-flex items-center space-x-1 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 hover:text-white border border-slate-700 transition"
+            title="Open local account profile and preferences"
+            aria-label="Open account profile and preferences"
+          >
+            <UserRound className="w-3.5 h-3.5" />
+            <span className="font-semibold text-[11px]">Account</span>
           </button>
 
           <button

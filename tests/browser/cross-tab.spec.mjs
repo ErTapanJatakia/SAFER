@@ -33,7 +33,10 @@ test('two same-origin tabs serialize real repository writes and reject the stale
     const losingTab = rejectedIndex === 0 ? firstTab : secondTab;
     await expect.poll(() => losingTab.evaluate(() => window.saferBrowserHarness.externalChange)).not.toBeNull();
 
-    const persisted = await firstTab.evaluate(() => window.saferBrowserHarness.listPersonnel());
+    const persisted = await firstTab.evaluate(() => {
+      const raw = window.localStorage.getItem('prot_ops_personnel_v2');
+      return raw ? JSON.parse(raw) : [];
+    });
     const acceptedIds = ['browser-tab-a', 'browser-tab-b'].filter((id) => persisted.some((record) => record.id === id));
     expect(acceptedIds).toHaveLength(1);
   } finally {
