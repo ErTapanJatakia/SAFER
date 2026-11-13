@@ -189,3 +189,6 @@ Regression cases have been authored for recipient mismatch, whitespace/case norm
 ### Membership response provenance at the UI boundary
 
 After an exact membership lookup resolves, AuthGate independently checks that the returned UID and organisation ID match the request token and that the status remains active before publishing the result. A mismatched response fails closed with generic recovery guidance. This is defense in depth against an incorrectly bound adapter or unexpected result; it does not replace resolver schema validation, Firestore Security Rules, or server-side authorization. The regression test supplies a mismatched UID and organisation and confirms that no workspace is rendered. Validation remains part of the consolidated milestone.
+
+
+The AuthGate response boundary also validates the returned role against the canonical four-role allowlist before rendering capability guidance. Unsupported runtime values fail closed rather than reaching the role-capability map. This is a UI robustness check only; exact membership parsing and Firestore Rules remain authoritative.
