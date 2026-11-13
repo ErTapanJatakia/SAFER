@@ -101,6 +101,14 @@ describe('AuthGate membership session handling',()=>{
   expect(verifiedWorkspace()?.textContent).toContain('Manager');
   expect(resolveTenantMembership).toHaveBeenCalledTimes(2);
  });
+ it('rejects a membership response bound to a different UID or organisation',async()=>{
+  vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-b',orgId:'org-other',role:'owner',status:'active'});
+  auth(makeUser('user-a'));await flush();
+  const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
+  change(field,'org-a');await flush();submit(field.closest('form')!);await flush();
+  expect(verifiedWorkspace()).toBeNull();
+  expect(host.querySelector('[role="alert"]')?.textContent).toContain('Membership could not be verified.');
+ });
  it('resolves the exact organisation for the authenticated UID',async()=>{vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'manager',status:'active'});auth(makeUser('user-a'));await flush();const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();expect(verifiedWorkspace()).not.toBeNull();expect(verifiedWorkspace()?.textContent).toContain('Manager');expect(resolveTenantMembership).toHaveBeenCalledWith({name:'test-db'},{uid:'user-a'},'org-a');});
  it('fails closed with generic feedback when lookup is denied',async()=>{vi.mocked(resolveTenantMembership).mockRejectedValue(new Error('permission-denied'));auth(makeUser('user-a'));await flush();const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();expect(host.querySelector('[role="alert"]')?.textContent).toContain('Membership could not be verified.');expect(host.textContent).not.toContain('Role:');});
  it('keeps only the newest membership result when duplicate requests overlap',async()=>{
