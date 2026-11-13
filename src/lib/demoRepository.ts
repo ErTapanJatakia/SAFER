@@ -202,11 +202,12 @@ export function createDemoRepository(storage: DemoStorage, options: DemoReposito
     // Deterministic in-process serialization for unit tests and non-browser adapters.
     const previous = localQueues.get(key) ?? Promise.resolve();
     const operationPromise = previous.then(execute);
-    localQueues.set(key, operationPromise.then(() => undefined, () => undefined));
+    const tail = operationPromise.then(() => undefined, () => undefined);
+    localQueues.set(key, tail);
     try {
       return await operationPromise;
     } finally {
-      if (localQueues.get(key) === operationPromise) localQueues.delete(key);
+      if (localQueues.get(key) === tail) localQueues.delete(key);
     }
   };
 
@@ -216,6 +217,7 @@ export function createDemoRepository(storage: DemoStorage, options: DemoReposito
     isValid: (entry: unknown) => entry is T,
     domain: keyof typeof KEYS,
   ): Promise<void> => {
+    if (!baselineLoaded) loadSnapshot();
     if (!Array.isArray(value) || !value.every(isValid) || !hasUniqueIds(value)) {
       throw new Error(`Refusing to persist invalid Demo Guest records for ${key}.`);
     }
