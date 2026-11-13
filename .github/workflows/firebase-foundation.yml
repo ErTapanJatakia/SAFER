@@ -225,6 +225,9 @@ jobs:
       - name: Demo Guest confirmed UI persistence tests
         run: npm run test:demo-ui-persistence
 
+      - name: Demo Guest conflict recovery export tests
+        run: npm run test:demo-conflict-export
+
       - name: Demo Guest retention notice tests
         run: npm run test:demo-retention-notice
 

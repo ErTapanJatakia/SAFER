@@ -33,6 +33,7 @@ import {
 import { isSafeImageDataUrl } from './utils/securitySanitizer.ts';
 import { getCurrentISODate } from './utils/dateUtils.ts';
 import { useDemoWorkspaceRepository } from './components/DemoGuestWorkspaceProvider.tsx';
+import { serializeDemoConflictSnapshot } from './lib/demoConflictExport.ts';
 import { SaferWordmark } from './components/SaferWordmark.tsx';
 import { HeaderBanner } from './components/HeaderBanner.tsx';
 import { Navbar, type NavigationSection } from './components/Navbar.tsx';
@@ -524,6 +525,26 @@ export default function App() {
     void commitChecklist(() => [...INITIAL_CHECKLIST], 'Pre-deployment checklist reset to standard deployment scenario.');
   };
 
+  const handleDownloadConflictSnapshot = () => {
+    const content = serializeDemoConflictSnapshot({
+      personnel: personnelRef.current,
+      incidents: incidentsRef.current,
+      cyberHygiene: cyberItemsRef.current,
+      checklist: checklistRef.current,
+    });
+    const blob = new Blob([content], { type: 'application/json;charset=utf-8' });
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = `safer-demo-conflict-snapshot-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+    link.hidden = true;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    showToast('Downloaded this tab’s last confirmed Demo Guest records.');
+  };
+
   const handleResetDemoData = async () => {
     // Drain queued writes before reset so an older pending save cannot restore
     // records after the user has explicitly reset the workspace.
@@ -851,7 +872,26 @@ export default function App() {
           aria-live="assertive"
           className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] w-[min(92vw,48rem)] rounded-lg border border-amber-500 bg-amber-50 px-4 py-3 text-sm text-amber-950 shadow-lg"
         >
-          {crossTabConflictMessage}
+          <p className="font-semibold">{crossTabConflictMessage}</p>
+          <p className="mt-1 text-xs">
+            Download includes this tab’s last confirmed records only; unsubmitted form fields are not included. The JSON is unencrypted and may contain personal, health, contact, or employer details entered into these records. Store it securely.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleDownloadConflictSnapshot}
+              className="rounded-md border border-amber-800 bg-amber-900 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-900"
+            >
+              Download this tab’s records
+            </button>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="rounded-md border border-amber-800 px-3 py-2 text-xs font-semibold text-amber-950 hover:bg-amber-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-900"
+            >
+              Reload workspace
+            </button>
+          </div>
         </div>
       )}
 
