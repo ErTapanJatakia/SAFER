@@ -103,7 +103,7 @@ describe('revocable Demo Guest repository capability', () => {
 
     active = false;
     await assert.rejects(guarded.savePersonnel({ ...record, fullName: 'Must not persist' }), /session has ended/);
-    assert.throws(() => guarded.reset(), /session has ended/);
+    await assert.rejects(guarded.reset(), /session has ended/);
     assert.equal(storage.calls.length, beforeRevocation);
     assert.equal((await raw.listPersonnel()).some((item) => item.id === record.id), true);
     assert.equal((await raw.listPersonnel()).find((item) => item.id === record.id)?.fullName, record.fullName);

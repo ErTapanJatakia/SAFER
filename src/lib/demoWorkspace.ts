@@ -5,7 +5,7 @@ import type { DemoSnapshot } from './demoRepository.ts';
 
 export type DemoWorkspaceRepository = DemoRepository & {
   loadSnapshot(): DemoSnapshot;
-  reset(): void;
+  reset(): Promise<void>;
 };
 
 /** The only approved selector for browser-local operational data. */
@@ -50,10 +50,7 @@ export function createRevocableDemoRepository(
       assertActive();
       return repository.loadSnapshot();
     },
-    reset: () => {
-      assertActive();
-      repository.reset();
-    },
+    reset: () => run(() => repository.reset()),
     listPersonnel: () => run(() => repository.listPersonnel()),
     replacePersonnel: (records: readonly PersonnelRecord[]) => run(() => repository.replacePersonnel(records)),
     savePersonnel: (record: PersonnelRecord) => run(() => repository.savePersonnel(record)),

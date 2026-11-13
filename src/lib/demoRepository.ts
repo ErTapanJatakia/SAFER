@@ -25,6 +25,23 @@ export interface DemoStorage {
   removeItem(key: string): void;
 }
 
+export interface DemoLockManager {
+  request<T>(name: string, callback: () => Promise<T>): Promise<T>;
+}
+
+export interface DemoRepositoryOptions {
+  /** Production must supply the browser's origin-wide Web Locks manager. */
+  locks?: DemoLockManager;
+  requireCrossTabLock?: boolean;
+}
+
+export class DemoWriteConflictError extends Error {
+  constructor(domain: string) {
+    super(`Cross-tab conflict detected for ${domain}. Reload the workspace before editing again.`);
+    this.name = 'DemoWriteConflictError';
+  }
+}
+
 const KEYS = Object.freeze({
   personnel: 'prot_ops_personnel_v2',
   incidents: 'prot_ops_incidents_v2',
@@ -131,22 +148,76 @@ function readList<T>(storage: DemoStorage, key: string, fallback: readonly T[], 
 }
 
 /** Browser-local repository for synthetic Demo Guest records only. */
-export function createDemoRepository(storage: DemoStorage): DemoRepository & {
+export function createDemoRepository(storage: DemoStorage, options: DemoRepositoryOptions = {}): DemoRepository & {
   loadSnapshot(): DemoSnapshot;
-  reset(): void;
+  reset(): Promise<void>;
 } {
-  const loadSnapshot = (): DemoSnapshot => Object.freeze({
-    personnel: readList(storage, KEYS.personnel, INITIAL_PERSONNEL, isPersonnelRecord),
-    incidents: readList(storage, KEYS.incidents, INITIAL_INCIDENTS, isIncidentReport),
-    cyberHygiene: readList(storage, KEYS.cyberHygiene, INITIAL_CYBER_ITEMS, isCyberHygieneItem),
-    checklist: readList(storage, KEYS.checklist, INITIAL_CHECKLIST, isChecklistItem),
-  });
+  const expectedRaw = new Map<string, string | null>();
+  const localQueues = new Map<string, Promise<void>>();
+  let baselineLoaded = false;
 
-  const save = <T,>(
+  const readRaw = (key: string): string | null => {
+    try {
+      return storage.getItem(key);
+    } catch (error) {
+      throw new Error(`Unable to read Demo Guest storage key: ${key}`, { cause: error });
+    }
+  };
+
+  const loadSnapshot = (): DemoSnapshot => {
+    if (!baselineLoaded) {
+      // The baseline and parsed snapshot must use the exact same bytes; otherwise
+      // a cross-tab write between two reads could be mistaken for our own state.
+      Object.values(KEYS).forEach((key) => expectedRaw.set(key, readRaw(key)));
+      baselineLoaded = true;
+    }
+    const baselineStorage: DemoStorage = {
+      getItem: (key) => expectedRaw.has(key) ? (expectedRaw.get(key) ?? null) : readRaw(key),
+      setItem: () => { throw new Error('Snapshot storage is read-only.'); },
+      removeItem: () => { throw new Error('Snapshot storage is read-only.'); },
+    };
+    return Object.freeze({
+      personnel: readList(baselineStorage, KEYS.personnel, INITIAL_PERSONNEL, isPersonnelRecord),
+      incidents: readList(baselineStorage, KEYS.incidents, INITIAL_INCIDENTS, isIncidentReport),
+      cyberHygiene: readList(baselineStorage, KEYS.cyberHygiene, INITIAL_CYBER_ITEMS, isCyberHygieneItem),
+      checklist: readList(baselineStorage, KEYS.checklist, INITIAL_CHECKLIST, isChecklistItem),
+    });
+  };
+
+  const withDomainLock = async <T,>(domain: keyof typeof KEYS, operation: () => Promise<T>): Promise<T> => {
+    const key = KEYS[domain];
+    const lockName = `safer-demo-guest:${key}`;
+    const execute = async (): Promise<T> => {
+      const currentRaw = readRaw(key);
+      const expected = expectedRaw.get(key);
+      if (baselineLoaded && currentRaw !== expected) throw new DemoWriteConflictError(domain);
+      return operation();
+    };
+
+    if (options.locks) return options.locks.request(lockName, execute);
+    if (options.requireCrossTabLock) {
+      throw new Error('Cross-tab safe editing is unavailable in this browser because the Web Locks API is not supported. Open SAFER in a supported browser to edit records.');
+    }
+
+    // Deterministic in-process serialization for unit tests and non-browser adapters.
+    const previous = localQueues.get(key) ?? Promise.resolve();
+    const operationPromise = previous.then(execute);
+    const tail = operationPromise.then(() => undefined, () => undefined);
+    localQueues.set(key, tail);
+    try {
+      return await operationPromise;
+    } finally {
+      if (localQueues.get(key) === tail) localQueues.delete(key);
+    }
+  };
+
+  const save = async <T,>(
     key: string,
     value: readonly T[],
     isValid: (entry: unknown) => entry is T,
-  ): void => {
+    domain: keyof typeof KEYS,
+  ): Promise<void> => {
+    if (!baselineLoaded) loadSnapshot();
     if (!Array.isArray(value) || !value.every(isValid) || !hasUniqueIds(value)) {
       throw new Error(`Refusing to persist invalid Demo Guest records for ${key}.`);
     }
@@ -158,75 +229,85 @@ export function createDemoRepository(storage: DemoStorage): DemoRepository & {
       throw new Error(`Unable to serialize Demo Guest records for ${key}.`, { cause: error });
     }
 
-    try {
-      storage.setItem(key, serialized);
-    } catch (error) {
-      throw new Error(`Unable to write Demo Guest storage key: ${key}. Check browser storage availability and available space.`, { cause: error });
-    }
-
-    try {
-      if (storage.getItem(key) !== serialized) {
-        throw new Error('Stored value did not match the submitted value.');
+    await withDomainLock(domain, async () => {
+      try {
+        storage.setItem(key, serialized);
+      } catch (error) {
+        throw new Error(`Unable to write Demo Guest storage key: ${key}. Check browser storage availability and available space.`, { cause: error });
       }
-    } catch (error) {
-      throw new Error(`Unable to verify Demo Guest storage key after writing: ${key}.`, { cause: error });
-    }
+
+      try {
+        if (storage.getItem(key) !== serialized) {
+          throw new Error('Stored value did not match the submitted value.');
+        }
+      } catch (error) {
+        throw new Error(`Unable to verify Demo Guest storage key after writing: ${key}.`, { cause: error });
+      }
+      expectedRaw.set(key, serialized);
+    });
   };
 
   return Object.freeze({
     kind: 'demo' as const,
     loadSnapshot,
     listPersonnel: async () => loadSnapshot().personnel,
-    replacePersonnel: async (records: readonly PersonnelRecord[]) => { save(KEYS.personnel, records, isPersonnelRecord); },
+    replacePersonnel: async (records: readonly PersonnelRecord[]) => { await save(KEYS.personnel, records, isPersonnelRecord, 'personnel'); },
     savePersonnel: async (record: PersonnelRecord) => {
       const current = [...loadSnapshot().personnel];
       const index = current.findIndex((item) => item.id === record.id);
       if (index < 0) current.unshift(record);
       else current[index] = record;
-      save(KEYS.personnel, current, isPersonnelRecord);
+      await save(KEYS.personnel, current, isPersonnelRecord, 'personnel');
     },
     deletePersonnel: async (recordId: string) => {
-      save(KEYS.personnel, loadSnapshot().personnel.filter((item) => item.id !== recordId), isPersonnelRecord);
+      await save(KEYS.personnel, loadSnapshot().personnel.filter((item) => item.id !== recordId), isPersonnelRecord, 'personnel');
     },
     listIncidents: async () => loadSnapshot().incidents,
-    replaceIncidents: async (records: readonly IncidentReport[]) => { save(KEYS.incidents, records, isIncidentReport); },
+    replaceIncidents: async (records: readonly IncidentReport[]) => { await save(KEYS.incidents, records, isIncidentReport, 'incidents'); },
     saveIncident: async (record: IncidentReport) => {
       const current = [...loadSnapshot().incidents];
       const index = current.findIndex((item) => item.id === record.id);
       if (index < 0) current.unshift(record);
       else current[index] = record;
-      save(KEYS.incidents, current, isIncidentReport);
+      await save(KEYS.incidents, current, isIncidentReport, 'incidents');
     },
     listCyberHygiene: async () => loadSnapshot().cyberHygiene,
-    replaceCyberHygiene: async (items: readonly CyberHygieneItem[]) => { save(KEYS.cyberHygiene, items, isCyberHygieneItem); },
+    replaceCyberHygiene: async (items: readonly CyberHygieneItem[]) => { await save(KEYS.cyberHygiene, items, isCyberHygieneItem, 'cyberHygiene'); },
     saveCyberHygiene: async (item: CyberHygieneItem) => {
       const current = [...loadSnapshot().cyberHygiene];
       const index = current.findIndex((entry) => entry.id === item.id);
       if (index < 0) current.unshift(item);
       else current[index] = item;
-      save(KEYS.cyberHygiene, current, isCyberHygieneItem);
+      await save(KEYS.cyberHygiene, current, isCyberHygieneItem, 'cyberHygiene');
     },
     listChecklist: async () => loadSnapshot().checklist,
-    replaceChecklist: async (items: readonly PreDeploymentChecklistItem[]) => { save(KEYS.checklist, items, isChecklistItem); },
+    replaceChecklist: async (items: readonly PreDeploymentChecklistItem[]) => { await save(KEYS.checklist, items, isChecklistItem, 'checklist'); },
     saveChecklist: async (item: PreDeploymentChecklistItem) => {
       const current = [...loadSnapshot().checklist];
       const index = current.findIndex((entry) => entry.id === item.id);
       if (index < 0) current.unshift(item);
       else current[index] = item;
-      save(KEYS.checklist, current, isChecklistItem);
+      await save(KEYS.checklist, current, isChecklistItem, 'checklist');
     },
-    reset: () => {
-      const failedKeys: string[] = [];
-      Object.entries(KEYS).forEach(([domain, key]) => {
-        try {
-          storage.removeItem(key);
-        } catch {
-          failedKeys.push(domain);
+    reset: async () => {
+      const domains = Object.keys(KEYS) as (keyof typeof KEYS)[];
+      const removeAllUnderLocks = async (index: number): Promise<void> => {
+        if (index < domains.length) {
+          await withDomainLock(domains[index], () => removeAllUnderLocks(index + 1));
+          return;
         }
-      });
-      if (failedKeys.length > 0) {
-        throw new Error(`Unable to clear all Demo Guest records. Storage removal failed for: ${failedKeys.join(', ')}.`);
-      }
+        const failedKeys: string[] = [];
+        domains.forEach((domain) => {
+          const key = KEYS[domain];
+          try { storage.removeItem(key); }
+          catch { failedKeys.push(domain); }
+        });
+        if (failedKeys.length > 0) {
+          throw new Error(`Unable to clear all Demo Guest records. Storage removal failed for: ${failedKeys.join(', ')}.`);
+        }
+        domains.forEach((domain) => expectedRaw.set(KEYS[domain], null));
+      };
+      await removeAllUnderLocks(0);
     },
   });
 }

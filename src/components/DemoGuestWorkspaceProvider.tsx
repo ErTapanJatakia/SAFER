@@ -32,7 +32,10 @@ function AuthorizedDemoGuestWorkspace({ accessState, children }: { accessState: 
 
   const repository = useMemo(() => {
     try {
-      const browserRepository = createDemoRepository(window.localStorage);
+      const browserRepository = createDemoRepository(window.localStorage, {
+        locks: window.navigator.locks,
+        requireCrossTabLock: true,
+      });
       // Probe all four reads before mounting the workspace. A blocked storage
       // API must not be mistaken for an empty workspace and overwritten later.
       browserRepository.loadSnapshot();

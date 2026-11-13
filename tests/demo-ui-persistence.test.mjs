@@ -32,3 +32,21 @@ test('Reset Records drains pending writes before clearing storage and publishing
   assert.match(app, /demoRepository\.reset\(\)/);
   assert.match(app, /personnelRef\.current = \[\.\.\.INITIAL_PERSONNEL\]/);
 });
+
+test('cross-tab operational changes pause stale UI writes until the user reloads', () => {
+  assert.match(app, /window\.addEventListener\('storage', handleExternalStorageChange\)/);
+  assert.match(app, /crossTabConflictRef\.current = true/);
+  assert.match(app, /Another SAFER tab changed operational records/);
+  assert.match(app, /if \(crossTabConflictRef\.current\) throw new Error\('Cross-tab conflict: reload required\.'\)/);
+  assert.match(app, /Your previous records remain unchanged/);
+});
+
+test('cross-tab conflicts are surfaced by the repository and browser writes require Web Locks', () => {
+  const repository = readFileSync(new URL('../src/lib/demoRepository.ts', import.meta.url), 'utf8');
+  const provider = readFileSync(new URL('../src/components/DemoGuestWorkspaceProvider.tsx', import.meta.url), 'utf8');
+  assert.match(repository, /navigator|options\.locks\.request/);
+  assert.match(repository, /currentRaw !== expected/);
+  assert.match(repository, /class DemoWriteConflictError/);
+  assert.match(provider, /locks: window\.navigator\.locks/);
+  assert.match(provider, /requireCrossTabLock: true/);
+});

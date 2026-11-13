@@ -199,6 +199,7 @@ export default function App() {
   // Feedback & Screen Reader Announcements
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [liveAnnouncement, setLiveAnnouncement] = useState<string | null>(null);
+  const [crossTabConflictMessage, setCrossTabConflictMessage] = useState<string | null>(null);
 
   const announce = (msg: string) => {
     setLiveAnnouncement(msg);
@@ -221,6 +222,25 @@ export default function App() {
   const incidentsQueue = useRef<Promise<void>>(Promise.resolve());
   const cyberQueue = useRef<Promise<void>>(Promise.resolve());
   const checklistQueue = useRef<Promise<void>>(Promise.resolve());
+  const crossTabConflictRef = useRef(false);
+
+  useEffect(() => {
+    const operationalKeys = new Set([
+      'prot_ops_personnel_v2',
+      'prot_ops_incidents_v2',
+      'prot_ops_cyber_v2',
+      'prot_ops_checklist_v2',
+    ]);
+    const handleExternalStorageChange = (event: StorageEvent) => {
+      if (event.storageArea !== window.localStorage || (event.key !== null && !operationalKeys.has(event.key))) return;
+      crossTabConflictRef.current = true;
+      const message = 'Another SAFER tab changed operational records. Editing is paused here to prevent overwriting newer data. Export any work you need, then reload this tab.';
+      setCrossTabConflictMessage(message);
+      showToast(message);
+    };
+    window.addEventListener('storage', handleExternalStorageChange);
+    return () => window.removeEventListener('storage', handleExternalStorageChange);
+  }, []);
 
   const commitCollection = async <T,>(
     queue: React.MutableRefObject<Promise<void>>,
@@ -232,6 +252,7 @@ export default function App() {
     successMessage?: string,
   ): Promise<boolean> => {
     const operation = queue.current.then(async () => {
+      if (crossTabConflictRef.current) throw new Error('Cross-tab conflict: reload required.');
       const next = update(current.current);
       await persist(next);
       current.current = next;
@@ -242,8 +263,20 @@ export default function App() {
     try {
       await operation;
       return true;
-    } catch {
-      showToast(errorMessage);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Cross-tab conflict')) {
+        crossTabConflictRef.current = true;
+        const message = 'A cross-tab conflict was detected. Your previous records remain unchanged. Export any needed work, then reload this tab.';
+        setCrossTabConflictMessage(message);
+        showToast(message);
+      } else if (error instanceof Error && error.message.includes('Web Locks API')) {
+        crossTabConflictRef.current = true;
+        const message = 'Editing is disabled because this browser cannot coordinate safe cross-tab writes. Use a browser that supports the Web Locks API.';
+        setCrossTabConflictMessage(message);
+        showToast(message);
+      } else {
+        showToast(errorMessage);
+      }
       return false;
     }
   };
@@ -496,9 +529,16 @@ export default function App() {
     // records after the user has explicitly reset the workspace.
     await Promise.all([personnelQueue.current, incidentsQueue.current, cyberQueue.current, checklistQueue.current]);
     try {
-      demoRepository.reset();
-    } catch {
-      showToast('Browser storage blocked part of the reset. Some records may remain; retry or clear this site’s browser data.');
+      if (crossTabConflictRef.current) throw new Error('Cross-tab conflict: reload required.');
+      await demoRepository.reset();
+    } catch (error) {
+      const message = error instanceof Error && error.message.includes('Cross-tab conflict')
+        ? 'Reset paused because another SAFER tab changed records. Export any needed work, then reload this tab before resetting.'
+        : error instanceof Error && error.message.includes('Web Locks API')
+          ? 'This browser cannot coordinate a safe cross-tab reset. Use a browser that supports the Web Locks API.'
+          : 'Browser storage blocked part of the reset. Some records may remain; retry or clear this site’s browser data.';
+      if (error instanceof Error && error.message.includes('Cross-tab conflict')) setCrossTabConflictMessage(message);
+      showToast(message);
       return;
     }
     personnelRef.current = [...INITIAL_PERSONNEL];
@@ -803,6 +843,17 @@ export default function App() {
         person={exportPerson || null}
         personnelList={personnelList}
       />
+
+      {/* Persistent cross-tab conflict warning: editing remains blocked until reload. */}
+      {crossTabConflictMessage && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] w-[min(92vw,48rem)] rounded-lg border border-amber-500 bg-amber-50 px-4 py-3 text-sm text-amber-950 shadow-lg"
+        >
+          {crossTabConflictMessage}
+        </div>
+      )}
 
       {/* Toast Notification */}
       {toastMessage && (
