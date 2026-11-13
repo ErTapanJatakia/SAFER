@@ -211,13 +211,11 @@ export function createDemoRepository(storage: DemoStorage, options: DemoReposito
     }
   };
 
-  const save = async <T,>(
+  const writeUnderLock = async <T,>(
     key: string,
     value: readonly T[],
     isValid: (entry: unknown) => entry is T,
-    domain: keyof typeof KEYS,
   ): Promise<void> => {
-    if (!baselineLoaded) loadSnapshot();
     if (!Array.isArray(value) || !value.every(isValid) || !hasUniqueIds(value)) {
       throw new Error(`Refusing to persist invalid Demo Guest records for ${key}.`);
     }
@@ -229,21 +227,46 @@ export function createDemoRepository(storage: DemoStorage, options: DemoReposito
       throw new Error(`Unable to serialize Demo Guest records for ${key}.`, { cause: error });
     }
 
-    await withDomainLock(domain, async () => {
-      try {
-        storage.setItem(key, serialized);
-      } catch (error) {
-        throw new Error(`Unable to write Demo Guest storage key: ${key}. Check browser storage availability and available space.`, { cause: error });
-      }
+    try {
+      storage.setItem(key, serialized);
+    } catch (error) {
+      throw new Error(`Unable to write Demo Guest storage key: ${key}. Check browser storage availability and available space.`, { cause: error });
+    }
 
-      try {
-        if (storage.getItem(key) !== serialized) {
-          throw new Error('Stored value did not match the submitted value.');
-        }
-      } catch (error) {
-        throw new Error(`Unable to verify Demo Guest storage key after writing: ${key}.`, { cause: error });
+    try {
+      if (storage.getItem(key) !== serialized) {
+        throw new Error('Stored value did not match the submitted value.');
       }
-      expectedRaw.set(key, serialized);
+    } catch (error) {
+      throw new Error(`Unable to verify Demo Guest storage key after writing: ${key}.`, { cause: error });
+    }
+    expectedRaw.set(key, serialized);
+  };
+
+  const save = async <T,>(
+    key: string,
+    value: readonly T[],
+    isValid: (entry: unknown) => entry is T,
+    domain: keyof typeof KEYS,
+  ): Promise<void> => {
+    if (!baselineLoaded) loadSnapshot();
+    await withDomainLock(domain, () => writeUnderLock(key, value, isValid));
+  };
+
+  const mutate = async <T,>(
+    key: string,
+    fallback: readonly T[],
+    isValid: (entry: unknown) => entry is T,
+    domain: keyof typeof KEYS,
+    update: (records: T[]) => T[],
+  ): Promise<void> => {
+    if (!baselineLoaded) loadSnapshot();
+    await withDomainLock(domain, async () => {
+      // Read and modify only after acquiring the same lock used for the write.
+      // This prevents concurrent same-tab operations from building stale arrays.
+      const current = readList(storage, key, fallback, isValid);
+      const next = update(current);
+      await writeUnderLock(key, next, isValid);
     });
   };
 
@@ -252,43 +275,52 @@ export function createDemoRepository(storage: DemoStorage, options: DemoReposito
     loadSnapshot,
     listPersonnel: async () => loadSnapshot().personnel,
     replacePersonnel: async (records: readonly PersonnelRecord[]) => { await save(KEYS.personnel, records, isPersonnelRecord, 'personnel'); },
-    savePersonnel: async (record: PersonnelRecord) => {
-      const current = [...loadSnapshot().personnel];
-      const index = current.findIndex((item) => item.id === record.id);
-      if (index < 0) current.unshift(record);
-      else current[index] = record;
-      await save(KEYS.personnel, current, isPersonnelRecord, 'personnel');
-    },
-    deletePersonnel: async (recordId: string) => {
-      await save(KEYS.personnel, loadSnapshot().personnel.filter((item) => item.id !== recordId), isPersonnelRecord, 'personnel');
-    },
+    savePersonnel: async (record: PersonnelRecord) => mutate(
+      KEYS.personnel, INITIAL_PERSONNEL, isPersonnelRecord, 'personnel',
+      (current) => {
+        const index = current.findIndex((item) => item.id === record.id);
+        if (index < 0) current.unshift(record);
+        else current[index] = record;
+        return current;
+      },
+    ),
+    deletePersonnel: async (recordId: string) => mutate(
+      KEYS.personnel, INITIAL_PERSONNEL, isPersonnelRecord, 'personnel',
+      (current) => current.filter((item) => item.id !== recordId),
+    ),
     listIncidents: async () => loadSnapshot().incidents,
     replaceIncidents: async (records: readonly IncidentReport[]) => { await save(KEYS.incidents, records, isIncidentReport, 'incidents'); },
-    saveIncident: async (record: IncidentReport) => {
-      const current = [...loadSnapshot().incidents];
-      const index = current.findIndex((item) => item.id === record.id);
-      if (index < 0) current.unshift(record);
-      else current[index] = record;
-      await save(KEYS.incidents, current, isIncidentReport, 'incidents');
-    },
+    saveIncident: async (record: IncidentReport) => mutate(
+      KEYS.incidents, INITIAL_INCIDENTS, isIncidentReport, 'incidents',
+      (current) => {
+        const index = current.findIndex((item) => item.id === record.id);
+        if (index < 0) current.unshift(record);
+        else current[index] = record;
+        return current;
+      },
+    ),
     listCyberHygiene: async () => loadSnapshot().cyberHygiene,
     replaceCyberHygiene: async (items: readonly CyberHygieneItem[]) => { await save(KEYS.cyberHygiene, items, isCyberHygieneItem, 'cyberHygiene'); },
-    saveCyberHygiene: async (item: CyberHygieneItem) => {
-      const current = [...loadSnapshot().cyberHygiene];
-      const index = current.findIndex((entry) => entry.id === item.id);
-      if (index < 0) current.unshift(item);
-      else current[index] = item;
-      await save(KEYS.cyberHygiene, current, isCyberHygieneItem, 'cyberHygiene');
-    },
+    saveCyberHygiene: async (item: CyberHygieneItem) => mutate(
+      KEYS.cyberHygiene, INITIAL_CYBER_ITEMS, isCyberHygieneItem, 'cyberHygiene',
+      (current) => {
+        const index = current.findIndex((entry) => entry.id === item.id);
+        if (index < 0) current.unshift(item);
+        else current[index] = item;
+        return current;
+      },
+    ),
     listChecklist: async () => loadSnapshot().checklist,
     replaceChecklist: async (items: readonly PreDeploymentChecklistItem[]) => { await save(KEYS.checklist, items, isChecklistItem, 'checklist'); },
-    saveChecklist: async (item: PreDeploymentChecklistItem) => {
-      const current = [...loadSnapshot().checklist];
-      const index = current.findIndex((entry) => entry.id === item.id);
-      if (index < 0) current.unshift(item);
-      else current[index] = item;
-      await save(KEYS.checklist, current, isChecklistItem, 'checklist');
-    },
+    saveChecklist: async (item: PreDeploymentChecklistItem) => mutate(
+      KEYS.checklist, INITIAL_CHECKLIST, isChecklistItem, 'checklist',
+      (current) => {
+        const index = current.findIndex((entry) => entry.id === item.id);
+        if (index < 0) current.unshift(item);
+        else current[index] = item;
+        return current;
+      },
+    ),
     reset: async () => {
       const domains = Object.keys(KEYS) as (keyof typeof KEYS)[];
       const removeAllUnderLocks = async (index: number): Promise<void> => {
