@@ -273,7 +273,9 @@ describe('Demo Guest repository', () => {
     const rejected = outcomes.filter((outcome) => outcome.status === 'rejected');
     assert.equal(accepted.length, 1, 'only one stale baseline may commit');
     assert.equal(rejected.length, 1, 'the competing stale baseline must be rejected');
-    assert.ok(rejected[0].status === 'rejected' && rejected[0].reason instanceof DemoWriteConflictError);
+    const rejectedOutcome = rejected[0];
+    if (!rejectedOutcome || rejectedOutcome.status !== 'rejected') throw new Error('Expected one rejected stale-tab write.');
+    assert.ok(rejectedOutcome.reason instanceof DemoWriteConflictError);
 
     const persisted = await firstTab.listPersonnel();
     const acceptedIds = [firstRecord.id, secondRecord.id].filter((id) => persisted.some((record) => record.id === id));
