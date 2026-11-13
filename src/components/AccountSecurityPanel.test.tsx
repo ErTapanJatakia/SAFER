@@ -55,6 +55,24 @@ describe('authenticated account security lifecycle',()=>{
   // A display-name edit does not change credentials or session authority.
   expect(sessionInvalidation.publishSessionInvalidation).not.toHaveBeenCalled();
  });
+ it('clears credential inputs and feedback when the authenticated UID changes',async()=>{
+  change(input('Current password'),'OldAccountPass!123');
+  change(input('New password'),'NewAccountPass!456');
+  change(input('Confirm new password'),'NewAccountPass!456');
+  change(input('New email address'),'next@example.test');
+  change(input('Current password','Change email address'),'OldAccountPass!123');
+  user=makeUser(['password']);
+  user.uid='user-b';
+  user.email='user-b@example.test';
+  await act(async()=>root.render(<AccountSecurityPanel user={user}/>));
+  expect(input('Current password')?.value).toBe('');
+  expect(input('New password')?.value).toBe('');
+  expect(input('Confirm new password')?.value).toBe('');
+  expect(input('New email address')?.value).toBe('');
+  expect(input('Current password','Change email address')?.value).toBe('');
+  expect(host.querySelector('[role="alert"]')).toBeNull();
+  expect(host.querySelector('[role="status"]')).toBeNull();
+ });
  it('rejects weak passwords without attempting re-authentication',async()=>{
   change(input('Current password'),'CurrentPass!123');change(input('New password'),'short');change(input('Confirm new password'),'short');
   submit('Change password');await flush();
