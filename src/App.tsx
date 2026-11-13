@@ -51,6 +51,7 @@ import { ThemeSettingsModal } from './components/ThemeSettingsModal.tsx';
 import { AccessibilityMenuModal } from './components/AccessibilityMenuModal.tsx';
 import { BudgetPolicyModal } from './components/BudgetPolicyModal.tsx';
 import { AccountSettingsModal } from './components/AccountSettingsModal.tsx';
+import { PrivacyConsoleModal } from './components/PrivacyConsoleModal.tsx';
 import { PersonnelExportModal } from './components/PersonnelExportModal.tsx';
 import { LiveAnnouncer } from './components/LiveAnnouncer.tsx';
 import {
@@ -191,6 +192,7 @@ export default function App() {
   const [isAccessibilityOpen, setIsAccessibilityOpen] = useState(false);
   const [isBudgetPolicyOpen, setIsBudgetPolicyOpen] = useState(false);
   const [isAccountSettingsOpen, setIsAccountSettingsOpen] = useState(false);
+  const [isPrivacyConsoleOpen, setIsPrivacyConsoleOpen] = useState(false);
 
   // Operational Modals
   const [isPersonnelModalOpen, setIsPersonnelModalOpen] = useState(false);
@@ -632,6 +634,7 @@ export default function App() {
         onOpenAccessibility={() => setIsAccessibilityOpen(true)}
         onOpenBudget={() => setIsBudgetPolicyOpen(true)}
         onOpenAccount={() => setIsAccountSettingsOpen(true)}
+        onOpenPrivacy={() => setIsPrivacyConsoleOpen(true)}
         topLogo={topLogo}
         themeCamoPattern={activeColors.camoPattern}
       />
@@ -815,6 +818,12 @@ export default function App() {
         isOpen={isAccountSettingsOpen}
         onClose={() => setIsAccountSettingsOpen(false)}
         onSaved={showToast}
+      />
+
+      {/* Synthetic-only Privacy Operations Console */}
+      <PrivacyConsoleModal
+        isOpen={isPrivacyConsoleOpen}
+        onClose={() => setIsPrivacyConsoleOpen(false)}
       />
 
       {/* SAFER zero-cost operating policy */}
