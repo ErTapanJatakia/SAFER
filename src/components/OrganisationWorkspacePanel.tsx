@@ -46,7 +46,7 @@ export const OrganisationWorkspacePanel: React.FC<OrganisationWorkspacePanelProp
     >
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-300">Membership verified</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-300">Membership verified at check time</p>
           <h3 id="verified-organisation-heading" className="mt-1 text-base font-semibold text-white">Organisation workspace</h3>
           <dl className="mt-2 grid gap-x-5 gap-y-1 text-xs sm:grid-cols-2">
             <div>
@@ -60,7 +60,7 @@ export const OrganisationWorkspacePanel: React.FC<OrganisationWorkspacePanelProp
           </dl>
         </div>
         <span className="rounded-full border border-emerald-700 bg-emerald-950 px-3 py-1 text-xs font-semibold text-emerald-200">
-          Active membership
+          Active when checked
         </span>
       </header>
 
@@ -114,7 +114,7 @@ export const OrganisationWorkspacePanel: React.FC<OrganisationWorkspacePanelProp
             </ul>
           </div>
           <p className="mt-3 text-[11px] leading-relaxed text-amber-200/80">
-            “Permitted” describes the current Firestore Rules model only; it does not mean the corresponding SAFER screen or workflow is released. This matrix is informational UI guidance, not authorization. Firestore Security Rules remain authoritative. No audit feed or simulated activity is displayed.
+            “Permitted” describes the current Firestore Rules model only; it does not mean the corresponding SAFER screen or workflow is released. Membership status is a point-in-time result, not continuous monitoring; it may change after this check. Firestore Security Rules re-evaluate each database request and remain authoritative. This matrix is informational UI guidance, not authorization. No audit feed or simulated activity is displayed.
           </p>
         </aside>
       </div>
