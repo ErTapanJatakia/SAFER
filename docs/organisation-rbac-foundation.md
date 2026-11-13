@@ -133,3 +133,15 @@ Regression tests have been authored for eligible/ineligible transfer candidates 
 ## Membership status freshness disclosure
 
 The authenticated organisation panel labels membership as **verified at check time** and **active when checked**. This is a point-in-time result from the exact membership lookup, not a live subscription or continuous revocation monitor. Any future database operation must rely on Firestore Security Rules, which evaluate authorization for each request; UI state and role labels are never a substitute. If operational workflows are later released, the product must define how stale UI state is refreshed and how permission-denied responses revoke or refresh local presentation state. No background polling or additional reads are introduced by this disclosure.
+
+## Organisation profile request isolation
+
+The read-only organisation profile panel now binds every rendered result to the exact request context: Firestore database instance, authenticated UID, organisation ID, role, and membership status.
+
+- A profile from the previous account or tenant is hidden immediately during a context transition, before the next effect completes.
+- Late success or failure from an obsolete request cannot publish profile state after cleanup.
+- Suspended/non-active membership never triggers the metadata read; manager/viewer remain excluded.
+- Missing Firestore database configuration fails closed with an unavailable message rather than an empty or inferred profile.
+- This is presentation/request isolation only. Firestore Rules continue to authorize every read, and no cache, polling, membership mutation, or operational access is added.
+
+Regression cases have been authored for UID changes while retaining the same tenant, stale asynchronous responses, suspended membership, and unavailable database configuration. They remain pending the consolidated validation milestone.
