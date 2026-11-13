@@ -209,3 +209,8 @@ Beginning sign-out invalidates the session lifecycle request token synchronously
 ## Authentication observer failure during membership lookup
 
 If Firebase's authentication observer fails while an organisation membership request is pending, AuthGate ends the session lifecycle, clears the account and organisation presentation, and publishes a peer-tab invalidation. The outstanding request token is no longer current, so its eventual response cannot restore the prior workspace. Recovery requires an explicit observer re-subscription and a fresh Firebase identity callback; the previous organisation locator is not carried forward. A regression case covers the delayed membership response, observer failure, and fresh-identity recovery. Test execution remains deferred to consolidated validation.
+
+
+## Replaced authentication observer callback isolation
+
+AuthGate now marks each Firebase authentication observer inactive during effect cleanup and ignores both queued identity callbacks and queued error callbacks from that replaced observer. This supplements Firebase unsubscribe during observer retry: a delayed callback from the previous subscription cannot overwrite a newly recovered account's UI identity. The regression test retains the previous observer callback, recovers a new identity, then delivers a late old-identity callback and confirms the recovered identity remains displayed. This is client-side callback ordering protection, not a change to Firebase authentication or token validity. Test execution remains deferred to consolidated validation.
