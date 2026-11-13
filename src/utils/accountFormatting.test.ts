@@ -27,6 +27,13 @@ describe('account regional formatting', () => {
     expect(formatAccountDateTime(timestamp, prefs({ timezone: 'Asia/Kolkata', timeFormat: '24h' }))).toContain('06:00');
   });
 
+  it('parses SAFER local operational timestamps without relying on non-standard Date parsing', () => {
+    expect(formatAccountDate('2026-11-13 13:05', prefs({ timezone: 'UTC' }))).toBe('13-11-2026');
+    expect(formatAccountTime('2026-11-13 13:05', prefs({ timezone: 'UTC', timeFormat: '24h' }))).toBe('13:05');
+    expect(formatAccountDateTime('2026-11-13 13:05', prefs({ timezone: 'UTC', timeFormat: '24h' }))).toBe('13-11-2026 13:05');
+    expect(formatAccountDateTime('2026-02-31 13:05', prefs())).toBe('—');
+  });
+
   it('honours 12-hour and 24-hour time preferences', () => {
     const timestamp = '2026-11-13T13:05:00.000Z';
     expect(formatAccountTime(timestamp, prefs({ timezone: 'UTC', timeFormat: '24h' }))).toBe('13:05');
