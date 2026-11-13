@@ -38,9 +38,18 @@ No Remix sample organisation names, old Firebase IDs, or alternate role vocabula
 7. No local Demo Guest data is synchronized or uploaded.
 8. Firestore rules remain the only authorization authority; any future grants require emulator-backed negative and positive tests.
 
+## Read-only workspace context implemented
+
+- `OrganisationWorkspacePanel` displays the exact verified organisation ID and current role after the existing exact-membership resolver succeeds.
+- The panel presents a role capability preview aligned to the existing Rules model. Manager/viewer currently receive no tenant operational capabilities.
+- Membership administration and audit-event access are explicitly shown as unavailable for every role.
+- The panel states that authenticated operational workspace access is not released and that its capability preview is informational only.
+- `AuthGate` renders the panel only for a membership verified in the current in-memory session. Changing the organisation locator or crossing an authentication/session boundary clears the membership result.
+- Focused UI regression coverage is registered as `test:organisation-workspace` and has been added but not yet executed.
+
 ## Next implementation slices
 
-1. Reconcile the UI with the existing four-role model and current owner/admin-only operational grants.
+1. Add a safe, read-only organisation profile view for roles whose current Rules permit the exact organisation document read; do not query metadata for manager/viewer.
 2. Design membership lifecycle and trusted owner bootstrap without client-side privilege assignment.
 3. Extend emulator coverage for cross-tenant queries, role mutation attempts, membership lifecycle, and immutable audit-event policy.
 4. Only after review and separate approval, consider production rules changes or tenant provisioning.
