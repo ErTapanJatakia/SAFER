@@ -140,6 +140,30 @@ describe('OrganisationProfilePanel', () => {
     expect(host.textContent).toContain('not available to this role');
   });
 
+  it('ignores a pending profile response from a replaced Firestore instance', async () => {
+    const replacementDatabase = {} as any;
+    let finishOriginal!: (value: {orgId: string; displayName: string; status: 'active'; schemaVersion: 1}) => void;
+    vi.mocked(readOrganisationProfile)
+      .mockReturnValueOnce(new Promise((resolve) => { finishOriginal = resolve; }))
+      .mockResolvedValueOnce({
+        orgId: 'org-alpha', displayName: 'Replacement Database Profile', status: 'active', schemaVersion: 1,
+      });
+
+    await act(async () => root.render(
+      <OrganisationProfilePanel database={database} membership={member('owner')} />,
+    ));
+    await act(async () => root.render(
+      <OrganisationProfilePanel database={replacementDatabase} membership={member('owner')} />,
+    ));
+    expect(host.textContent).toContain('Replacement Database Profile');
+
+    await act(async () => finishOriginal({
+      orgId: 'org-alpha', displayName: 'Obsolete Database Profile', status: 'active', schemaVersion: 1,
+    }));
+    expect(host.textContent).toContain('Replacement Database Profile');
+    expect(host.textContent).not.toContain('Obsolete Database Profile');
+  });
+
   it('fails closed when the Firestore database is unavailable', async () => {
     await act(async () => root.render(<OrganisationProfilePanel database={null} membership={member('owner')} />));
     expect(readOrganisationProfile).not.toHaveBeenCalled();
