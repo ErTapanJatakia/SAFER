@@ -37,6 +37,12 @@ test('audit envelope requires exact fields, identifiers and digest formats', () 
   assert.equal(isOrganisationAuditEvent({ ...event(), targetUid: '' }), false);
 });
 
+test('target UID is optional but unknown fields remain rejected', () => {
+  const {targetUid: _targetUid, ...withoutTarget} = event();
+  assert.equal(isOrganisationAuditEvent(withoutTarget), true);
+  assert.equal(isOrganisationAuditEvent({...withoutTarget, unexpected: true}), false);
+});
+
 test('audit chain requires genesis null and exact previous-event hash linkage', () => {
   const first = event();
   const second = event({
