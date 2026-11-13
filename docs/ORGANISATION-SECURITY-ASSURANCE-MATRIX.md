@@ -24,9 +24,9 @@
 | Operational record provenance | Client changes tenant ID, record ID, creator, reporter, or timestamps | Firestore Rules | Existing personnel/incident mutation tests | Deny |
 | Invitation policy | Invalid digest, excessive expiry, terminal-state reuse, untrusted role | Pure policy model | src/lib/membershipLifecycle.test.ts | Reject; not authorization |
 | Last-owner safety | Last active owner demoted, suspended, or revoked | Pure policy model | Existing lifecycle tests | Reject; trusted backend must enforce atomically |
-| Audit envelope shape | Unknown event, extra field, malformed digest, invalid identifier | TypeScript contract | src/types/organisationAudit.test.ts | Reject malformed envelope |
+| Audit envelope shape | Unknown event, extra field, malformed digest, invalid identifier; optional target omitted | TypeScript contract | src/types/organisationAudit.test.ts | Accept valid optional-field omission; reject malformed envelope |
 | Audit chain linkage | Broken previous hash or time reversal | TypeScript contract | Existing audit contract tests | Reject malformed sequence; not proof of immutability |
-| UI capability accuracy | UI suggests permissions not granted by Rules | UI/domain tests | Organisation workspace and capability tests | Display only current verified capabilities |
+| UI capability accuracy | UI conflates Rules-level permission with a released application workflow | UI/domain tests | Organisation workspace and capability tests | Label Rules permission separately; state that UI workflow is not released |
 
 ## Validation tiers
 
