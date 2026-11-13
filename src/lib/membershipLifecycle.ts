@@ -52,7 +52,8 @@ export type MembershipPolicyDecision =
         | 'owner-assignment-requires-trusted-bootstrap'
         | 'owner-protection'
         | 'admin-cannot-manage-admin'
-        | 'invalid-transition';
+        | 'invalid-transition'
+        | 'owner-count-inconsistent';
     };
 
 const MAX_INVITATION_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
@@ -216,6 +217,13 @@ export function evaluateMembershipChange(
     || !Number.isSafeInteger(activeOwnerCount) || activeOwnerCount < 0
   ) return { allowed: false, reason: 'invalid-context' };
 
+  // A proposal about an active owner must include that owner in the supplied
+  // count. Counts are advisory snapshots; the trusted writer must re-read and
+  // enforce the invariant transactionally to prevent concurrent last-owner loss.
+  if (currentRole === 'owner' && currentStatus === 'active' && activeOwnerCount < 1) {
+    return { allowed: false, reason: 'owner-count-inconsistent' };
+  }
+
   if (actorRole !== 'owner' && actorRole !== 'admin') {
     return { allowed: false, reason: 'actor-not-authorised' };
   }
@@ -225,17 +233,22 @@ export function evaluateMembershipChange(
   if (nextRole === 'owner' && currentRole !== 'owner') {
     return { allowed: false, reason: 'owner-assignment-requires-trusted-bootstrap' };
   }
+  // Revocation is terminal: no later role or status edits are accepted.
+  if (currentStatus === 'revoked') {
+    return { allowed: false, reason: 'invalid-transition' };
+  }
+  // Revocation is a dedicated lifecycle action; do not bundle it with a role change.
+  if (nextStatus === 'revoked' && nextRole !== currentRole) {
+    return { allowed: false, reason: 'invalid-transition' };
+  }
   if (
-    currentRole === 'owner'
+    currentRole === 'owner' && currentStatus === 'active'
     && (nextRole !== 'owner' || nextStatus !== 'active')
     && activeOwnerCount <= 1
   ) return { allowed: false, reason: 'owner-protection' };
 
   if (actorRole === 'admin' && (currentRole === 'owner' || currentRole === 'admin' || nextRole === 'admin')) {
     return { allowed: false, reason: 'admin-cannot-manage-admin' };
-  }
-  if (currentStatus === 'revoked' && nextStatus !== 'revoked') {
-    return { allowed: false, reason: 'invalid-transition' };
   }
   if (currentStatus === nextStatus && currentRole === nextRole) {
     return { allowed: false, reason: 'invalid-transition' };
