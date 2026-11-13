@@ -9,6 +9,7 @@ import {
 } from '../types/privacy.ts';
 import { createPrivacyDemoRepository } from '../utils/privacyRepository.ts';
 import { createPrivacyDemoExport } from '../utils/privacyExport.ts';
+import { formatAccountDateTime, formatAccountNumber, readAccountPreferences } from '../utils/accountFormatting.ts';
 
 type Tab = 'overview' | 'processing' | 'notices' | 'requests' | 'grievances' | 'consent' | 'retention';
 
@@ -31,6 +32,7 @@ function newId(prefix: string): string {
 }
 
 export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+  const accountPreferences = readAccountPreferences();
   const dialogRef = useRef<HTMLElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [workspace, setWorkspace] = useState<PrivacyDemoWorkspace>(EMPTY_PRIVACY_DEMO_WORKSPACE);
@@ -302,7 +304,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
           {activeTab === 'overview' && <>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {counts.map((item) => <div key={item.label} className="rounded-xl border border-slate-700 bg-slate-950/70 p-4">
-                <p className="text-xs text-slate-400">{item.label}</p><p className="mt-2 text-2xl font-bold tabular-nums">{item.count}</p>
+                <p className="text-xs text-slate-400">{item.label}</p><p className="mt-2 text-2xl font-bold tabular-nums">{formatAccountNumber(item.count, accountPreferences)}</p>
               </div>)}
             </div>
             <div className="rounded-xl border border-slate-700 bg-slate-950/50 p-4">
@@ -354,7 +356,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
             {workspace.noticeDrafts.map((notice) => <article key={notice.id} className="rounded-xl border border-slate-700 p-4">
               <div className="flex flex-wrap justify-between gap-2"><h4 className="font-semibold">{notice.title}</h4><span className="text-xs text-amber-300">Draft only</span></div>
               <p className="mt-2 whitespace-pre-wrap text-sm text-slate-300">{notice.content}</p>
-              <p className="mt-2 text-[11px] text-slate-500">Updated {new Date(notice.updatedAt).toLocaleString()}</p>
+              <p className="mt-2 text-[11px] text-slate-500">Updated {formatAccountDateTime(notice.updatedAt, accountPreferences)}</p>
             </article>)}
             {workspace.noticeDrafts.length === 0 && <p className="text-sm text-slate-400">No notice drafts have been created.</p>}
           </section>}
@@ -373,7 +375,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
                 <select className="rounded border border-slate-600 bg-slate-950 px-2 py-1 text-xs" value={record.status} onChange={(e) => updateRequestStatus(record.id, e.target.value as PrivacyRightsRequest['status'])} disabled={!storageReady || !demoAcknowledged} aria-label={`Status for ${record.id}`}>
                   <option value="submitted">Submitted (demo)</option><option value="under_review">Under review</option><option value="completed">Completed</option><option value="rejected">Rejected</option>
                 </select>
-              </div><p className="mt-2 text-sm text-slate-300">{record.description}</p><p className="mt-2 text-[11px] text-slate-500">{new Date(record.submittedAt).toLocaleString()}</p>
+              </div><p className="mt-2 text-sm text-slate-300">{record.description}</p><p className="mt-2 text-[11px] text-slate-500">{formatAccountDateTime(record.submittedAt, accountPreferences)}</p>
             </article>)}
             {workspace.rightsRequests.length === 0 && <p className="text-sm text-slate-400">No synthetic requests recorded.</p>}
           </section>}
@@ -404,7 +406,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
             </form>
             <p className="rounded-lg border border-amber-800 bg-amber-950/40 p-3 text-xs text-amber-100">This ledger records a demonstration event only. It does not establish that consent is required, valid, informed or freely given for any real processing activity.</p>
             {workspace.consentEvents.map((event) => <article key={event.id} className="rounded-xl border border-slate-700 p-4 text-sm">
-              <strong>{event.subjectRef}</strong><p className="mt-1 text-slate-300">Purpose: {event.purposeRef}</p><p className="mt-1 text-xs text-slate-500">{event.event} · {new Date(event.recordedAt).toLocaleString()}</p>
+              <strong>{event.subjectRef}</strong><p className="mt-1 text-slate-300">Purpose: {event.purposeRef}</p><p className="mt-1 text-xs text-slate-500">{event.event} · {formatAccountDateTime(event.recordedAt, accountPreferences)}</p>
             </article>)}
             {workspace.consentEvents.length === 0 && <p className="text-sm text-slate-400">No synthetic consent events recorded.</p>}
           </section>}
@@ -418,7 +420,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
             </form>
             <p className="rounded-lg border border-amber-800 bg-amber-950/40 p-3 text-xs text-amber-100">Reviews are notes only. No timer, legal retention period or deletion action is performed. Operational records remain untouched.</p>
             {workspace.retentionReviews.map((review) => <article key={review.id} className="rounded-xl border border-slate-700 p-4">
-              <strong className="text-sm">{review.dataCategory}</strong><p className="mt-2 text-sm text-slate-300">{review.reviewNote}</p><p className="mt-2 text-[11px] text-slate-500">Reviewed {review.reviewedAt ? new Date(review.reviewedAt).toLocaleString() : '—'}</p>
+              <strong className="text-sm">{review.dataCategory}</strong><p className="mt-2 text-sm text-slate-300">{review.reviewNote}</p><p className="mt-2 text-[11px] text-slate-500">Reviewed {review.reviewedAt ? formatAccountDateTime(review.reviewedAt, accountPreferences) : '—'}</p>
             </article>)}
             {workspace.retentionReviews.length === 0 && <p className="text-sm text-slate-400">No retention reviews recorded.</p>}
           </section>}
