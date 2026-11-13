@@ -67,7 +67,8 @@
     "test:account-security": "vitest run src/components/AccountSecurityPanel.test.tsx",
     "test:privacy-demo": "tsx --test src/utils/privacyRepository.test.ts src/utils/privacyExport.test.ts && node --test tests/privacy-console-synthetic-boundary.test.mjs",
     "test:organisation-domain": "tsx --test src/types/organisation.test.ts",
-    "test:organisation-workspace": "vitest run src/components/OrganisationWorkspacePanel.test.tsx"
+    "test:organisation-workspace": "vitest run src/components/OrganisationWorkspacePanel.test.tsx",
+    "test:organisation-profile": "vitest run src/lib/organisationProfile.test.ts src/components/OrganisationProfilePanel.test.tsx"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
