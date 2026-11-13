@@ -34,7 +34,7 @@ export interface OrganisationAuditEvent {
 
 const ID = /^[A-Za-z0-9_-]{1,128}$/;
 const HASH = /^[a-f0-9]{64}$/i;
-const EVENT_KEYS = [
+const REQUIRED_EVENT_KEYS = [
   'actorUid',
   'eventHash',
   'eventId',
@@ -43,8 +43,8 @@ const EVENT_KEYS = [
   'orgId',
   'previousEventHash',
   'schemaVersion',
-  'targetUid',
 ] as const;
+const OPTIONAL_EVENT_KEYS = ['targetUid'] as const;
 
 export function isOrganisationAuditEventType(
   value: unknown,
@@ -60,9 +60,14 @@ export function isOrganisationAuditEvent(
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const record = value as Record<string, unknown>;
   const keys = Object.keys(record).sort();
-  const expected = [...EVENT_KEYS].sort();
-  const exactKeys = keys.length === expected.length
-    && keys.every((key, index) => key === expected[index]);
+  const expected = [...REQUIRED_EVENT_KEYS].sort();
+  const requiredKeysPresent = expected.every((key) => keys.includes(key));
+  const onlyKnownKeys = keys.every((key) =>
+    (REQUIRED_EVENT_KEYS as readonly string[]).includes(key)
+    || (OPTIONAL_EVENT_KEYS as readonly string[]).includes(key));
+  const exactKeys = requiredKeysPresent && onlyKnownKeys
+    && keys.length >= REQUIRED_EVENT_KEYS.length
+    && keys.length <= REQUIRED_EVENT_KEYS.length + OPTIONAL_EVENT_KEYS.length;
   const targetValid = record.targetUid === undefined
     || (typeof record.targetUid === 'string' && ID.test(record.targetUid));
 
