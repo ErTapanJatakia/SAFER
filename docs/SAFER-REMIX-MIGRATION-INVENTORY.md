@@ -435,3 +435,12 @@ The next safe account-settings candidate has been implemented on the same featur
 - Added unit coverage for date parsing, timezone display, clock formats, number grouping and unavailable storage. Tests are registered as `test:account-formatting` but have not been run.
 
 This is a staged integration, not a claim that every SAFER screen is localized. Other operational views continue using their established date/number display conventions until each can be audited and migrated without changing stored evidence or date-calculation semantics. The Account Settings description now states the exact current coverage.
+
+
+### Regional formatting rollout: personnel detail view
+
+The first operational read-only detail surface now consumes the same browser-local regional preferences:
+- Personnel birth date, work-history dates, certification completion/expiry dates and last supervisor review date use the selected date format.
+- Date labels reflect the active format so the displayed value is not ambiguous.
+- Formatting is display-only; personnel form input validation and stored date values remain DD-MM-YYYY as before, and readiness calculations are untouched.
+- The feature branch still requires consolidated validation before review or merge.
