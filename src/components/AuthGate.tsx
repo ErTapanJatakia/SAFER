@@ -262,7 +262,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
     if (!requestToken || requestToken.uid !== requestedUid || requestToken.orgId !== requestedOrganisationId) {
       setMembership(null);
       setMembershipBusy(false);
-      setMembershipError('Membership could not be verified. Check the organisation ID or contact its authorised administrator.');
+      setMembershipError('Membership could not be verified. Check your connection and organisation ID, then retry or contact an authorised administrator.');
       return;
     }
     setMembershipBusy(true);
@@ -327,7 +327,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
                 <h2 id="organisation-access-heading" className="font-semibold">Organisation membership</h2>
                 <p className="text-xs text-slate-300">Enter the organisation ID supplied through your authorised onboarding process. SAFER checks only your exact membership record.</p>
               </div>
-              <form onSubmit={handleResolveMembership} className="flex flex-col gap-2 sm:flex-row sm:items-end">
+              <form onSubmit={handleResolveMembership} aria-busy={membershipBusy} className="flex flex-col gap-2 sm:flex-row sm:items-end">
                 <label className="flex-1 text-xs font-medium text-slate-300">Organisation ID
                   <input
                     value={organisationId}
