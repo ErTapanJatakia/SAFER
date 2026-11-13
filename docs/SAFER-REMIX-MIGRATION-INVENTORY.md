@@ -456,3 +456,6 @@ Extended the display-only integration to the following additional surfaces:
 - SAFER's legacy incident timestamp shape (`YYYY-MM-DD HH:mm`) is now parsed explicitly as a local wall-clock timestamp before timezone display conversion; invalid calendar/time values fail to the neutral fallback rather than relying on browser-specific Date string parsing.
 
 The integration does not rewrite records or alter due-date comparisons, readiness calculations, incident chronology, input validation, export evidence, or timestamps generated at record creation. New focused tests cover the local timestamp parser and are registered in the existing regional-formatting suite. No test/CI run was initiated during this implementation batch.
+
+
+A follow-up source audit also removed the remaining browser-default locale formatting in the Privacy Console (grievance submission timestamps) and personnel export preview character count. The Privacy Console now uses the shared account preference formatter for all visible timestamps in its notices, rights/grievance examples, consent ledger, and retention review sections.
