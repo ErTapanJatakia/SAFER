@@ -1,24 +1,8 @@
 name: SAFER dependency and build validation
 
 on:
-  push:
-    branches:
-      - "feature/*"
-      - "security/*"
-      - "fix/*"
-    paths:
-      - "package.json"
-      - "package-lock.json"
-      - "bun.lock"
-      - "src/**"
-      - "tests/**"
-      - "firestore.rules"
-      - "firebase.json"
-      - "vercel.json"
-      - "public/**"
-      - "docs/**"
-      - "README.md"
-      - ".github/workflows/firebase-foundation.yml"
+  # Run the consolidated gate once a feature batch is ready for review,
+  # rather than on every intermediate implementation commit.
   pull_request:
     branches:
       - main
@@ -36,6 +20,7 @@ on:
       - "docs/**"
       - "README.md"
       - ".github/workflows/firebase-foundation.yml"
+  workflow_dispatch:
 
 permissions:
   contents: write
