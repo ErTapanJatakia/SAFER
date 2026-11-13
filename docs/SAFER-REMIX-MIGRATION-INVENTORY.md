@@ -293,3 +293,23 @@ Comparison basis: current main directory listings for SAFER-Remix and canonical 
 3. Fix any failures without weakening or deleting tests; apply the three-consecutive-failure redesign rule.
 4. Complete final runtime/source reconciliation and update this inventory with actual validation results.
 5. Keep SAFER-Remix available until the user explicitly approves retirement after all candidates are classified and validated.
+
+## Type and demonstration-data reconciliation
+
+Directory comparison of Remix and canonical SAFER confirms both demonstration data modules (mockData and indianPersonnel) already exist in SAFER. No separate data-file migration is required; retain canonical synthetic-data labels, privacy boundaries, and data validation.
+
+| Remix type module | Canonical disposition |
+|---|---|
+| types/index.ts | Already represented by canonical operational domain types |
+| types/multiorg.ts | Replaced by canonical organisation.ts and tenantMembership.ts; canonical four-role schema follows existing Firestore Rules |
+| types/privacy.ts | Replaced by canonical synthetic privacy workspace contracts; do not import Remix legal assumptions or persistence shape |
+| types/settings.ts | Replaced by canonical local-only account settings contract and separate authenticated account-security state |
+| types/theme.ts | Already represented by canonical theme types and branding configuration |
+
+The current canonical type directory is intentionally smaller because organisation and account-security domain contracts live in their own focused modules. A filename mismatch is not a missing capability.
+
+## Repository-level migration boundary
+
+No Remix Firebase project configuration, Firestore Rules, lockfile, package manifest, environment example, generated metadata, or deployment configuration is copied into canonical SAFER. Canonical SAFER's current project identity, dependency graph, emulator setup, CI workflows, deployment policy, and zero-cost constraints remain authoritative.
+
+Reference screenshots and temporary AI Studio media are not application features or source-of-truth assets. They are not bulk-migrated. Any future asset reuse requires a specific product need, provenance check, accessibility review, and optimization assessment.
