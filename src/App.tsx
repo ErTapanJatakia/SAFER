@@ -269,6 +269,11 @@ export default function App() {
         const message = 'A cross-tab conflict was detected. Your previous records remain unchanged. Export any needed work, then reload this tab.';
         setCrossTabConflictMessage(message);
         showToast(message);
+      } else if (error instanceof Error && error.message.includes('Web Locks API')) {
+        crossTabConflictRef.current = true;
+        const message = 'Editing is disabled because this browser cannot coordinate safe cross-tab writes. Use a browser that supports the Web Locks API.';
+        setCrossTabConflictMessage(message);
+        showToast(message);
       } else {
         showToast(errorMessage);
       }
