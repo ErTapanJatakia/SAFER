@@ -10,6 +10,7 @@ import {
   Palette,
   Eye,
   Info,
+  Wallet,
 } from 'lucide-react';
 
 interface HeaderBannerProps {
@@ -19,6 +20,7 @@ interface HeaderBannerProps {
   onOpenBranding: () => void;
   onOpenTheme: () => void;
   onOpenAccessibility: () => void;
+  onOpenBudget: () => void;
   topLogo: LogoConfig;
   themeCamoPattern?: string;
 }
@@ -30,6 +32,7 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
   onOpenBranding,
   onOpenTheme,
   onOpenAccessibility,
+  onOpenBudget,
   topLogo,
   themeCamoPattern,
 }) => {
@@ -88,6 +91,17 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
           >
             <Palette className="w-3.5 h-3.5" />
             <span className="font-semibold text-[11px]">Theme</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onOpenBudget}
+            className="inline-flex items-center space-x-1 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-emerald-300 hover:text-white border border-slate-700 transition"
+            title="View SAFER zero-cost operating policy"
+            aria-label="Open zero-cost budget policy"
+          >
+            <Wallet className="w-3.5 h-3.5" />
+            <span className="font-semibold text-[11px]">Budget</span>
           </button>
 
           <button
