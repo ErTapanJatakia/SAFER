@@ -214,3 +214,10 @@ If Firebase's authentication observer fails while an organisation membership req
 ## Replaced authentication observer callback isolation
 
 AuthGate now marks each Firebase authentication observer inactive during effect cleanup and ignores both queued identity callbacks and queued error callbacks from that replaced observer. This supplements Firebase unsubscribe during observer retry: a delayed callback from the previous subscription cannot overwrite a newly recovered account's UI identity. The regression test retains the previous observer callback, recovers a new identity, then delivers a late old-identity callback and confirms the recovered identity remains displayed. This is client-side callback ordering protection, not a change to Firebase authentication or token validity. Test execution remains deferred to consolidated validation.
+
+## Organisation profile tenant and privilege transition regressions
+
+The profile-panel regression suite now holds an organisation metadata request open while the verified organisation context changes. It confirms that the new tenant's profile is displayed and the late response for the previous tenant cannot overwrite it. A second case holds an owner metadata request open while the membership role changes to manager; the privileged profile remains unavailable and the obsolete response is ignored.
+
+These are UI request-lifecycle checks only. The exact membership resolver and Firestore Rules remain authoritative, and no additional metadata reads, polling, caching, or permission grants are introduced. The tests are authored but remain deferred to the consolidated validation milestone.
+
