@@ -368,6 +368,45 @@ test("membership, restricted records, audit events, and unapproved organisation 
   }));
 });
 
+test("cross-tenant membership, organisation, operational, and audit access are denied", async () => {
+  await seedTenant({ orgId: "tenant-isolation-a", uid: "tenant-owner-a" });
+  await seedTenant({ orgId: "tenant-isolation-b", uid: "tenant-owner-b" });
+
+  const attacker = dbFor("tenant-owner-a");
+  await assertFails(getDoc(doc(attacker, "organisations/tenant-isolation-b")));
+  await assertFails(getDoc(doc(attacker, "organisations/tenant-isolation-b/members/tenant-owner-b")));
+  await assertFails(getDoc(doc(attacker, "organisations/tenant-isolation-b/personnel/person-b")));
+  await assertFails(getDoc(doc(attacker, "organisations/tenant-isolation-b/incidents/incident-b")));
+  await assertFails(setDoc(doc(attacker, "organisations/tenant-isolation-b/personnel/cross-tenant-write"),
+    validPersonnel("tenant-owner-a", "tenant-isolation-b", "cross-tenant-write")));
+  await assertFails(setDoc(doc(attacker, "organisations/tenant-isolation-b/incidents/cross-tenant-incident"),
+    validIncident("tenant-owner-a", "tenant-isolation-b", "cross-tenant-incident")));
+  await assertFails(getDoc(doc(attacker, "organisations/tenant-isolation-b/auditEvents/event-b")));
+  await assertFails(setDoc(doc(attacker, "organisations/tenant-isolation-b/auditEvents/event-b"), {
+    eventId: "event-b", orgId: "tenant-isolation-b", actorUid: "tenant-owner-a",
+    eventType: "membership.role_changed",
+  }));
+});
+
+test("membership mutation attempts fail for every role, including cross-user and cross-tenant targets", async () => {
+  for (const role of ["owner", "admin", "manager", "viewer"]) {
+    const uid = "mutation-" + role;
+    const orgId = "mutation-org-" + role;
+    await seedTenant({ orgId, uid, role });
+    await seedTenant({ orgId: orgId + "-other", uid: "other-member" });
+    const db = dbFor(uid);
+
+    await assertFails(setDoc(doc(db, "organisations/" + orgId + "/members/new-member"), {
+      uid: "new-member", orgId, role: "viewer", status: "active",
+    }));
+    await assertFails(updateDoc(doc(db, "organisations/" + orgId + "/members/" + uid), { role: "owner" }));
+    await assertFails(updateDoc(doc(db, "organisations/" + orgId + "/members/other-member"), { role: "admin" }));
+    await assertFails(deleteDoc(doc(db, "organisations/" + orgId + "/members/" + uid)));
+    await assertFails(setDoc(doc(db, "organisations/" + orgId + "-other/members/attacker"), {
+      uid: "attacker", orgId: orgId + "-other", role: "owner", status: "active",
+    }));
+  }
+});
 test("tenant list queries must constrain the organisation field", async () => {
   await seedTenant();
   const db = dbFor("owner-a");
