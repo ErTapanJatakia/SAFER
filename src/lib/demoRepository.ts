@@ -331,13 +331,20 @@ export function createDemoRepository(storage: DemoStorage, options: DemoReposito
         const failedKeys: string[] = [];
         domains.forEach((domain) => {
           const key = KEYS[domain];
-          try { storage.removeItem(key); }
-          catch { failedKeys.push(domain); }
+          try {
+            storage.removeItem(key);
+            // Keep the in-memory baseline aligned with each confirmed removal,
+            // even if another key fails. This lets the user safely retry a
+            // partial reset without treating our own removals as tab conflicts.
+            if (storage.getItem(key) === null) expectedRaw.set(key, null);
+            else failedKeys.push(domain);
+          } catch {
+            failedKeys.push(domain);
+          }
         });
         if (failedKeys.length > 0) {
           throw new Error(`Unable to clear all Demo Guest records. Storage removal failed for: ${failedKeys.join(', ')}.`);
         }
-        domains.forEach((domain) => expectedRaw.set(KEYS[domain], null));
       };
       await removeAllUnderLocks(0);
     },
