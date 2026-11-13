@@ -16,7 +16,7 @@
 | No client membership mutation | Every role attempts create, update, or delete | Firestore Rules | Existing denial test plus expanded role-by-role test | Deny for every role |
 | No privilege escalation | User promotes self or another member to owner/admin | Firestore Rules | Expanded role-by-role test; pure policy tests are supplementary only | Deny |
 | Tenant isolation | Tenant A member reads/writes tenant B organisation, membership, personnel, or incident records | Firestore Rules | New cross-tenant emulator test | Deny |
-| Role separation | Manager/viewer attempt operational data access | Firestore Rules | Existing manager/viewer tests | Deny |
+| Role separation | Manager/viewer attempt operational data access | Firestore Rules | Existing manager/viewer tests | Deny |\n| Explicit operation denials | Owner/admin attempt personnel or incident deletion, evidence create/update/delete, membership mutation, or audit read/write | Firestore Rules + capability matrix | Firestore Rules tests and organisation domain/UI tests | Deny; UI must display the denial |
 | Organisation lifecycle | Suspended organisation or suspended/revoked membership is used | Firestore Rules | Existing suspended/revoked fixtures | Deny |
 | Organisation metadata integrity | Client creates/updates/deletes organisation metadata | Firestore Rules | Existing organisation write denial test | Deny |
 | Audit confidentiality and integrity boundary | Client reads or writes audit events | Firestore Rules | Expanded cross-tenant audit read/write test; existing same-tenant write denial | Deny |
