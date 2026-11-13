@@ -145,3 +145,11 @@ The read-only organisation profile panel now binds every rendered result to the 
 - This is presentation/request isolation only. Firestore Rules continue to authorize every read, and no cache, polling, membership mutation, or operational access is added.
 
 Regression cases have been authored for UID changes while retaining the same tenant, stale asynchronous responses, suspended membership, and unavailable database configuration. They remain pending the consolidated validation milestone.
+
+## Membership verification recovery and request ordering
+
+The authenticated membership check remains an explicit, user-initiated exact-document read. The UI exposes an accessible busy status while the lookup is pending and gives generic recovery guidance to check connectivity and the organisation locator before retrying. It does not reveal raw Firebase errors or distinguish permission denial from transient unavailability.
+
+The session lifecycle issues a fresh request token for each lookup. Only the newest token in the unchanged UID/organisation context may publish a result; account, organisation, sign-out, and peer-tab transitions invalidate older tokens. Overlapping duplicate requests are therefore last-request-wins, even if an earlier network response arrives later. The UI does not automatically retry, cache membership, or grant authority from a stale result. Firestore Rules remain authoritative for each database operation.
+
+Regression coverage has been authored for overlapping lookups and the accessible pending state. These tests remain pending the consolidated validation milestone.
