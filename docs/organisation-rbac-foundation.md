@@ -1,56 +1,55 @@
-# Organisation and RBAC foundation
+# Organisation and RBAC implementation baseline
 
-**Status:** Domain contracts only; not enabled for tenant access  
+**Status:** Domain/UI contracts only; existing Firestore Rules remain authoritative  
 **Parent:** Privacy Console safety hardening  
 **Cost boundary:** INR 0; Firebase Spark only  
 **Data boundary:** Synthetic development data only
 
-## Delivered in this foundation
+## Current SAFER implementation discovered
 
-- A canonical organisation record and UID-keyed membership contract.
-- Explicit organisation and membership lifecycle states.
-- A conservative five-role vocabulary: owner, admin, manager, auditor, member.
-- A single capability matrix for UI presentation and later policy review.
-- Runtime role-shape validation and a narrow active-membership consistency helper.
+SAFER already contains a substantial tenant authorization foundation. This migration must extend that implementation rather than introduce a parallel Remix-shaped model:
 
-The capability matrix is a user-interface hint only. It is not an authorization boundary and must not be used to authorize Firestore operations. A signed-in user receives no tenant access unless the authoritative membership document and Firestore Security Rules independently permit the requested operation.
+- `src/lib/tenantMembership.ts` resolves one exact membership document at `organisations/{orgId}/members/{uid}`.
+- Membership parsing requires the exact minimal fields `uid`, `orgId`, `role`, and `status`, and binds UID and tenant ID to the authenticated context.
+- Current roles are `owner`, `admin`, `manager`, and `viewer`.
+- `firestore.rules` is default-deny and currently grants operational collection access only to active owner/admin memberships.
+- Membership list/create/update/delete, evidence writes, private personnel, restricted incidents, and audit event access remain denied.
+- Existing emulator-backed suites are registered as `test:firestore-rules` and `test:tenant-membership`.
 
-## Security decisions
+The current UI capability map in `src/types/organisation.ts` deliberately mirrors only the grants that exist today. It is presentation metadata, not authorization.
 
-1. Firebase Authentication UID is the identity key. Email addresses are contact attributes and never membership identifiers.
-2. Membership document ID must equal its `userId` and authenticated UID.
-3. Membership is tenant-scoped and must be explicitly active. Invited, suspended, revoked, missing, and malformed membership grants no access.
-4. No platform-wide super-admin role is exposed in client domain contracts.
-5. Owner/admin membership assignment is not available to the untrusted client. Initial owner provisioning requires a separately reviewed trusted operator procedure.
-6. No client self-service organisation creation, owner transfer, invitations, role escalation, or membership revocation is implemented here.
-7. Audit events, personnel, incidents, evidence, and privacy records remain inaccessible through this model until the Firestore schema and per-operation rules are approved and emulator-tested.
-8. No old SAFER-Remix Firebase project configuration, rules, IDs, or sample organisations are copied.
+## Domain contracts added
 
-## Role capability baseline
+- Canonical organisation metadata contract aligned to the current `orgId`, `displayName`, `status`, and `schemaVersion` fields.
+- Minimal membership contract aligned exactly to the current Rules schema.
+- Role vocabulary and UI capability hints aligned with the existing tenant membership resolver and Rules.
+- Runtime role validation and a narrow membership provenance helper.
 
-| Role | Intended UI capability |
-|---|---|
-| Owner | Tenant governance and broad operational capability |
-| Admin | Tenant administration and broad operational capability |
-| Manager | Personnel and incident workflows; no membership management or operational export |
-| Auditor | Read-only views and audit visibility |
-| Member | Limited incident participation; no personnel, membership, audit, or export access |
+No Remix sample organisation names, old Firebase IDs, or alternate role vocabulary are carried over.
 
-This matrix is a starting product policy, not a final legal or operational authorization decision. Firestore rules must independently define allowed document paths, fields, and operations for each role. Sensitive fields may require separate documents because Firestore rules cannot redact fields from a returned document.
+## Security boundaries retained
+
+1. Firebase Authentication UID is the identity key. Email is not a membership identifier.
+2. Membership document ID, `uid`, authenticated UID, and requested tenant must agree.
+3. Membership must be active and the organisation must be active.
+4. A role shown in the client is never sufficient to authorize a Firestore operation.
+5. No client-side membership creation, role assignment, owner transfer, invitation, or revocation.
+6. No production rules publication, tenant provisioning, or operational-record migration.
+7. No local Demo Guest data is synchronized or uploaded.
+8. Firestore rules remain the only authorization authority; any future grants require emulator-backed negative and positive tests.
 
 ## Next implementation slices
 
-1. Define and review a concrete Firestore document schema and field-level data classification.
-2. Implement rule helper functions and explicit per-collection grants while keeping production access deny-all.
-3. Build Firebase Emulator tests for unauthenticated access, missing/inactive membership, cross-tenant reads and writes, self-promotion, forged roles, invalid fields, query constraints, and immutable audit events.
-4. Only after those gates pass, request separate approval for any production rules publication or tenant provisioning.
-5. Design invitation and membership lifecycle without client-trusted role assignment.
-6. Keep existing local Demo Guest records separate. No automatic localStorage-to-Firestore migration is permitted.
+1. Reconcile the UI with the existing four-role model and current owner/admin-only operational grants.
+2. Design membership lifecycle and trusted owner bootstrap without client-side privilege assignment.
+3. Extend emulator coverage for cross-tenant queries, role mutation attempts, membership lifecycle, and immutable audit-event policy.
+4. Only after review and separate approval, consider production rules changes or tenant provisioning.
+5. Keep operational localStorage records separate until an explicit, reviewed migration workflow exists.
 
 ## Explicitly not implemented
 
-- No Firestore reads or writes.
+- No Firestore reads/writes added by this domain contract.
 - No changes to `firestore.rules` or Firebase configuration.
-- No production tenant creation, sign-in activation, or role assignment.
+- No production tenant creation, role assignment, or membership mutation.
 - No operational-record migration or synchronization.
-- No claims of tenant isolation being active or guaranteed.
+- No claim that every Remix RBAC screen or workflow has been migrated.
