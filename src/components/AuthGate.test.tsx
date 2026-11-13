@@ -39,6 +39,16 @@ const verifiedWorkspace = () => host.querySelector('[data-testid="verified-organ
 describe('AuthGate membership session handling',()=>{
  it('does not resolve membership for Demo Guest',async()=>{button('Continue as Demo Guest').click();await flush();expect(host.textContent).toContain('Demo Guest session');expect(host.querySelector('input[placeholder="Enter organisation ID"]')).toBeNull();expect(resolveTenantMembership).not.toHaveBeenCalled();});
  it('keeps the operational app shell unmounted for authenticated sessions',async()=>{auth(makeUser('user-a'));await flush();expect(host.textContent).toContain('Account verified — workspace not yet released');expect(host.textContent).not.toContain('App shell');expect(host.textContent).not.toContain('Demo Guest session');});
+ it('remounts account security controls when the authenticated UID changes',async()=>{
+  auth(makeUser('user-a'));await flush();
+  const current=host.querySelector('input[autocomplete="current-password"]') as HTMLInputElement;
+  change(current,'SensitiveOldAccountPass!123');
+  expect(current.value).toBe('SensitiveOldAccountPass!123');
+  auth(makeUser('user-b'));await flush();
+  const next=[...host.querySelectorAll('input[autocomplete="current-password"]')][0] as HTMLInputElement;
+  expect(next.value).toBe('');
+  expect(host.textContent).toContain('user-b@example.test');
+ });
  it('does not touch operational browser storage while signed out or authenticated',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');expect(read).not.toHaveBeenCalled();auth(makeUser('user-a'));await flush();expect(read).not.toHaveBeenCalled();expect(host.textContent).not.toContain('Operational app shell');});
  it('probes all operational storage keys only after explicit Demo Guest entry',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');expect(read).not.toHaveBeenCalled();button('Continue as Demo Guest').click();await flush();expect(read).toHaveBeenCalledTimes(5);expect(read).toHaveBeenNthCalledWith(1,'prot_ops_personnel_v2');expect(read).toHaveBeenNthCalledWith(2,'prot_ops_incidents_v2');expect(read).toHaveBeenNthCalledWith(3,'prot_ops_cyber_v2');expect(read).toHaveBeenNthCalledWith(4,'prot_ops_checklist_v2');expect(host.textContent).toContain('Operational app shell');});
  it('unmounts the Demo Guest workspace when an authenticated identity appears and revokes retained access',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');button('Continue as Demo Guest').click();await flush();expect(read).toHaveBeenCalledTimes(5);auth(makeUser('user-a'));await flush();expect(host.textContent).not.toContain('Operational app shell');expect(host.textContent).toContain('Account verified — workspace not yet released');expect(read).toHaveBeenCalledTimes(5);expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);expect(read).toHaveBeenCalledTimes(5);});
