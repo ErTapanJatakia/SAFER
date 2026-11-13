@@ -3,6 +3,7 @@ import {
   createAccountSettingsExport,
   DEFAULT_ACCOUNT_SETTINGS,
   normalizeAccountSettings,
+  readAccountProfile,
   validateAccountProfile,
 } from './accountSettings.ts';
 
@@ -69,5 +70,29 @@ describe('personal settings export', () => {
   it('does not include a user identifier or authentication token', () => {
     const serialized = JSON.stringify(createAccountSettingsExport(DEFAULT_ACCOUNT_SETTINGS));
     expect(serialized).not.toMatch(/uid|token|password/i);
+  });
+});
+
+
+describe('browser-local profile display reader', () => {
+  const storage = (value: string | null) => ({
+    getItem: () => value,
+  });
+
+  it('returns only the normalized profile from valid local preferences', () => {
+    expect(readAccountProfile(storage(JSON.stringify({
+      profile: { displayName: '  Operator  ', callSign: 'ALPHA', bio: 'Private bio' },
+    })))).toEqual({
+      displayName: '  Operator  ',
+      callSign: 'ALPHA',
+      bio: 'Private bio',
+    });
+  });
+
+  it('returns an empty profile when storage is absent, malformed or unavailable', () => {
+    expect(readAccountProfile(storage(null))).toEqual(DEFAULT_ACCOUNT_SETTINGS.profile);
+    expect(readAccountProfile(storage('{invalid-json')).toEqual(DEFAULT_ACCOUNT_SETTINGS.profile);
+    expect(readAccountProfile({ getItem: () => { throw new Error('storage unavailable'); } }))
+      .toEqual(DEFAULT_ACCOUNT_SETTINGS.profile);
   });
 });
