@@ -113,6 +113,26 @@ describe('authenticated account security lifecycle',()=>{
   expect(host.textContent).not.toContain('Password updated.');
   expect(previousUser.uid).toBe('user-a');
  });
+ it('broadcasts a completed password mutation even if its panel was replaced mid-request',async()=>{
+  let finishPasswordUpdate!:()=>void;
+  vi.mocked(updatePassword).mockReturnValueOnce(new Promise<void>(resolve=>{finishPasswordUpdate=resolve;}));
+  change(input('Current password'),'CurrentPass!123');
+  change(input('New password'),'NewSecurePass!456');
+  change(input('Confirm new password'),'NewSecurePass!456');
+  submit('Change password');
+  await flush();
+  expect(updatePassword).toHaveBeenCalledTimes(1);
+
+  user=makeUser(['password']);
+  user.uid='user-b';
+  user.email='user-b@example.test';
+  await act(async()=>root.render(<AccountSecurityPanel user={user}/>));
+  await act(async()=>finishPasswordUpdate());
+  await flush();
+
+  expect(sessionInvalidation.publishSessionInvalidation).toHaveBeenCalledTimes(1);
+  expect(host.textContent).not.toContain('Password updated.');
+ });
  it('does not change the password if re-authentication fails',async()=>{
   vi.mocked(reauthenticateWithCredential).mockRejectedValueOnce({code:'auth/wrong-password'});
   change(input('Current password'),'WrongPass!123');change(input('New password'),'NewSecurePass!456');change(input('Confirm new password'),'NewSecurePass!456');
