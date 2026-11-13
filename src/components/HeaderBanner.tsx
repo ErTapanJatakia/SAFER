@@ -2,6 +2,7 @@ import type { LogoConfig } from '../types/theme.ts';
 import { isSafeImageDataUrl } from '../utils/securitySanitizer.ts';
 import { SaferWordmark } from './SaferWordmark.tsx';
 import { formatAccountDate, formatAccountNumber, readAccountPreferences } from '../utils/accountFormatting.ts';
+import { readAccountProfile } from '../utils/accountSettings.ts';
 import {
   Shield,
   AlertTriangle,
@@ -44,6 +45,9 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
   themeCamoPattern,
 }) => {
   const accountPreferences = readAccountPreferences();
+  const localProfile = readAccountProfile();
+  const profileName = localProfile.displayName.trim();
+  const profileCallSign = localProfile.callSign.trim();
   const todayLabel = formatAccountDate(new Date(), accountPreferences);
   const showTopLogoLeft =
     topLogo.enabled && isSafeImageDataUrl(topLogo.dataUrl) && topLogo.position === 'top-left';
@@ -134,6 +138,19 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
             <UserRound className="w-3.5 h-3.5" />
             <span className="font-semibold text-[11px]">Account</span>
           </button>
+
+          {profileName && (
+            <span
+              className="inline-flex max-w-[220px] items-center gap-1.5 rounded border border-cyan-800 bg-cyan-950/60 px-2.5 py-1 text-[11px] text-cyan-100"
+              aria-label={`Browser-local profile: ${profileName}${profileCallSign ? `, call sign ${profileCallSign}` : ''}. This is not the signed-in identity.`}
+              title="Browser-local profile only; not your authenticated sign-in identity"
+            >
+              <UserRound className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="truncate font-semibold">{profileName}</span>
+              {profileCallSign && <span className="truncate text-cyan-300">· {profileCallSign}</span>}
+              <span className="sr-only">Local profile, not signed-in identity</span>
+            </span>
+          )}
 
           <button
             type="button"
