@@ -241,3 +241,10 @@ The parser still grants no authority: it only validates the result of the exact 
 The role capability contract and read-only workspace matrix now show the important negative grants explicitly. Even active owner/admin memberships cannot delete personnel or incident records, write evidence records, manage memberships, or read/write audit events under the current Rules. Owner/admin may read personnel, incidents and evidence, and create/update personnel and incidents subject to the existing field-level Rules validation. Manager/viewer remain denied all tenant operational capabilities.
 
 This is a presentation/domain mirror of the current `firestore.rules`, not a new permission system. No Rules changed and no operational workflow was released. Type-level and UI regression cases have been authored for the explicit denials; they remain pending consolidated validation.
+
+
+## Organisation profile parser runtime-object boundary
+
+The exact organisation metadata reader now validates its Firestore adapter result as a plain data object with precisely the four current organisation fields. It rejects accessor-backed values without executing getters, inherited/exotic objects, symbol or extra keys, and proxy inspection failures. Malformed profiles return one generic `invalid-profile` error and are never rendered.
+
+The owner/admin role check, exact organisation document read, active status, bounded display name, and schema version checks remain unchanged. Firestore Rules still authorize the read; this parser does not provision a tenant or grant operational access. Regression coverage is authored for hostile object shapes and remains pending consolidated validation.
