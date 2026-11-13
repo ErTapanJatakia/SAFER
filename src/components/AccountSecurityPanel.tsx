@@ -166,7 +166,6 @@ export const AccountSecurityPanel: React.FC<AccountSecurityPanelProps> = ({user,
       setEmailCurrentPassword('');
       setNewEmail('');
       setMessage('A verification link has been sent to the new address. The account email changes only after verification.');
-      publishSessionInvalidation();
     });
   };
 
