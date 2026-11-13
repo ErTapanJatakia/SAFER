@@ -1,140 +1,94 @@
 /**
- * SAFER organisation and membership domain contracts.
- *
- * These types describe the proposed tenant model only. They are not an
- * authorization mechanism. All access must be enforced by Firestore Security
- * Rules against authoritative membership documents before any tenant data is
- * read or written. Never derive roles from profile fields or browser storage.
+ * SAFER's current tenant domain contracts, aligned with tenantMembership.ts
+ * and firestore.rules. These types do not grant access: Firestore Security
+ * Rules remain the authoritative boundary.
  */
 
-export type OrganisationStatus = 'active' | 'suspended' | 'archived';
+export type OrganisationStatus = 'active' | 'suspended';
 
-export type OrganisationRole =
-  | 'owner'
-  | 'admin'
-  | 'manager'
-  | 'auditor'
-  | 'member';
+export type TenantRole = 'owner' | 'admin' | 'manager' | 'viewer';
 
-export type MembershipStatus =
-  | 'invited'
-  | 'active'
-  | 'suspended'
-  | 'revoked';
+export type MembershipStatus = 'active' | 'suspended' | 'revoked';
 
 export interface OrganisationRecord {
-  /** Firestore document ID; generated outside untrusted client input. */
-  id: string;
+  orgId: string;
   displayName: string;
   status: OrganisationStatus;
-  createdAt: string;
-  /** Auth UID of the trusted provisioning actor, not an email address. */
-  createdByUid: string;
+  schemaVersion: 1;
 }
 
+/** Exact minimal membership shape currently accepted by Firestore Rules. */
 export interface OrganisationMembership {
-  /** Must equal the Firebase Authentication UID and membership document ID. */
-  userId: string;
-  organisationId: string;
-  role: OrganisationRole;
-  status: MembershipStatus;
-  createdAt: string;
-  /** Trusted actor UID that provisioned or changed this membership. */
-  assignedByUid: string;
-  updatedAt: string;
+  uid: string;
+  orgId: string;
+  role: TenantRole;
+  status: 'active';
 }
 
 /**
- * UI capability hints only. Firestore rules must independently enforce every
- * operation. This matrix must never be treated as proof of authorization.
+ * Reflects current rules, not a desired future grant matrix.
+ * Manager and viewer are intentionally denied operational access today.
  */
-export interface OrganisationRoleCapabilities {
-  canViewPersonnel: boolean;
-  canEditPersonnel: boolean;
-  canViewIncidents: boolean;
+export interface TenantUiCapabilities {
+  canReadOrganisation: boolean;
+  canReadPersonnel: boolean;
+  canWritePersonnel: boolean;
+  canReadIncidents: boolean;
   canCreateIncidents: boolean;
   canUpdateIncidents: boolean;
-  canViewAuditEvents: boolean;
+  canReadEvidence: boolean;
   canManageMemberships: boolean;
-  canExportOperationalData: boolean;
-  readOnly: boolean;
+  canReadAuditEvents: boolean;
 }
 
-export const ORGANISATION_ROLE_CAPABILITIES: Readonly<
-  Record<OrganisationRole, Readonly<OrganisationRoleCapabilities>>
-> = Object.freeze({
-  owner: Object.freeze({
-    canViewPersonnel: true,
-    canEditPersonnel: true,
-    canViewIncidents: true,
-    canCreateIncidents: true,
-    canUpdateIncidents: true,
-    canViewAuditEvents: true,
-    canManageMemberships: true,
-    canExportOperationalData: true,
-    readOnly: false,
-  }),
-  admin: Object.freeze({
-    canViewPersonnel: true,
-    canEditPersonnel: true,
-    canViewIncidents: true,
-    canCreateIncidents: true,
-    canUpdateIncidents: true,
-    canViewAuditEvents: true,
-    canManageMemberships: true,
-    canExportOperationalData: true,
-    readOnly: false,
-  }),
-  manager: Object.freeze({
-    canViewPersonnel: true,
-    canEditPersonnel: true,
-    canViewIncidents: true,
-    canCreateIncidents: true,
-    canUpdateIncidents: true,
-    canViewAuditEvents: true,
-    canManageMemberships: false,
-    canExportOperationalData: false,
-    readOnly: false,
-  }),
-  auditor: Object.freeze({
-    canViewPersonnel: true,
-    canEditPersonnel: false,
-    canViewIncidents: true,
-    canCreateIncidents: false,
-    canUpdateIncidents: false,
-    canViewAuditEvents: true,
-    canManageMemberships: false,
-    canExportOperationalData: false,
-    readOnly: true,
-  }),
-  member: Object.freeze({
-    canViewPersonnel: false,
-    canEditPersonnel: false,
-    canViewIncidents: true,
-    canCreateIncidents: true,
-    canUpdateIncidents: false,
-    canViewAuditEvents: false,
-    canManageMemberships: false,
-    canExportOperationalData: false,
-    readOnly: false,
-  }),
+const OWNER_ADMIN_CAPABILITIES: Readonly<TenantUiCapabilities> = Object.freeze({
+  canReadOrganisation: true,
+  canReadPersonnel: true,
+  canWritePersonnel: true,
+  canReadIncidents: true,
+  canCreateIncidents: true,
+  canUpdateIncidents: true,
+  canReadEvidence: true,
+  canManageMemberships: false,
+  canReadAuditEvents: false,
 });
 
-const ORGANISATION_ROLES: readonly OrganisationRole[] = [
-  'owner', 'admin', 'manager', 'auditor', 'member',
-];
+const NO_TENANT_CAPABILITIES: Readonly<TenantUiCapabilities> = Object.freeze({
+  canReadOrganisation: false,
+  canReadPersonnel: false,
+  canWritePersonnel: false,
+  canReadIncidents: false,
+  canCreateIncidents: false,
+  canUpdateIncidents: false,
+  canReadEvidence: false,
+  canManageMemberships: false,
+  canReadAuditEvents: false,
+});
 
-export function isOrganisationRole(value: unknown): value is OrganisationRole {
-  return typeof value === 'string' &&
-    ORGANISATION_ROLES.includes(value as OrganisationRole);
+/** UI hints only. Never use this map as a substitute for Firestore Rules. */
+export const TENANT_ROLE_UI_CAPABILITIES: Readonly<
+  Record<TenantRole, Readonly<TenantUiCapabilities>>
+> = Object.freeze({
+  owner: OWNER_ADMIN_CAPABILITIES,
+  admin: OWNER_ADMIN_CAPABILITIES,
+  manager: NO_TENANT_CAPABILITIES,
+  viewer: NO_TENANT_CAPABILITIES,
+});
+
+const TENANT_ROLES: readonly TenantRole[] = ['owner', 'admin', 'manager', 'viewer'];
+
+export function isTenantRole(value: unknown): value is TenantRole {
+  return typeof value === 'string' && TENANT_ROLES.includes(value as TenantRole);
 }
 
-export function isActiveMembershipFor(
+/** Shape/provenance check for UI decisions; not a security authorization. */
+export function isCurrentUserActiveMember(
   membership: OrganisationMembership,
   authenticatedUid: string,
-  organisationId: string,
+  expectedOrgId: string,
 ): boolean {
-  return membership.userId === authenticatedUid &&
-    membership.organisationId === organisationId &&
-    membership.status === 'active';
+  return membership.uid === authenticatedUid &&
+    membership.orgId === expectedOrgId &&
+    membership.status === 'active' &&
+    isTenantRole(membership.role);
 }
