@@ -492,3 +492,25 @@ The AuthGate tests now assert the current stable workspace test ID and the role 
 - Saving Account Settings causes the existing application feedback update to re-render the header and reflect the saved profile; reset removes the local profile and the header returns to its unconfigured state.
 - Added focused reader tests for valid, absent, malformed and unavailable browser storage. These tests are authored but remain pending consolidated validation.
 - The Remix account-menu concept is therefore selectively represented without copying its identity semantics or creating a duplicate account menu.
+
+
+### Second-pass account settings audit: remaining candidates and release boundaries
+
+A focused comparison of the remaining Remix account settings against the canonical SAFER runtime has been completed. The following dispositions are deliberate:
+
+| Remix preference | Canonical evidence reviewed | Migration disposition |
+| --- | --- | --- |
+| Layout density (comfortable / compact) | Remix's compact/comfortable choice is used in its settings preview and persisted model. Canonical SAFER has no global density token or verified density-aware layout contract across dashboard, operational views, forms, dialogs and responsive breakpoints. | Defer. Do not expose a compact switch until a consistent application-wide layout contract can be implemented and checked for keyboard target size, readability, reflow and accessibility. |
+| Language (English / Hindi) | Remix exposes two language values, but the selector alone does not provide complete translation resources or prove every screen, validation message, modal, announcement and export label is translated. | Defer. No language preference selector is added until end-to-end translation coverage exists. Existing English interface remains the truthful supported baseline. |
+| Analytics consent | Remix's boolean is not tied to a sufficiently documented event inventory, analytics provider boundary, retention statement and consent enforcement contract. Canonical Vercel product analytics are separately configured and are not the operational security-record store. | Defer. Do not add a consent switch that cannot actually gate the relevant collection. Any future work must define exactly which analytics events are collected, what is excluded, how consent is enforced and how withdrawal behaves. |
+| Inactivity timeout | Canonical `src/lib/sessionLifecycle.ts` is an in-memory generation gate that invalidates stale asynchronous work on identity, organisation and sign-out transitions. It is not itself an inactivity timer or an authentication lockout mechanism. | Defer. Do not add a second timer or claim that an inactivity preference locks or signs out a user. A future implementation must integrate with the actual AuthGate/session boundary, distinguish warning from sign-out, cover keyboard/pointer activity and multi-tab behavior, and preserve immediate session invalidation. |
+
+The canonical application already provides separate theme and accessibility controls; duplicate settings stores are not warranted. The local profile visibility integration is now implemented as browser-local presentation data and explicitly does not alter Firebase identity or authorization.
+
+#### Account-settings migration completion criteria
+
+- Safe local profile, export format, redaction profile and regional display preferences are implemented.
+- Existing theme/accessibility controls remain authoritative.
+- Notification settings remain deferred until real event sources, severity, deduplication, persistence, delivery and accessibility behavior are specified.
+- Density, language, analytics consent and inactivity timeout remain deferred under the criteria above; they are not represented as implemented features.
+- Tests for the account settings/profile reader and all other implementation-batch changes remain pending consolidated validation. No test or CI run is implied by this audit entry.
