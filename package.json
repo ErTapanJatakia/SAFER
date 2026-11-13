@@ -69,7 +69,8 @@
     "test:organisation-domain": "tsx --test src/types/organisation.test.ts",
     "test:organisation-workspace": "vitest run src/components/OrganisationWorkspacePanel.test.tsx",
     "test:organisation-profile": "vitest run src/lib/organisationProfile.test.ts src/components/OrganisationProfilePanel.test.tsx",
-    "test:membership-lifecycle": "tsx --test src/lib/membershipLifecycle.test.ts"
+    "test:membership-lifecycle": "tsx --test src/lib/membershipLifecycle.test.ts",
+    "test:organisation-audit-contract": "tsx --test src/types/organisationAudit.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
