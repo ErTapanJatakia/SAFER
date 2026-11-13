@@ -68,6 +68,8 @@ export function canIssueInvitation(
   actorRole: TenantRole,
   invitedRole: Exclude<TenantRole, 'owner'>,
 ): boolean {
+  if (!TENANT_ROLES.includes(actorRole)
+    || !['admin', 'manager', 'viewer'].includes(invitedRole)) return false;
   if (actorRole === 'owner') return true;
   return actorRole === 'admin' && invitedRole !== 'admin';
 }
@@ -82,6 +84,7 @@ export function validateInvitationForIssuance(
   invitation: MembershipInvitation,
   now: number,
 ): boolean {
+  if (!invitation || typeof invitation !== 'object') return false;
   return INVITATION_ID.test(invitation.invitationId)
     && INVITATION_ID.test(invitation.orgId)
     && UID.test(invitation.invitedByUid)
@@ -204,6 +207,9 @@ export function assessOwnerTransfer(input: {
 export function evaluateMembershipChange(
   proposal: MembershipChangeProposal,
 ): MembershipPolicyDecision {
+  if (!proposal || typeof proposal !== 'object') {
+    return { allowed: false, reason: 'invalid-context' };
+  }
   const {
     actorUid, actorRole, targetUid, currentRole, nextRole,
     currentStatus, nextStatus, activeOwnerCount,
