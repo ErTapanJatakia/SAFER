@@ -64,6 +64,7 @@ describe('AuthGate membership session handling',()=>{
   act(()=>window.dispatchEvent(new StorageEvent('storage',{key:'safer:session-boundary-signal',newValue:'peer-boundary-recovery'})));
   await flush();
   expect(host.textContent).toContain('Account verified — workspace not yet released');
+  expect(host.textContent).toContain('Current Firestore Rules independently permit only the explicitly modelled owner/admin operations');
   expect(verifiedWorkspace()).toBeNull();
   const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
   expect(field.value).toBe('');
