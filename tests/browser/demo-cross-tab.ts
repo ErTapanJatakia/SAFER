@@ -7,7 +7,7 @@ declare global {
       ready: boolean;
       externalChange: string | null;
       savePersonnel: (id: string, fullName: string) => Promise<void>;
-      listPersonnel: () => Promise<Array<{ id: string; fullName: string }>>;
+      listPersonnel: () => Promise<readonly { id: string; fullName: string }[]>;
     };
   }
 }
