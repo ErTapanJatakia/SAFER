@@ -124,6 +124,7 @@ test('revoked memberships cannot be reactivated and non-admins cannot manage mem
   assert.equal(evaluateMembershipChange(proposal({
     actorRole: 'manager',
   })).reason, 'actor-not-authorised');
+});
 
 test('owner transfer assessment requires a distinct active non-owner and trusted authority', () => {
   assert.deepEqual(assessOwnerTransfer({
