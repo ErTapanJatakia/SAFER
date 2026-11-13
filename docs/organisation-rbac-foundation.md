@@ -51,11 +51,13 @@ No Remix sample organisation names, old Firebase IDs, or alternate role vocabula
 
 ## Next implementation slices
 
-1. Add a safe, read-only organisation profile view for roles whose current Rules permit the exact organisation document read; do not query metadata for manager/viewer.
-2. Design membership lifecycle and trusted owner bootstrap without client-side privilege assignment.
-3. Extend emulator coverage for cross-tenant queries, role mutation attempts, membership lifecycle, and immutable audit-event policy.
-4. Only after review and separate approval, consider production rules changes or tenant provisioning.
-5. Keep operational localStorage records separate until an explicit, reviewed migration workflow exists.
+1. [x] Add a safe, read-only organisation profile view for roles whose current Rules permit the exact organisation document read; do not query metadata for manager/viewer.
+2. [x] Define a pure membership lifecycle policy and a structural audit-event contract without enabling writes.
+3. [x] Record the trusted provisioning decision in `docs/TRUSTED-ORGANISATION-PROVISIONING-ADR.md`: manual project-owner administration is the only approved Spark-era provisioning path; no client mutations or unassessed third-party backend.
+4. [ ] Add a manual provisioning checklist/runbook review and emulator scenarios for exact UID/path binding, malformed membership, tenant isolation, and denied client lifecycle writes. Keep these as design/test additions until the consolidated validation milestone.
+5. [ ] Assess whether any genuinely zero-cost trusted execution provider can satisfy every security gate in the ADR. If none qualifies, retain manual owner-operated provisioning.
+6. [ ] Only after review and separate approval, consider production rules changes or tenant provisioning.
+7. Keep operational localStorage records separate until an explicit, reviewed migration workflow exists.
 
 ## Explicitly not implemented
 
@@ -83,3 +85,8 @@ Regression tests are registered as `test:membership-lifecycle`; they have been a
 A minimal envelope and chain-link verifier now live in `src/types/organisationAudit.ts`. The contract allowlists membership and organisation-profile event names, rejects unexpected fields, bounds identifiers, requires SHA-256-shaped event digests, and checks previous-hash continuity and non-decreasing timestamps across a supplied sequence.
 
 This is structural validation only: it does not calculate canonical hashes, verify signatures, guarantee ordering under concurrent writers, or make client storage immutable/tamper-proof. A future trusted backend must own append-only writes, canonical serialization, signing/key custody, retention, access controls, and emulator-backed negative tests. Current Firestore rules still deny audit reads and writes. The regression suite is registered as `test:organisation-audit-contract` and has not been executed.
+
+
+## Trusted provisioning decision
+
+The current Firebase Spark configuration has no trusted application execution service. The approved interim model is manual, project-owner-controlled provisioning through the Firebase administration plane, documented in `docs/TRUSTED-ORGANISATION-PROVISIONING-ADR.md`. The client remains read-only for organisation membership and audit events. No provider, privileged credential, Firebase plan, Rules, or production tenant configuration was changed by this decision.
