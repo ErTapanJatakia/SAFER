@@ -37,7 +37,7 @@ export interface DemoRepositoryOptions {
 
 export class DemoWriteConflictError extends Error {
   constructor(domain: string) {
-    super(`Cross-tab write conflict detected for ${domain}. Reload the workspace before editing again.`);
+    super(`Cross-tab conflict detected for ${domain}. Reload the workspace before editing again.`);
     this.name = 'DemoWriteConflictError';
   }
 }
