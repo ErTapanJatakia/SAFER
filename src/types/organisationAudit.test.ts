@@ -61,6 +61,27 @@ test('audit chain requires genesis null and exact previous-event hash linkage', 
   ]), false);
 });
 
+
+test('audit chain rejects duplicate event IDs and mixed organisation sequences', () => {
+  const first = event();
+  const second = event({
+    eventId: 'event-002',
+    occurredAt: first.occurredAt,
+    orgId: first.orgId,
+    previousEventHash: first.eventHash,
+    eventHash: 'b'.repeat(64),
+  });
+  assert.equal(hasContinuousAuditHashLinks([first, second]), true);
+  assert.equal(hasContinuousAuditHashLinks([
+    first,
+    { ...second, eventId: first.eventId },
+  ]), false);
+  assert.equal(hasContinuousAuditHashLinks([
+    first,
+    { ...second, orgId: 'other-org' },
+  ]), false);
+});
+
 test('audit chain rejects time reversal and malformed event envelopes', () => {
   const first = event();
   const second = event({
