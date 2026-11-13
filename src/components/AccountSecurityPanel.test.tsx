@@ -106,7 +106,8 @@ describe('authenticated account security lifecycle',()=>{
   expect(host.textContent).not.toContain('Current password');
  });
  it('refreshes account details after an email-verification link is completed',async()=>{
-  submit('Refresh account details');await flush();
+  const refresh=[...host.querySelectorAll('button')].find(node=>node.textContent?.includes('Refresh account details')) as HTMLButtonElement;
+  refresh.click();await flush();
   expect(reload).toHaveBeenCalledWith(user);
   expect(host.textContent).toContain('Account details refreshed from Firebase.');
  });
