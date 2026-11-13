@@ -368,3 +368,30 @@ The two Firestore Rules files are materially different, not interchangeable:
 | SAFER-Remix retirement | Not authorized; remains available |
 
 No direct migration candidate remains in the reviewed source, type, data, or root-configuration inventories. The remaining task is to validate the canonical implementation branch as one coherent milestone, review any failures, and obtain the final release decision. This status is an inventory conclusion, not a claim of runtime parity or production readiness.
+
+## Deep second-pass: account settings feature parity
+
+A deeper review of Remix MyAccountSettingsView and its settings schema found several settings concepts that were not captured by the earlier filename-level reconciliation. The earlier statement that no direct migration candidate remains is narrowed accordingly: the old UI itself is not safe to copy, but a few individual preferences are candidates for deliberate canonical integration.
+
+| Remix capability | Current canonical state | Disposition |
+|---|---|---|
+| Profile display name, call sign, bio | Local-only AccountSettingsModal already stores these fields and exports them separately from operational records. | Already represented. Do not import the older cloud sync. |
+| Regional date/time/timezone/number preferences | Canonical account preferences store these values but explicitly state they are not yet applied globally. | Already represented as stored preferences; global formatting integration remains a safe candidate for a future coherent implementation batch. |
+| Theme and accessibility controls | Dedicated canonical controls and settings stores already exist. | Already represented; keep separate to avoid duplicate sources of truth. |
+| Layout density and camouflage trim | Canonical theme system handles visual themes/trim; density is not established as a global account preference. | Candidate only if implemented consistently across operational screens and responsive breakpoints; otherwise defer. |
+| In-app operational/incident/audit alerts, expiry threshold, audio chimes, realtime/batch display | Canonical dashboard has visual status indicators and live announcements, but no equivalent user-configurable notification preference contract was found in the account settings model. Remix describes client-side in-app indicators and Web Audio, not verified push/email/SMS delivery. | Safe candidate for an in-app-only preference layer after verifying each toggle controls actual existing UI behavior. No push, email, SMS, background delivery, or false delivery claims. |
+| English/Hindi language preference | Remix exposes only en-IN and hi-IN settings; that does not establish complete translated application coverage. | Defer until canonical localization resources and full-screen translation coverage exist. Do not add a language selector that changes only a stored label. |
+| Inactivity timeout | Remix stores a selectable timeout value. Canonical session lifecycle already has its own security behavior. | Compare against canonical session lifecycle before any change; never introduce a second independent timer or weaken current invalidation. |
+| Default export redaction level (strict/standard/minimal) | Canonical personnel export already has field-level sensitive defaults and user-controlled selection, but account settings do not yet persist a preferred redaction profile. | Safe candidate: add a local-only default profile only if strict/standard/minimal are precisely mapped to existing field keys and export remains fail-safe. Never make “minimal” the default; retain sensitive redaction by default. |
+| Default export format | Canonical PersonnelExportModal currently starts at TXT. Remix stores PDF/XLSX/CSV/DOCX/TXT as a preference. | Safe candidate: persist a validated local preference and use it as the initial format; no automatic export or silent change to output contents. |
+| Background analytics consent | Remix defaults analytics consent false but its account settings flow is tied to broader cloud settings and privacy request examples. | Do not import until a specific analytics data flow and consent boundary are documented. Vercel privacy-conscious product analytics remain separate from security/operational records. |
+| Privacy/data principal request submission and account deletion request | Remix privacyService uses unsupported deadlines/identities and simulated local request tracking; canonical synthetic privacy console already models example requests. | Keep synthetic-only privacy workflows. Do not present local examples as statutory submissions, actual account erasure, or live DPDPA processing. |
+
+### Settings migration sequencing
+
+1. First candidate batch: local-only default export format and redaction profile, with runtime allowlists and explicit mapping to existing export field keys.
+2. Second candidate batch: in-app notification preferences only, but only after each preference is connected to a real status indicator/chime and its limits are stated.
+3. Later: regional formatting integration and density only after all affected screens can consume one canonical preference source without breaking date consistency or accessibility.
+4. Deferred: language selector until actual translation coverage; analytics consent until a defined analytics data flow; account deletion and statutory request submission until trusted backend and legal process exist.
+
+No settings code was copied during this second-pass review. This correction supersedes the broad "no direct migration candidate remains" statement above for the specific safe candidates listed here.
