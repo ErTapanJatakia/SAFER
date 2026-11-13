@@ -74,6 +74,8 @@ jobs:
 
       - name: Install from frozen Bun lockfile
         run: bun install --frozen-lockfile
+      - name: Install Chromium for browser validation
+        run: bunx playwright install --with-deps chromium
 
       - name: Vercel browser security header policy tests
         run: node --test tests/vercel-security-headers.test.mjs
@@ -239,6 +241,9 @@ jobs:
 
       - name: Cross-tab session invalidation tests
         run: npm run test:session-invalidation
+
+      - name: Real Chromium cross-tab repository tests
+        run: npm run test:browser-cross-tab
 
       - name: Security assessment and export regression tests
         run: npm run test:security-assessment
