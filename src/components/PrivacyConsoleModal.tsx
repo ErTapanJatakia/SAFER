@@ -392,7 +392,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
                 <select className="rounded border border-slate-600 bg-slate-950 px-2 py-1 text-xs" value={record.status} onChange={(e) => updateGrievanceStatus(record.id, e.target.value as PrivacyGrievance['status'])} disabled={!storageReady || !demoAcknowledged} aria-label={`Status for ${record.id}`}>
                   <option value="open">Open</option><option value="investigating">Investigating</option><option value="resolved">Resolved</option><option value="closed">Closed</option>
                 </select>
-              </div><p className="mt-2 text-sm text-slate-300">{record.description}</p><p className="mt-2 text-[11px] text-slate-500">{new Date(record.submittedAt).toLocaleString()}</p>
+              </div><p className="mt-2 text-sm text-slate-300">{record.description}</p><p className="mt-2 text-[11px] text-slate-500">{formatAccountDateTime(record.submittedAt, accountPreferences)}</p>
             </article>)}
             {workspace.grievances.length === 0 && <p className="text-sm text-slate-400">No synthetic grievances recorded.</p>}
           </section>}
