@@ -65,6 +65,7 @@
     "test:browser-cross-tab": "playwright test --config=playwright.config.mjs",
     "test:budget-policy": "vitest run src/utils/budgetPolicy.test.ts",
     "test:account-security": "vitest run src/components/AccountSecurityPanel.test.tsx",
+    "test:account-formatting": "vitest run src/utils/accountFormatting.test.ts",
     "test:privacy-demo": "tsx --test src/utils/privacyRepository.test.ts src/utils/privacyExport.test.ts && node --test tests/privacy-console-synthetic-boundary.test.mjs",
     "test:organisation-domain": "tsx --test src/types/organisation.test.ts",
     "test:organisation-workspace": "vitest run src/components/OrganisationWorkspacePanel.test.tsx",
