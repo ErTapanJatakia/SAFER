@@ -67,6 +67,35 @@ describe('OrganisationProfilePanel', () => {
     expect(host.textContent).not.toContain('Alpha Operations');
   });
 
+  it('hides a previously loaded profile immediately when the authenticated UID changes', async () => {
+    vi.mocked(readOrganisationProfile).mockResolvedValue({
+      orgId: 'org-alpha', displayName: 'Alpha Operations', status: 'active', schemaVersion: 1,
+    });
+    await act(async () => root.render(<OrganisationProfilePanel database={database} membership={member('owner')} />));
+    expect(host.textContent).toContain('Alpha Operations');
+
+    let finish!: (value: {orgId: string; displayName: string; status: 'active'; schemaVersion: 1}) => void;
+    vi.mocked(readOrganisationProfile).mockReturnValueOnce(new Promise((resolve) => { finish = resolve; }));
+    await act(async () => root.render(
+      <OrganisationProfilePanel database={database} membership={{...member('owner'), uid: 'user-b'}} />,
+    ));
+
+    expect(host.textContent).not.toContain('Alpha Operations');
+    expect(host.textContent).toContain('Loading verified organisation profile');
+    await act(async () => finish({
+      orgId: 'org-alpha', displayName: 'Stale Alpha Profile', status: 'active', schemaVersion: 1,
+    }));
+    expect(host.textContent).not.toContain('Stale Alpha Profile');
+  });
+
+  it('does not display profile metadata for a suspended membership', async () => {
+    await act(async () => root.render(
+      <OrganisationProfilePanel database={database} membership={{...member('owner'), status: 'suspended'}} />,
+    ));
+    expect(readOrganisationProfile).not.toHaveBeenCalled();
+    expect(host.textContent).toContain('active owner or administrator membership is required');
+  });
+
   it('fails closed when the profile cannot be retrieved', async () => {
     vi.mocked(readOrganisationProfile).mockRejectedValue(new Error('unavailable'));
     await act(async () => root.render(<OrganisationProfilePanel database={database} membership={member('owner')} />));
