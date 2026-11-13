@@ -466,3 +466,12 @@ A follow-up source audit also removed the remaining browser-default locale forma
 Review of the earlier automatically triggered run `43443158928` identified five AuthGate test failures. The Firestore Rules emulator (19 tests) and tenant membership resolver emulator (5 tests) passed; the failure was in five UI assertions still expecting the previous plain-text labels ("Verified active membership" and "Role: …") after the verified-membership screen had been replaced with the structured `OrganisationWorkspacePanel`.
 
 The AuthGate tests now assert the current stable workspace test ID and the role labels rendered by that panel. Negative session-boundary assertions check that the workspace element is absent, rather than relying on obsolete text. This updates the test contract to the actual UI without removing the session lifecycle, stale-response, cross-tab invalidation, or role checks. The updated tests have not yet been executed.
+
+
+### Dashboard regional-number integration and account export lifecycle
+
+- Dashboard KPI counts, represented-sector counts, review-queue counts, task totals and recent-incident counts now use the saved `en-IN` or `en-US` number convention.
+- Progress-bar ARIA values and percentage calculations remain numeric and unchanged; only human-readable labels are formatted.
+- Account preference JSON export now defers temporary object-URL revocation briefly after the browser download click, avoiding premature cleanup before the browser consumes the download.
+- The Account Settings description now reflects the implemented regional display coverage. It does not claim full-app localization.
+- These changes are display/download lifecycle only. They do not modify operational records, metric calculations, evidence exports or account authentication.
