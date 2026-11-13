@@ -42,3 +42,57 @@ test('active membership helper binds UID, organisation and status exactly', () =
   assert.equal(isCurrentUserActiveMember(membership, 'synthetic-user-a', 'synthetic-org-b'), false);
   assert.equal(isCurrentUserActiveMember({ ...membership, status: 'suspended' } as OrganisationMembership, 'synthetic-user-a', 'synthetic-org-a'), false);
 });
+
+
+test('active membership boundary rejects malformed runtime values without throwing', () => {
+  const valid = {
+    uid: 'synthetic-user-a',
+    orgId: 'synthetic-org-a',
+    role: 'owner',
+    status: 'active',
+  };
+  for (const malformed of [
+    null,
+    undefined,
+    'membership',
+    42,
+    [],
+    ['synthetic-user-a', 'synthetic-org-a', 'owner', 'active'],
+  ]) {
+    assert.equal(isCurrentUserActiveMember(malformed, 'synthetic-user-a', 'synthetic-org-a'), false);
+  }
+  assert.equal(
+    isCurrentUserActiveMember({ ...valid, unexpected: 'sensitive-extra-field' }, 'synthetic-user-a', 'synthetic-org-a'),
+    false,
+  );
+  assert.equal(
+    isCurrentUserActiveMember({ uid: 'synthetic-user-a', orgId: 'synthetic-org-a', role: 'owner' }, 'synthetic-user-a', 'synthetic-org-a'),
+    false,
+  );
+});
+
+test('active membership boundary rejects accessor-backed and exotic objects', () => {
+  const accessorMembership = {
+    get uid() { throw new Error('getter must not execute'); },
+    orgId: 'synthetic-org-a',
+    role: 'owner',
+    status: 'active',
+  };
+  assert.equal(
+    isCurrentUserActiveMember(accessorMembership, 'synthetic-user-a', 'synthetic-org-a'),
+    false,
+  );
+  assert.equal(
+    isCurrentUserActiveMember(
+      Object.assign(Object.create({ inherited: true }), {
+        uid: 'synthetic-user-a',
+        orgId: 'synthetic-org-a',
+        role: 'owner',
+        status: 'active',
+      }),
+      'synthetic-user-a',
+      'synthetic-org-a',
+    ),
+    false,
+  );
+});
