@@ -444,3 +444,15 @@ The first operational read-only detail surface now consumes the same browser-loc
 - Date labels reflect the active format so the displayed value is not ambiguous.
 - Formatting is display-only; personnel form input validation and stored date values remain DD-MM-YYYY as before, and readiness calculations are untouched.
 - The feature branch still requires consolidated validation before review or merge.
+
+
+### Regional display preference rollout: operational views
+
+Extended the display-only integration to the following additional surfaces:
+
+- Personnel readiness certification cards: completion and expiry dates follow the selected date format.
+- Pre-deployment checklist: target deadlines and supervisory sign-off dates follow the selected date format.
+- Incident report list: reported date/time follows the selected date, time and timezone preferences.
+- SAFER's legacy incident timestamp shape (`YYYY-MM-DD HH:mm`) is now parsed explicitly as a local wall-clock timestamp before timezone display conversion; invalid calendar/time values fail to the neutral fallback rather than relying on browser-specific Date string parsing.
+
+The integration does not rewrite records or alter due-date comparisons, readiness calculations, incident chronology, input validation, export evidence, or timestamps generated at record creation. New focused tests cover the local timestamp parser and are registered in the existing regional-formatting suite. No test/CI run was initiated during this implementation batch.
