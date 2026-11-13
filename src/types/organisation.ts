@@ -5,9 +5,7 @@
  */
 
 export type OrganisationStatus = 'active' | 'suspended';
-
 export type TenantRole = 'owner' | 'admin' | 'manager' | 'viewer';
-
 export type MembershipStatus = 'active' | 'suspended' | 'revoked';
 
 export interface OrganisationRecord {
@@ -25,44 +23,53 @@ export interface OrganisationMembership {
   status: 'active';
 }
 
-/**
- * Reflects current rules, not a desired future grant matrix.
- * Manager and viewer are intentionally denied operational access today.
- */
+/** Mirrors explicit allow/deny boundaries in the current Rules file. */
 export interface TenantUiCapabilities {
   canReadOrganisation: boolean;
   canReadPersonnel: boolean;
   canWritePersonnel: boolean;
+  canDeletePersonnel: boolean;
   canReadIncidents: boolean;
   canCreateIncidents: boolean;
   canUpdateIncidents: boolean;
+  canDeleteIncidents: boolean;
   canReadEvidence: boolean;
+  canWriteEvidence: boolean;
   canManageMemberships: boolean;
   canReadAuditEvents: boolean;
+  canWriteAuditEvents: boolean;
 }
 
 const OWNER_ADMIN_CAPABILITIES: Readonly<TenantUiCapabilities> = Object.freeze({
   canReadOrganisation: true,
   canReadPersonnel: true,
   canWritePersonnel: true,
+  canDeletePersonnel: false,
   canReadIncidents: true,
   canCreateIncidents: true,
   canUpdateIncidents: true,
+  canDeleteIncidents: false,
   canReadEvidence: true,
+  canWriteEvidence: false,
   canManageMemberships: false,
   canReadAuditEvents: false,
+  canWriteAuditEvents: false,
 });
 
 const NO_TENANT_CAPABILITIES: Readonly<TenantUiCapabilities> = Object.freeze({
   canReadOrganisation: false,
   canReadPersonnel: false,
   canWritePersonnel: false,
+  canDeletePersonnel: false,
   canReadIncidents: false,
   canCreateIncidents: false,
   canUpdateIncidents: false,
+  canDeleteIncidents: false,
   canReadEvidence: false,
+  canWriteEvidence: false,
   canManageMemberships: false,
   canReadAuditEvents: false,
+  canWriteAuditEvents: false,
 });
 
 /** UI hints only. Never use this map as a substitute for Firestore Rules. */
@@ -87,8 +94,6 @@ export function isCurrentUserActiveMember(
   authenticatedUid: string,
   expectedOrgId: string,
 ): boolean {
-  // Treat the adapter boundary as untrusted at runtime: reject nulls,
-  // arrays, exotic objects, missing/extra keys, and accessor properties.
   try {
     if (
       membership === null ||
@@ -124,7 +129,6 @@ export function isCurrentUserActiveMember(
       candidate.status === 'active' &&
       isTenantRole(candidate.role);
   } catch {
-    // Proxies or unusual objects must never crash the authentication gate.
     return false;
   }
 }
