@@ -184,3 +184,8 @@ The owner-transfer candidate assessment also validates actor/target roles and me
 The audit-chain structural verifier now also rejects duplicate event IDs and sequences that mix organisation IDs. Equal millisecond timestamps remain acceptable because timestamps alone cannot provide a unique total order; the supplied array position and previous-hash links provide the sequence relationship being checked. The verifier still does not recompute hashes, authenticate writers, verify signatures, or establish immutable storage.
 
 Regression cases have been authored for recipient mismatch, whitespace/case normalization, exact expiry boundary, accepted/replayed invitations, malformed digest/context, duplicate audit IDs, cross-organisation chains, and equal-timestamp linked events. They remain pending consolidated validation; no tests or CI were run for this implementation slice.
+
+
+### Membership response provenance at the UI boundary
+
+After an exact membership lookup resolves, AuthGate independently checks that the returned UID and organisation ID match the request token and that the status remains active before publishing the result. A mismatched response fails closed with generic recovery guidance. This is defense in depth against an incorrectly bound adapter or unexpected result; it does not replace resolver schema validation, Firestore Security Rules, or server-side authorization. The regression test supplies a mismatched UID and organisation and confirms that no workspace is rendered. Validation remains part of the consolidated milestone.
