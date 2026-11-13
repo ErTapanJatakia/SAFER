@@ -93,6 +93,8 @@ describe('authenticated account security lifecycle',()=>{
   change(input('New email address'),'new-address@example.test');submit('Change email address');await flush();
   expect(reauthenticateWithCredential).toHaveBeenCalledTimes(1);
   expect(verifyBeforeUpdateEmail).toHaveBeenCalledWith(user,'new-address@example.test');
+  // Email changes remain pending until the user follows Firebase's verification link.
+  expect(sessionInvalidation.publishSessionInvalidation).not.toHaveBeenCalled();
  });
  it('does not request an email change if re-authentication fails',async()=>{
   vi.mocked(reauthenticateWithCredential).mockRejectedValueOnce({code:'auth/wrong-password'});
