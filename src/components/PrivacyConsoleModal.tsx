@@ -1,17 +1,20 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ClipboardList, ShieldCheck, X } from 'lucide-react';
+import { AlertTriangle, ClipboardList, Database, Download, ShieldCheck, X } from 'lucide-react';
 import {
   EMPTY_PRIVACY_DEMO_WORKSPACE,
   type PrivacyDemoWorkspace,
   type PrivacyGrievance,
+  type PrivacyProcessingActivity,
   type PrivacyRightsRequest,
 } from '../types/privacy.ts';
 import { createPrivacyDemoRepository } from '../utils/privacyRepository.ts';
+import { createPrivacyDemoExport } from '../utils/privacyExport.ts';
 
-type Tab = 'overview' | 'notices' | 'requests' | 'grievances' | 'consent' | 'retention';
+type Tab = 'overview' | 'processing' | 'notices' | 'requests' | 'grievances' | 'consent' | 'retention';
 
 const tabs: Array<{ id: Tab; label: string }> = [
   { id: 'overview', label: 'Overview' },
+  { id: 'processing', label: 'Processing activities' },
   { id: 'notices', label: 'Notice drafts' },
   { id: 'requests', label: 'Rights requests' },
   { id: 'grievances', label: 'Grievances' },
@@ -34,6 +37,11 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [error, setError] = useState<string | null>(null);
   const [storageReady, setStorageReady] = useState(false);
+  const [activityPurpose, setActivityPurpose] = useState('');
+  const [activityCategories, setActivityCategories] = useState('');
+  const [activityRecipients, setActivityRecipients] = useState('');
+  const [activityRetention, setActivityRetention] = useState('');
+  const [activityAssessment, setActivityAssessment] = useState<PrivacyProcessingActivity['legalAssessment']>('not-assessed');
   const [noticeTitle, setNoticeTitle] = useState('');
   const [noticeContent, setNoticeContent] = useState('');
   const [requestKind, setRequestKind] = useState<PrivacyRightsRequest['requestKind']>('access');
@@ -190,6 +198,44 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
     }
   };
 
+  const addProcessingActivity = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!activityPurpose.trim() || !activityRetention.trim()) return;
+    const splitValues = (value: string) => value.split(',').map((item) => item.trim()).filter(Boolean);
+    const record: PrivacyProcessingActivity = {
+      id: newId('activity'), purpose: activityPurpose.trim(),
+      dataCategories: splitValues(activityCategories), recipients: splitValues(activityRecipients),
+      retentionDescription: activityRetention.trim(), legalAssessment: activityAssessment,
+    };
+    if (persist({ ...workspace, processingActivities: [record, ...workspace.processingActivities] })) {
+      setActivityPurpose(''); setActivityCategories(''); setActivityRecipients(''); setActivityRetention('');
+      setActivityAssessment('not-assessed');
+    }
+  };
+
+  const exportWorkspace = () => {
+    if (!repository || !storageReady) {
+      setError('The privacy workspace has not passed its storage and integrity checks. No export was created.');
+      return;
+    }
+    try {
+      const latestWorkspace = repository.loadWorkspace();
+      const blob = new Blob([createPrivacyDemoExport(latestWorkspace)], { type: 'application/json;charset=utf-8' });
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = `safer-privacy-demo-export-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+      setWorkspace(latestWorkspace);
+      setError(null);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Unable to create the privacy demo export.');
+    }
+  };
+
   const addRetentionReview = (event: React.FormEvent) => {
     event.preventDefault();
     if (!retentionCategory.trim() || !retentionNote.trim()) return;
@@ -205,6 +251,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
   };
 
   const counts = [
+    { label: 'Processing activities', count: workspace.processingActivities.length },
     { label: 'Notice drafts', count: workspace.noticeDrafts.length },
     { label: 'Rights requests', count: workspace.rightsRequests.length },
     { label: 'Grievances', count: workspace.grievances.length },
@@ -255,6 +302,30 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
               <p className="mt-2 text-sm text-slate-300">This console is a local administrative prototype. It does not calculate statutory deadlines, decide legal bases, contact a regulator or data subject, or execute deletion against operational records.</p>
             </div>
           </>}
+
+          {activeTab === 'processing' && <section className="space-y-4">
+            <form onSubmit={addProcessingActivity} className="space-y-3 rounded-xl border border-slate-700 bg-slate-950/50 p-4">
+              <h3 className="text-sm font-semibold">Add a synthetic processing activity</h3>
+              <input className={inputClass} value={activityPurpose} onChange={(e) => setActivityPurpose(e.target.value)} placeholder="Purpose of processing (synthetic example)" aria-label="Processing activity purpose" maxLength={240} required />
+              <input className={inputClass} value={activityCategories} onChange={(e) => setActivityCategories(e.target.value)} placeholder="Data categories, separated by commas" aria-label="Processing data categories" maxLength={600} />
+              <input className={inputClass} value={activityRecipients} onChange={(e) => setActivityRecipients(e.target.value)} placeholder="Recipient categories, separated by commas" aria-label="Processing recipients" maxLength={600} />
+              <textarea className={inputClass} value={activityRetention} onChange={(e) => setActivityRetention(e.target.value)} placeholder="Retention description or manual review note — do not invent a statutory period" aria-label="Processing retention description" rows={2} maxLength={1000} required />
+              <label className="block space-y-1 text-xs text-slate-300">Assessment note
+                <select className={inputClass} value={activityAssessment} onChange={(e) => setActivityAssessment(e.target.value as PrivacyProcessingActivity['legalAssessment'])} aria-label="Processing activity assessment note">
+                  <option value="not-assessed">Not assessed</option><option value="organization-reviewed">Organisation marked as reviewed</option>
+                </select>
+              </label>
+              <p className="text-xs text-amber-200">This is an internal tracking label only. It does not establish a lawful basis, necessity, proportionality or legal compliance.</p>
+              <button className={primaryButtonClass} type="submit" disabled={!storageReady}>Save synthetic activity</button>
+            </form>
+            {workspace.processingActivities.map((activity) => <article key={activity.id} className="rounded-xl border border-slate-700 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2"><strong className="text-sm">{activity.purpose}</strong><span className="text-xs text-amber-300">{activity.legalAssessment === 'not-assessed' ? 'Not assessed' : 'Marked reviewed'}</span></div>
+              <p className="mt-2 text-xs text-slate-300"><strong>Data categories:</strong> {activity.dataCategories.length ? activity.dataCategories.join(', ') : 'Not specified'}</p>
+              <p className="mt-1 text-xs text-slate-300"><strong>Recipients:</strong> {activity.recipients.length ? activity.recipients.join(', ') : 'Not specified'}</p>
+              <p className="mt-2 text-sm text-slate-300"><strong>Retention note:</strong> {activity.retentionDescription}</p>
+            </article>)}
+            {workspace.processingActivities.length === 0 && <p className="text-sm text-slate-400">No synthetic processing activities recorded.</p>}
+          </section>}
 
           {activeTab === 'notices' && <section className="space-y-4">
             <form onSubmit={addNotice} className="space-y-3 rounded-xl border border-slate-700 bg-slate-950/50 p-4">
@@ -338,7 +409,10 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
 
         <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-700 bg-slate-950 px-5 py-3">
           <span className="text-[11px] text-slate-500">Synthetic Demo Guest data · Browser-local storage</span>
-          <button type="button" onClick={onClose} className={buttonClass}>Close</button>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={exportWorkspace} className={buttonClass} disabled={!storageReady}><Download className="mr-1 inline h-3.5 w-3.5" />Export JSON</button>
+            <button type="button" onClick={onClose} className={buttonClass}>Close</button>
+          </div>
         </footer>
       </section>
     </div>
