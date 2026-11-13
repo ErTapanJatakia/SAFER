@@ -165,6 +165,14 @@ A component-level regression case has been added for switching the panel from on
 Account security actions capture the Firebase UID that initiated the operation. Before a follow-on sensitive mutation or UI update, the component checks that the same UID still owns the mounted panel. A stale re-authentication completion therefore cannot proceed to a password or email mutation after the panel has moved to another identity. If a password update itself has already succeeded remotely, its content-free cross-tab invalidation signal is still published even if the initiating panel was replaced before the response returned. This is a client-side stale-work guard, not server-side cancellation or proof that Firebase revoked other sessions.
 
 
+## Membership transition and owner-count safeguards
+
+The advisory membership policy now treats revocation as terminal: a revoked membership cannot be reactivated, have its role edited, or receive any further lifecycle update. A transition into revoked status must retain the existing role so a role change cannot be bundled into the revocation event. Suspended memberships may be reactivated through the policy model, but only by an otherwise authorised actor; this remains an advisory decision, not a client permission.
+
+For an active owner target, the supplied active-owner count must include at least that target. Demotion or suspension/revocation of an active owner is rejected when the supplied count is one; it may be considered when the count is greater than one. A suspended owner is not counted as active, so reactivation can restore an owner without incorrectly treating the suspended membership as currently active. The count is only a caller-supplied snapshot: a future trusted writer must recompute it and enforce the final-owner invariant in one transaction, otherwise concurrent changes could still remove the last owner.
+
+Invitation role checks, issuance validation, owner-transfer assessment and membership-change evaluation now reject malformed runtime inputs rather than relying on TypeScript types. Regression cases have been authored for suspended/revoked transitions, role-change/revocation separation, owner-count consistency, and malformed inputs. They remain pending consolidated validation; no tests or CI were run for this implementation slice.
+
 ## Invitation recipient binding and audit sequence checks
 
 The pure invitation policy now includes `canAcceptInvitationForRecipient`. It checks that the invitation is still issued and unexpired, has a bounded lifetime and digest-shaped token reference, has not already recorded an accepting UID, and that the authenticated UID is well-formed. It compares the invited address with the supplied verified account email after trimming and case-normalising, and rejects malformed runtime input.
