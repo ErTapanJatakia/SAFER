@@ -153,6 +153,17 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
                     <option value="en-IN">India (1,23,456.78)</option><option value="en-US">International (123,456.78)</option>
                   </select>
                 </label>
+                <label className={labelClass}>Default personnel export format
+                  <select className={inputClass} value={settings.preferences.defaultExportFormat} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, defaultExportFormat: event.target.value as AccountSettings['preferences']['defaultExportFormat'] } }))}>
+                    <option value="txt">Plain text (.TXT)</option><option value="csv">CSV (.CSV)</option><option value="xlsx">Excel (.XLSX)</option><option value="pdf">PDF (.PDF)</option><option value="docx">Word (.DOCX)</option>
+                  </select>
+                </label>
+                <label className={labelClass}>Default personnel export redaction
+                  <select className={inputClass} value={settings.preferences.defaultRedactionLevel} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, defaultRedactionLevel: event.target.value as AccountSettings['preferences']['defaultRedactionLevel'] } }))}>
+                    <option value="standard">Standard — redact sensitive fields</option><option value="strict">Strict — redact every exportable field</option>
+                  </select>
+                </label>
+                <p className="sm:col-span-2 text-xs text-slate-600">Strict redaction is the most protective option. Standard retains the existing sensitive-field defaults. You can review and change individual field selections before every export.</p>
               </div>
               <p className="text-xs text-slate-500">Theme and accessibility remain managed by their existing dedicated controls, avoiding duplicate settings stores.</p>
             </div>
