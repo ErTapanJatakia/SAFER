@@ -56,7 +56,7 @@ test('cross-tab recovery offers an explicit snapshot download and user-confirmed
   assert.match(app, /link\.download = `safer-demo-conflict-snapshot-/);
   assert.match(app, /link\.click\(\)/);
   assert.match(app, /Download this tab’s records/);
-  assert.match(app, /Unsubmitted form fields are not included/);
+  assert.match(app, /unsubmitted form fields are not included/i);
   assert.match(app, /onClick=\{\(\) => window\.location\.reload\(\)\}/);
   assert.match(app, /role="alert"/);
 });
