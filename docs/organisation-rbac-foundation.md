@@ -199,3 +199,8 @@ The AuthGate response boundary also validates the returned role against the cano
 The AuthGate membership-response guard now accepts an unknown runtime value and requires a plain data object containing exactly the four currently supported fields: `uid`, `orgId`, `role`, and `status`. Nulls, arrays, primitives, missing or unexpected fields, accessor-backed properties, exotic prototypes, unsupported roles, and mismatched identity/organisation context fail closed. The guard catches unusual object-inspection failures rather than allowing malformed adapter output to crash the authentication boundary.
 
 This remains defence in depth for UI publication. The tenant resolver validates the Firestore document shape, and Firestore Security Rules remain the actual authorization boundary. Regression cases are authored for malformed values and exact-shape enforcement; execution remains deferred to consolidated validation.
+
+
+## Sign-out while membership verification is pending
+
+Beginning sign-out invalidates the session lifecycle request token synchronously, before Firebase sign-out completes. A membership response that arrives during a slow or unresolved sign-out therefore cannot restore the organisation workspace, even while the Firebase identity is still temporarily displayed. If Firebase sign-out later fails while the same identity remains current, the account can explicitly re-verify membership; the old pending result is never reused. A regression case covers the delayed membership response and delayed Firebase sign-out completion. Test execution remains deferred to consolidated validation.
