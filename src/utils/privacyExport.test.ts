@@ -40,8 +40,8 @@ describe('synthetic privacy workspace export', () => {
         recipients: [], retentionDescription: 'Manual review only',
         legalAssessment: 'not-assessed' as const,
         unexpectedSecret: 'must-not-export',
-      }],
-    } as typeof EMPTY_PRIVACY_DEMO_WORKSPACE;
+      } as unknown as (typeof EMPTY_PRIVACY_DEMO_WORKSPACE)['processingActivities'][number]],
+    };
     const output = createPrivacyDemoExport(workspace);
     assert.equal(output.includes('must-not-export'), false);
     assert.equal(workspace.processingActivities[0].purpose, 'Synthetic purpose');
