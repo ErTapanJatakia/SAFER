@@ -31,6 +31,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
   const [workspace, setWorkspace] = useState<PrivacyDemoWorkspace>(EMPTY_PRIVACY_DEMO_WORKSPACE);
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [error, setError] = useState<string | null>(null);
+  const [storageReady, setStorageReady] = useState(false);
   const [noticeTitle, setNoticeTitle] = useState('');
   const [noticeContent, setNoticeContent] = useState('');
   const [requestKind, setRequestKind] = useState<PrivacyRightsRequest['requestKind']>('access');
@@ -54,30 +55,35 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
   useEffect(() => {
     if (!isOpen) return;
     if (!repository) {
+      setStorageReady(false);
       setError('Browser storage is unavailable. The privacy console is read-only until storage access is restored.');
       return;
     }
     try {
       setWorkspace(repository.loadWorkspace());
+      setStorageReady(true);
       setError(null);
     } catch (cause) {
+      setStorageReady(false);
       setError(cause instanceof Error ? cause.message : 'Privacy workspace could not be loaded.');
     }
   }, [isOpen, repository]);
 
   if (!isOpen) return null;
 
-  const persist = (next: PrivacyDemoWorkspace) => {
-    if (!repository) {
-      setError('Browser storage is unavailable. No changes were saved.');
-      return;
+  const persist = (next: PrivacyDemoWorkspace): boolean => {
+    if (!repository || !storageReady) {
+      setError('The privacy workspace has not passed its storage and integrity checks. No changes were saved.');
+      return false;
     }
     try {
       repository.saveWorkspace(next);
       setWorkspace(next);
       setError(null);
+      return true;
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Unable to save privacy workspace.');
+      return false;
     }
   };
 
@@ -90,8 +96,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
       requestKind, description: requestDescription.trim(), status: 'submitted',
       submittedAt: now, updatedAt: now,
     };
-    persist({ ...workspace, rightsRequests: [record, ...workspace.rightsRequests] });
-    setRequestDescription('');
+    if (persist({ ...workspace, rightsRequests: [record, ...workspace.rightsRequests] })) setRequestDescription('');
   };
 
   const addGrievance = (event: React.FormEvent) => {
@@ -103,8 +108,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
       category: grievanceCategory, description: grievanceDescription.trim(),
       status: 'open', submittedAt: now, updatedAt: now,
     };
-    persist({ ...workspace, grievances: [record, ...workspace.grievances] });
-    setGrievanceDescription('');
+    if (persist({ ...workspace, grievances: [record, ...workspace.grievances] })) setGrievanceDescription('');
   };
 
   const updateRequestStatus = (id: string, status: PrivacyRightsRequest['status']) => {
@@ -129,33 +133,38 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
         versionLabel: 'Draft', updatedAt: new Date().toISOString(),
       }, ...workspace.noticeDrafts],
     };
-    persist(next);
-    setNoticeTitle('');
-    setNoticeContent('');
+    if (persist(next)) {
+      setNoticeTitle('');
+      setNoticeContent('');
+    }
   };
 
   const addConsentEvent = (event: React.FormEvent) => {
     event.preventDefault();
     if (!consentSubject.trim() || !consentPurpose.trim()) return;
-    persist({ ...workspace, consentEvents: [{
+    const saved = persist({ ...workspace, consentEvents: [{
       id: newId('consent'), subjectRef: consentSubject.trim(), purposeRef: consentPurpose.trim(),
       event: 'granted', recordedAt: new Date().toISOString(),
       note: 'Manually recorded synthetic demonstration event; not proof of legally valid consent.',
     }, ...workspace.consentEvents] });
-    setConsentSubject('');
-    setConsentPurpose('');
+    if (saved) {
+      setConsentSubject('');
+      setConsentPurpose('');
+    }
   };
 
   const addRetentionReview = (event: React.FormEvent) => {
     event.preventDefault();
     if (!retentionCategory.trim() || !retentionNote.trim()) return;
-    persist({ ...workspace, retentionReviews: [{
+    const saved = persist({ ...workspace, retentionReviews: [{
       id: newId('retention'), dataCategory: retentionCategory.trim(),
       reviewNote: retentionNote.trim(), status: 'reviewed',
       reviewedAt: new Date().toISOString(),
     }, ...workspace.retentionReviews] });
-    setRetentionCategory('');
-    setRetentionNote('');
+    if (saved) {
+      setRetentionCategory('');
+      setRetentionNote('');
+    }
   };
 
   const counts = [
@@ -215,7 +224,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
               <h3 className="text-sm font-semibold">Create a notice draft</h3>
               <input className={inputClass} value={noticeTitle} onChange={(e) => setNoticeTitle(e.target.value)} placeholder="Draft title" aria-label="Notice draft title" maxLength={120} required />
               <textarea className={inputClass} value={noticeContent} onChange={(e) => setNoticeContent(e.target.value)} placeholder="Draft text — verify all organisation-specific statements before use" aria-label="Notice draft content" rows={4} maxLength={8000} required />
-              <button className={primaryButtonClass} type="submit">Save draft</button>
+              <button className={primaryButtonClass} type="submit" disabled={!storageReady}>Save draft</button>
             </form>
             {workspace.noticeDrafts.map((notice) => <article key={notice.id} className="rounded-xl border border-slate-700 p-4">
               <div className="flex flex-wrap justify-between gap-2"><h4 className="font-semibold">{notice.title}</h4><span className="text-xs text-amber-300">Draft only</span></div>
@@ -236,7 +245,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
             </form>
             {workspace.rightsRequests.map((record) => <article key={record.id} className="rounded-xl border border-slate-700 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2"><strong className="text-sm capitalize">{record.requestKind} request</strong>
-                <select className="rounded border border-slate-600 bg-slate-950 px-2 py-1 text-xs" value={record.status} onChange={(e) => updateRequestStatus(record.id, e.target.value as PrivacyRightsRequest['status'])} aria-label={`Status for ${record.id}`}>
+                <select className="rounded border border-slate-600 bg-slate-950 px-2 py-1 text-xs" value={record.status} onChange={(e) => updateRequestStatus(record.id, e.target.value as PrivacyRightsRequest['status'])} disabled={!storageReady} aria-label={`Status for ${record.id}`}>
                   <option value="submitted">Submitted (demo)</option><option value="under_review">Under review</option><option value="completed">Completed</option><option value="rejected">Rejected</option>
                 </select>
               </div><p className="mt-2 text-sm text-slate-300">{record.description}</p><p className="mt-2 text-[11px] text-slate-500">{new Date(record.submittedAt).toLocaleString()}</p>
@@ -253,7 +262,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
             </form>
             {workspace.grievances.map((record) => <article key={record.id} className="rounded-xl border border-slate-700 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2"><strong className="text-sm">{record.category}</strong>
-                <select className="rounded border border-slate-600 bg-slate-950 px-2 py-1 text-xs" value={record.status} onChange={(e) => updateGrievanceStatus(record.id, e.target.value as PrivacyGrievance['status'])} aria-label={`Status for ${record.id}`}>
+                <select className="rounded border border-slate-600 bg-slate-950 px-2 py-1 text-xs" value={record.status} onChange={(e) => updateGrievanceStatus(record.id, e.target.value as PrivacyGrievance['status'])} disabled={!storageReady} aria-label={`Status for ${record.id}`}>
                   <option value="open">Open</option><option value="investigating">Investigating</option><option value="resolved">Resolved</option><option value="closed">Closed</option>
                 </select>
               </div><p className="mt-2 text-sm text-slate-300">{record.description}</p><p className="mt-2 text-[11px] text-slate-500">{new Date(record.submittedAt).toLocaleString()}</p>
