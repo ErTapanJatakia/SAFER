@@ -17,6 +17,7 @@ import {
 import { sanitizeErrorMessage } from '../utils/securitySanitizer.ts';
 import { ACCOUNT_SETTINGS_STORAGE_KEY, normalizeAccountSettings } from '../utils/accountSettings.ts';
 import { getDefaultExportRedactionKeys } from '../utils/exportPreferences.ts';
+import { formatAccountNumber, readAccountPreferences } from '../utils/accountFormatting.ts';
 import {
   Download,
   X,
@@ -495,7 +496,7 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
                   </span>
                 </div>
                 <span className="font-mono text-[11px] text-slate-500">
-                  Approx. {previewContent.length.toLocaleString()} characters
+                  Approx. {formatAccountNumber(previewContent.length, readAccountPreferences())} characters
                 </span>
               </div>
 
