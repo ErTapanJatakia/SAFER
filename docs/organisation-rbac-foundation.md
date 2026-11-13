@@ -128,3 +128,8 @@ Owner transfer has a separate candidate assessment:
 This does not implement or authorize transfer. The future trusted operation must atomically promote the target and demote the initiating owner, preserve at least one active owner, prevent replay/concurrent transfer races, and record an independently protected administrative event. No client-side Firestore write or UI action is enabled.
 
 Regression tests have been authored for eligible/ineligible transfer candidates and malformed runtime role/status values. Invitation expiry and digest-only metadata rules remain advisory and require trusted recipient authentication, digest verification, single-use enforcement, and atomic acceptance before any real invitation workflow can ship. Test execution remains deferred to the consolidated validation milestone.
+
+
+## Membership status freshness disclosure
+
+The authenticated organisation panel labels membership as **verified at check time** and **active when checked**. This is a point-in-time result from the exact membership lookup, not a live subscription or continuous revocation monitor. Any future database operation must rely on Firestore Security Rules, which evaluate authorization for each request; UI state and role labels are never a substitute. If operational workflows are later released, the product must define how stale UI state is refreshed and how permission-denied responses revoke or refresh local presentation state. No background polling or additional reads are introduced by this disclosure.
