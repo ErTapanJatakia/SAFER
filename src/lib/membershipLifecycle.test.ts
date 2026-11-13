@@ -105,6 +105,14 @@ test('owner may propose ordinary non-owner role and status changes', () => {
   });
 });
 
+test('invitation role policy rejects malformed runtime roles', () => {
+  assert.equal(canIssueInvitation('owner', 'owner' as never), false);
+  assert.equal(canIssueInvitation('platform_super_admin' as never, 'viewer'), false);
+  assert.equal(canIssueInvitation('owner', 'unknown' as never), false);
+  assert.equal(validateInvitationForIssuance(null as never, now), false);
+  assert.equal(evaluateMembershipChange(null as never).reason, 'invalid-context');
+});
+
 test('only owners may invite administrators', () => {
   assert.equal(canIssueInvitation('owner', 'admin'), true);
   assert.equal(canIssueInvitation('admin', 'admin'), false);
