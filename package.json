@@ -62,7 +62,8 @@
     "test:demo-storage-boundary": "tsx --test src/lib/demoRepository.test.ts && node --test tests/demo-storage-boundary.test.mjs",
     "test:demo-ui-persistence": "node --test tests/demo-ui-persistence.test.mjs",
     "test:demo-conflict-export": "tsx --test src/lib/demoConflictExport.test.ts",
-    "test:browser-cross-tab": "playwright test --config=playwright.config.mjs"
+    "test:browser-cross-tab": "playwright test --config=playwright.config.mjs",
+    "test:budget-policy": "vitest run src/utils/budgetPolicy.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
