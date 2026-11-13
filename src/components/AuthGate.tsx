@@ -13,6 +13,7 @@ import {
 import {auth, db, isFirebaseConfigured} from '../lib/firebase.ts';
 import {resolveTenantMembership, type TenantMembership} from '../lib/tenantMembership.ts';
 import {createSessionLifecycle} from '../lib/sessionLifecycle.ts';
+import {isCurrentUserActiveMember} from '../types/organisation.ts';
 import {publishSessionInvalidation, subscribeToSessionInvalidation} from '../lib/sessionInvalidation.ts';
 import {enterDemoGuest} from '../lib/dataBoundary.ts';
 import {DemoGuestWorkspaceProvider} from './DemoGuestWorkspaceProvider.tsx';
@@ -273,7 +274,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       if (sessionLifecycleRef.current.isCurrent(requestToken)) {
         // Re-check response provenance at the UI boundary as well as in the
         // resolver. A mismatched adapter/result must never publish tenant UI.
-        if (resolved.uid !== requestToken.uid || resolved.orgId !== requestToken.orgId || resolved.status !== 'active') {
+        if (!isCurrentUserActiveMember(resolved, requestToken.uid, requestToken.orgId)) {
           setMembership(null);
           setMembershipError('Membership could not be verified. Check the organisation ID or contact its authorised administrator.');
         } else {
