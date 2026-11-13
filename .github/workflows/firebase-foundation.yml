@@ -245,6 +245,9 @@ jobs:
       - name: Real Chromium cross-tab repository tests
         run: npm run test:browser-cross-tab
 
+      - name: Real Chromium Demo Guest conflict recovery UI tests
+        run: npx playwright test --config=playwright.config.mjs tests/browser/demo-conflict-ui.spec.mjs
+
       - name: Security assessment and export regression tests
         run: npm run test:security-assessment
 
