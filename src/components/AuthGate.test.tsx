@@ -1,0 +1,174 @@
+import React, {act} from 'react';
+import {createRoot, type Root} from 'react-dom/client';
+import {JSDOM} from 'jsdom';
+import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
+import {AuthGate} from './AuthGate';
+import {useDemoWorkspaceRepository} from './DemoGuestWorkspaceProvider';
+import type {DemoWorkspaceRepository} from '../lib/demoWorkspace';
+import {resolveTenantMembership} from '../lib/tenantMembership';
+import {onAuthStateChanged,signOut} from 'firebase/auth';
+import {auth as firebaseAuth} from '../lib/firebase.ts';
+import * as sessionInvalidation from '../lib/sessionInvalidation';
+
+vi.mock('firebase/auth',()=>({GoogleAuthProvider:vi.fn(),createUserWithEmailAndPassword:vi.fn(),onAuthStateChanged:vi.fn(),sendEmailVerification:vi.fn(),sendPasswordResetEmail:vi.fn(),signInWithEmailAndPassword:vi.fn(),signInWithPopup:vi.fn(),signOut:vi.fn()}));
+vi.mock('../lib/firebase.ts',()=>({auth:{name:'test-auth',currentUser:null},db:{name:'test-db'},isFirebaseConfigured:true}));
+vi.mock('../lib/tenantMembership.ts',()=>({resolveTenantMembership:vi.fn()}));
+const makeUser=(uid:string)=>({uid,email:uid+'@example.test',emailVerified:true});
+let retainedRepository: DemoWorkspaceRepository | null = null;
+const StorageProbe=()=>{const repository=useDemoWorkspaceRepository();retainedRepository=repository;const [stored]=React.useState(()=>window.localStorage.getItem('prot_ops_personnel_v2'));return <div>Operational app shell {stored||''}</div>;};
+
+let dom: JSDOM, root:Root, host:HTMLElement, listener:((user:ReturnType<typeof makeUser>|null)=>void)|undefined, authError:((error:Error)=>void)|undefined;
+const flush=async()=>{await act(async()=>{await Promise.resolve();await Promise.resolve();});};
+const button=(name:string)=>[...host.querySelectorAll('button')].find(b=>b.textContent?.trim()===name) as HTMLButtonElement;
+const change=(el:HTMLInputElement,value:string)=>{const setter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')?.set; if (setter) setter.call(el,value); el.dispatchEvent(new dom.window.Event('input',{bubbles:true}));el.dispatchEvent(new dom.window.Event('change',{bubbles:true}));};
+const submit=(form:HTMLFormElement)=>form.dispatchEvent(new dom.window.Event('submit',{bubbles:true,cancelable:true}));
+const auth=(user:ReturnType<typeof makeUser>|null)=>{Object.defineProperty(firebaseAuth,'currentUser',{configurable:true,value:user});act(()=>listener?.(user));};
+beforeEach(async()=>{
+ dom=new JSDOM('<!doctype html><html><body></body></html>',{url:'http://localhost'});
+ Object.assign(globalThis,{window:dom.window,document:dom.window.document,navigator:dom.window.navigator,HTMLElement:dom.window.HTMLElement,HTMLInputElement:dom.window.HTMLInputElement,Event:dom.window.Event,IS_REACT_ACT_ENVIRONMENT:true});
+ host=document.createElement('div');document.body.append(host);root=createRoot(host);listener=undefined;authError=undefined;retainedRepository=null;
+ vi.mocked(onAuthStateChanged).mockImplementation((_auth,cb,error)=>{listener=cb as typeof listener;authError=error as typeof authError;listener!(null);return vi.fn();});
+ vi.mocked(signOut).mockImplementation(async()=>{Object.defineProperty(firebaseAuth,'currentUser',{configurable:true,value:null});listener?.(null);});
+ await act(async()=>{root.render(<AuthGate><StorageProbe /></AuthGate>);});
+ await flush();
+});
+afterEach(async()=>{await act(async()=>root.unmount());dom.window.close();vi.clearAllMocks();});
+
+describe('AuthGate membership session handling',()=>{
+ it('does not resolve membership for Demo Guest',async()=>{button('Continue as Demo Guest').click();await flush();expect(host.textContent).toContain('Demo Guest session');expect(host.querySelector('input[placeholder="Enter organisation ID"]')).toBeNull();expect(resolveTenantMembership).not.toHaveBeenCalled();});
+ it('keeps the operational app shell unmounted for authenticated sessions',async()=>{auth(makeUser('user-a'));await flush();expect(host.textContent).toContain('Account verified — workspace not yet released');expect(host.textContent).not.toContain('App shell');expect(host.textContent).not.toContain('Demo Guest session');});
+ it('does not touch operational browser storage while signed out or authenticated',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');expect(read).not.toHaveBeenCalled();auth(makeUser('user-a'));await flush();expect(read).not.toHaveBeenCalled();expect(host.textContent).not.toContain('Operational app shell');});
+ it('probes all operational storage keys only after explicit Demo Guest entry',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');expect(read).not.toHaveBeenCalled();button('Continue as Demo Guest').click();await flush();expect(read).toHaveBeenCalledTimes(5);expect(read).toHaveBeenNthCalledWith(1,'prot_ops_personnel_v2');expect(read).toHaveBeenNthCalledWith(2,'prot_ops_incidents_v2');expect(read).toHaveBeenNthCalledWith(3,'prot_ops_cyber_v2');expect(read).toHaveBeenNthCalledWith(4,'prot_ops_checklist_v2');expect(host.textContent).toContain('Operational app shell');});
+ it('unmounts the Demo Guest workspace when an authenticated identity appears and revokes retained access',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');button('Continue as Demo Guest').click();await flush();expect(read).toHaveBeenCalledTimes(5);auth(makeUser('user-a'));await flush();expect(host.textContent).not.toContain('Operational app shell');expect(host.textContent).toContain('Account verified — workspace not yet released');expect(read).toHaveBeenCalledTimes(5);expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);expect(read).toHaveBeenCalledTimes(5);});
+ it('restores the authenticated lifecycle when Firebase sign-out fails but the same user remains current',async()=>{
+  vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'manager',status:'active'});
+  auth(makeUser('user-a'));await flush();
+  vi.mocked(signOut).mockRejectedValueOnce(new Error('network unavailable'));
+  button('Sign out').click();await flush();
+  expect(host.textContent).toContain('Signed in: user-a@example.test');
+  expect(host.querySelector('[role="alert"]')?.textContent).toContain('Your account session remains active');
+  const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
+  change(field,'org-a');await flush();submit(field.closest('form')!);await flush();
+  expect(host.textContent).toContain('Verified active membership');
+  expect(host.textContent).toContain('Role: manager');
+  expect(resolveTenantMembership).toHaveBeenCalledWith({name:'test-db'},{uid:'user-a'},'org-a');
+ });
+ it('revokes retained repository access during Demo Guest sign-out',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');button('Continue as Demo Guest').click();await flush();expect(retainedRepository).not.toBeNull();button('Sign out').click();await flush();expect(host.textContent).toContain('Continue as Demo Guest');expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);expect(read).toHaveBeenCalledTimes(5);});
+ it('revokes the Demo Guest workspace when another tab signals an account boundary',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');button('Continue as Demo Guest').click();await flush();expect(retainedRepository).not.toBeNull();act(()=>window.dispatchEvent(new StorageEvent('storage',{key:'safer:session-boundary-signal',newValue:'other-tab-signout'})));await flush();expect(host.textContent).toContain('Continue as Demo Guest');expect(host.textContent).not.toContain('Operational app shell');expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);expect(read).toHaveBeenCalledTimes(5);});
+
+ it('allows an authenticated user to re-check membership after a peer-tab boundary',async()=>{
+  vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-b',role:'manager',status:'active'});
+  auth(makeUser('user-a'));await flush();
+  act(()=>window.dispatchEvent(new StorageEvent('storage',{key:'safer:session-boundary-signal',newValue:'peer-boundary-recovery'})));
+  await flush();
+  expect(host.textContent).toContain('Account verified — workspace not yet released');
+  expect(host.textContent).not.toContain('Verified active membership');
+  const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
+  expect(field.value).toBe('');
+  change(field,'org-b');await flush();submit(field.closest('form')!);await flush();
+  expect(host.textContent).toContain('Verified active membership');
+  expect(host.textContent).toContain('Role: manager');
+  expect(resolveTenantMembership).toHaveBeenCalledWith({name:'test-db'},{uid:'user-a'},'org-b');
+ });
+ it('discards an in-flight membership response after a peer-tab boundary while allowing a new check',async()=>{
+  let finish!:(v:{uid:string;orgId:string;role:'owner';status:'active'})=>void;
+  vi.mocked(resolveTenantMembership).mockReturnValueOnce(new Promise(resolve=>{finish=resolve;}))
+    .mockResolvedValueOnce({uid:'user-a',orgId:'org-b',role:'manager',status:'active'});
+  auth(makeUser('user-a'));await flush();
+  let field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
+  change(field,'org-a');await flush();submit(field.closest('form')!);await flush();
+  expect(host.textContent).toContain('Checking…');
+  act(()=>window.dispatchEvent(new StorageEvent('storage',{key:'safer:session-boundary-signal',newValue:'peer-boundary-inflight'})));
+  await flush();
+  await act(async()=>finish({uid:'user-a',orgId:'org-a',role:'owner',status:'active'}));
+  await flush();
+  expect(host.textContent).not.toContain('Role: owner');
+  field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
+  change(field,'org-b');await flush();submit(field.closest('form')!);await flush();
+  expect(host.textContent).toContain('Role: manager');
+  expect(resolveTenantMembership).toHaveBeenCalledTimes(2);
+ });
+ it('resolves the exact organisation for the authenticated UID',async()=>{vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'manager',status:'active'});auth(makeUser('user-a'));await flush();const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();expect(host.textContent).toContain('Verified active membership');expect(host.textContent).toContain('Role: manager');expect(resolveTenantMembership).toHaveBeenCalledWith({name:'test-db'},{uid:'user-a'},'org-a');});
+ it('fails closed with generic feedback when lookup is denied',async()=>{vi.mocked(resolveTenantMembership).mockRejectedValue(new Error('permission-denied'));auth(makeUser('user-a'));await flush();const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();expect(host.querySelector('[role="alert"]')?.textContent).toContain('Membership could not be verified.');expect(host.textContent).not.toContain('Role:');});
+ it('discards pending results when the organisation locator changes',async()=>{let finish!:(v:{uid:string;orgId:string;role:'owner';status:'active'})=>void;vi.mocked(resolveTenantMembership).mockReturnValue(new Promise(resolve=>{finish=resolve;}));auth(makeUser('user-a'));await flush();const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();change(field,'org-b');await flush();await act(async()=>finish({uid:'user-a',orgId:'org-a',role:'owner',status:'active'}));expect(host.textContent).not.toContain('Verified active membership');});
+ it('publishes a boundary for each real account transition without duplicating same-UID callbacks',async()=>{
+  const publish=vi.spyOn(sessionInvalidation,'publishSessionInvalidation');
+  expect(publish).not.toHaveBeenCalled();
+  auth(makeUser('user-a'));await flush();
+  expect(publish).toHaveBeenCalledTimes(1);
+  auth(makeUser('user-a'));await flush();
+  expect(publish).toHaveBeenCalledTimes(1);
+  auth(makeUser('user-b'));await flush();
+  expect(publish).toHaveBeenCalledTimes(2);
+  auth(null);await flush();
+  expect(publish).toHaveBeenCalledTimes(3);
+  auth(makeUser('user-c'));await flush();
+  expect(publish).toHaveBeenCalledTimes(4);
+  publish.mockRestore();
+ });
+ it('discards a delayed membership response after a rapid account switch',async()=>{
+  let finish!:(value:{uid:string;orgId:string;role:'owner';status:'active'})=>void;
+  vi.mocked(resolveTenantMembership).mockReturnValue(new Promise(resolve=>{finish=resolve;}));
+  auth(makeUser('user-a'));await flush();
+  const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
+  change(field,'org-a');await flush();submit(field.closest('form')!);await flush();
+  expect(host.textContent).toContain('Checking…');
+  expect(resolveTenantMembership).toHaveBeenCalledWith({name:'test-db'},{uid:'user-a'},'org-a');
+  auth(makeUser('user-b'));await flush();
+  await act(async()=>finish({uid:'user-a',orgId:'org-a',role:'owner',status:'active'}));
+  await flush();
+  expect(host.textContent).not.toContain('Verified active membership');
+  expect(host.textContent).not.toContain('Role: owner');
+  expect(host.textContent).toContain('Account verified — workspace not yet released');
+ });
+ it('clears membership on account switch and sign-out',async()=>{vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'admin',status:'active'});auth(makeUser('user-a'));await flush();let field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();expect(host.textContent).toContain('Role: admin');auth(makeUser('user-b'));await flush();expect(host.textContent).not.toContain('Role: admin');field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;expect(field.value).toBe('');change(field,'org-b');await flush();submit(field.closest('form')!);await flush();expect(host.textContent).toContain('Role: admin');button('Sign out').click();await flush();expect(host.textContent).not.toContain('Role: admin');expect(host.textContent).toContain('Continue as Demo Guest');expect(resolveTenantMembership).toHaveBeenCalledTimes(2);});
+
+ it('revokes Demo Guest access and pending authority when the auth observer errors',async()=>{
+  const read=vi.spyOn(dom.window.Storage.prototype,'getItem');
+  const publish=vi.spyOn(sessionInvalidation,'publishSessionInvalidation');
+  button('Continue as Demo Guest').click();await flush();
+  expect(host.textContent).toContain('Operational app shell');
+  expect(retainedRepository).not.toBeNull();
+  act(()=>authError?.(new Error('auth observer unavailable')));
+  await flush();
+  expect(host.textContent).toContain('Continue as Demo Guest');
+  expect(host.textContent).not.toContain('Operational app shell');
+  expect(host.textContent).toContain('Unable to verify the current account session.');
+  expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);
+  expect(read).toHaveBeenCalledTimes(5);
+  expect(publish).toHaveBeenCalledTimes(1);
+  publish.mockRestore();
+ });
+ it('re-subscribes to Firebase auth state after an observer failure',async()=>{
+  act(()=>authError?.(new Error('auth observer unavailable')));
+  await flush();
+  expect(host.textContent).toContain('Retry account verification');
+  expect(onAuthStateChanged).toHaveBeenCalledTimes(1);
+  button('Retry account verification').click();
+  await flush();
+  expect(onAuthStateChanged).toHaveBeenCalledTimes(2);
+  expect(host.textContent).not.toContain('Retry account verification');
+  auth(makeUser('user-recovered'));
+  await flush();
+  expect(host.textContent).toContain('Account verified — workspace not yet released');
+  expect(host.textContent).toContain('Signed in: user-recovered@example.test');
+  expect(host.textContent).not.toContain('Continue as Demo Guest');
+ });
+ it('does not resurrect a previous Demo Guest workspace after an auth identity appears and signs out',async()=>{
+  const read=vi.spyOn(dom.window.Storage.prototype,'getItem');
+  button('Continue as Demo Guest').click();await flush();
+  expect(host.textContent).toContain('Operational app shell');
+  expect(retainedRepository).not.toBeNull();
+  auth(makeUser('user-a'));await flush();
+  expect(host.textContent).toContain('Account verified — workspace not yet released');
+  expect(host.textContent).not.toContain('Operational app shell');
+  expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);
+  auth(null);await flush();
+  expect(host.textContent).toContain('Continue as Demo Guest');
+  expect(host.textContent).not.toContain('Operational app shell');
+  expect(read).toHaveBeenCalledTimes(5);
+  button('Continue as Demo Guest').click();await flush();
+  expect(host.textContent).toContain('Operational app shell');
+  expect(read).toHaveBeenCalledTimes(10);
+ });
+});

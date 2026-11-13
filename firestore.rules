@@ -1,0 +1,283 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function membershipPath(orgId) {
+      return /databases/$(database)/documents/organisations/$(orgId)/members/$(request.auth.uid);
+    }
+
+    function organisationPath(orgId) {
+      return /databases/$(database)/documents/organisations/$(orgId);
+    }
+
+    function activeTenantRole(orgId) {
+      return signedIn()
+        && exists(membershipPath(orgId))
+        && get(membershipPath(orgId)).data.uid == request.auth.uid
+        && get(membershipPath(orgId)).data.orgId == orgId
+        && get(membershipPath(orgId)).data.status == 'active'
+        && get(organisationPath(orgId)).data.orgId == orgId
+        && get(organisationPath(orgId)).data.status == 'active';
+    }
+
+    function ownerOrAdmin(orgId) {
+      return activeTenantRole(orgId)
+        && get(membershipPath(orgId)).data.role in ['owner', 'admin'];
+    }
+
+    function validProfile(uid) {
+      return request.resource.data.keys().hasOnly([
+          'uid', 'displayName', 'locale', 'themeId', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'uid', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.uid == uid
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt == request.time
+        && (!('displayName' in request.resource.data)
+          || (request.resource.data.displayName is string
+            && request.resource.data.displayName.size() <= 100))
+        && (!('locale' in request.resource.data)
+          || (request.resource.data.locale is string
+            && request.resource.data.locale.matches('^[a-z]{2}(-[A-Z]{2})?$')))
+        && (!('themeId' in request.resource.data)
+          || (request.resource.data.themeId is string
+            && request.resource.data.themeId.matches('^[a-z0-9-]{1,40}$')));
+    }
+
+    function validOperationalRole(value) {
+      return value is string && value.size() >= 1 && value.size() <= 60;
+    }
+
+    function validSpecialisation(value) {
+      return value is string && value.size() >= 1 && value.size() <= 80;
+    }
+
+    function validOperationalRoleList(values) {
+      return values is list && values.size() <= 10
+        && (values.size() < 1 || validOperationalRole(values[0]))
+        && (values.size() < 2 || validOperationalRole(values[1]))
+        && (values.size() < 3 || validOperationalRole(values[2]))
+        && (values.size() < 4 || validOperationalRole(values[3]))
+        && (values.size() < 5 || validOperationalRole(values[4]))
+        && (values.size() < 6 || validOperationalRole(values[5]))
+        && (values.size() < 7 || validOperationalRole(values[6]))
+        && (values.size() < 8 || validOperationalRole(values[7]))
+        && (values.size() < 9 || validOperationalRole(values[8]))
+        && (values.size() < 10 || validOperationalRole(values[9]));
+    }
+
+    function validSpecialisationList(values) {
+      return values is list && values.size() <= 10
+        && (values.size() < 1 || validSpecialisation(values[0]))
+        && (values.size() < 2 || validSpecialisation(values[1]))
+        && (values.size() < 3 || validSpecialisation(values[2]))
+        && (values.size() < 4 || validSpecialisation(values[3]))
+        && (values.size() < 5 || validSpecialisation(values[4]))
+        && (values.size() < 6 || validSpecialisation(values[5]))
+        && (values.size() < 7 || validSpecialisation(values[6]))
+        && (values.size() < 8 || validSpecialisation(values[7]))
+        && (values.size() < 9 || validSpecialisation(values[8]))
+        && (values.size() < 10 || validSpecialisation(values[9]));
+    }
+
+    function validPersonnelData(orgId, recordId) {
+      return request.resource.data.keys().hasOnly([
+          'recordId', 'orgId', 'employeeRef', 'displayLabel',
+          'operationalRoles', 'specialisations', 'assignmentSector',
+          'readinessStatus', 'requiresHumanReview',
+          'createdAt', 'createdByUid', 'updatedAt', 'updatedByUid'
+        ])
+        && request.resource.data.keys().hasAll([
+          'recordId', 'orgId', 'employeeRef', 'operationalRoles',
+          'specialisations', 'assignmentSector', 'readinessStatus',
+          'requiresHumanReview', 'createdAt', 'createdByUid',
+          'updatedAt', 'updatedByUid'
+        ])
+        && request.resource.data.recordId == recordId
+        && request.resource.data.orgId == orgId
+        && request.resource.data.employeeRef is string
+        && request.resource.data.employeeRef.size() >= 1
+        && request.resource.data.employeeRef.size() <= 64
+        && (!('displayLabel' in request.resource.data)
+          || (request.resource.data.displayLabel is string
+            && request.resource.data.displayLabel.size() <= 80))
+        && validOperationalRoleList(request.resource.data.operationalRoles)
+        && validSpecialisationList(request.resource.data.specialisations)
+        && request.resource.data.assignmentSector in [
+          'Sector Alpha (Metropolitan)', 'Sector Bravo (Transit)',
+          'Sector Charlie (Static Facility)', 'Sector Delta (Reserve)'
+        ]
+        && request.resource.data.readinessStatus in [
+          'DOCS_CURRENT_AWAITING_REVIEW', 'REQUIRES_HUMAN_REVIEW',
+          'FLAGGED_EXPIRED_CERTS', 'UNVERIFIED_CREDENTIALS',
+          'PENDING_INTAKE_DOCS'
+        ]
+        && request.resource.data.requiresHumanReview is bool
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedByUid == request.auth.uid;
+    }
+
+    function validPersonnelCreate(orgId, recordId) {
+      return validPersonnelData(orgId, recordId)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.createdByUid == request.auth.uid;
+    }
+
+    function validPersonnelUpdate(orgId, recordId) {
+      return validPersonnelData(orgId, recordId)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.createdByUid == resource.data.createdByUid
+        && request.resource.data.recordId == resource.data.recordId
+        && request.resource.data.orgId == resource.data.orgId;
+    }
+
+    function validIncidentData(orgId, incidentId) {
+      return request.resource.data.keys().hasOnly([
+          'incidentId', 'orgId', 'referenceNumber', 'incidentType',
+          'dateReported', 'title', 'status', 'priority', 'summary',
+          'reportedByUid', 'locationLabel',
+          'createdAt', 'createdByUid', 'updatedAt', 'updatedByUid'
+        ])
+        && request.resource.data.keys().hasAll([
+          'incidentId', 'orgId', 'referenceNumber', 'incidentType',
+          'dateReported', 'title', 'status', 'priority', 'summary',
+          'reportedByUid', 'createdAt', 'createdByUid',
+          'updatedAt', 'updatedByUid'
+        ])
+        && request.resource.data.incidentId == incidentId
+        && request.resource.data.orgId == orgId
+        && request.resource.data.referenceNumber is string
+        && request.resource.data.referenceNumber.size() >= 1
+        && request.resource.data.referenceNumber.size() <= 64
+        && request.resource.data.incidentType in [
+          'Equipment Malfunction', 'Access Control Anomaly',
+          'Communications Drop', 'Logistics Delay',
+          'Medical First-Aid Event', 'Administrative Discrepancy'
+        ]
+        && request.resource.data.dateReported is timestamp
+        && request.resource.data.title is string
+        && request.resource.data.title.size() >= 1
+        && request.resource.data.title.size() <= 160
+        && request.resource.data.status in [
+          'Logged - Pending Officer Review',
+          'Under Investigation / Human Review',
+          'Documented & Filed'
+        ]
+        && request.resource.data.priority in [
+          'Routine', 'Moderate', 'High Attention'
+        ]
+        && request.resource.data.summary is string
+        && request.resource.data.summary.size() <= 2000
+        && (!('locationLabel' in request.resource.data)
+          || (request.resource.data.locationLabel is string
+            && request.resource.data.locationLabel.size() <= 120))
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedByUid == request.auth.uid;
+    }
+
+    function validIncidentCreate(orgId, incidentId) {
+      return validIncidentData(orgId, incidentId)
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.createdByUid == request.auth.uid
+        && request.resource.data.reportedByUid == request.auth.uid;
+    }
+
+    function validIncidentUpdate(orgId, incidentId) {
+      return validIncidentData(orgId, incidentId)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.createdByUid == resource.data.createdByUid
+        && request.resource.data.reportedByUid == resource.data.reportedByUid
+        && request.resource.data.incidentId == resource.data.incidentId
+        && request.resource.data.orgId == resource.data.orgId;
+    }
+
+    match /users/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow list: if false;
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && validProfile(uid)
+        && request.resource.data.createdAt == request.time;
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && validProfile(uid)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.uid == resource.data.uid;
+      allow delete: if false;
+    }
+
+    match /organisations/{orgId} {
+      allow get: if ownerOrAdmin(orgId)
+        && resource.data.orgId == orgId
+        && resource.data.status == 'active';
+      allow list, create, update, delete: if false;
+
+      match /members/{uid} {
+        // A signed-in user may get only their own minimal membership record.
+        // This is a locator-bound read, not tenant discovery or role management.
+        allow get: if signedIn()
+          && request.auth.uid == uid
+          && resource.data.keys().hasOnly(['uid', 'orgId', 'role', 'status'])
+          && resource.data.keys().hasAll(['uid', 'orgId', 'role', 'status'])
+          && resource.data.uid == uid
+          && resource.data.orgId == orgId
+          && resource.data.status == 'active'
+          && resource.data.role in ['owner', 'admin', 'manager', 'viewer']
+          && exists(organisationPath(orgId))
+          && get(organisationPath(orgId)).data.orgId == orgId
+          && get(organisationPath(orgId)).data.status == 'active';
+        allow list, create, update, delete: if false;
+      }
+
+      match /personnel/{recordId} {
+        allow get, list: if ownerOrAdmin(orgId)
+          && resource.data.orgId == orgId;
+        allow create: if ownerOrAdmin(orgId)
+          && validPersonnelCreate(orgId, recordId);
+        allow update: if ownerOrAdmin(orgId)
+          && validPersonnelUpdate(orgId, recordId);
+        allow delete: if false;
+      }
+
+      match /incidents/{incidentId} {
+        allow get, list: if ownerOrAdmin(orgId)
+          && resource.data.orgId == orgId;
+        allow create: if ownerOrAdmin(orgId)
+          && validIncidentCreate(orgId, incidentId);
+        allow update: if ownerOrAdmin(orgId)
+          && validIncidentUpdate(orgId, incidentId);
+        allow delete: if false;
+      }
+
+      match /evidence/{evidenceId} {
+        allow get, list: if ownerOrAdmin(orgId)
+          && resource.data.orgId == orgId;
+        allow create, update, delete: if false;
+      }
+
+      match /personnelPrivate/{recordId} {
+        allow read, write: if false;
+      }
+
+      match /incidentRestricted/{incidentId} {
+        allow read, write: if false;
+      }
+
+      match /auditEvents/{eventId} {
+        allow read, write: if false;
+      }
+    }
+
+    // Every unmodelled path, including collection-group and future paths,
+    // remains inaccessible unless a later reviewed rule explicitly grants it.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

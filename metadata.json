@@ -1,0 +1,6 @@
+{
+  "name": "SAFER - Security Administration, Field Readiness, Evidence & Reporting",
+  "description": "AI-Assisted Security Operations Platform. Prepared. Accountable. Secure. Administrative readiness, personnel certification tracking, incident documentation, and defensive cybersecurity prototype.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
