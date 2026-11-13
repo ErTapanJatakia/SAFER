@@ -92,11 +92,22 @@ export function isOrganisationAuditEvent(
 export function hasContinuousAuditHashLinks(
   events: readonly OrganisationAuditEvent[],
 ): boolean {
+  const seenEventIds = new Set<string>();
+  let chainOrganisationId: string | null = null;
+
   for (let index = 0; index < events.length; index += 1) {
-    if (!isOrganisationAuditEvent(events[index])) return false;
+    const current = events[index];
+    if (!isOrganisationAuditEvent(current)) return false;
+
+    if (chainOrganisationId === null) chainOrganisationId = current.orgId;
+    if (current.orgId !== chainOrganisationId || seenEventIds.has(current.eventId)) return false;
+    seenEventIds.add(current.eventId);
+
     const expectedPrevious = index === 0 ? null : events[index - 1].eventHash;
-    if (events[index].previousEventHash !== expectedPrevious) return false;
-    if (index > 0 && events[index].occurredAt < events[index - 1].occurredAt) return false;
+    if (current.previousEventHash !== expectedPrevious) return false;
+    // Equal timestamps are allowed: millisecond clocks do not establish a
+    // unique total order. The hash link and array position establish sequence.
+    if (index > 0 && current.occurredAt < events[index - 1].occurredAt) return false;
   }
   return true;
 }
