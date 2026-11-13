@@ -12,6 +12,7 @@ import {
   Info,
   Wallet,
   UserRound,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface HeaderBannerProps {
@@ -23,6 +24,7 @@ interface HeaderBannerProps {
   onOpenAccessibility: () => void;
   onOpenBudget: () => void;
   onOpenAccount: () => void;
+  onOpenPrivacy: () => void;
   topLogo: LogoConfig;
   themeCamoPattern?: string;
 }
@@ -36,6 +38,7 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
   onOpenAccessibility,
   onOpenBudget,
   onOpenAccount,
+  onOpenPrivacy,
   topLogo,
   themeCamoPattern,
 }) => {
@@ -105,6 +108,17 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
           >
             <Wallet className="w-3.5 h-3.5" />
             <span className="font-semibold text-[11px]">Budget</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onOpenPrivacy}
+            className="inline-flex items-center space-x-1 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-teal-300 hover:text-white border border-slate-700 transition"
+            title="Open synthetic privacy operations console"
+            aria-label="Open Privacy Operations Console"
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span className="font-semibold text-[11px]">Privacy</span>
           </button>
 
           <button
