@@ -475,3 +475,10 @@ The AuthGate tests now assert the current stable workspace test ID and the role 
 - Account preference JSON export now defers temporary object-URL revocation briefly after the browser download click, avoiding premature cleanup before the browser consumes the download.
 - The Account Settings description now reflects the implemented regional display coverage. It does not claim full-app localization.
 - These changes are display/download lifecycle only. They do not modify operational records, metric calculations, evidence exports or account authentication.
+
+
+### Header regional preferences and stale-date correction
+
+- The header's previously hard-coded prototype date (15 October 2026) has been replaced with the current browser date rendered using the selected account date format and timezone.
+- Header expired-certification and human-review counts now use the selected number grouping convention.
+- The value remains a display-only current-date indicator; no record timestamps or operational calculations are changed.
