@@ -88,3 +88,20 @@ export function createAccountSettingsExport(settings: AccountSettings, exportedA
     settings: normalizeAccountSettings(settings),
   };
 }
+
+
+/**
+ * Read the optional browser-local profile for display only.
+ * This value is not a Firebase identity and must never be used for authorization.
+ */
+export function readAccountProfile(storage?: Pick<Storage, 'getItem'>): AccountProfile {
+  try {
+    const target = storage ?? (typeof window !== 'undefined' ? window.localStorage : undefined);
+    if (!target) return { ...DEFAULT_ACCOUNT_SETTINGS.profile };
+    const raw = target.getItem(ACCOUNT_SETTINGS_STORAGE_KEY);
+    if (!raw) return { ...DEFAULT_ACCOUNT_SETTINGS.profile };
+    return normalizeAccountSettings(JSON.parse(raw)).profile;
+  } catch {
+    return { ...DEFAULT_ACCOUNT_SETTINGS.profile };
+  }
+}
