@@ -482,3 +482,13 @@ The AuthGate tests now assert the current stable workspace test ID and the role 
 - The header's previously hard-coded prototype date (15 October 2026) has been replaced with the current browser date rendered using the selected account date format and timezone.
 - Header expired-certification and human-review counts now use the selected number grouping convention.
 - The value remains a display-only current-date indicator; no record timestamps or operational calculations are changed.
+
+
+### Local profile visibility integration
+
+- Added a defensive reader for the existing browser-local profile settings. It validates through the canonical settings normalizer and returns an empty profile when storage is missing, malformed or unavailable.
+- The header now displays the optional display name and call sign only when a non-empty display name is configured. The short bio is not surfaced in the header.
+- The visible profile label and accessible name explicitly state that this is browser-local presentation data, not the authenticated Firebase identity. It is not used for authorization, account lookup, audit attribution or operational record ownership.
+- Saving Account Settings causes the existing application feedback update to re-render the header and reflect the saved profile; reset removes the local profile and the header returns to its unconfigured state.
+- Added focused reader tests for valid, absent, malformed and unavailable browser storage. These tests are authored but remain pending consolidated validation.
+- The Remix account-menu concept is therefore selectively represented without copying its identity semantics or creating a duplicate account menu.
