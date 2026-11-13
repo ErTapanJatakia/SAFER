@@ -420,3 +420,18 @@ Canonical SAFER currently exposes live status indicators, navigation badges, toa
 - Any future notification work must first define real event sources, severity, deduplication, persistence, user-visible delivery, accessibility behavior, and which critical security/session warnings cannot be suppressed.
 - Browser Web Audio may be considered only as an optional, user-initiated/in-app enhancement; it must respect browser gesture/autoplay restrictions and never be represented as guaranteed delivery.
 - External email, SMS, push, background delivery, and membership/audit events remain out of scope unless their trusted infrastructure and cost boundary are separately approved.
+
+
+## Implemented candidate batch: regional display preferences (staged rollout)
+
+The next safe account-settings candidate has been implemented on the same feature branch:
+
+- Added pure formatting helpers for account-local date, time, date-time and number preferences.
+- Date-only values in the explicitly supported formats (ISO YYYY-MM-DD, DD-MM-YYYY and DD/MM/YYYY) are parsed as calendar dates, not passed through UTC conversion. Invalid or ambiguous strings fail to a neutral fallback instead of being guessed.
+- ISO timestamps and Date objects are displayed in the selected supported timezone (Asia/Kolkata or UTC) and selected 12/24-hour clock.
+- Number formatting uses the selected en-IN or en-US convention.
+- Browser-local preference reads use the existing account-settings schema and fail back to the canonical defaults if storage is unavailable or malformed.
+- Applied the preferences to Privacy Console record timestamps and summary counts, plus the personnel-export preview character count. Stored timestamps, sorting, record schemas, date calculations, export payloads, filenames and evidence serialization remain unchanged.
+- Added unit coverage for date parsing, timezone display, clock formats, number grouping and unavailable storage. Tests are registered as `test:account-formatting` but have not been run.
+
+This is a staged integration, not a claim that every SAFER screen is localized. Other operational views continue using their established date/number display conventions until each can be audited and migrated without changing stored evidence or date-calculation semantics. The Account Settings description now states the exact current coverage.
