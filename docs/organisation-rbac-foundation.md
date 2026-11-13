@@ -59,7 +59,7 @@ No Remix sample organisation names, old Firebase IDs, or alternate role vocabula
 
 ## Explicitly not implemented
 
-- No Firestore reads/writes added by this domain contract.
+- No Firestore writes, membership mutations, or operational-record reads/writes are added by this slice. The only new Firestore read is the exact organisation metadata `get` for an already-verified active owner/admin membership.
 - No changes to `firestore.rules` or Firebase configuration.
 - No production tenant creation, role assignment, or membership mutation.
 - No operational-record migration or synchronization.
