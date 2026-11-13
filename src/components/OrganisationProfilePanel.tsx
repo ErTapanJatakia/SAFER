@@ -46,7 +46,8 @@ export const OrganisationProfilePanel: React.FC<OrganisationProfilePanelProps> =
       status: membership.status,
       loading: Boolean(database && membership.status === 'active'
         && (membership.role === 'owner' || membership.role === 'admin')),
-      unavailable: false,
+      unavailable: !database && membership.status === 'active'
+        && (membership.role === 'owner' || membership.role === 'admin'),
       profile: null,
     };
     setRequestState(request);
