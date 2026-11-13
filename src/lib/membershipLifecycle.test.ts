@@ -179,6 +179,19 @@ test('owner transfer assessment requires a distinct active non-owner and trusted
   }).reason, 'target-already-owner');
 });
 
+test('owner transfer assessment rejects malformed runtime role and status values', () => {
+  assert.equal(assessOwnerTransfer({
+    actorUid: 'owner-001', actorRole: 'owner',
+    targetUid: 'member-001', targetRole: 'platform_super_admin' as never,
+    targetStatus: 'active',
+  }).reason, 'invalid-context');
+  assert.equal(assessOwnerTransfer({
+    actorUid: 'owner-001', actorRole: 'owner',
+    targetUid: 'member-001', targetRole: 'manager',
+    targetStatus: 'pending' as never,
+  }).reason, 'invalid-context');
+});
+
 test('membership policy rejects malformed role and status values at runtime', () => {
   assert.equal(evaluateMembershipChange(proposal({
     actorRole: 'platform_super_admin' as never,
