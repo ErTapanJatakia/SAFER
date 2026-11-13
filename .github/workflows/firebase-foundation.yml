@@ -92,6 +92,9 @@ jobs:
       - name: AuthGate membership UI tests
         run: npm run test:auth-membership-ui
 
+      - name: Authenticated account security lifecycle tests
+        run: npm run test:account-security
+
       - name: Accessibility preferences UI tests
         run: npm run test:accessibility-preferences
 
