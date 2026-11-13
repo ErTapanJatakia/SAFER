@@ -16,12 +16,21 @@ describe('account settings normalization', () => {
   it('preserves supported values and normalizes unknown preference values', () => {
     expect(normalizeAccountSettings({
       profile: { displayName: 'Operator', callSign: 'ALPHA', bio: 'Bio' },
-      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', numberFormat: 'en-US' },
+      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', numberFormat: 'en-US', defaultExportFormat: 'xlsx', defaultRedactionLevel: 'strict' },
     })).toEqual({
       version: 1,
       profile: { displayName: 'Operator', callSign: 'ALPHA', bio: 'Bio' },
-      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', numberFormat: 'en-US' },
+      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', numberFormat: 'en-US', defaultExportFormat: 'xlsx', defaultRedactionLevel: 'strict' },
     });
+  });
+
+
+  it('normalizes unsupported export preferences to the safe existing defaults', () => {
+    const normalized = normalizeAccountSettings({
+      preferences: { defaultExportFormat: 'exe', defaultRedactionLevel: 'minimal' },
+    });
+    expect(normalized.preferences.defaultExportFormat).toBe('txt');
+    expect(normalized.preferences.defaultRedactionLevel).toBe('standard');
   });
 
   it('bounds imported profile strings', () => {
