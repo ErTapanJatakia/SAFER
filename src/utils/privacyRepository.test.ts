@@ -116,6 +116,39 @@ describe('SAFER privacy demo repository', () => {
     );
   });
 
+
+  it('round-trips synthetic processing activity register entries', () => {
+    const repository = createPrivacyDemoRepository(memoryStorage());
+    const workspace = repository.loadWorkspace();
+    workspace.processingActivities.push({
+      id: 'activity-demo-1',
+      purpose: 'Synthetic workforce administration',
+      dataCategories: ['synthetic role reference', 'synthetic qualification'],
+      recipients: ['demo operations team'],
+      retentionDescription: 'Manual review required; no statutory period asserted.',
+      legalAssessment: 'not-assessed',
+    });
+    repository.saveWorkspace(workspace);
+    assert.deepEqual(repository.loadWorkspace(), workspace);
+  });
+
+  it('rejects malformed processing activity records and duplicate activity IDs', () => {
+    for (const activities of [
+      [{ id: 'activity-1', purpose: 'x', dataCategories: [], recipients: [], retentionDescription: 'x', legalAssessment: 'approved' }],
+      [
+        { id: 'same', purpose: 'x', dataCategories: [], recipients: [], retentionDescription: 'x', legalAssessment: 'not-assessed' },
+        { id: 'same', purpose: 'y', dataCategories: [], recipients: [], retentionDescription: 'y', legalAssessment: 'not-assessed' },
+      ],
+    ]) {
+      const storage = memoryStorage();
+      storage.setItem(PRIVACY_DEMO_STORAGE_KEY, JSON.stringify({
+        ...EMPTY_PRIVACY_DEMO_WORKSPACE,
+        processingActivities: activities,
+      }));
+      assert.throws(() => createPrivacyDemoRepository(storage).loadWorkspace(), /schema validation/);
+    }
+  });
+
   it('verifies clear operations and leaves no stored demo workspace', () => {
     const storage = memoryStorage();
     const repository = createPrivacyDemoRepository(storage);
