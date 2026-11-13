@@ -204,3 +204,8 @@ This remains defence in depth for UI publication. The tenant resolver validates 
 ## Sign-out while membership verification is pending
 
 Beginning sign-out invalidates the session lifecycle request token synchronously, before Firebase sign-out completes. A membership response that arrives during a slow or unresolved sign-out therefore cannot restore the organisation workspace, even while the Firebase identity is still temporarily displayed. If Firebase sign-out later fails while the same identity remains current, the account can explicitly re-verify membership; the old pending result is never reused. A regression case covers the delayed membership response and delayed Firebase sign-out completion. Test execution remains deferred to consolidated validation.
+
+
+## Authentication observer failure during membership lookup
+
+If Firebase's authentication observer fails while an organisation membership request is pending, AuthGate ends the session lifecycle, clears the account and organisation presentation, and publishes a peer-tab invalidation. The outstanding request token is no longer current, so its eventual response cannot restore the prior workspace. Recovery requires an explicit observer re-subscription and a fresh Firebase identity callback; the previous organisation locator is not carried forward. A regression case covers the delayed membership response, observer failure, and fresh-identity recovery. Test execution remains deferred to consolidated validation.
