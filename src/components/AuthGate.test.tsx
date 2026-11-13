@@ -101,6 +101,14 @@ describe('AuthGate membership session handling',()=>{
   expect(verifiedWorkspace()?.textContent).toContain('Manager');
   expect(resolveTenantMembership).toHaveBeenCalledTimes(2);
  });
+ it('rejects an unsupported role returned by the membership adapter',async()=>{
+  vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'platform_super_admin' as any,status:'active'});
+  auth(makeUser('user-a'));await flush();
+  const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
+  change(field,'org-a');await flush();submit(field.closest('form')!);await flush();
+  expect(verifiedWorkspace()).toBeNull();
+  expect(host.querySelector('[role="alert"]')?.textContent).toContain('Membership could not be verified.');
+ });
  it('rejects a membership response bound to a different UID or organisation',async()=>{
   vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-b',orgId:'org-other',role:'owner',status:'active'});
   auth(makeUser('user-a'));await flush();
