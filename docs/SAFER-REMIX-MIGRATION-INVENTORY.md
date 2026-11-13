@@ -514,3 +514,13 @@ The canonical application already provides separate theme and accessibility cont
 - Notification settings remain deferred until real event sources, severity, deduplication, persistence, delivery and accessibility behavior are specified.
 - Density, language, analytics consent and inactivity timeout remain deferred under the criteria above; they are not represented as implemented features.
 - Tests for the account settings/profile reader and all other implementation-batch changes remain pending consolidated validation. No test or CI run is implied by this audit entry.
+
+
+### Browser-local account preference cross-tab refresh
+
+- Added a narrowly scoped `storage` event listener in the canonical App shell for the exact `safer_account_settings_v1` key (and the browser's clear-all event).
+- A change in another same-origin tab triggers a React refresh so header profile presentation and screens consuming regional preferences can re-read the validated current settings.
+- Same-tab saves continue to refresh through the existing Account Settings success feedback state; the browser does not emit a storage event back to the writing document.
+- The listener ignores unrelated localStorage keys and other storage areas, and unregisters on unmount.
+- This is a presentation refresh only. It does not synchronize authenticated identity, alter operational records, or bypass the existing cross-tab operational-record conflict protections.
+- Cross-tab refresh behavior is authored but remains pending consolidated validation.
