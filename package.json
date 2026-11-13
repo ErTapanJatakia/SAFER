@@ -60,7 +60,8 @@
     "test:security-assessment": "tsx --test src/utils/securityAssessment.test.ts",
     "test:demo-retention-notice": "node --test tests/demo-retention-notice.test.mjs",
     "test:demo-storage-boundary": "tsx --test src/lib/demoRepository.test.ts && node --test tests/demo-storage-boundary.test.mjs",
-    "test:demo-ui-persistence": "node --test tests/demo-ui-persistence.test.mjs"
+    "test:demo-ui-persistence": "node --test tests/demo-ui-persistence.test.mjs",
+    "test:demo-conflict-export": "tsx --test src/lib/demoConflictExport.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
