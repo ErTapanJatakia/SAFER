@@ -192,3 +192,10 @@ After an exact membership lookup resolves, AuthGate independently checks that th
 
 
 The AuthGate response boundary also validates the returned role against the canonical four-role allowlist before rendering capability guidance. Unsupported runtime values fail closed rather than reaching the role-capability map. This is a UI robustness check only; exact membership parsing and Firestore Rules remain authoritative.
+
+
+## Exact runtime membership response shape
+
+The AuthGate membership-response guard now accepts an unknown runtime value and requires a plain data object containing exactly the four currently supported fields: `uid`, `orgId`, `role`, and `status`. Nulls, arrays, primitives, missing or unexpected fields, accessor-backed properties, exotic prototypes, unsupported roles, and mismatched identity/organisation context fail closed. The guard catches unusual object-inspection failures rather than allowing malformed adapter output to crash the authentication boundary.
+
+This remains defence in depth for UI publication. The tenant resolver validates the Firestore document shape, and Firestore Security Rules remain the actual authorization boundary. Regression cases are authored for malformed values and exact-shape enforcement; execution remains deferred to consolidated validation.
