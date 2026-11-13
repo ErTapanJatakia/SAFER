@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, ClipboardList, FileText, ShieldCheck, X } from 'lucide-react';
+import { AlertTriangle, ClipboardList, ShieldCheck, X } from 'lucide-react';
 import {
   EMPTY_PRIVACY_DEMO_WORKSPACE,
   type PrivacyDemoWorkspace,
@@ -43,8 +43,12 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
   const [retentionNote, setRetentionNote] = useState('');
 
   const repository = useMemo(() => {
-    if (typeof window === 'undefined') return null;
-    return createPrivacyDemoRepository(window.localStorage);
+    try {
+      if (typeof window === 'undefined') return null;
+      return createPrivacyDemoRepository(window.localStorage);
+    } catch {
+      return null;
+    }
   }, []);
 
   useEffect(() => {
