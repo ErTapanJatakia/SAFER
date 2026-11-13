@@ -63,7 +63,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      URL.revokeObjectURL(url);
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
       onSaved('Personal preferences export prepared.');
     } catch {
       setError('Unable to create the preferences export.');
@@ -131,7 +131,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
 
           {activeTab === 'preferences' && (
             <div className="space-y-4">
-              <div><h3 className="font-semibold text-slate-900">Regional preferences</h3><p className="text-xs text-slate-600 mt-1">These preferences now control Privacy Console timestamps and counts plus the personnel export preview count. Other operational screens retain their existing display formats until their own safe integration is completed.</p></div>
+              <div><h3 className="font-semibold text-slate-900">Regional preferences</h3><p className="text-xs text-slate-600 mt-1">Regional preferences now control visible dates in personnel details, readiness cards, deployment checklists and incident lists; timestamps and counts in the Privacy Console; and numeric counts in the dashboard and personnel export preview. Stored records, calculations and formal evidence exports retain their existing formats.</p></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label className={labelClass}>Date format
                   <select className={inputClass} value={settings.preferences.dateFormat} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, dateFormat: event.target.value as AccountSettings['preferences']['dateFormat'] } }))}>
