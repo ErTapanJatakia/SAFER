@@ -75,7 +75,9 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       return;
     }
     setAuthObserverFailed(false);
-    return onAuthStateChanged(firebaseAuth, (nextUser) => {
+    let observerActive = true;
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (nextUser) => {
+      if (!observerActive) return;
       const nextUid = nextUser?.uid ?? null;
       const previousUid = lastAuthUidRef.current;
       if ((previousUid === undefined && nextUid !== null)
@@ -107,6 +109,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       }
       setLoading(false);
     }, () => {
+      if (!observerActive) return;
       // An observer failure makes the account state uncertain. Revoke every
       // local workspace capability and invalidate work in this and peer tabs.
       sessionLifecycleRef.current.endSession();
@@ -122,6 +125,12 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       setAuthObserverFailed(true);
       setError('Unable to verify the current account session. Please retry account verification.');
     });
+    return () => {
+      // Ignore callbacks already queued by an observer being replaced during
+      // recovery; unsubscribe alone does not guard against a late callback.
+      observerActive = false;
+      unsubscribe();
+    };
   }, [authObserverRetry]);
 
   const retryAuthObserver = () => {
