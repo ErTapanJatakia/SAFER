@@ -395,3 +395,17 @@ A deeper review of Remix MyAccountSettingsView and its settings schema found sev
 4. Deferred: language selector until actual translation coverage; analytics consent until a defined analytics data flow; account deletion and statutory request submission until trusted backend and legal process exist.
 
 No settings code was copied during this second-pass review. This correction supersedes the broad "no direct migration candidate remains" statement above for the specific safe candidates listed here.
+
+## Implemented candidate batch: safe local export defaults
+
+The first account-settings candidate has now been implemented on the organisation foundation feature branch:
+
+- Added validated local preferences for default export format (TXT, CSV, XLSX, PDF, DOCX) and default redaction profile (standard or strict).
+- Standard mode preserves SAFER's existing sensitive-field redaction defaults.
+- Strict mode redacts every field exposed by the current export schema.
+- Unsupported or malformed stored values normalize to TXT + standard redaction; the legacy Remix "minimal" profile is deliberately not imported because it could reduce protection ambiguously.
+- Personnel Export reads the browser-local preferences only when opened, then still presents the redaction controls and preview for user review before download.
+- Account preference export remains limited to local profile/preferences; operational records and credentials are excluded.
+- Added normalization, redaction mapping, and UI regression tests. Tests have been authored but intentionally not executed pending the consolidated validation milestone.
+
+This is a local preference only. It does not automatically export data, change source records, bypass per-field review, or upload settings to Firebase. The implementation is on the feature branch and is not merged or deployed.
