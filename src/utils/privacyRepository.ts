@@ -111,6 +111,9 @@ function cloneEmptyWorkspace(): PrivacyDemoWorkspace {
  * It deliberately has no authenticated-user or operational-record API.
  */
 export function createPrivacyDemoRepository(storage: PrivacyStorage) {
+  // Track exact bytes last loaded or verified to reject stale cross-tab writes.
+  let expectedRaw: string | null | undefined;
+
   const readRaw = (): string | null => {
     try {
       return storage.getItem(PRIVACY_DEMO_STORAGE_KEY);
@@ -121,6 +124,7 @@ export function createPrivacyDemoRepository(storage: PrivacyStorage) {
 
   const loadWorkspace = (): PrivacyDemoWorkspace => {
     const raw = readRaw();
+    expectedRaw = raw;
     if (raw === null) return cloneEmptyWorkspace();
     if (new TextEncoder().encode(raw).byteLength > MAX_SERIALIZED_BYTES) {
       throw new Error('Stored privacy demo workspace exceeds the 1 MB safety limit; no data was replaced.');
@@ -142,6 +146,11 @@ export function createPrivacyDemoRepository(storage: PrivacyStorage) {
     if (!isPrivacyWorkspace(workspace) || !isWithinWorkspaceLimits(workspace)) {
       throw new Error('Refusing to persist invalid privacy demo data (invalid or oversized).');
     }
+    const currentRaw = readRaw();
+    if (expectedRaw === undefined) expectedRaw = currentRaw;
+    if (currentRaw !== expectedRaw) {
+      throw new Error('Privacy demo workspace changed in another tab or session. Reload the workspace before making further changes.');
+    }
     const serialized = JSON.stringify(workspace);
     if (new TextEncoder().encode(serialized).byteLength > MAX_SERIALIZED_BYTES) {
       throw new Error('Privacy demo workspace exceeds the 1 MB storage safety limit.');
@@ -154,9 +163,15 @@ export function createPrivacyDemoRepository(storage: PrivacyStorage) {
     if (readRaw() !== serialized) {
       throw new Error('Unable to verify SAFER privacy demo storage after writing.');
     }
+    expectedRaw = serialized;
   };
 
   const clearWorkspace = (): void => {
+    const currentRaw = readRaw();
+    if (expectedRaw === undefined) expectedRaw = currentRaw;
+    if (currentRaw !== expectedRaw) {
+      throw new Error('Privacy demo workspace changed in another tab or session. Reload the workspace before clearing it.');
+    }
     try {
       storage.removeItem(PRIVACY_DEMO_STORAGE_KEY);
     } catch (error) {
@@ -165,6 +180,7 @@ export function createPrivacyDemoRepository(storage: PrivacyStorage) {
     if (readRaw() !== null) {
       throw new Error('Unable to verify SAFER privacy demo storage after clearing.');
     }
+    expectedRaw = null;
   };
 
   return Object.freeze({ loadWorkspace, saveWorkspace, clearWorkspace });
