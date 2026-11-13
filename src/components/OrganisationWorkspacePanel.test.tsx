@@ -36,6 +36,8 @@ describe('OrganisationWorkspacePanel', () => {
     expect(host.textContent).toContain('Membership verified');
     expect(host.textContent).toContain('Operational workspace access is not released');
     expect(host.textContent).toContain('informational UI guidance');
+    expect(host.textContent).toContain('does not mean the corresponding SAFER screen or workflow is released');
+    expect(host.textContent).toContain('Permitted by current Rules');
     expect(host.querySelector('table')).not.toBeNull();
     expect(host.querySelector('th[scope="col"]')?.textContent).toContain('Capability');
   });
