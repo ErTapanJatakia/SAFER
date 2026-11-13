@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, ClipboardList, ShieldCheck, X } from 'lucide-react';
 import {
   EMPTY_PRIVACY_DEMO_WORKSPACE,
@@ -28,6 +28,8 @@ function newId(prefix: string): string {
 }
 
 export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+  const dialogRef = useRef<HTMLElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [workspace, setWorkspace] = useState<PrivacyDemoWorkspace>(EMPTY_PRIVACY_DEMO_WORKSPACE);
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [error, setError] = useState<string | null>(null);
@@ -68,6 +70,41 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
       setError(cause instanceof Error ? cause.message : 'Privacy workspace could not be loaded.');
     }
   }, [isOpen, repository]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    closeButtonRef.current?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab' || !dialogRef.current) return;
+      const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )).filter((element) => element.offsetParent !== null);
+      if (focusable.length === 0) {
+        event.preventDefault();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      previousFocus?.focus();
+    };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -178,7 +215,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto bg-slate-950/85 p-3 backdrop-blur-sm sm:p-5"
       role="dialog" aria-modal="true" aria-labelledby="privacy-console-title">
-      <section className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 text-slate-100 shadow-2xl">
+      <section ref={dialogRef} className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 text-slate-100 shadow-2xl">
         <header className="flex items-start justify-between gap-3 border-b border-slate-700 bg-slate-950 px-5 py-4">
           <div className="flex items-start gap-3">
             <ShieldCheck className="mt-1 h-6 w-6 shrink-0 text-teal-400" />
@@ -187,7 +224,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
               <p className="mt-1 text-xs text-slate-400">Privacy notices, request tracking, consent records and retention reviews.</p>
             </div>
           </div>
-          <button type="button" onClick={onClose} className={buttonClass} aria-label="Close Privacy Console"><X className="h-4 w-4" /></button>
+          <button ref={closeButtonRef} type="button" onClick={onClose} className={buttonClass} aria-label="Close Privacy Console"><X className="h-4 w-4" /></button>
         </header>
 
         <div className="border-b border-amber-700/60 bg-amber-950/50 px-5 py-3 text-xs text-amber-100">
