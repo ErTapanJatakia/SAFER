@@ -44,8 +44,10 @@ No Remix sample organisation names, old Firebase IDs, or alternate role vocabula
 - The panel presents a role capability preview aligned to the existing Rules model. Manager/viewer currently receive no tenant operational capabilities.
 - Membership administration and audit-event access are explicitly shown as unavailable for every role.
 - The panel states that authenticated operational workspace access is not released and that its capability preview is informational only.
+- Owner/admin memberships trigger one exact read of `organisations/{orgId}` for profile metadata. Manager/viewer roles never issue that metadata read.
+- The profile reader validates the organisation ID against the verified membership, active status, display-name bounds, and schema version; malformed, missing, and unavailable profiles fail closed without cached/inferred data.
 - `AuthGate` renders the panel only for a membership verified in the current in-memory session. Changing the organisation locator or crossing an authentication/session boundary clears the membership result.
-- Focused UI regression coverage is registered as `test:organisation-workspace` and has been added but not yet executed.
+- Focused regression suites are registered as `test:organisation-workspace` and `test:organisation-profile`; they have been added but not yet executed.
 
 ## Next implementation slices
 
