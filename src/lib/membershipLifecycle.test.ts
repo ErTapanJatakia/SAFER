@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  canIssueInvitation,
   canTransitionInvitation,
   evaluateMembershipChange,
   isInvitationStatus,
@@ -54,7 +55,7 @@ test('issuance metadata requires bounded expiry and a SHA-256 digest, never a ra
   assert.equal(validateInvitationForIssuance(invitation(), now), true);
   assert.equal(validateInvitationForIssuance(invitation({ expiresAt: now + 8 * DAY }), now), false);
   assert.equal(validateInvitationForIssuance(invitation({ tokenDigest: 'raw-token' }), now), false);
-  assert.equal(validateInvitationForIssuance(invitation({ role: 'owner' as 'manager' }), now), false);
+  assert.equal(validateInvitationForIssuance(invitation({ role: 'owner' as never }), now), false);
   assert.equal(validateInvitationForIssuance(invitation({ status: 'issued' }), now), false);
 });
 
@@ -74,12 +75,22 @@ test('owner may propose ordinary non-owner role and status changes', () => {
   });
 });
 
+test('only owners may invite administrators', () => {
+  assert.equal(canIssueInvitation('owner', 'admin'), true);
+  assert.equal(canIssueInvitation('admin', 'admin'), false);
+  assert.equal(canIssueInvitation('admin', 'manager'), true);
+  assert.equal(canIssueInvitation('manager', 'viewer'), false);
+});
+
 test('admin cannot manage owners or other administrators', () => {
   assert.equal(evaluateMembershipChange(proposal({
     actorRole: 'admin', currentRole: 'admin',
   })).reason, 'admin-cannot-manage-admin');
   assert.equal(evaluateMembershipChange(proposal({
     actorRole: 'admin', currentRole: 'owner',
+  })).reason, 'admin-cannot-manage-admin');
+  assert.equal(evaluateMembershipChange(proposal({
+    actorRole: 'admin', currentRole: 'manager', nextRole: 'admin',
   })).reason, 'admin-cannot-manage-admin');
 });
 
