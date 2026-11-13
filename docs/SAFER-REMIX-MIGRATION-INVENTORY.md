@@ -313,3 +313,32 @@ The current canonical type directory is intentionally smaller because organisati
 No Remix Firebase project configuration, Firestore Rules, lockfile, package manifest, environment example, generated metadata, or deployment configuration is copied into canonical SAFER. Canonical SAFER's current project identity, dependency graph, emulator setup, CI workflows, deployment policy, and zero-cost constraints remain authoritative.
 
 Reference screenshots and temporary AI Studio media are not application features or source-of-truth assets. They are not bulk-migrated. Any future asset reuse requires a specific product need, provenance check, accessibility review, and optimization assessment.
+
+## Repository-root documentation and configuration audit
+
+The Remix root was reviewed in addition to its source directories. These files are reference artifacts only; none is copied into canonical SAFER.
+
+| Remix artifact | Finding | Canonical disposition |
+|---|---|---|
+| README.md | Describes the product's operational workflows and synthetic demonstration purpose; much of the capability inventory is already present in SAFER. Some statements describe older UI/data semantics and must not be treated as current release evidence. | Retain canonical SAFER README and current implementation as source of truth. No README transplant. |
+| ADMIN_PROVISIONING.md | Contains a personal email address and fabricated example UID, a legacy Firebase project/database identifier, and instructions for a platform_admins path and six-role model that do not match canonical SAFER. Its assertion that the described document immediately grants privileges is not valid for the current canonical Rules model. | Do not execute or copy. Canonical trusted-organisation provisioning ADR is the only current operating decision. Recommend owner review and removal of personal/sample identifiers from the reference repository; no edit to Remix is authorized by this migration. |
+| security_spec.md | Aspirational six-role/platform-super-admin model; claims broad access and append-only audit behavior not proven by the old mock tests and not implemented in canonical SAFER. | Rejected as a security authority. Canonical Firestore Rules, emulator tests, organisation ADR and assurance matrix govern actual claims. |
+| BUDGET_POLICY.md | Contains historical service quotas, old AI Studio/Gemini assumptions, and broad Firebase product claims that are not current authoritative pricing or service eligibility evidence. | Do not copy quotas or treat them as current pricing. Canonical INR 0 policy and provider allowlist are advisory; verify provider limits at the point of any future deployment decision. |
+| firebase-applet-config.json | Contains a legacy Firebase web-client configuration and project identifiers. A Firebase web API key is a public client identifier, not a service-account secret, but the associated project/app/database are unrelated to canonical SAFER. | Never reuse the old project configuration. Canonical safer-2026 client configuration remains authoritative. No credential rotation claim is made from this review. |
+| firebase-blueprint.json | Defines old entity shapes and incompatible field/role/path names, including platform_admins, memberships, and the six-role hierarchy. | Rejected as a schema source. Canonical organisation, membership, tenant resolver and Firestore Rules are authoritative. |
+| .env.example | References a Gemini API key and AI Studio/Cloud Run APP_URL assumptions that are not part of the canonical SAFER client architecture. | Do not copy. Canonical environment example is retained; public Firebase web-client variables are separately documented. No secrets are committed by this migration. |
+| package.json / package-lock.json / bun.lock | Legacy dependency graph includes server-oriented and AI SDK packages not needed by the canonical static Vite app. Lockfiles are repository-specific. | Do not merge manifests or lockfiles. Canonical package manifest and lockfiles remain authoritative. |
+| vercel.json | SPA rewrite is already represented in canonical hosting configuration. | No migration required; canonical deployment policy governs. |
+| screenshots and metadata.json | UI snapshots and generated project metadata are not source code or authoritative functional specifications. | Retain only existing canonical assets that are actually used; no bulk asset or metadata migration. |
+| .aistudio | AI Studio workspace metadata is tool-specific, not a product capability. | Do not migrate. |
+
+### Configuration and security caveats
+
+- The Remix Firebase web API key is not equivalent to a private service-account key. Its presence alone is not evidence of credential compromise. The legacy project identifiers and config must nevertheless not be used by canonical SAFER.
+- The old provisioning guide includes personal/sample identifiers. This inventory deliberately does not reproduce them. Review and redact them in the reference repository if they are not intentionally public; any historical Git commit may continue to contain prior versions.
+- The old security specification's statements about platform-wide administration, employee/auditor access, Demo Guest remote-write denial, and immutable audit events are not accepted as implemented facts. Each must be independently supported by current canonical rules and emulator tests before any future feature claim.
+- No Firebase project, Firestore Rules, authentication provider, environment secret, deployment setting, DNS record, billing plan, or live operational dataset was changed during this audit.
+
+## Repository-level reconciliation outcome
+
+The source, type, demo-data, and root-configuration reviews identify no additional feature that warrants a direct transplant. The remaining work is verification, not copying legacy configuration: final source/runtime parity review, one consolidated validation milestone, remediation of any failures, and a final explicit disposition of deferred capabilities. SAFER-Remix remains available until the user separately approves retirement.
