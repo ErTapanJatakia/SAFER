@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   assessOwnerTransfer,
+  canAcceptInvitationForRecipient,
   canIssueInvitation,
   canTransitionInvitation,
   evaluateMembershipChange,
@@ -67,6 +68,34 @@ test('invitation transitions enforce one-way states and expiry boundaries', () =
   assert.equal(canTransitionInvitation('issued', 'expire', now + DAY, now + DAY), true);
   assert.equal(canTransitionInvitation('accepted', 'revoke', now, now + DAY), false);
   assert.equal(canTransitionInvitation('revoked', 'accept', now, now + DAY), false);
+});
+
+
+test('invitation acceptance is bound to the verified recipient and exact expiry boundary', () => {
+  const issued = invitation({ status: 'issued' });
+  assert.equal(canAcceptInvitationForRecipient(
+    issued, 'member-001', ' MEMBER@example.test ', now,
+  ), true);
+  assert.equal(canAcceptInvitationForRecipient(
+    issued, 'member-001', 'other@example.test', now,
+  ), false);
+  assert.equal(canAcceptInvitationForRecipient(
+    issued, 'member-001', 'member@example.test', issued.expiresAt,
+  ), false);
+  assert.equal(canAcceptInvitationForRecipient(
+    invitation({ status: 'accepted' }), 'member-001', 'member@example.test', now,
+  ), false);
+  assert.equal(canAcceptInvitationForRecipient(
+    invitation({ status: 'issued', acceptedByUid: 'member-002' }),
+    'member-001', 'member@example.test', now,
+  ), false);
+  assert.equal(canAcceptInvitationForRecipient(
+    invitation({ status: 'issued', tokenDigest: 'raw-secret' }),
+    'member-001', 'member@example.test', now,
+  ), false);
+  assert.equal(canAcceptInvitationForRecipient(
+    issued, 'member-001', 'member@example.test', Number.NaN,
+  ), false);
 });
 
 test('owner may propose ordinary non-owner role and status changes', () => {
