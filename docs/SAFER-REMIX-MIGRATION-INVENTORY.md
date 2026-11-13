@@ -17,7 +17,7 @@ This document tracks capabilities present in SAFER-Remix that are not represente
 | Authentication gateway and account lifecycle | `src/components/AuthGatewayView.tsx`, `src/utils/firebaseAuth.ts`, `src/utils/authValidation.ts`, `src/utils/authValidation.test.ts` | Candidate; SAFER has related authentication/session foundations. | Compare behavior; verify password policy, email verification/reset, session invalidation, error handling, and no credential exposure. Do not enable sign-in or configure production Firebase in this migration PR. |
 | Account profile and settings | `src/components/MyAccountSettingsView.tsx`, `src/components/AccountMenuDropdown.tsx`, `src/utils/accountSettingsHelpers.ts`, `src/utils/userSettingsService.ts`, related tests and `src/types/settings.ts` | Candidate; theme/accessibility preferences already exist in SAFER and must remain the source of truth. | Merge only missing capabilities; preserve SAFER's 20-theme system, accessibility behavior, and local Demo Guest boundary. Validate all persisted settings at runtime. |
 | Organisation administration and multi-organisation RBAC | `src/components/OrganisationModal.tsx`, `src/types/multiorg.ts`, `src/utils/multiOrgRbac.test.ts` | High-value but security-sensitive; current test file includes mock rule evaluation and does not by itself prove Firestore enforcement. | Design tenant model independently; add emulator-backed Firestore rules tests for default-deny, cross-tenant isolation, self-promotion, revoked membership, read-only auditor, Demo Guest isolation, and immutable audit events. No operational collection migration. |
-| Privacy console, notice and rights-request workflow | `src/components/PrivacyConsoleModal.tsx`, `src/components/PrivacyNoticeModal.tsx`, `src/utils/privacyService.ts`, `src/utils/privacyService.test.ts`, `src/types/privacy.ts` | Candidate; useful privacy operations, but includes sample organisation/DPO/contact details and legal-basis assertions that must not be copied as real facts. | Replace sample identities with clearly synthetic placeholders; validate request lifecycle and data minimisation; review DPDP terminology with legal caution; do not claim compliance or automate deletion before verified controls exist. |
+| Privacy console, notice and rights-request workflow | `src/components/PrivacyConsoleModal.tsx`, `src/components/PrivacyNoticeModal.tsx`, `src/utils/privacyService.ts`, `src/utils/privacyService.test.ts`, `src/types/privacy.ts` | Core synthetic workflows already exist in canonical SAFER; Remix notice and service contain fictional identities, unsupported legal assertions, and unsafe persistence/deletion semantics. | Reconcile existing capabilities; migrate only safe workflow concepts and explicit legal-boundary wording. Keep real notices, submissions, consent, deadlines, and deletion out of scope until separately reviewed and authorized. |
 | Firestore service and rules foundation | `src/utils/firestoreService.ts`, `firestore.rules`, `firebase-blueprint.json`, `firebase-applet-config.json` | Do not transplant configuration. Existing SAFER Firebase foundation is authoritative. | Independently design and test rules against SAFER's current schema. Do not reuse the Remix Firebase project ID, app config, credentials, or old rules. |
 | Provisioning and security documentation | `ADMIN_PROVISIONING.md`, `security_spec.md` | Useful design references, not operational instructions to execute as written. | Rewrite for SAFER's current architecture; remove personal/sample identifiers; verify every claimed security invariant with executable tests. |
 
@@ -42,7 +42,7 @@ The Remix tree contains the candidate modules listed above. SAFER already contai
 - [ ] Corrected INR 0 budget policy inspector (first functional port; local-only).
 - [ ] Authentication/account lifecycle comparison and isolated implementation plan.
 - [x] Profile, preferences, accessibility and account-settings reconciliation (existing local-only settings and authenticated security flows retained; global regional-format application remains deferred).
-- [ ] Privacy notice and privacy-request workflow review and selective port.
+- [x] Privacy notice and privacy-request workflow review and selective port (synthetic console already migrated; legal/compliance boundary added; unsafe Remix defaults rejected).
 - [ ] Multi-organisation data model and RBAC threat model.
 - [ ] Emulator-backed Firestore rules and tenant-isolation tests.
 - [ ] Trusted provisioning documentation rewritten for SAFER.
@@ -85,6 +85,52 @@ A Remix capability is considered migrated only when SAFER contains the reviewed 
 | Authenticated password/email lifecycle | Already handled by canonical account-security implementation |
 | Firestore user-settings sync/cache fallback | Rejected as-is; unsafe cache-first and false-success behavior |
 | Duplicate account dropdown / second settings screen | Not needed; avoid duplicate navigation and settings state |
+
+## Privacy notice and privacy-request workflow reconciliation
+
+**Review basis:** Remix `PrivacyNoticeModal`, `PrivacyConsoleModal`, `privacyService`, and `types/privacy`, compared with canonical SAFER `PrivacyConsoleModal`, `privacyRepository`, `privacyExport`, and the synthetic privacy workspace contracts.
+
+### Already represented in canonical SAFER
+
+- Synthetic processing-activity register and notice-draft workflow.
+- Synthetic rights-request and grievance tracking with manually maintained statuses.
+- Consent-event examples that explicitly state they are not proof of legally valid consent.
+- Retention review notes rather than automated deletion.
+- Synthetic-only acknowledgement, fail-closed storage handling, bounded workspace persistence, and synthetic export.
+- Explicit statement that the console does not calculate statutory deadlines, decide legal bases, contact regulators/data subjects, or delete operational records.
+
+### Safe concept retained
+
+The useful part of Remix's prominent legal disclaimer was its separation of technical workflow aids from legal advice or compliance certification. A clear **Legal and compliance boundary** notice has now been added to the canonical Privacy Console overview. It states that SAFER does not determine legal bases, certify DPDP compliance, or guarantee statutory performance, and that responsible organisations must obtain qualified legal review before real-world use. It also clarifies that no organisation identity, DPO contact, deadline, legal basis, or retention period is pre-populated as a verified fact.
+
+### Remix behaviours and claims rejected
+
+1. **Fictional fiduciary and DPO data:** the default notice contains a named company, registration number, office address, named DPO, email addresses and telephone numbers. These are not canonical SAFER facts and must not be copied or presented as real.
+2. **Unverified legal bases and retention periods:** preset processing purposes and fixed year-based retention rules make legal and operational assumptions that depend on the actual organisation, processing context, and applicable law. Canonical SAFER leaves assessments explicitly unassessed unless manually reviewed.
+3. **Unsupported statutory deadlines:** precomputed request and grievance target dates imply legal timelines and service-level commitments. Canonical SAFER records timestamps/statuses only; it does not calculate deadlines.
+4. **False persistence success:** Remix privacy persistence helpers catch localStorage failures and may return an acknowledgement or success-shaped object even when data was not saved. Canonical SAFER's repository throws on failed persistence and the UI reports the failure.
+5. **Unsafe retention purge:** Remix includes destructive purge/anonymisation paths that can modify personnel records. No such capability is migrated; canonical retention is a review log only.
+6. **Overstated privacy guarantees:** claims such as zero PII transmission, complete client-side redaction, and prevention of AI prompt leakage are not accepted without end-to-end evidence for every data path and integration. SAFER does not claim these guarantees.
+7. **AI/Gemini privacy settings:** a configuration object describing masking options is not evidence of an implemented AI integration or effective protection. No external LLM integration or transmission path is introduced by this migration.
+8. **External mailbox boundary:** accepted email identifiers do not imply access to third-party mailboxes. Canonical account authentication and email verification remain separate; no mailbox integration is added.
+
+### Disposition
+
+| Capability | Disposition |
+|---|---|
+| Synthetic notice drafting | Already present in canonical Privacy Console |
+| Processing-purpose register | Already present as synthetic processing activities; legal assessment defaults to not assessed |
+| Rights requests and grievances | Already present as synthetic workflow tracking; no statutory deadline calculation |
+| Consent ledger | Already present as manually recorded synthetic events, explicitly not proof of valid consent |
+| Retention policy review | Already present as review notes; no automated purge |
+| Legal disclaimer | Safe concept migrated into the Privacy Console overview |
+| Fictional fiduciary/DPO/contact defaults | Rejected; never represent as canonical or verified identities |
+| Preset legal bases and statutory periods | Rejected as defaults; require organisation-specific qualified review |
+| AI/Gemini masking configuration | Deferred; no AI processing integration is implied |
+| Silent localStorage write failure | Rejected; canonical repository fails closed and surfaces errors |
+| Automatic personnel deletion/anonymisation | Rejected; no destructive retention workflow |
+
+The privacy migration review is complete for the currently identified Remix privacy components. Remaining legal, production notice, real-data intake, and statutory workflow capabilities are explicitly deferred rather than implied to be complete.
 
 ## Deep review: Remix organisation/RBAC and provisioning artifacts
 
