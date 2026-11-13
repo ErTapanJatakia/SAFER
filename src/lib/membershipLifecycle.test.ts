@@ -146,6 +146,43 @@ test('last active owner cannot be suspended, revoked or demoted', () => {
   }
 });
 
+test('revocation is terminal and cannot be combined with a role change', () => {
+  assert.equal(evaluateMembershipChange(proposal({
+    currentStatus: 'revoked', nextStatus: 'revoked',
+    currentRole: 'manager', nextRole: 'viewer',
+  })).reason, 'invalid-transition');
+  assert.equal(evaluateMembershipChange(proposal({
+    currentStatus: 'revoked', nextStatus: 'revoked',
+    currentRole: 'manager', nextRole: 'manager',
+  })).reason, 'invalid-transition');
+  assert.equal(evaluateMembershipChange(proposal({
+    currentStatus: 'active', nextStatus: 'revoked',
+    currentRole: 'manager', nextRole: 'viewer',
+  })).reason, 'invalid-transition');
+  assert.deepEqual(evaluateMembershipChange(proposal({
+    currentStatus: 'active', nextStatus: 'revoked',
+    currentRole: 'manager', nextRole: 'manager',
+  })), { allowed: true, reason: 'owner-policy' });
+});
+
+test('active owner count must include the target active owner', () => {
+  assert.equal(evaluateMembershipChange(proposal({
+    currentRole: 'owner', currentStatus: 'active',
+    nextRole: 'owner', nextStatus: 'suspended',
+    activeOwnerCount: 0,
+  })).reason, 'owner-count-inconsistent');
+  assert.equal(evaluateMembershipChange(proposal({
+    currentRole: 'owner', currentStatus: 'active',
+    nextRole: 'admin', nextStatus: 'active',
+    activeOwnerCount: 1,
+  })).reason, 'owner-protection');
+  assert.deepEqual(evaluateMembershipChange(proposal({
+    currentRole: 'owner', currentStatus: 'active',
+    nextRole: 'admin', nextStatus: 'active',
+    activeOwnerCount: 2,
+  })), { allowed: true, reason: 'owner-policy' });
+});
+
 test('revoked memberships cannot be reactivated and non-admins cannot manage membership', () => {
   assert.equal(evaluateMembershipChange(proposal({
     currentStatus: 'revoked', nextStatus: 'active',
