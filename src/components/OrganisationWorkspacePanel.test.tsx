@@ -51,20 +51,27 @@ describe('OrganisationWorkspacePanel', () => {
     ));
     const rows = [...host.querySelectorAll('tbody tr')];
     expect(rows.length).toBeGreaterThan(0);
-    expect(rows.every((row) => row.textContent?.includes('Not granted'))).toBe(true);
+    expect(rows.every((row) => row.textContent?.includes('Not permitted by current Rules'))).toBe(true);
     expect(host.textContent).toContain('Read personnel records');
   });
 
-  it('never advertises membership administration or audit access for any role', async () => {
-    for (const role of ['owner', 'admin', 'manager', 'viewer'] as const) {
+  it('shows destructive, evidence-write, membership and audit operations as denied for owner and admin', async () => {
+    for (const role of ['owner', 'admin'] as const) {
       await act(async () => root.render(
         <OrganisationWorkspacePanel database={null} membership={{uid: 'user-a', orgId: 'org-safe', role, status: 'active'}} />,
       ));
       const rows = [...host.querySelectorAll('tbody tr')];
-      const membership = rows.find((row) => row.textContent?.includes('Manage memberships'));
-      const audit = rows.find((row) => row.textContent?.includes('Read audit events'));
-      expect(membership?.textContent).toContain('Not granted');
-      expect(audit?.textContent).toContain('Not granted');
+      for (const label of [
+        'Delete personnel records',
+        'Delete incident records',
+        'Create, update or delete evidence records',
+        'Manage memberships',
+        'Read audit events',
+        'Append or modify audit events',
+      ]) {
+        const row = rows.find((candidate) => candidate.textContent?.includes(label));
+        expect(row?.textContent).toContain('Not permitted by current Rules');
+      }
     }
   });
 
