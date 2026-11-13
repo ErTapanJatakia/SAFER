@@ -27,12 +27,16 @@ const CAPABILITY_LABELS: ReadonlyArray<{
   {key: 'canReadOrganisation', label: 'Read organisation profile', area: 'Organisation'},
   {key: 'canReadPersonnel', label: 'Read personnel records', area: 'Personnel'},
   {key: 'canWritePersonnel', label: 'Create or update personnel records', area: 'Personnel'},
+  {key: 'canDeletePersonnel', label: 'Delete personnel records', area: 'Personnel'},
   {key: 'canReadIncidents', label: 'Read incident records', area: 'Incidents'},
   {key: 'canCreateIncidents', label: 'Create incident records', area: 'Incidents'},
   {key: 'canUpdateIncidents', label: 'Update incident records', area: 'Incidents'},
+  {key: 'canDeleteIncidents', label: 'Delete incident records', area: 'Incidents'},
   {key: 'canReadEvidence', label: 'Read evidence records', area: 'Evidence'},
+  {key: 'canWriteEvidence', label: 'Create, update or delete evidence records', area: 'Evidence'},
   {key: 'canManageMemberships', label: 'Manage memberships', area: 'Administration'},
   {key: 'canReadAuditEvents', label: 'Read audit events', area: 'Administration'},
+  {key: 'canWriteAuditEvents', label: 'Append or modify audit events', area: 'Administration'},
 ];
 
 export const OrganisationWorkspacePanel: React.FC<OrganisationWorkspacePanelProps> = ({database, membership}) => {
