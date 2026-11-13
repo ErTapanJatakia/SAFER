@@ -34,6 +34,8 @@ beforeEach(async()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());dom.window.close();vi.clearAllMocks();});
 
+const verifiedWorkspace = () => host.querySelector('[data-testid="verified-organisation-workspace"]');
+
 describe('AuthGate membership session handling',()=>{
  it('does not resolve membership for Demo Guest',async()=>{button('Continue as Demo Guest').click();await flush();expect(host.textContent).toContain('Demo Guest session');expect(host.querySelector('input[placeholder="Enter organisation ID"]')).toBeNull();expect(resolveTenantMembership).not.toHaveBeenCalled();});
  it('keeps the operational app shell unmounted for authenticated sessions',async()=>{auth(makeUser('user-a'));await flush();expect(host.textContent).toContain('Account verified — workspace not yet released');expect(host.textContent).not.toContain('App shell');expect(host.textContent).not.toContain('Demo Guest session');});
@@ -49,8 +51,8 @@ describe('AuthGate membership session handling',()=>{
   expect(host.querySelector('[role="alert"]')?.textContent).toContain('Your account session remains active');
   const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
   change(field,'org-a');await flush();submit(field.closest('form')!);await flush();
-  expect(host.textContent).toContain('Verified active membership');
-  expect(host.textContent).toContain('Role: manager');
+  expect(verifiedWorkspace()).not.toBeNull();
+  expect(verifiedWorkspace()?.textContent).toContain('Manager');
   expect(resolveTenantMembership).toHaveBeenCalledWith({name:'test-db'},{uid:'user-a'},'org-a');
  });
  it('revokes retained repository access during Demo Guest sign-out',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');button('Continue as Demo Guest').click();await flush();expect(retainedRepository).not.toBeNull();button('Sign out').click();await flush();expect(host.textContent).toContain('Continue as Demo Guest');expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);expect(read).toHaveBeenCalledTimes(5);});
@@ -62,12 +64,12 @@ describe('AuthGate membership session handling',()=>{
   act(()=>window.dispatchEvent(new StorageEvent('storage',{key:'safer:session-boundary-signal',newValue:'peer-boundary-recovery'})));
   await flush();
   expect(host.textContent).toContain('Account verified — workspace not yet released');
-  expect(host.textContent).not.toContain('Verified active membership');
+  expect(verifiedWorkspace()).toBeNull();
   const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
   expect(field.value).toBe('');
   change(field,'org-b');await flush();submit(field.closest('form')!);await flush();
-  expect(host.textContent).toContain('Verified active membership');
-  expect(host.textContent).toContain('Role: manager');
+  expect(verifiedWorkspace()).not.toBeNull();
+  expect(verifiedWorkspace()?.textContent).toContain('Manager');
   expect(resolveTenantMembership).toHaveBeenCalledWith({name:'test-db'},{uid:'user-a'},'org-b');
  });
  it('discards an in-flight membership response after a peer-tab boundary while allowing a new check',async()=>{
@@ -82,15 +84,15 @@ describe('AuthGate membership session handling',()=>{
   await flush();
   await act(async()=>finish({uid:'user-a',orgId:'org-a',role:'owner',status:'active'}));
   await flush();
-  expect(host.textContent).not.toContain('Role: owner');
+  expect(verifiedWorkspace()).toBeNull();
   field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
   change(field,'org-b');await flush();submit(field.closest('form')!);await flush();
-  expect(host.textContent).toContain('Role: manager');
+  expect(verifiedWorkspace()?.textContent).toContain('Manager');
   expect(resolveTenantMembership).toHaveBeenCalledTimes(2);
  });
- it('resolves the exact organisation for the authenticated UID',async()=>{vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'manager',status:'active'});auth(makeUser('user-a'));await flush();const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();expect(host.textContent).toContain('Verified active membership');expect(host.textContent).toContain('Role: manager');expect(resolveTenantMembership).toHaveBeenCalledWith({name:'test-db'},{uid:'user-a'},'org-a');});
+ it('resolves the exact organisation for the authenticated UID',async()=>{vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'manager',status:'active'});auth(makeUser('user-a'));await flush();const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();expect(verifiedWorkspace()).not.toBeNull();expect(verifiedWorkspace()?.textContent).toContain('Manager');expect(resolveTenantMembership).toHaveBeenCalledWith({name:'test-db'},{uid:'user-a'},'org-a');});
  it('fails closed with generic feedback when lookup is denied',async()=>{vi.mocked(resolveTenantMembership).mockRejectedValue(new Error('permission-denied'));auth(makeUser('user-a'));await flush();const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();expect(host.querySelector('[role="alert"]')?.textContent).toContain('Membership could not be verified.');expect(host.textContent).not.toContain('Role:');});
- it('discards pending results when the organisation locator changes',async()=>{let finish!:(v:{uid:string;orgId:string;role:'owner';status:'active'})=>void;vi.mocked(resolveTenantMembership).mockReturnValue(new Promise(resolve=>{finish=resolve;}));auth(makeUser('user-a'));await flush();const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();change(field,'org-b');await flush();await act(async()=>finish({uid:'user-a',orgId:'org-a',role:'owner',status:'active'}));expect(host.textContent).not.toContain('Verified active membership');});
+ it('discards pending results when the organisation locator changes',async()=>{let finish!:(v:{uid:string;orgId:string;role:'owner';status:'active'})=>void;vi.mocked(resolveTenantMembership).mockReturnValue(new Promise(resolve=>{finish=resolve;}));auth(makeUser('user-a'));await flush();const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();change(field,'org-b');await flush();await act(async()=>finish({uid:'user-a',orgId:'org-a',role:'owner',status:'active'}));expect(verifiedWorkspace()).toBeNull();});
  it('publishes a boundary for each real account transition without duplicating same-UID callbacks',async()=>{
   const publish=vi.spyOn(sessionInvalidation,'publishSessionInvalidation');
   expect(publish).not.toHaveBeenCalled();
@@ -117,11 +119,11 @@ describe('AuthGate membership session handling',()=>{
   auth(makeUser('user-b'));await flush();
   await act(async()=>finish({uid:'user-a',orgId:'org-a',role:'owner',status:'active'}));
   await flush();
-  expect(host.textContent).not.toContain('Verified active membership');
-  expect(host.textContent).not.toContain('Role: owner');
+  expect(verifiedWorkspace()).toBeNull();
+  expect(verifiedWorkspace()).toBeNull();
   expect(host.textContent).toContain('Account verified — workspace not yet released');
  });
- it('clears membership on account switch and sign-out',async()=>{vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'admin',status:'active'});auth(makeUser('user-a'));await flush();let field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();expect(host.textContent).toContain('Role: admin');auth(makeUser('user-b'));await flush();expect(host.textContent).not.toContain('Role: admin');field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;expect(field.value).toBe('');change(field,'org-b');await flush();submit(field.closest('form')!);await flush();expect(host.textContent).toContain('Role: admin');button('Sign out').click();await flush();expect(host.textContent).not.toContain('Role: admin');expect(host.textContent).toContain('Continue as Demo Guest');expect(resolveTenantMembership).toHaveBeenCalledTimes(2);});
+ it('clears membership on account switch and sign-out',async()=>{vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'admin',status:'active'});auth(makeUser('user-a'));await flush();let field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();expect(verifiedWorkspace()?.textContent).toContain('Organisation administrator');auth(makeUser('user-b'));await flush();expect(verifiedWorkspace()).toBeNull();field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;expect(field.value).toBe('');change(field,'org-b');await flush();submit(field.closest('form')!);await flush();expect(verifiedWorkspace()?.textContent).toContain('Organisation administrator');button('Sign out').click();await flush();expect(verifiedWorkspace()).toBeNull();expect(host.textContent).toContain('Continue as Demo Guest');expect(resolveTenantMembership).toHaveBeenCalledTimes(2);});
 
  it('revokes Demo Guest access and pending authority when the auth observer errors',async()=>{
   const read=vi.spyOn(dom.window.Storage.prototype,'getItem');
