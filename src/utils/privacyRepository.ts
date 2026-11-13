@@ -11,6 +11,9 @@ export interface PrivacyStorage {
 
 export const PRIVACY_DEMO_STORAGE_KEY = 'safer_privacy_demo_workspace_v1';
 
+const MAX_SERIALIZED_BYTES = 1_000_000;
+const MAX_RECORDS_PER_COLLECTION = 500;
+
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -63,6 +66,42 @@ function isPrivacyWorkspace(value: unknown): value is PrivacyDemoWorkspace {
     Array.isArray(collection) && collection.every(validate) && hasUniqueIds(collection));
 }
 
+
+function boundedString(value: unknown, max: number): value is string {
+  return isString(value) && value.length <= max;
+}
+
+function boundedStringArray(value: unknown, maxItems: number, maxLength: number): value is string[] {
+  return Array.isArray(value) && value.length <= maxItems &&
+    value.every((item) => boundedString(item, maxLength));
+}
+
+function isWithinWorkspaceLimits(value: unknown): boolean {
+  if (!isObject(value)) return false;
+  const limits: Array<[unknown, (record: Record<string, unknown>) => boolean]> = [
+    [value.noticeDrafts, (r) => boundedString(r.id, 100) && boundedString(r.title, 120) &&
+      boundedString(r.content, 8000) && boundedString(r.versionLabel, 40) && boundedString(r.updatedAt, 64)],
+    [value.processingActivities, (r) => boundedString(r.id, 100) && boundedString(r.purpose, 240) &&
+      boundedStringArray(r.dataCategories, 50, 160) && boundedStringArray(r.recipients, 50, 160) &&
+      boundedString(r.retentionDescription, 1000)],
+    [value.consentEvents, (r) => boundedString(r.id, 100) && boundedString(r.subjectRef, 120) &&
+      boundedString(r.purposeRef, 120) && boundedString(r.recordedAt, 64) &&
+      (r.note === undefined || boundedString(r.note, 500))],
+    [value.rightsRequests, (r) => boundedString(r.id, 100) && boundedString(r.subjectRef, 120) &&
+      boundedString(r.description, 3000) && boundedString(r.submittedAt, 64) &&
+      boundedString(r.updatedAt, 64) && (r.resolutionNote === undefined || boundedString(r.resolutionNote, 2000))],
+    [value.grievances, (r) => boundedString(r.id, 100) && boundedString(r.subjectRef, 120) &&
+      boundedString(r.category, 100) && boundedString(r.description, 3000) &&
+      boundedString(r.submittedAt, 64) && boundedString(r.updatedAt, 64) &&
+      (r.responseNote === undefined || boundedString(r.responseNote, 2000))],
+    [value.retentionReviews, (r) => boundedString(r.id, 100) && boundedString(r.dataCategory, 120) &&
+      boundedString(r.reviewNote, 3000) && (r.reviewedAt === undefined || boundedString(r.reviewedAt, 64))],
+  ];
+  return limits.every(([collection, validate]) =>
+    Array.isArray(collection) && collection.length <= MAX_RECORDS_PER_COLLECTION &&
+    collection.every((record) => isObject(record) && validate(record)));
+}
+
 function cloneEmptyWorkspace(): PrivacyDemoWorkspace {
   return structuredClone(EMPTY_PRIVACY_DEMO_WORKSPACE);
 }
@@ -83,7 +122,7 @@ export function createPrivacyDemoRepository(storage: PrivacyStorage) {
   const loadWorkspace = (): PrivacyDemoWorkspace => {
     const raw = readRaw();
     if (raw === null) return cloneEmptyWorkspace();
-    if (new TextEncoder().encode(raw).byteLength > MAX_SERIALIZED_CHARS) {
+    if (new TextEncoder().encode(raw).byteLength > MAX_SERIALIZED_BYTES) {
       throw new Error('Stored privacy demo workspace exceeds the 1 MB safety limit; no data was replaced.');
     }
 
@@ -104,7 +143,7 @@ export function createPrivacyDemoRepository(storage: PrivacyStorage) {
       throw new Error('Refusing to persist invalid or oversized privacy demo data.');
     }
     const serialized = JSON.stringify(workspace);
-    if (new TextEncoder().encode(serialized).byteLength > MAX_SERIALIZED_CHARS) {
+    if (new TextEncoder().encode(serialized).byteLength > MAX_SERIALIZED_BYTES) {
       throw new Error('Privacy demo workspace exceeds the 1 MB storage safety limit.');
     }
     try {
