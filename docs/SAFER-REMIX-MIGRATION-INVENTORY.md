@@ -532,3 +532,10 @@ The canonical application already provides separate theme and accessibility cont
 - The audit-event structural validator now correctly accepts the documented optional `targetUid` field when it is omitted, while continuing to reject unknown fields and malformed values. Regression coverage includes both cases.
 - Repaired a missing test-block closure in the membership lifecycle suite discovered during source review. The test remains intact and has not been executed; no assertion was removed or weakened.
 - These changes clarify contracts and test readiness only. No Rules, tenant data, Firebase configuration, or trusted execution path changed. Consolidated validation remains pending.
+
+
+### Authenticated workspace security-copy correction
+
+- Corrected an AuthGate notice that inaccurately described production Firestore Rules as deny-all. The checked-in Rules do permit narrowly defined owner/admin operations on selected tenant paths; they continue to deny membership mutations, audit access, private/restricted records and unmodelled paths.
+- The authenticated UI still does not load or expose operational records. Its notice now distinguishes that UI release boundary from the independent Rules-level permissions.
+- Added an AuthGate regression assertion for the corrected disclosure. No authorization rule or runtime data-access path was changed.
