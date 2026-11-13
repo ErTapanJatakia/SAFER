@@ -125,9 +125,11 @@ export const AccountSecurityPanel: React.FC<AccountSecurityPanelProps> = ({user,
       setMessage('');
       return;
     }
-    void run(async () => {
+    void run(async (isCurrent) => {
       await updateProfile(user, {displayName: normalized});
+      if (!isCurrent()) return;
       await reload(user);
+      if (!isCurrent()) return;
       onUserUpdated?.(user);
       setDisplayName(user.displayName || normalized);
       setMessage('Display name updated.');
@@ -135,8 +137,9 @@ export const AccountSecurityPanel: React.FC<AccountSecurityPanelProps> = ({user,
   };
 
   const refreshAccountDetails = () => {
-    void run(async () => {
+    void run(async (isCurrent) => {
       await reload(user);
+      if (!isCurrent()) return;
       onUserUpdated?.(user);
       setDisplayName(user.displayName || '');
       setMessage('Account details refreshed from Firebase.');
@@ -160,14 +163,18 @@ export const AccountSecurityPanel: React.FC<AccountSecurityPanelProps> = ({user,
       setError('The new password must differ from the current password.');
       return;
     }
-    void run(async () => {
+    void run(async (isCurrent) => {
       await reauthenticate(currentPassword);
+      if (!isCurrent()) return;
       await updatePassword(user, newPassword);
+      // The remote credential mutation succeeded even if this panel was
+      // replaced while the request was in flight. Notify peer tabs regardless.
+      publishSessionInvalidation();
+      if (!isCurrent()) return;
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
       setMessage('Password updated. Other sessions may require sign-in again.');
-      publishSessionInvalidation();
     });
   };
 
@@ -185,9 +192,11 @@ export const AccountSecurityPanel: React.FC<AccountSecurityPanelProps> = ({user,
       setError('The new email address must differ from the current address.');
       return;
     }
-    void run(async () => {
+    void run(async (isCurrent) => {
       await reauthenticate(emailCurrentPassword);
+      if (!isCurrent()) return;
       await verifyBeforeUpdateEmail(user, normalized);
+      if (!isCurrent()) return;
       setEmailCurrentPassword('');
       setNewEmail('');
       setMessage('A verification link has been sent to the new address. The account email changes only after verification.');
