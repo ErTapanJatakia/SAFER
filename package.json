@@ -64,7 +64,8 @@
     "test:demo-conflict-export": "tsx --test src/lib/demoConflictExport.test.ts",
     "test:browser-cross-tab": "playwright test --config=playwright.config.mjs",
     "test:budget-policy": "vitest run src/utils/budgetPolicy.test.ts",
-    "test:account-security": "vitest run src/components/AccountSecurityPanel.test.tsx"
+    "test:account-security": "vitest run src/components/AccountSecurityPanel.test.tsx",
+    "test:privacy-demo": "tsx --test src/utils/privacyRepository.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
