@@ -2,6 +2,8 @@ export type AccountDateFormat = 'DD-MM-YYYY' | 'YYYY-MM-DD' | 'DD/MM/YYYY';
 export type AccountTimeFormat = '24h' | '12h';
 export type AccountTimezone = 'Asia/Kolkata' | 'UTC';
 export type AccountNumberFormat = 'en-IN' | 'en-US';
+export type AccountExportFormat = 'txt' | 'csv' | 'xlsx' | 'pdf' | 'docx';
+export type AccountRedactionLevel = 'standard' | 'strict';
 
 export interface AccountProfile {
   displayName: string;
@@ -14,6 +16,8 @@ export interface AccountPreferences {
   timeFormat: AccountTimeFormat;
   timezone: AccountTimezone;
   numberFormat: AccountNumberFormat;
+  defaultExportFormat: AccountExportFormat;
+  defaultRedactionLevel: AccountRedactionLevel;
 }
 
 export interface AccountSettings {
@@ -30,6 +34,8 @@ export const DEFAULT_ACCOUNT_SETTINGS: AccountSettings = {
     timeFormat: '24h',
     timezone: 'Asia/Kolkata',
     numberFormat: 'en-IN',
+    defaultExportFormat: 'txt',
+    defaultRedactionLevel: 'standard',
   },
 };
 
@@ -55,6 +61,9 @@ export function normalizeAccountSettings(raw: unknown): AccountSettings {
       timeFormat: preferences.timeFormat === '12h' ? '12h' : '24h',
       timezone: preferences.timezone === 'UTC' ? 'UTC' : 'Asia/Kolkata',
       numberFormat: preferences.numberFormat === 'en-US' ? 'en-US' : 'en-IN',
+      defaultExportFormat: ['txt', 'csv', 'xlsx', 'pdf', 'docx'].includes(String(preferences.defaultExportFormat))
+        ? preferences.defaultExportFormat as AccountExportFormat : DEFAULT_ACCOUNT_SETTINGS.preferences.defaultExportFormat,
+      defaultRedactionLevel: preferences.defaultRedactionLevel === 'strict' ? 'strict' : 'standard',
     },
   };
 }
