@@ -1,6 +1,7 @@
 import type { LogoConfig } from '../types/theme.ts';
 import { isSafeImageDataUrl } from '../utils/securitySanitizer.ts';
 import { SaferWordmark } from './SaferWordmark.tsx';
+import { formatAccountDate, formatAccountNumber, readAccountPreferences } from '../utils/accountFormatting.ts';
 import {
   Shield,
   AlertTriangle,
@@ -42,6 +43,8 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
   topLogo,
   themeCamoPattern,
 }) => {
+  const accountPreferences = readAccountPreferences();
+  const todayLabel = formatAccountDate(new Date(), accountPreferences);
   const showTopLogoLeft =
     topLogo.enabled && isSafeImageDataUrl(topLogo.dataUrl) && topLogo.position === 'top-left';
   const showTopLogoRight =
@@ -145,7 +148,7 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
 
           <span className="hidden md:inline-flex items-center text-slate-400 text-xs">
             <Calendar className="w-3.5 h-3.5 mr-1" />
-            Oct 15, 2026
+            Today: {todayLabel}
           </span>
         </div>
       </div>
@@ -181,7 +184,7 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
               <div className="min-w-0">
                 <div className="text-[10px] uppercase text-slate-400 font-medium">Expired Certs</div>
                 <div className="font-semibold text-white break-words">
-                  {expiredCertsCount} {expiredCertsCount === 1 ? 'Action Item' : 'Action Items'}
+                  {formatAccountNumber(expiredCertsCount, accountPreferences)} {expiredCertsCount === 1 ? 'Action Item' : 'Action Items'}
                 </div>
               </div>
             </div>
@@ -195,7 +198,7 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
               <div className="min-w-0">
                 <div className="text-[10px] uppercase text-slate-400 font-medium">Human Review Queue</div>
                 <div className="font-semibold text-white break-words">
-                  {requiringReviewCount} Personnel Pending
+                  {formatAccountNumber(requiringReviewCount, accountPreferences)} Personnel Pending
                 </div>
               </div>
             </div>
