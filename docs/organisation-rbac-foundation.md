@@ -217,7 +217,7 @@ AuthGate now marks each Firebase authentication observer inactive during effect 
 
 ## Organisation profile tenant and privilege transition regressions
 
-The profile-panel regression suite now holds an organisation metadata request open while the verified organisation context changes. It confirms that the new tenant's profile is displayed and the late response for the previous tenant cannot overwrite it. A second case holds an owner metadata request open while the membership role changes to manager; the privileged profile remains unavailable and the obsolete response is ignored.
+The profile-panel regression suite now holds an organisation metadata request open while the verified organisation context changes. It confirms that the new tenant's profile is displayed and the late response for the previous tenant cannot overwrite it. A second case holds an owner metadata request open while the membership role changes to manager; the privileged profile remains unavailable and the obsolete response is ignored. A third case replaces the Firestore instance during a pending read and confirms that only the replacement instance's result can be rendered.
 
 These are UI request-lifecycle checks only. The exact membership resolver and Firestore Rules remain authoritative, and no additional metadata reads, polling, caching, or permission grants are introduced. The tests are authored but remain deferred to the consolidated validation milestone.
 
