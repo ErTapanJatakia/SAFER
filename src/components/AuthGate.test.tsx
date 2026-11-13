@@ -215,6 +215,30 @@ describe('AuthGate membership session handling',()=>{
   expect(publish).toHaveBeenCalledTimes(1);
   publish.mockRestore();
  });
+
+ it('discards a pending membership response after auth observer failure and recovers with a fresh identity',async()=>{
+  let finishMembership!:(value:{uid:string;orgId:string;role:'owner';status:'active'})=>void;
+  vi.mocked(resolveTenantMembership).mockReturnValueOnce(new Promise(resolve=>{finishMembership=resolve;}));
+  auth(makeUser('user-a'));await flush();
+  const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
+  change(field,'org-a');await flush();submit(field.closest('form')!);await flush();
+  expect(host.textContent).toContain('Checking…');
+  act(()=>authError?.(new Error('auth observer unavailable')));
+  await flush();
+  expect(verifiedWorkspace()).toBeNull();
+  expect(host.textContent).toContain('Retry account verification');
+  await act(async()=>finishMembership({uid:'user-a',orgId:'org-a',role:'owner',status:'active'}));
+  await flush();
+  expect(verifiedWorkspace()).toBeNull();
+  expect(host.textContent).toContain('Retry account verification');
+  expect(host.textContent).not.toContain('Organisation administrator');
+  button('Retry account verification').click();await flush();
+  auth(makeUser('user-recovered'));await flush();
+  expect(verifiedWorkspace()).toBeNull();
+  expect(host.textContent).toContain('Signed in: user-recovered@example.test');
+  const recoveredField=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
+  expect(recoveredField.value).toBe('');
+ });
  it('re-subscribes to Firebase auth state after an observer failure',async()=>{
   act(()=>authError?.(new Error('auth observer unavailable')));
   await flush();
