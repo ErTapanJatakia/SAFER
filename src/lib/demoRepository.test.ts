@@ -197,6 +197,39 @@ describe('Demo Guest repository', () => {
     assert.equal(JSON.parse(values.get('prot_ops_personnel_v2')!)[0].administrativeNotes, 'Updated in first tab');
   });
 
+
+  it('refuses a reset when another tab has changed any protected collection', async () => {
+    const values = new Map<string, string>();
+    const sharedStorage: DemoStorage = {
+      getItem: (key) => values.get(key) ?? null,
+      setItem: (key, value) => { values.set(key, value); },
+      removeItem: (key) => { values.delete(key); },
+    };
+    const lockTails = new Map<string, Promise<void>>();
+    const locks: DemoLockManager = {
+      async request<T>(name: string, callback: () => Promise<T>): Promise<T> {
+        const previous = lockTails.get(name) ?? Promise.resolve();
+        let release!: () => void;
+        const held = new Promise<void>((resolve) => { release = resolve; });
+        const tail = previous.then(() => held);
+        lockTails.set(name, tail);
+        await previous;
+        try { return await callback(); }
+        finally { release(); }
+      },
+    };
+    const firstTab = createDemoRepository(sharedStorage, { locks, requireCrossTabLock: true });
+    const secondTab = createDemoRepository(sharedStorage, { locks, requireCrossTabLock: true });
+    firstTab.loadSnapshot();
+    secondTab.loadSnapshot();
+    const updated = [...firstTab.loadSnapshot().personnel];
+    updated[0] = { ...updated[0], administrativeNotes: 'Keep this newer value' };
+    await firstTab.replacePersonnel(updated);
+
+    await assert.rejects(secondTab.reset(), /Cross-tab write conflict detected for personnel/);
+    assert.equal(JSON.parse(values.get('prot_ops_personnel_v2')!)[0].administrativeNotes, 'Keep this newer value');
+  });
+
   it('fails closed for writes when cross-tab locking is required but unavailable', async () => {
     let writes = 0;
     const storage: DemoStorage = {
