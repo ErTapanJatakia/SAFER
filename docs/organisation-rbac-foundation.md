@@ -59,6 +59,25 @@ No Remix sample organisation names, old Firebase IDs, or alternate role vocabula
 6. [ ] Only after review and separate approval, consider production rules changes or tenant provisioning.
 7. Keep operational localStorage records separate until an explicit, reviewed migration workflow exists.
 
+## Remix organisation UI reconciliation
+
+The Remix `OrganisationModal` was reviewed against the canonical verified workspace panels. The following presentation patterns were retained in a security-aligned form:
+
+- A clear current organisation/session context and role badge, using only the exact verified membership locator and supported four-role vocabulary.
+- A structured, accessible capability matrix grouped by organisation, personnel, incidents, evidence, and administration.
+- A distinct workspace-release status panel that explains what is and is not currently available.
+- Clear separation between identity/profile metadata and operational data access.
+
+The following Remix UI behaviours were intentionally not migrated:
+
+- Sample organisation cards and organisation switching, because no trusted organisation directory or switch workflow is implemented.
+- The six-role matrix and its advertised permissions, because it conflicts with canonical Firestore Rules.
+- Membership invitations, role editing, and other client-side administration controls.
+- Simulated audit events and claims of immutable/append-only audit storage. The current canonical rules deny audit-event reads and writes.
+- Unqualified claims that tenant isolation or every listed capability is guaranteed by the UI. Firestore Rules and emulator evidence remain the authority.
+
+The canonical panel now explicitly labels the role matrix as informational, states that operational workspace access is not released, and lists unavailable controls. Regression coverage was updated for the semantic table, all four supported roles, denied membership/audit capabilities, and the absence of simulated activity. These tests are authored but remain pending the consolidated validation milestone.
+
 ## Explicitly not implemented
 
 - No Firestore writes, membership mutations, or operational-record reads/writes are added by this slice. The only new Firestore read is the exact organisation metadata `get` for an already-verified active owner/admin membership.
