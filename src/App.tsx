@@ -49,6 +49,7 @@ import { DemonstrationNoticeModal } from './components/DemonstrationNoticeModal.
 import { BrandingSettingsModal } from './components/BrandingSettingsModal.tsx';
 import { ThemeSettingsModal } from './components/ThemeSettingsModal.tsx';
 import { AccessibilityMenuModal } from './components/AccessibilityMenuModal.tsx';
+import { BudgetPolicyModal } from './components/BudgetPolicyModal.tsx';
 import { PersonnelExportModal } from './components/PersonnelExportModal.tsx';
 import { LiveAnnouncer } from './components/LiveAnnouncer.tsx';
 import {
@@ -187,6 +188,7 @@ export default function App() {
   const [isBrandingOpen, setIsBrandingOpen] = useState(false);
   const [isThemeOpen, setIsThemeOpen] = useState(false);
   const [isAccessibilityOpen, setIsAccessibilityOpen] = useState(false);
+  const [isBudgetPolicyOpen, setIsBudgetPolicyOpen] = useState(false);
 
   // Operational Modals
   const [isPersonnelModalOpen, setIsPersonnelModalOpen] = useState(false);
@@ -626,6 +628,7 @@ export default function App() {
         onOpenBranding={() => setIsBrandingOpen(true)}
         onOpenTheme={() => setIsThemeOpen(true)}
         onOpenAccessibility={() => setIsAccessibilityOpen(true)}
+        onOpenBudget={() => setIsBudgetPolicyOpen(true)}
         topLogo={topLogo}
         themeCamoPattern={activeColors.camoPattern}
       />
@@ -802,6 +805,12 @@ export default function App() {
         onUpdateCustomTheme={(partial) => setCustomTheme((prev) => ({ ...prev, ...partial }))}
         isCustomActive={isCustomThemeActive}
         onActivateCustomTheme={handleActivateCustomTheme}
+      />
+
+      {/* SAFER zero-cost operating policy */}
+      <BudgetPolicyModal
+        isOpen={isBudgetPolicyOpen}
+        onClose={() => setIsBudgetPolicyOpen(false)}
       />
 
       {/* Accessibility Preferences Modal */}
