@@ -160,6 +160,45 @@ describe('Demo Guest repository', () => {
   });
 
 
+
+  it('preserves concurrent same-tab mutations across all four operational collections', async () => {
+    const repository = createDemoRepository(memoryStorage());
+    const personnelA = { ...INITIAL_PERSONNEL[0], id: 'parallel-person-a', fullName: 'Parallel Person A' };
+    const personnelB = { ...INITIAL_PERSONNEL[0], id: 'parallel-person-b', fullName: 'Parallel Person B' };
+    const incidentA = { ...INITIAL_INCIDENTS[0], id: 'parallel-incident-a', title: 'Parallel Incident A' };
+    const incidentB = { ...INITIAL_INCIDENTS[0], id: 'parallel-incident-b', title: 'Parallel Incident B' };
+    const cyberA = { ...INITIAL_CYBER_ITEMS[0], id: 'parallel-cyber-a', title: 'Parallel Cyber A' };
+    const cyberB = { ...INITIAL_CYBER_ITEMS[0], id: 'parallel-cyber-b', title: 'Parallel Cyber B' };
+    const checklistA = { ...INITIAL_CHECKLIST[0], id: 'parallel-checklist-a', task: 'Parallel Checklist A' };
+    const checklistB = { ...INITIAL_CHECKLIST[0], id: 'parallel-checklist-b', task: 'Parallel Checklist B' };
+
+    await Promise.all([
+      repository.savePersonnel(personnelA),
+      repository.savePersonnel(personnelB),
+      repository.saveIncident(incidentA),
+      repository.saveIncident(incidentB),
+      repository.saveCyberHygiene(cyberA),
+      repository.saveCyberHygiene(cyberB),
+      repository.saveChecklist(checklistA),
+      repository.saveChecklist(checklistB),
+    ]);
+
+    const [personnel, incidents, cyber, checklist] = await Promise.all([
+      repository.listPersonnel(),
+      repository.listIncidents(),
+      repository.listCyberHygiene(),
+      repository.listChecklist(),
+    ]);
+    assert.ok(personnel.some((record) => record.id === personnelA.id));
+    assert.ok(personnel.some((record) => record.id === personnelB.id));
+    assert.ok(incidents.some((record) => record.id === incidentA.id));
+    assert.ok(incidents.some((record) => record.id === incidentB.id));
+    assert.ok(cyber.some((record) => record.id === cyberA.id));
+    assert.ok(cyber.some((record) => record.id === cyberB.id));
+    assert.ok(checklist.some((record) => record.id === checklistA.id));
+    assert.ok(checklist.some((record) => record.id === checklistB.id));
+  });
+
   it('rejects a stale second-tab write after another repository instance commits', async () => {
     const values = new Map<string, string>();
     const sharedStorage: DemoStorage = {
