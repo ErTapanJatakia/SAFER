@@ -227,3 +227,10 @@ Submitting a fresh membership verification clears the previously displayed membe
 
 A regression case now verifies the successful-first-check, pending re-check, and denied re-check sequence. This protects client presentation only; it does not provide continuous membership monitoring or alter Firestore Rules. Test execution remains deferred to the consolidated validation milestone.
 
+
+
+## Tenant membership parser runtime-object boundary
+
+The pure membership parser now treats its input as an untrusted runtime value. It accepts only a plain object (or null-prototype data object) with exactly the four enumerable own data fields required by the current Rules schema. It rejects symbol keys, inherited/exotic objects, accessors, invalid UID/organisation context, and proxy inspection failures without invoking getters. All malformed values return the same generic `invalid-membership` error.
+
+The parser still grants no authority: it only validates the result of the exact membership read. Firestore Rules continue to authorize the read and every later database operation. Regression coverage has been authored for getter non-execution, exotic prototypes, unexpected symbol keys, hostile proxy traps, and invalid identity/organisation context. These tests remain pending the consolidated validation milestone; no test or CI run is claimed.
