@@ -149,7 +149,7 @@ export function createPrivacyDemoRepository(storage: PrivacyStorage) {
     const currentRaw = readRaw();
     if (expectedRaw === undefined) expectedRaw = currentRaw;
     if (currentRaw !== expectedRaw) {
-      throw new Error('Privacy demo workspace changed in another tab or session. Reload the workspace before making further changes.');
+      throw new Error('Privacy demo workspace changed in another tab or session. Close and reopen the Privacy Console to load the latest saved data before retrying.');
     }
     const serialized = JSON.stringify(workspace);
     if (new TextEncoder().encode(serialized).byteLength > MAX_SERIALIZED_BYTES) {
@@ -170,7 +170,7 @@ export function createPrivacyDemoRepository(storage: PrivacyStorage) {
     const currentRaw = readRaw();
     if (expectedRaw === undefined) expectedRaw = currentRaw;
     if (currentRaw !== expectedRaw) {
-      throw new Error('Privacy demo workspace changed in another tab or session. Reload the workspace before clearing it.');
+      throw new Error('Privacy demo workspace changed in another tab or session. Close and reopen the Privacy Console to load the latest saved data before clearing.');
     }
     try {
       storage.removeItem(PRIVACY_DEMO_STORAGE_KEY);
