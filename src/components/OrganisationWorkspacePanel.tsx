@@ -1,4 +1,6 @@
 import React from 'react';
+import type {Firestore} from 'firebase/firestore';
+import {OrganisationProfilePanel} from './OrganisationProfilePanel.tsx';
 import {
   TENANT_ROLE_UI_CAPABILITIES,
   type OrganisationMembership,
@@ -6,6 +8,7 @@ import {
 } from '../types/organisation.ts';
 
 interface OrganisationWorkspacePanelProps {
+  database: Firestore | null;
   membership: OrganisationMembership;
 }
 
@@ -24,7 +27,7 @@ const CAPABILITY_LABELS: ReadonlyArray<{
   {key: 'canReadAuditEvents', label: 'Read audit events'},
 ];
 
-export const OrganisationWorkspacePanel: React.FC<OrganisationWorkspacePanelProps> = ({membership}) => {
+export const OrganisationWorkspacePanel: React.FC<OrganisationWorkspacePanelProps> = ({database, membership}) => {
   const capabilities = TENANT_ROLE_UI_CAPABILITIES[membership.role];
 
   return (
@@ -69,6 +72,7 @@ export const OrganisationWorkspacePanel: React.FC<OrganisationWorkspacePanelProp
           </p>
         </div>
       </div>
+      <OrganisationProfilePanel database={database} membership={membership} />
     </section>
   );
 };
