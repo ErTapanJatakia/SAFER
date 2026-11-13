@@ -309,6 +309,15 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
               <h3 className="flex items-center gap-2 text-sm font-semibold"><ClipboardList className="h-4 w-4 text-teal-400" /> Operating boundary</h3>
               <p className="mt-2 text-sm text-slate-300">This console is a local administrative prototype. It does not calculate statutory deadlines, decide legal bases, contact a regulator or data subject, or execute deletion against operational records.</p>
             </div>
+            <div role="note" aria-labelledby="privacy-legal-boundary-heading" className="rounded-xl border border-amber-700/70 bg-amber-950/40 p-4">
+              <h3 id="privacy-legal-boundary-heading" className="text-sm font-semibold text-amber-100">Legal and compliance boundary</h3>
+              <p className="mt-2 text-sm leading-relaxed text-amber-100/90">
+                SAFER provides workflow aids for privacy administration. It does not provide legal advice, determine whether a processing activity has a valid legal basis, certify compliance with the Digital Personal Data Protection Act, 2023 or its Rules, or guarantee that a statutory obligation has been met. Have notices, purposes, retention decisions and response procedures reviewed by qualified counsel and the responsible organisation before real-world use.
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-amber-200/80">
+                No organisation identity, Data Protection Officer contact, statutory deadline, legal basis or retention period is pre-populated as a verified fact in this demonstration workspace.
+              </p>
+            </div>
           </>}
 
           {activeTab === 'processing' && <section className="space-y-4">
