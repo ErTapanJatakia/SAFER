@@ -99,6 +99,44 @@ export function validateInvitationForIssuance(
     && invitation.acceptedByUid === undefined;
 }
 
+
+/**
+ * Checks whether the currently authenticated, verified account matches the
+ * invitation recipient. This is a local consistency check only: a trusted
+ * service must still verify the secret digest, email verification state,
+ * single-use status, expiry and membership write atomically.
+ */
+export function canAcceptInvitationForRecipient(
+  invitation: MembershipInvitation,
+  authenticatedUid: string,
+  verifiedEmail: string,
+  now: number,
+): boolean {
+  if (
+    !UID.test(authenticatedUid)
+    || !Number.isSafeInteger(now)
+    || invitation.status !== 'issued'
+    || invitation.acceptedByUid !== undefined
+    || !Number.isSafeInteger(invitation.expiresAt)
+    || now >= invitation.expiresAt
+    || !Number.isSafeInteger(invitation.createdAt)
+    || invitation.expiresAt <= invitation.createdAt
+    || invitation.expiresAt - invitation.createdAt > MAX_INVITATION_LIFETIME_MS
+    || !UID.test(invitation.invitedByUid)
+    || !INVITATION_ID.test(invitation.invitationId)
+    || !INVITATION_ID.test(invitation.orgId)
+    || !SHA256_HEX.test(invitation.tokenDigest)
+    || typeof verifiedEmail !== 'string'
+    || verifiedEmail.length > 254
+  ) return false;
+
+  const normalizeEmail = (value: string) => value.trim().toLocaleLowerCase('en-US');
+  const recipient = normalizeEmail(invitation.invitedEmail);
+  const account = normalizeEmail(verifiedEmail);
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)
+    && recipient === account;
+}
+
 /**
  * Pure state transition guard. The caller must separately authenticate the
  * recipient and verify the invitation digest/email server-side before accept.
