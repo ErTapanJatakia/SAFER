@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  assessOwnerTransfer,
   canIssueInvitation,
   canTransitionInvitation,
   evaluateMembershipChange,
@@ -123,4 +124,37 @@ test('revoked memberships cannot be reactivated and non-admins cannot manage mem
   assert.equal(evaluateMembershipChange(proposal({
     actorRole: 'manager',
   })).reason, 'actor-not-authorised');
+
+test('owner transfer assessment requires a distinct active non-owner and trusted authority', () => {
+  assert.deepEqual(assessOwnerTransfer({
+    actorUid: 'owner-001', actorRole: 'owner',
+    targetUid: 'member-001', targetRole: 'admin', targetStatus: 'active',
+  }), { eligible: true, disposition: 'trusted-authority-required' });
+
+  assert.equal(assessOwnerTransfer({
+    actorUid: 'owner-001', actorRole: 'owner',
+    targetUid: 'owner-001', targetRole: 'admin', targetStatus: 'active',
+  }).reason, 'self-transfer-forbidden');
+  assert.equal(assessOwnerTransfer({
+    actorUid: 'admin-001', actorRole: 'admin',
+    targetUid: 'member-001', targetRole: 'manager', targetStatus: 'active',
+  }).reason, 'actor-not-owner');
+  assert.equal(assessOwnerTransfer({
+    actorUid: 'owner-001', actorRole: 'owner',
+    targetUid: 'member-001', targetRole: 'manager', targetStatus: 'suspended',
+  }).reason, 'target-not-active');
+  assert.equal(assessOwnerTransfer({
+    actorUid: 'owner-001', actorRole: 'owner',
+    targetUid: 'owner-002', targetRole: 'owner', targetStatus: 'active',
+  }).reason, 'target-already-owner');
+});
+
+test('membership policy rejects malformed role and status values at runtime', () => {
+  assert.equal(evaluateMembershipChange(proposal({
+    actorRole: 'platform_super_admin' as never,
+  })).reason, 'invalid-context');
+  assert.equal(evaluateMembershipChange(proposal({
+    currentStatus: 'pending' as never,
+  })).reason, 'invalid-context');
+});
 });
