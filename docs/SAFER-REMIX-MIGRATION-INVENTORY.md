@@ -75,7 +75,7 @@ A Remix capability is considered migrated only when SAFER contains the reviewed 
 
 | Remix capability or claim | Disposition in canonical SAFER |
 |---|---|
-| Organisation workspace context | Partially represented by the verified read-only workspace and organisation profile panels |
+| Organisation workspace context | Partially represented by the verified read-only workspace and organisation profile panels; Remix's useful role/context presentation is reconciled in an accessible capability matrix |
 | Six-role RBAC hierarchy | Rejected as-is; retain canonical four-role vocabulary until a separate trusted authorization design is approved |
 | Platform super-admin | Deferred; no platform-wide privilege exists in current canonical Rules |
 | Cross-tenant isolation | Enforced by canonical Rules and expanded emulator tests; do not rely on Remix mock evaluator |
@@ -83,11 +83,12 @@ A Remix capability is considered migrated only when SAFER contains the reviewed 
 | Member-created append-only audit events | Rejected as-is; canonical audit path remains fully denied |
 | Simulated audit activity | Rejected; no synthetic event should be presented as a real security event |
 | Sample organisations and identities | Rejected for production; use clearly labelled emulator fixtures only |
+| Organisation modal tabs, cards, and status layout | Safely adapted into a verified-session header, semantic capability matrix, release-status panel, and explicit unavailable-controls list; no tab that implies unsupported navigation or audit access |
 | Manual provisioning runbook | Replaced by canonical ADR and current-schema runbook; old instructions are unsafe for this project |
 
 ### Follow-up actions
 
 - [x] Record the incompatibilities and non-portable claims in the canonical migration inventory.
 - [ ] Review the reference repository's provisioning documentation for unnecessary personal/project identifiers and redact if appropriate.
-- [ ] Finish mapping the remaining genuinely unique Remix organisation UI ideas against the canonical workspace without importing fake tenant data or unsupported permissions.
+- [x] Reconcile the OrganisationModal presentation patterns into the canonical verified workspace without importing fake tenant data or unsupported permissions.
 - [ ] Complete the consolidated emulator and project CI validation milestone before opening a review PR.
