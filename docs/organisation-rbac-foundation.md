@@ -221,3 +221,9 @@ The profile-panel regression suite now holds an organisation metadata request op
 
 These are UI request-lifecycle checks only. The exact membership resolver and Firestore Rules remain authoritative, and no additional metadata reads, polling, caching, or permission grants are introduced. The tests are authored but remain deferred to the consolidated validation milestone.
 
+## Membership re-verification clears prior organisation context
+
+Submitting a fresh membership verification clears the previously displayed membership/workspace result before the new exact-document lookup begins. If the new lookup is pending, denied, malformed, or unavailable, the previous organisation profile and role presentation are not retained or restored. Only a response that still matches the current session request token and exact UID/organisation context can publish a new workspace context.
+
+A regression case now verifies the successful-first-check, pending re-check, and denied re-check sequence. This protects client presentation only; it does not provide continuous membership monitoring or alter Firestore Rules. Test execution remains deferred to the consolidated validation milestone.
+
