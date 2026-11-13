@@ -95,6 +95,9 @@ jobs:
       - name: Authenticated account security lifecycle tests
         run: npm run test:account-security
 
+      - name: Privacy demo repository tests
+        run: npm run test:privacy-demo
+
       - name: Accessibility preferences UI tests
         run: npm run test:accessibility-preferences
 
