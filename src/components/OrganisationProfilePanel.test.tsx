@@ -88,6 +88,12 @@ describe('OrganisationProfilePanel', () => {
     expect(host.textContent).not.toContain('Stale Alpha Profile');
   });
 
+  it('fails closed when the Firestore database is unavailable', async () => {
+    await act(async () => root.render(<OrganisationProfilePanel database={null} membership={member('owner')} />));
+    expect(readOrganisationProfile).not.toHaveBeenCalled();
+    expect(host.querySelector('[role="alert"]')?.textContent).toContain('No cached or inferred profile details');
+  });
+
   it('does not display profile metadata for a suspended membership', async () => {
     await act(async () => root.render(
       <OrganisationProfilePanel database={database} membership={{...member('owner'), status: 'suspended'}} />,
