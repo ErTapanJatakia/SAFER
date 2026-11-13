@@ -31,7 +31,7 @@ function parseCalendarDate(value: string): { year: number; month: number; day: n
 
 
 function parseDisplayDateTime(value: string): Date | null {
-  const local = value.trim().match(/^(\\d{4})-(\\d{2})-(\\d{2})[ T](\\d{2}):(\\d{2})$/);
+  const local = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})$/);
   if (!local) {
     const parsed = new Date(value);
     return Number.isFinite(parsed.getTime()) ? parsed : null;
@@ -103,8 +103,8 @@ export function formatAccountDateTime(
   fallback = '—',
 ): string {
   if (value === null || value === undefined || value === '') return fallback;
-  const date = value instanceof Date ? value : new Date(value);
-  if (!Number.isFinite(date.getTime())) return fallback;
+  const date = value instanceof Date ? value : parseDisplayDateTime(value);
+  if (!date || !Number.isFinite(date.getTime())) return fallback;
   return `${formatAccountDate(date, preferences, fallback)} ${formatAccountTime(date, preferences, fallback)}`;
 }
 
