@@ -17,6 +17,7 @@ import {publishSessionInvalidation, subscribeToSessionInvalidation} from '../lib
 import {enterDemoGuest} from '../lib/dataBoundary.ts';
 import {DemoGuestWorkspaceProvider} from './DemoGuestWorkspaceProvider.tsx';
 import {AccountSecurityPanel} from './AccountSecurityPanel.tsx';
+import {OrganisationWorkspacePanel} from './OrganisationWorkspacePanel.tsx';
 
 type AuthMode = 'signin' | 'register' | 'reset' | 'verify';
 
@@ -346,7 +347,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
               </form>
               <p id="organisation-id-help" className="text-[11px] text-slate-400">The ID is a locator, not a password or access token. Membership status is held in memory only.</p>
               {membershipError && <p role="alert" className="text-xs text-red-300">{membershipError}</p>}
-              {membership && <p role="status" className="text-xs text-emerald-300">Verified active membership · Role: {membership.role} · Organisation: {membership.orgId}</p>}
+              {membership && <OrganisationWorkspacePanel membership={membership} />}
             </div>
           </section>
           </>
