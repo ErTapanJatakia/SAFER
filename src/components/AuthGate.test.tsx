@@ -140,9 +140,10 @@ describe('AuthGate membership session handling',()=>{
  });
  it('resolves the exact organisation for the authenticated UID',async()=>{vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'manager',status:'active'});auth(makeUser('user-a'));await flush();const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();expect(verifiedWorkspace()).not.toBeNull();expect(verifiedWorkspace()?.textContent).toContain('Manager');expect(resolveTenantMembership).toHaveBeenCalledWith({name:'test-db'},{uid:'user-a'},'org-a');});
  it('removes previously verified workspace metadata while re-verification is pending and after it fails',async()=>{
+  let failSecond!:(reason:Error)=>void;
   vi.mocked(resolveTenantMembership)
     .mockResolvedValueOnce({uid:'user-a',orgId:'org-a',role:'owner',status:'active'})
-    .mockRejectedValueOnce(new Error('permission-denied'));
+    .mockReturnValueOnce(new Promise((_resolve,reject)=>{failSecond=reject;}));
   auth(makeUser('user-a'));await flush();
   const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
   change(field,'org-a');await flush();
@@ -154,6 +155,7 @@ describe('AuthGate membership session handling',()=>{
   submit(form);await flush();
   expect(verifiedWorkspace()).toBeNull();
   expect(host.textContent).toContain('Checking the exact membership record');
+  await act(async()=>failSecond(new Error('permission-denied')));
   await flush();
 
   expect(verifiedWorkspace()).toBeNull();
@@ -161,6 +163,7 @@ describe('AuthGate membership session handling',()=>{
   expect(host.textContent).not.toContain('Organisation owner');
   expect(host.textContent).not.toContain('Organisation profile');
  });
+
  it('fails closed with generic feedback when lookup is denied',async()=>{vi.mocked(resolveTenantMembership).mockRejectedValue(new Error('permission-denied'));auth(makeUser('user-a'));await flush();const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();expect(host.querySelector('[role="alert"]')?.textContent).toContain('Membership could not be verified.');expect(host.textContent).not.toContain('Role:');});
  it('keeps only the newest membership result when duplicate requests overlap',async()=>{
   let finishFirst!:(value:{uid:string;orgId:string;role:'owner';status:'active'})=>void;
