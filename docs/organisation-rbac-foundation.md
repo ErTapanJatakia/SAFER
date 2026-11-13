@@ -54,8 +54,8 @@ No Remix sample organisation names, old Firebase IDs, or alternate role vocabula
 1. [x] Add a safe, read-only organisation profile view for roles whose current Rules permit the exact organisation document read; do not query metadata for manager/viewer.
 2. [x] Define a pure membership lifecycle policy and a structural audit-event contract without enabling writes.
 3. [x] Record the trusted provisioning decision in `docs/TRUSTED-ORGANISATION-PROVISIONING-ADR.md`: manual project-owner administration is the only approved Spark-era provisioning path; no client mutations or unassessed third-party backend.
-4. [ ] Add a manual provisioning checklist/runbook review and emulator scenarios for exact UID/path binding, malformed membership, tenant isolation, and denied client lifecycle writes. Keep these as design/test additions until the consolidated validation milestone.
-5. [ ] Assess whether any genuinely zero-cost trusted execution provider can satisfy every security gate in the ADR. If none qualifies, retain manual owner-operated provisioning.
+4. [x] Add the organisation security assurance matrix and expand emulator coverage for cross-tenant reads/writes, all-role membership mutation attempts, cross-user role changes, and audit-event read/write denial. See `docs/ORGANISATION-SECURITY-ASSURANCE-MATRIX.md`. Tests are added but intentionally not executed before the consolidated validation milestone.
+5. [x] Assess the current execution options against the zero-cost and trust requirements. No alternative provider is approved; retain manual owner-operated provisioning unless a future provider passes every ADR gate.
 6. [ ] Only after review and separate approval, consider production rules changes or tenant provisioning.
 7. Keep operational localStorage records separate until an explicit, reviewed migration workflow exists.
 
@@ -90,3 +90,8 @@ This is structural validation only: it does not calculate canonical hashes, veri
 ## Trusted provisioning decision
 
 The current Firebase Spark configuration has no trusted application execution service. The approved interim model is manual, project-owner-controlled provisioning through the Firebase administration plane, documented in `docs/TRUSTED-ORGANISATION-PROVISIONING-ADR.md`. The client remains read-only for organisation membership and audit events. No provider, privileged credential, Firebase plan, Rules, or production tenant configuration was changed by this decision.
+
+
+## Security assurance status
+
+The assurance matrix maps Firestore Rules, tenant membership resolution, lifecycle contracts, audit-envelope validation, and UI capability claims to their evidence. New emulator scenarios cover cross-tenant access and attempted membership mutations by every supported role, including cross-user role changes. This is test coverage authored, not test execution: no result is claimed until the consolidated emulator/CI milestone.
