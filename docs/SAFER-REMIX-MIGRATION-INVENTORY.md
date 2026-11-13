@@ -53,3 +53,41 @@ The Remix tree contains the candidate modules listed above. SAFER already contai
 ## Definition of complete
 
 A Remix capability is considered migrated only when SAFER contains the reviewed implementation, relevant automated regression/security tests pass, documentation matches actual behavior, and the feature is usable in SAFER without relying on the Remix repository. The Remix repository must remain available until every candidate is classified as **ported**, **already present**, or **explicitly rejected/deferred with rationale**.
+
+
+## Deep review: Remix organisation/RBAC and provisioning artifacts
+
+**Review basis:** Remix OrganisationModal, multiorg types, mock RBAC tests, ADMIN_PROVISIONING.md, and security_spec.md.  
+**Disposition:** Do not port these files as implementation. Retain only reviewed concepts and test scenarios.
+
+### Findings
+
+1. **Role model is incompatible with canonical SAFER.** Remix defines platform_super_admin, org_admin, supervisor_manager, personnel_employee, readonly_auditor, and demo_guest. Canonical SAFER's verified membership and Rules model supports only owner, admin, manager, and viewer. Adding the Remix roles to the client without a corresponding trusted membership schema and emulator-tested Rules would create misleading privilege presentation.
+2. **The Remix RBAC suite is a mock evaluator, not a Firestore Rules test.** It proves behavior of local helper functions only. Its "admin may update another member" and "member may append an audit event" assertions are not evidence that deployed Firestore Rules permit or safely constrain those operations.
+3. **The OrganisationModal overstates security guarantees.** It describes tenant isolation and an immutable audit trail as operational facts while displaying hard-coded sample organisations and simulated audit events. The sample audit events are not retrieved from a trusted audit store.
+4. **The proposed audit policy conflicts with the canonical boundary.** Remix's mock policy allows authenticated members to create audit events and denies update/delete. Canonical SAFER currently denies all audit reads and writes. Do not enable member-created audit events or label a hash-chain contract as immutable logging.
+5. **The provisioning runbook targets a different Firebase project and schema.** It refers to a legacy project identifier, a platform-admin collection, a different membership path, and fields/roles absent from canonical SAFER. It must never be followed against the canonical project.
+6. **The provisioning document contains a personal email address.** Do not copy it into SAFER documentation, examples, tests, or issue discussions. Review the reference repository's exposure and redact it there if it is not intentionally public.
+7. **The security specification is aspirational, not verified.** Its six-role hierarchy, cross-tenant super-admin model, employee/auditor data access, demo guest remote-write denial, and append-only audit claims are not implemented by canonical SAFER's current Rules.
+8. **Sample organisation data is not tenant provisioning.** The three hard-coded sample organisations are UI fixtures, not canonical Firestore organisation records. Do not import them into the production project.
+
+### Migration disposition
+
+| Remix capability or claim | Disposition in canonical SAFER |
+|---|---|
+| Organisation workspace context | Partially represented by the verified read-only workspace and organisation profile panels |
+| Six-role RBAC hierarchy | Rejected as-is; retain canonical four-role vocabulary until a separate trusted authorization design is approved |
+| Platform super-admin | Deferred; no platform-wide privilege exists in current canonical Rules |
+| Cross-tenant isolation | Enforced by canonical Rules and expanded emulator tests; do not rely on Remix mock evaluator |
+| Membership management UI | Deferred until a trusted provisioning authority is approved |
+| Member-created append-only audit events | Rejected as-is; canonical audit path remains fully denied |
+| Simulated audit activity | Rejected; no synthetic event should be presented as a real security event |
+| Sample organisations and identities | Rejected for production; use clearly labelled emulator fixtures only |
+| Manual provisioning runbook | Replaced by canonical ADR and current-schema runbook; old instructions are unsafe for this project |
+
+### Follow-up actions
+
+- [x] Record the incompatibilities and non-portable claims in the canonical migration inventory.
+- [ ] Review the reference repository's provisioning documentation for unnecessary personal/project identifiers and redact if appropriate.
+- [ ] Finish mapping the remaining genuinely unique Remix organisation UI ideas against the canonical workspace without importing fake tenant data or unsupported permissions.
+- [ ] Complete the consolidated emulator and project CI validation milestone before opening a review PR.
