@@ -29,7 +29,7 @@ afterEach(async () => {
 describe('OrganisationWorkspacePanel', () => {
   it('shows the exact verified organisation locator and role without claiming workspace release', async () => {
     await act(async () => root.render(
-      <OrganisationWorkspacePanel membership={{uid: 'user-a', orgId: 'org-alpha', role: 'owner', status: 'active'}} />,
+      <OrganisationWorkspacePanel database={null} membership={{uid: 'user-a', orgId: 'org-alpha', role: 'owner', status: 'active'}} />,
     ));
     expect(host.textContent).toContain('org-alpha');
     expect(host.textContent).toContain('owner');
@@ -41,7 +41,7 @@ describe('OrganisationWorkspacePanel', () => {
   it('shows no tenant operational capabilities for manager and viewer roles', async () => {
     for (const role of ['manager', 'viewer'] as const) {
       await act(async () => root.render(
-        <OrganisationWorkspacePanel membership={{uid: 'user-a', orgId: 'org-readonly', role, status: 'active'}} />,
+        <OrganisationWorkspacePanel database={null} membership={{uid: 'user-a', orgId: 'org-readonly', role, status: 'active'}} />,
       ));
       const list = host.querySelector('ul');
       expect(list).not.toBeNull();
@@ -53,7 +53,7 @@ describe('OrganisationWorkspacePanel', () => {
   it('never advertises membership administration or audit access for any role', async () => {
     for (const role of ['owner', 'admin', 'manager', 'viewer'] as const) {
       await act(async () => root.render(
-        <OrganisationWorkspacePanel membership={{uid: 'user-a', orgId: 'org-safe', role, status: 'active'}} />,
+        <OrganisationWorkspacePanel database={null} membership={{uid: 'user-a', orgId: 'org-safe', role, status: 'active'}} />,
       ));
       const items = [...host.querySelectorAll('li')];
       const membership = items.find((item) => item.textContent?.includes('Manage memberships'));
