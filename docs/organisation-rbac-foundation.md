@@ -234,3 +234,10 @@ A regression case now verifies the successful-first-check, pending re-check, and
 The pure membership parser now treats its input as an untrusted runtime value. It accepts only a plain object (or null-prototype data object) with exactly the four enumerable own data fields required by the current Rules schema. It rejects symbol keys, inherited/exotic objects, accessors, invalid UID/organisation context, and proxy inspection failures without invoking getters. All malformed values return the same generic `invalid-membership` error.
 
 The parser still grants no authority: it only validates the result of the exact membership read. Firestore Rules continue to authorize the read and every later database operation. Regression coverage has been authored for getter non-execution, exotic prototypes, unexpected symbol keys, hostile proxy traps, and invalid identity/organisation context. These tests remain pending the consolidated validation milestone; no test or CI run is claimed.
+
+
+## Explicit tenant operation denials in the role matrix
+
+The role capability contract and read-only workspace matrix now show the important negative grants explicitly. Even active owner/admin memberships cannot delete personnel or incident records, write evidence records, manage memberships, or read/write audit events under the current Rules. Owner/admin may read personnel, incidents and evidence, and create/update personnel and incidents subject to the existing field-level Rules validation. Manager/viewer remain denied all tenant operational capabilities.
+
+This is a presentation/domain mirror of the current `firestore.rules`, not a new permission system. No Rules changed and no operational workflow was released. Type-level and UI regression cases have been authored for the explicit denials; they remain pending consolidated validation.
