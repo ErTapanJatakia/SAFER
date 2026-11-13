@@ -332,15 +332,25 @@ describe('Demo Guest repository', () => {
 
   it('reset attempts every operational key even when one removal fails', async () => {
     const attempted: string[] = [];
+    const values = new Map([
+      ['prot_ops_personnel_v2', 'personnel'],
+      ['prot_ops_incidents_v2', 'incidents'],
+      ['prot_ops_cyber_v2', 'cyber'],
+      ['prot_ops_checklist_v2', 'checklist'],
+    ]);
+    let blockIncidentRemoval = true;
     const storage: DemoStorage = {
-      getItem: () => null,
-      setItem: () => undefined,
+      getItem: (key) => values.get(key) ?? null,
+      setItem: (key, value) => { values.set(key, value); },
       removeItem: (key) => {
         attempted.push(key);
-        if (key === 'prot_ops_incidents_v2') throw new Error('SecurityError');
+        if (key === 'prot_ops_incidents_v2' && blockIncidentRemoval) throw new Error('SecurityError');
+        values.delete(key);
       },
     };
     const repository = createDemoRepository(storage);
+    repository.loadSnapshot();
+
     await assert.rejects(repository.reset(), /incidents/);
     assert.deepEqual(attempted, [
       'prot_ops_personnel_v2',
@@ -348,6 +358,26 @@ describe('Demo Guest repository', () => {
       'prot_ops_cyber_v2',
       'prot_ops_checklist_v2',
     ]);
+    assert.equal(storage.getItem('prot_ops_personnel_v2'), null);
+    assert.equal(storage.getItem('prot_ops_incidents_v2'), 'incidents');
+    assert.equal(storage.getItem('prot_ops_cyber_v2'), null);
+    assert.equal(storage.getItem('prot_ops_checklist_v2'), null);
+
+    blockIncidentRemoval = false;
+    attempted.length = 0;
+    await assert.doesNotReject(repository.reset(), 'a partial reset must be safely retryable in the same tab');
+    assert.deepEqual(attempted, [
+      'prot_ops_personnel_v2',
+      'prot_ops_incidents_v2',
+      'prot_ops_cyber_v2',
+      'prot_ops_checklist_v2',
+    ]);
+    for (const key of [
+      'prot_ops_personnel_v2',
+      'prot_ops_incidents_v2',
+      'prot_ops_cyber_v2',
+      'prot_ops_checklist_v2',
+    ]) assert.equal(storage.getItem(key), null);
   });
 
   it('reset removes all four operational demo keys while preserving unrelated preferences', async () => {
