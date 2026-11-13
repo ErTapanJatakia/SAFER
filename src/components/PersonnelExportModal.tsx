@@ -71,15 +71,6 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
     return getRosterExportableFields();
   }, [person]);
 
-  // Sensitive field keys for default preselection
-  const defaultSensitiveKeys = useMemo(() => {
-    const set = new Set<string>();
-    allFields.forEach((f) => {
-      if (f.isSensitive) set.add(f.key);
-    });
-    return set;
-  }, [allFields]);
-
   const defaultRedactedKeys = useMemo(
     () => getDefaultExportRedactionKeys(allFields, redactionLevel),
     [allFields, redactionLevel],
