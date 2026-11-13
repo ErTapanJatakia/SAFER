@@ -32,22 +32,22 @@ describe('OrganisationWorkspacePanel', () => {
       <OrganisationWorkspacePanel database={null} membership={{uid: 'user-a', orgId: 'org-alpha', role: 'owner', status: 'active'}} />,
     ));
     expect(host.textContent).toContain('org-alpha');
-    expect(host.textContent).toContain('owner');
+    expect(host.textContent).toContain('Organisation owner');
     expect(host.textContent).toContain('Membership verified');
     expect(host.textContent).toContain('Operational workspace access is not released');
     expect(host.textContent).toContain('informational UI guidance');
+    expect(host.querySelector('table')).not.toBeNull();
+    expect(host.querySelector('th[scope="col"]')?.textContent).toContain('Capability');
   });
 
-  it('shows no tenant operational capabilities for manager and viewer roles', async () => {
-    for (const role of ['manager', 'viewer'] as const) {
-      await act(async () => root.render(
-        <OrganisationWorkspacePanel database={null} membership={{uid: 'user-a', orgId: 'org-readonly', role, status: 'active'}} />,
-      ));
-      const list = host.querySelector('ul');
-      expect(list).not.toBeNull();
-      expect(list?.textContent).toContain('Read personnel records');
-      expect(host.textContent).toContain('Not available in current rules model');
-    }
+  it.each(['manager', 'viewer'] as const)('shows no tenant operational capabilities for %s roles', async (role) => {
+    await act(async () => root.render(
+      <OrganisationWorkspacePanel database={null} membership={{uid: 'user-a', orgId: 'org-readonly', role, status: 'active'}} />,
+    ));
+    const rows = [...host.querySelectorAll('tbody tr')];
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((row) => row.textContent?.includes('Not granted'))).toBe(true);
+    expect(host.textContent).toContain('Read personnel records');
   });
 
   it('never advertises membership administration or audit access for any role', async () => {
@@ -55,11 +55,19 @@ describe('OrganisationWorkspacePanel', () => {
       await act(async () => root.render(
         <OrganisationWorkspacePanel database={null} membership={{uid: 'user-a', orgId: 'org-safe', role, status: 'active'}} />,
       ));
-      const items = [...host.querySelectorAll('li')];
-      const membership = items.find((item) => item.textContent?.includes('Manage memberships'));
-      const audit = items.find((item) => item.textContent?.includes('Read audit events'));
-      expect(membership?.textContent).toContain('—');
-      expect(audit?.textContent).toContain('—');
+      const rows = [...host.querySelectorAll('tbody tr')];
+      const membership = rows.find((row) => row.textContent?.includes('Manage memberships'));
+      const audit = rows.find((row) => row.textContent?.includes('Read audit events'));
+      expect(membership?.textContent).toContain('Not granted');
+      expect(audit?.textContent).toContain('Not granted');
     }
+  });
+
+  it('does not display a simulated audit feed or organisation switching controls', async () => {
+    await act(async () => root.render(
+      <OrganisationWorkspacePanel database={null} membership={{uid: 'user-a', orgId: 'org-safe', role: 'owner', status: 'active'}} />,
+    ));
+    expect(host.textContent).toContain('No audit feed or simulated activity is displayed');
+    expect(host.querySelector('button')).toBeNull();
   });
 });
