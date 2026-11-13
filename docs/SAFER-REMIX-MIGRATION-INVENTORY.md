@@ -459,3 +459,10 @@ The integration does not rewrite records or alter due-date comparisons, readines
 
 
 A follow-up source audit also removed the remaining browser-default locale formatting in the Privacy Console (grievance submission timestamps) and personnel export preview character count. The Privacy Console now uses the shared account preference formatter for all visible timestamps in its notices, rights/grievance examples, consent ledger, and retention review sections.
+
+
+### Consolidated validation preparation: AuthGate UI contract alignment
+
+Review of the earlier automatically triggered run `43443158928` identified five AuthGate test failures. The Firestore Rules emulator (19 tests) and tenant membership resolver emulator (5 tests) passed; the failure was in five UI assertions still expecting the previous plain-text labels ("Verified active membership" and "Role: …") after the verified-membership screen had been replaced with the structured `OrganisationWorkspacePanel`.
+
+The AuthGate tests now assert the current stable workspace test ID and the role labels rendered by that panel. Negative session-boundary assertions check that the workspace element is absent, rather than relying on obsolete text. This updates the test contract to the actual UI without removing the session lifecycle, stale-response, cross-tab invalidation, or role checks. The updated tests have not yet been executed.
