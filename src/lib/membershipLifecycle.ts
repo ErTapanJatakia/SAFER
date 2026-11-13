@@ -181,9 +181,13 @@ export function assessOwnerTransfer(input: {
   readonly targetRole: TenantRole;
   readonly targetStatus: ManagedMembershipStatus;
 }): OwnerTransferAssessment {
-  if (!UID.test(input.actorUid) || !UID.test(input.targetUid)) {
-    return { eligible: false, reason: 'invalid-context' };
-  }
+  if (
+    !input || typeof input !== 'object'
+    || !UID.test(input.actorUid) || !UID.test(input.targetUid)
+    || !TENANT_ROLES.includes(input.actorRole)
+    || !TENANT_ROLES.includes(input.targetRole)
+    || !MEMBERSHIP_STATUSES.includes(input.targetStatus)
+  ) return { eligible: false, reason: 'invalid-context' };
   if (input.actorRole !== 'owner') return { eligible: false, reason: 'actor-not-owner' };
   if (input.actorUid === input.targetUid) return { eligible: false, reason: 'self-transfer-forbidden' };
   if (input.targetStatus !== 'active') return { eligible: false, reason: 'target-not-active' };
