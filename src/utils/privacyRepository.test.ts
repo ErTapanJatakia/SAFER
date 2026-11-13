@@ -194,4 +194,57 @@ describe('SAFER privacy demo repository', () => {
     repository.clearWorkspace();
     assert.equal(storage.getItem(PRIVACY_DEMO_STORAGE_KEY), null);
   });
+
+  it('rejects a stale save from a second repository instance without overwriting newer data', () => {
+    const storage = memoryStorage();
+    const first = createPrivacyDemoRepository(storage);
+    const second = createPrivacyDemoRepository(storage);
+    const firstSnapshot = first.loadWorkspace();
+    const secondSnapshot = second.loadWorkspace();
+    firstSnapshot.noticeDrafts.push({
+      id: 'notice-first', title: 'First tab', content: 'Newer synthetic content',
+      versionLabel: 'draft', updatedAt: '2026-11-13T00:00:00.000Z',
+    });
+    first.saveWorkspace(firstSnapshot);
+    secondSnapshot.noticeDrafts.push({
+      id: 'notice-stale', title: 'Second tab', content: 'Stale synthetic content',
+      versionLabel: 'draft', updatedAt: '2026-11-13T00:01:00.000Z',
+    });
+    assert.throws(() => second.saveWorkspace(secondSnapshot), /changed in another tab or session/);
+    assert.deepEqual(first.loadWorkspace().noticeDrafts.map((item) => item.id), ['notice-first']);
+  });
+
+  it('rejects clearing a workspace that changed after it was loaded', () => {
+    const storage = memoryStorage();
+    const stale = createPrivacyDemoRepository(storage);
+    const writer = createPrivacyDemoRepository(storage);
+    stale.loadWorkspace();
+    const newer = writer.loadWorkspace();
+    newer.grievances.push({
+      id: 'grievance-newer', subjectRef: 'synthetic-subject',
+      category: 'General', description: 'Newer synthetic grievance',
+      status: 'open', submittedAt: '2026-11-13T00:00:00.000Z',
+      updatedAt: '2026-11-13T00:00:00.000Z',
+    });
+    writer.saveWorkspace(newer);
+    assert.throws(() => stale.clearWorkspace(), /changed in another tab or session/);
+    assert.deepEqual(writer.loadWorkspace().grievances.map((item) => item.id), ['grievance-newer']);
+  });
+
+  it('allows a repository instance to continue after its own verified save', () => {
+    const storage = memoryStorage();
+    const repository = createPrivacyDemoRepository(storage);
+    const workspace = repository.loadWorkspace();
+    workspace.noticeDrafts.push({
+      id: 'notice-one', title: 'First save', content: 'Synthetic',
+      versionLabel: 'draft', updatedAt: '2026-11-13T00:00:00.000Z',
+    });
+    repository.saveWorkspace(workspace);
+    workspace.noticeDrafts.push({
+      id: 'notice-two', title: 'Second save', content: 'Synthetic',
+      versionLabel: 'draft', updatedAt: '2026-11-13T00:01:00.000Z',
+    });
+    repository.saveWorkspace(workspace);
+    assert.equal(repository.loadWorkspace().noticeDrafts.length, 2);
+  });
 });
