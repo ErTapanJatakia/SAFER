@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useModalFocus } from '../hooks/useModalFocus.ts';
-import { SAFER_FREE_PLAN_REFERENCE } from '../utils/budgetPolicy.ts';
-import { ShieldCheck, X, AlertTriangle, Info } from 'lucide-react';
+import { evaluateBudgetPolicy, SAFER_FREE_PLAN_REFERENCE, type BudgetPolicyResult } from '../utils/budgetPolicy.ts';
+import { ShieldCheck, X, AlertTriangle, Info, Search } from 'lucide-react';
 
 interface BudgetPolicyModalProps {
   isOpen: boolean;
@@ -10,8 +10,29 @@ interface BudgetPolicyModalProps {
 
 export const BudgetPolicyModal: React.FC<BudgetPolicyModalProps> = ({ isOpen, onClose }) => {
   const modalRef = useModalFocus<HTMLDivElement>(isOpen, onClose);
+  const [provider, setProvider] = useState('');
+  const [plan, setPlan] = useState('');
+  const [monthlyCost, setMonthlyCost] = useState('');
+  const [billingEnabled, setBillingEnabled] = useState(false);
+  const [result, setResult] = useState<BudgetPolicyResult | null>(null);
 
   if (!isOpen) return null;
+
+  const assess = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setResult(evaluateBudgetPolicy({
+      provider,
+      plan,
+      billingEnabled,
+      expectedMonthlyCostInr: monthlyCost.trim() === '' ? undefined : Number(monthlyCost),
+    }));
+  };
+
+  const verdictStyles = result?.verdict === 'within-policy'
+    ? 'border-teal-300 bg-teal-50 text-teal-950'
+    : result?.verdict === 'out-of-policy'
+      ? 'border-rose-300 bg-rose-50 text-rose-950'
+      : 'border-amber-300 bg-amber-50 text-amber-950';
 
   return (
     <div
@@ -27,8 +48,8 @@ export const BudgetPolicyModal: React.FC<BudgetPolicyModalProps> = ({ isOpen, on
           <div className="flex items-center gap-3 min-w-0">
             <ShieldCheck className="w-6 h-6 text-teal-300 shrink-0" />
             <div className="min-w-0">
-              <h2 id="budget-policy-title" className="font-bold text-base">SAFER INR 0 Budget Policy</h2>
-              <p className="text-xs text-slate-300">Reviewed free-plan reference and operating guardrails</p>
+              <h2 id="budget-policy-title" className="font-bold text-base">SAFER INR 0 Budget Policy Inspector</h2>
+              <p className="text-xs text-slate-300">Assess a provider and plan against SAFER’s operating constraint</p>
             </div>
           </div>
           <button type="button" onClick={onClose} aria-label="Close budget policy" className="text-slate-300 hover:text-white p-2 rounded-md">
@@ -39,8 +60,38 @@ export const BudgetPolicyModal: React.FC<BudgetPolicyModalProps> = ({ isOpen, on
         <div className="p-4 sm:p-6 overflow-y-auto space-y-5 text-sm">
           <div className="rounded-lg border border-teal-200 bg-teal-50 p-3 text-teal-950">
             <p className="font-semibold">Operating constraint: INR 0</p>
-            <p className="mt-1 text-xs leading-relaxed">SAFER development and hosting must remain within genuinely no-cost plans. No paid APIs, subscriptions, billing upgrades, or paid infrastructure.</p>
+            <p className="mt-1 text-xs leading-relaxed">No paid APIs, subscriptions, billing upgrades, or paid infrastructure for SAFER. This inspector is an advisory control; it does not change provider billing settings.</p>
           </div>
+
+          <form onSubmit={assess} className="space-y-3 rounded-lg border border-slate-200 p-4">
+            <h3 className="font-semibold text-slate-900 flex items-center gap-2"><Search className="w-4 h-4" /> Assess a service</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label className="space-y-1 text-xs font-semibold text-slate-700">
+                Provider
+                <input required value={provider} onChange={(event) => setProvider(event.target.value)} placeholder="e.g. Firebase" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-normal" />
+              </label>
+              <label className="space-y-1 text-xs font-semibold text-slate-700">
+                Plan
+                <input required value={plan} onChange={(event) => setPlan(event.target.value)} placeholder="e.g. Spark" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-normal" />
+              </label>
+              <label className="space-y-1 text-xs font-semibold text-slate-700 sm:col-span-2">
+                Expected monthly cost (INR, optional)
+                <input type="number" min="0" step="0.01" value={monthlyCost} onChange={(event) => setMonthlyCost(event.target.value)} placeholder="Leave blank if not yet verified" className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-normal" />
+              </label>
+            </div>
+            <label className="flex items-start gap-2 text-xs text-slate-700">
+              <input type="checkbox" checked={billingEnabled} onChange={(event) => setBillingEnabled(event.target.checked)} className="mt-0.5" />
+              Paid billing is enabled for this provider account
+            </label>
+            <button type="submit" className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900">Assess against policy</button>
+          </form>
+
+          {result && (
+            <div role="status" aria-live="polite" className={`rounded-lg border p-3 ${verdictStyles}`}>
+              <p className="font-semibold">{result.verdict === 'within-policy' ? 'Within reviewed policy' : result.verdict === 'out-of-policy' ? 'Outside policy' : 'Manual review required'} — {result.provider}</p>
+              <p className="mt-1 text-xs leading-relaxed">{result.reason}</p>
+            </div>
+          )}
 
           <div className="space-y-3">
             <h3 className="font-semibold text-slate-900">Reviewed free-plan reference</h3>
