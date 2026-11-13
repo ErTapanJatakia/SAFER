@@ -114,3 +114,17 @@ The current Firebase Spark configuration has no trusted application execution se
 ## Security assurance status
 
 The assurance matrix maps Firestore Rules, tenant membership resolution, lifecycle contracts, audit-envelope validation, and UI capability claims to their evidence. New emulator scenarios cover cross-tenant access and attempted membership mutations by every supported role, including cross-user role changes. This is test coverage authored, not test execution: no result is claimed until the consolidated emulator/CI milestone.
+
+## Membership lifecycle policy hardening
+
+The advisory lifecycle module now performs runtime allowlist validation of actor, target, and proposed membership roles/statuses rather than relying only on TypeScript compile-time types. Malformed values fail closed as invalid-context.
+
+Owner transfer has a separate candidate assessment:
+- only an existing owner may initiate the assessment;
+- actor and target must be distinct valid UIDs;
+- target must be an active non-owner membership;
+- a positive assessment is explicitly labelled trusted-authority-required.
+
+This does not implement or authorize transfer. The future trusted operation must atomically promote the target and demote the initiating owner, preserve at least one active owner, prevent replay/concurrent transfer races, and record an independently protected administrative event. No client-side Firestore write or UI action is enabled.
+
+Regression tests have been authored for eligible/ineligible transfer candidates and malformed runtime role/status values. Invitation expiry and digest-only metadata rules remain advisory and require trusted recipient authentication, digest verification, single-use enforcement, and atomic acceptance before any real invitation workflow can ship. Test execution remains deferred to the consolidated validation milestone.
