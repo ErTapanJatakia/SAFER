@@ -50,3 +50,13 @@ test('cross-tab conflicts are surfaced by the repository and browser writes requ
   assert.match(provider, /locks: window\.navigator\.locks/);
   assert.match(provider, /requireCrossTabLock: true/);
 });
+
+test('cross-tab recovery offers an explicit snapshot download and user-confirmed reload', () => {
+  assert.match(app, /serializeDemoConflictSnapshot\(\{/);
+  assert.match(app, /link\.download = `safer-demo-conflict-snapshot-/);
+  assert.match(app, /link\.click\(\)/);
+  assert.match(app, /Download this tab’s records/);
+  assert.match(app, /Unsubmitted form fields are not included/);
+  assert.match(app, /onClick=\{\(\) => window\.location\.reload\(\)\}/);
+  assert.match(app, /role="alert"/);
+});
