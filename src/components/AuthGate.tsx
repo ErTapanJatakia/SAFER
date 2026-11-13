@@ -271,8 +271,15 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
     try {
       const resolved = await resolveTenantMembership(db, {uid: requestedUid}, requestedOrganisationId);
       if (sessionLifecycleRef.current.isCurrent(requestToken)) {
-        // Keep the verified result in memory only; never persist roles or tenant authority.
-        setMembership(resolved);
+        // Re-check response provenance at the UI boundary as well as in the
+        // resolver. A mismatched adapter/result must never publish tenant UI.
+        if (resolved.uid !== requestToken.uid || resolved.orgId !== requestToken.orgId || resolved.status !== 'active') {
+          setMembership(null);
+          setMembershipError('Membership could not be verified. Check the organisation ID or contact its authorised administrator.');
+        } else {
+          // Keep the verified result in memory only; never persist roles or tenant authority.
+          setMembership(resolved);
+        }
       }
     } catch {
       if (sessionLifecycleRef.current.isCurrent(requestToken)) {
