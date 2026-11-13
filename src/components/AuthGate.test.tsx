@@ -101,6 +101,27 @@ describe('AuthGate membership session handling',()=>{
   expect(verifiedWorkspace()?.textContent).toContain('Manager');
   expect(resolveTenantMembership).toHaveBeenCalledTimes(2);
  });
+
+ it('cannot restore a pending membership result after sign-out begins',async()=>{
+  let finishMembership!:(value:{uid:string;orgId:string;role:'owner';status:'active'})=>void;
+  let finishSignOut!:()=>void;
+  vi.mocked(resolveTenantMembership).mockReturnValueOnce(new Promise(resolve=>{finishMembership=resolve;}));
+  vi.mocked(signOut).mockReturnValueOnce(new Promise<void>(resolve=>{finishSignOut=resolve;}));
+  auth(makeUser('user-a'));await flush();
+  const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
+  change(field,'org-a');await flush();submit(field.closest('form')!);await flush();
+  expect(host.textContent).toContain('Checking…');
+  button('Sign out').click();await flush();
+  expect(verifiedWorkspace()).toBeNull();
+  expect(host.textContent).toContain('Signed in: user-a@example.test');
+  await act(async()=>finishMembership({uid:'user-a',orgId:'org-a',role:'owner',status:'active'}));
+  await flush();
+  expect(verifiedWorkspace()).toBeNull();
+  expect(host.textContent).not.toContain('Organisation administrator');
+  await act(async()=>{finishSignOut();});
+  auth(null);await flush();
+  expect(host.textContent).toContain('Continue as Demo Guest');
+ });
  it('rejects an unsupported role returned by the membership adapter',async()=>{
   vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'platform_super_admin' as any,status:'active'});
   auth(makeUser('user-a'));await flush();
