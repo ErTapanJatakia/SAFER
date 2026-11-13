@@ -25,6 +25,8 @@ describe('Demo Guest conflict recovery export', () => {
     assert.match(parsed.purpose, /before reloading after a cross-tab conflict/);
     assert.match(parsed.warning, /not automatically imported or merged/);
     assert.match(parsed.warning, /Unsubmitted form fields are not included/);
+    assert.match(parsed.warning, /unencrypted/);
+    assert.match(parsed.warning, /sensitive record fields/);
     assert.deepEqual(parsed.records, records);
   });
 
