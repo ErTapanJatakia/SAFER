@@ -342,3 +342,29 @@ The Remix root was reviewed in addition to its source directories. These files a
 ## Repository-level reconciliation outcome
 
 The source, type, demo-data, and root-configuration reviews identify no additional feature that warrants a direct transplant. The remaining work is verification, not copying legacy configuration: final source/runtime parity review, one consolidated validation milestone, remediation of any failures, and a final explicit disposition of deferred capabilities. SAFER-Remix remains available until the user separately approves retirement.
+
+## Final source-tree and rules boundary check
+
+The remaining top-level source layout was checked. Remix contains only App.tsx, components, data, index.css, main.tsx, types and utils. Canonical SAFER additionally has dedicated hooks and lib modules for session, tenant, repository, and security boundaries. No unreviewed Remix service/lib directory or additional source module family was found in that tree comparison.
+
+The two Firestore Rules files are materially different, not interchangeable:
+- Remix uses the legacy platform_admins collection, memberships path, and platform-super-admin/six-role assumptions.
+- Canonical SAFER uses organisations/{orgId}/members/{uid}, validates the UID and org ID in the membership record, checks active organisation state, and intentionally denies client membership mutation and audit-event access.
+- The canonical rule model and emulator-backed tests are the sole authority. The Remix Rules file is not merged, copied, deployed, or used as a template.
+
+## Migration closure status
+
+| Workstream | Status |
+|---|---|
+| Operational component inventory | Classified |
+| Utility inventory | Classified |
+| Domain type and demo-data inventory | Classified |
+| Root documentation and configuration | Classified |
+| Legacy Firebase project and rules | Explicitly excluded |
+| Organisation RBAC redesign | Implemented on the current feature branch; validation pending |
+| Privacy workspace stale-snapshot safeguard | Implemented on the current feature branch; validation pending |
+| Consolidated tests / emulator / browser / security validation | Not yet run by design |
+| Final human review and merge | Pending validation |
+| SAFER-Remix retirement | Not authorized; remains available |
+
+No direct migration candidate remains in the reviewed source, type, data, or root-configuration inventories. The remaining task is to validate the canonical implementation branch as one coherent milestone, review any failures, and obtain the final release decision. This status is an inventory conclusion, not a claim of runtime parity or production readiness.
