@@ -90,6 +90,29 @@ describe('authenticated account security lifecycle',()=>{
   expect(updatePassword).toHaveBeenCalledWith(user,'NewSecurePass!456');
   expect(host.textContent).toContain('Password updated.');
  });
+ it('does not complete a password change after its account identity is replaced',async()=>{
+  let finishReauthentication!:()=>void;
+  vi.mocked(reauthenticateWithCredential).mockReturnValueOnce(new Promise<void>(resolve=>{finishReauthentication=resolve;}));
+  change(input('Current password'),'CurrentPass!123');
+  change(input('New password'),'NewSecurePass!456');
+  change(input('Confirm new password'),'NewSecurePass!456');
+  submit('Change password');
+  await flush();
+  expect(reauthenticateWithCredential).toHaveBeenCalledTimes(1);
+
+  const previousUser=user;
+  user=makeUser(['password']);
+  user.uid='user-b';
+  user.email='user-b@example.test';
+  await act(async()=>root.render(<AccountSecurityPanel user={user}/>));
+  await act(async()=>finishReauthentication());
+  await flush();
+
+  expect(updatePassword).not.toHaveBeenCalled();
+  expect(sessionInvalidation.publishSessionInvalidation).not.toHaveBeenCalled();
+  expect(host.textContent).not.toContain('Password updated.');
+  expect(previousUser.uid).toBe('user-a');
+ });
  it('does not change the password if re-authentication fails',async()=>{
   vi.mocked(reauthenticateWithCredential).mockRejectedValueOnce({code:'auth/wrong-password'});
   change(input('Current password'),'WrongPass!123');change(input('New password'),'NewSecurePass!456');change(input('Confirm new password'),'NewSecurePass!456');
