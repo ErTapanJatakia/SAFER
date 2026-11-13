@@ -52,7 +52,11 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
   }, []);
 
   useEffect(() => {
-    if (!isOpen || !repository) return;
+    if (!isOpen) return;
+    if (!repository) {
+      setError('Browser storage is unavailable. The privacy console is read-only until storage access is restored.');
+      return;
+    }
     try {
       setWorkspace(repository.loadWorkspace());
       setError(null);
