@@ -66,6 +66,18 @@ export const AccountSecurityPanel: React.FC<AccountSecurityPanelProps> = ({user,
     setDisplayName(user.displayName || '');
   }, [user.uid, user.displayName]);
 
+  useEffect(() => {
+    // Never carry credential material or pending feedback across account identities.
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setNewEmail('');
+    setEmailCurrentPassword('');
+    setError('');
+    setMessage('');
+    setBusy(false);
+  }, [user.uid]);
+
   const run = async (action: () => Promise<void>) => {
     setBusy(true);
     setError('');
