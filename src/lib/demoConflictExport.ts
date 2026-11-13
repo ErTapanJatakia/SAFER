@@ -22,7 +22,7 @@ export function serializeDemoConflictSnapshot(
     version: 1,
     exportedAt,
     purpose: 'Preserve the records confirmed in this browser tab before reloading after a cross-tab conflict.',
-    warning: 'Recovery export only. Review and reconcile manually; this file is not automatically imported or merged. Unsubmitted form fields are not included.',
+    warning: 'Recovery export only. Review and reconcile manually; this file is not automatically imported or merged. Unsubmitted form fields are not included. This JSON is unencrypted and may contain sensitive record fields; store it securely.',
     records: {
       personnel: [...records.personnel],
       incidents: [...records.incidents],
