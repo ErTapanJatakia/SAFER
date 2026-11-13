@@ -61,7 +61,8 @@
     "test:demo-retention-notice": "node --test tests/demo-retention-notice.test.mjs",
     "test:demo-storage-boundary": "tsx --test src/lib/demoRepository.test.ts && node --test tests/demo-storage-boundary.test.mjs",
     "test:demo-ui-persistence": "node --test tests/demo-ui-persistence.test.mjs",
-    "test:demo-conflict-export": "tsx --test src/lib/demoConflictExport.test.ts"
+    "test:demo-conflict-export": "tsx --test src/lib/demoConflictExport.test.ts",
+    "test:browser-cross-tab": "playwright test --config=playwright.config.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -92,6 +93,7 @@
     "tsx": "^4.21.0",
     "typescript": "^7.0.2",
     "jsdom": "^26.1.0",
+    "@playwright/test": "^1.56.1",
     "vitest": "^4.0.8",
     "@types/jsdom": "^21.1.7"
   },
