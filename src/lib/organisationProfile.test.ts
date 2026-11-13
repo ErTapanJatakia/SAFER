@@ -60,6 +60,30 @@ describe('readOrganisationProfile', () => {
     }
   });
 
+
+  it('rejects accessor-backed, exotic, symbol-keyed and hostile proxy profile values without running getters', async () => {
+    let getterExecuted = false;
+    const accessor = Object.defineProperties({}, {
+      orgId: {enumerable: true, value: 'org-alpha'},
+      displayName: {enumerable: true, get() { getterExecuted = true; return 'Alpha Operations'; }},
+      status: {enumerable: true, value: 'active'},
+      schemaVersion: {enumerable: true, value: 1},
+    });
+    const exotic = Object.assign(Object.create({inherited: true}), profile);
+    const symbolKeyed = {...profile, [Symbol('unexpected')]: true};
+    const hostileProxy = new Proxy(profile, {
+      ownKeys() { throw new Error('inspection trap'); },
+    });
+
+    for (const invalid of [accessor, exotic, symbolKeyed, hostileProxy]) {
+      vi.mocked(getDoc).mockResolvedValue({exists: () => true, data: () => invalid} as any);
+      await expect(readOrganisationProfile(database, membership())).rejects.toMatchObject({
+        code: 'invalid-profile',
+      });
+    }
+    expect(getterExecuted).toBe(false);
+  });
+
   it('fails closed when the document is missing or Firestore is unavailable', async () => {
     vi.mocked(getDoc).mockResolvedValueOnce({exists: () => false} as any);
     await expect(readOrganisationProfile(database, membership())).rejects.toMatchObject({code: 'unavailable'});
