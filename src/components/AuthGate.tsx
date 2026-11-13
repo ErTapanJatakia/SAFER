@@ -318,6 +318,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
         </div>
         {error && <p role="alert" className="border-b border-red-800 bg-red-950/60 px-4 py-2 text-xs text-red-200">{error}</p>}
         {!!user && (
+          <>
           <AccountSecurityPanel user={user} onUserUpdated={setUser} />
           <section aria-labelledby="organisation-access-heading" className="border-b border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-100">
             <div className="mx-auto flex max-w-7xl flex-col gap-2">
@@ -348,6 +349,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
               {membership && <p role="status" className="text-xs text-emerald-300">Verified active membership · Role: {membership.role} · Organisation: {membership.orgId}</p>}
             </div>
           </section>
+          </>
         )}
         {demoGuest && !user ? (
           <>
