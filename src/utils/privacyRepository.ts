@@ -133,14 +133,14 @@ export function createPrivacyDemoRepository(storage: PrivacyStorage) {
       throw new Error('Stored privacy demo data is malformed; no data was replaced.', { cause: error });
     }
     if (!isPrivacyWorkspace(parsed) || !isWithinWorkspaceLimits(parsed)) {
-      throw new Error('Stored privacy demo data failed schema or size validation; workspace access is blocked to protect it.');
+      throw new Error('Stored privacy demo data failed schema validation or size limits; workspace access is blocked to protect it.');
     }
     return structuredClone(parsed);
   };
 
   const saveWorkspace = (workspace: PrivacyDemoWorkspace): void => {
     if (!isPrivacyWorkspace(workspace) || !isWithinWorkspaceLimits(workspace)) {
-      throw new Error('Refusing to persist invalid or oversized privacy demo data.');
+      throw new Error('Refusing to persist invalid privacy demo data (invalid or oversized).');
     }
     const serialized = JSON.stringify(workspace);
     if (new TextEncoder().encode(serialized).byteLength > MAX_SERIALIZED_BYTES) {
