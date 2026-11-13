@@ -93,6 +93,31 @@ describe('AuthGate membership session handling',()=>{
  });
  it('resolves the exact organisation for the authenticated UID',async()=>{vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'manager',status:'active'});auth(makeUser('user-a'));await flush();const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();expect(verifiedWorkspace()).not.toBeNull();expect(verifiedWorkspace()?.textContent).toContain('Manager');expect(resolveTenantMembership).toHaveBeenCalledWith({name:'test-db'},{uid:'user-a'},'org-a');});
  it('fails closed with generic feedback when lookup is denied',async()=>{vi.mocked(resolveTenantMembership).mockRejectedValue(new Error('permission-denied'));auth(makeUser('user-a'));await flush();const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();expect(host.querySelector('[role="alert"]')?.textContent).toContain('Membership could not be verified.');expect(host.textContent).not.toContain('Role:');});
+ it('keeps only the newest membership result when duplicate requests overlap',async()=>{
+  let finishFirst!:(value:{uid:string;orgId:string;role:'owner';status:'active'})=>void;
+  let finishSecond!:(value:{uid:string;orgId:string;role:'manager';status:'active'})=>void;
+  vi.mocked(resolveTenantMembership)
+    .mockReturnValueOnce(new Promise(resolve=>{finishFirst=resolve;}))
+    .mockReturnValueOnce(new Promise(resolve=>{finishSecond=resolve;}));
+  auth(makeUser('user-a'));await flush();
+  const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
+  change(field,'org-a');await flush();
+  const form=field.closest('form')!;
+  await act(async()=>{submit(form);});
+  await flush();
+  await act(async()=>{submit(form);});
+  await flush();
+  expect(resolveTenantMembership).toHaveBeenCalledTimes(2);
+
+  await act(async()=>finishSecond({uid:'user-a',orgId:'org-a',role:'manager',status:'active'}));
+  await flush();
+  expect(verifiedWorkspace()?.textContent).toContain('Manager');
+  await act(async()=>finishFirst({uid:'user-a',orgId:'org-a',role:'owner',status:'active'}));
+  await flush();
+  expect(verifiedWorkspace()?.textContent).toContain('Manager');
+  expect(verifiedWorkspace()?.textContent).not.toContain('Organisation administrator');
+ });
+
  it('discards pending results when the organisation locator changes',async()=>{let finish!:(v:{uid:string;orgId:string;role:'owner';status:'active'})=>void;vi.mocked(resolveTenantMembership).mockReturnValue(new Promise(resolve=>{finish=resolve;}));auth(makeUser('user-a'));await flush();const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();change(field,'org-b');await flush();await act(async()=>finish({uid:'user-a',orgId:'org-a',role:'owner',status:'active'}));expect(verifiedWorkspace()).toBeNull();});
  it('publishes a boundary for each real account transition without duplicating same-UID callbacks',async()=>{
   const publish=vi.spyOn(sessionInvalidation,'publishSessionInvalidation');
