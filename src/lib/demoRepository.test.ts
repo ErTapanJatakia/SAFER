@@ -237,6 +237,51 @@ describe('Demo Guest repository', () => {
   });
 
 
+
+  it('serializes simultaneous writes from two tabs and rejects exactly one stale snapshot', async () => {
+    const values = new Map<string, string>();
+    const sharedStorage: DemoStorage = {
+      getItem: (key) => values.get(key) ?? null,
+      setItem: (key, value) => { values.set(key, value); },
+      removeItem: (key) => { values.delete(key); },
+    };
+    const lockTails = new Map<string, Promise<void>>();
+    const locks: DemoLockManager = {
+      async request<T>(name: string, callback: () => Promise<T>): Promise<T> {
+        const previous = lockTails.get(name) ?? Promise.resolve();
+        let release!: () => void;
+        const held = new Promise<void>((resolve) => { release = resolve; });
+        lockTails.set(name, previous.then(() => held));
+        await previous;
+        try { return await callback(); }
+        finally { release(); }
+      },
+    };
+    const firstTab = createDemoRepository(sharedStorage, { locks, requireCrossTabLock: true });
+    const secondTab = createDemoRepository(sharedStorage, { locks, requireCrossTabLock: true });
+    firstTab.loadSnapshot();
+    secondTab.loadSnapshot();
+
+    const firstRecord = { ...INITIAL_PERSONNEL[0], id: 'simultaneous-tab-a', fullName: 'Simultaneous Tab A' };
+    const secondRecord = { ...INITIAL_PERSONNEL[0], id: 'simultaneous-tab-b', fullName: 'Simultaneous Tab B' };
+    const outcomes = await Promise.allSettled([
+      firstTab.savePersonnel(firstRecord),
+      secondTab.savePersonnel(secondRecord),
+    ]);
+
+    const accepted = outcomes.filter((outcome) => outcome.status === 'fulfilled');
+    const rejected = outcomes.filter((outcome) => outcome.status === 'rejected');
+    assert.equal(accepted.length, 1, 'only one stale baseline may commit');
+    assert.equal(rejected.length, 1, 'the competing stale baseline must be rejected');
+    const rejectedOutcome = rejected[0];
+    if (!rejectedOutcome || rejectedOutcome.status !== 'rejected') throw new Error('Expected one rejected stale-tab write.');
+    assert.ok(rejectedOutcome.reason instanceof DemoWriteConflictError);
+
+    const persisted = await firstTab.listPersonnel();
+    const acceptedIds = [firstRecord.id, secondRecord.id].filter((id) => persisted.some((record) => record.id === id));
+    assert.equal(acceptedIds.length, 1, 'the persisted roster must contain exactly the accepted tab update');
+  });
+
   it('refuses a reset when another tab has changed any protected collection', async () => {
     const values = new Map<string, string>();
     const sharedStorage: DemoStorage = {
