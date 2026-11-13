@@ -154,6 +154,21 @@ test('last active owner cannot be suspended, revoked or demoted', () => {
   }
 });
 
+test('suspended memberships can be restored by an authorised actor but not by a manager', () => {
+  assert.deepEqual(evaluateMembershipChange(proposal({
+    currentStatus: 'suspended', nextStatus: 'active',
+  })), { allowed: true, reason: 'owner-policy' });
+  assert.deepEqual(evaluateMembershipChange(proposal({
+    actorRole: 'admin', currentStatus: 'suspended', nextStatus: 'active',
+  })), { allowed: true, reason: 'admin-policy' });
+  assert.equal(evaluateMembershipChange(proposal({
+    actorRole: 'manager', currentStatus: 'suspended', nextStatus: 'active',
+  })).reason, 'actor-not-authorised');
+  assert.equal(evaluateMembershipChange(proposal({
+    currentStatus: 'suspended', nextStatus: 'suspended',
+  })).reason, 'invalid-transition');
+});
+
 test('revocation is terminal and cannot be combined with a role change', () => {
   assert.equal(evaluateMembershipChange(proposal({
     currentStatus: 'revoked', nextStatus: 'revoked',
