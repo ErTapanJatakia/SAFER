@@ -15,6 +15,8 @@ import {
   EXPORT_LEGAL_DISCLAIMER,
 } from '../utils/personnelExport.ts';
 import { sanitizeErrorMessage } from '../utils/securitySanitizer.ts';
+import { ACCOUNT_SETTINGS_STORAGE_KEY, normalizeAccountSettings } from '../utils/accountSettings.ts';
+import { getDefaultExportRedactionKeys } from '../utils/exportPreferences.ts';
 import {
   Download,
   X,
@@ -54,6 +56,7 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
   );
 
   const [format, setFormat] = useState<ExportFormat>('txt');
+  const [redactionLevel, setRedactionLevel] = useState<'standard' | 'strict'>('standard');
   const [activeTab, setActiveTab] = useState<'redact' | 'preview'>('redact');
   const [fieldSearch, setFieldSearch] = useState('');
   const [isExporting, setIsExporting] = useState(false);
@@ -77,18 +80,35 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
     return set;
   }, [allFields]);
 
+  const defaultRedactedKeys = useMemo(
+    () => getDefaultExportRedactionKeys(allFields, redactionLevel),
+    [allFields, redactionLevel],
+  );
+
   // Redacted field keys state
   const [redactedKeys, setRedactedKeys] = useState<Set<string>>(new Set());
   const modalRef = useModalFocus<HTMLDivElement>(isOpen, onClose);
 
-  // Initialize with sensitive defaults when opening
+  // Load only validated browser-local preferences. Failure preserves safe defaults.
   useEffect(() => {
-    if (isOpen) {
-      setRedactedKeys(new Set(defaultSensitiveKeys));
-      setExportSuccessMsg(null);
-      setActiveTab('redact');
+    if (!isOpen) return;
+    try {
+      const raw = window.localStorage.getItem(ACCOUNT_SETTINGS_STORAGE_KEY);
+      const preferences = normalizeAccountSettings(raw ? JSON.parse(raw) : null).preferences;
+      setFormat(preferences.defaultExportFormat);
+      setRedactionLevel(preferences.defaultRedactionLevel);
+    } catch {
+      setFormat('txt');
+      setRedactionLevel('standard');
     }
-  }, [isOpen, defaultSensitiveKeys]);
+    setExportSuccessMsg(null);
+    setExportErrorMsg(null);
+    setActiveTab('redact');
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) setRedactedKeys(new Set(defaultRedactedKeys));
+  }, [isOpen, defaultRedactedKeys]);
 
   // Toggle single field redaction
   const toggleFieldRedaction = (key: string) => {
@@ -115,7 +135,7 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
   };
 
   const resetToSensitiveDefaults = () => {
-    setRedactedKeys(new Set(defaultSensitiveKeys));
+    setRedactedKeys(new Set(defaultRedactedKeys));
   };
 
   // Group fields by category
@@ -371,7 +391,7 @@ export const PersonnelExportModal: React.FC<PersonnelExportModalProps> = ({
                     className="px-2.5 py-1 text-xs font-semibold rounded bg-white border border-amber-300 text-amber-900 hover:bg-amber-50 transition flex items-center space-x-1"
                   >
                     <RefreshCw className="w-3.5 h-3.5 text-amber-700" />
-                    <span>Reset to Sensitive Defaults</span>
+                    <span>Reset to Saved Defaults</span>
                   </button>
                 </div>
 
