@@ -104,7 +104,8 @@ describe('session inactivity guard', () => {
     await renderGuard();
     await changeTimeout(5);
     await act(async () => { await vi.advanceTimersByTimeAsync(4 * 60_000); });
-    await act(async () => { window.dispatchEvent(new Event('pointerdown')); });
+    await act(async () => { document.dispatchEvent(new Event('pointerdown', {bubbles: true})); });
+    expect(host.textContent).toContain('5 min remaining');
     await act(async () => { await vi.advanceTimersByTimeAsync(4 * 60_000); });
     expect(host.querySelector('[role="alertdialog"]')).toBeNull();
     expect(onExpire).not.toHaveBeenCalled();
