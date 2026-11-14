@@ -44,7 +44,7 @@ The Remix tree contains the candidate modules listed above. SAFER already contai
 - [x] Profile, preferences, accessibility and account-settings reconciliation (existing local-only settings and authenticated security flows retained; global regional-format application remains deferred).
 - [x] Privacy notice and privacy-request workflow review and selective port (synthetic console already migrated; legal/compliance boundary added; unsafe Remix defaults rejected).
 - [x] Canonical organisation data model and RBAC threat model (aligned to existing four-role Firestore Rules; no unsupported Remix roles).
-- [x] Emulator-backed Firestore Rules and tenant-isolation test scenarios authored; execution and CI pass remain pending the consolidated validation milestone.
+- [x] Emulator-backed Firestore Rules and tenant-isolation test scenarios authored and executed successfully in the consolidated CI run on `f02edc221066edab232902d5471dc790feebea88`; production publication remains separately gated.
 - [x] Trusted provisioning documentation rewritten for SAFER in `docs/TRUSTED-ORGANISATION-PROVISIONING-ADR.md` (manual owner-operated provisioning only; no client writes or paid backend).
 - [ ] End-to-end regression and security review of every migrated capability.
 - [ ] Final source-to-destination reconciliation.
@@ -610,3 +610,14 @@ This dated update supersedes earlier provisional statements in this inventory th
 - **Release posture:** PR #138 remains open and draft. No merge, deployment, production authentication/rules change, trusted provisioning, or real operational-data migration is authorized by this update.
 
 - **Additional timestamp surface found during final scan:** the DPDP consent lifecycle ledger also rendered its stored ISO timestamp directly. Both that ledger and DPDP casework timestamps now use the shared account formatter; the Account Settings coverage note has been updated to name the DPDP governance workspace. These latest UI changes are awaiting fresh mandatory CI validation.
+
+
+## Organisation/RBAC migration security review — 2026-11-15
+
+The end-to-end review has begun against the actual candidate branch source, emulator tests, assurance matrix, and release documentation. The consolidated CI baseline is verified on exact commit `f02edc221066edab232902d5471dc790feebea88`: `validate` and independent DPDP governance validation passed. The main job explicitly passed Firestore Rules Emulator, tenant membership resolver, organisation domain, workspace/profile UI, membership lifecycle, audit-envelope, DPDP, type-check and production-build steps.
+
+The candidate Rules model remains deliberately narrower than the UI lifecycle proposal: owner/admin can access the specifically allowed operational records; manager/viewer have no operational access; membership writes and audit access remain denied; evidence is read-only; private/restricted paths and unmodelled paths remain denied. The lifecycle and audit TypeScript modules are policy/shape contracts only, not trusted services or authorization. Manual owner-operated provisioning remains outside the app under the provisioning ADR.
+
+Documentation reconciliation identified historical deny-all/pending-validation descriptions. The current testing, assurance, architecture, RBAC and production-foundation notes have been updated to distinguish the repository candidate policy from the separately deny-all production Console policy. No production Rules publication, tenant provisioning, operational data migration, or SAFER-Remix retirement is authorised.
+
+Remaining review: reconcile every Remix candidate and canonical destination, inspect migration-specific functional/security regressions, and retain explicit rejected/deferred dispositions.
