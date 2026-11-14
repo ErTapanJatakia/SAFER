@@ -42,7 +42,11 @@ describe('OrganisationWorkspacePanel', () => {
     expect(host.textContent).toContain('does not mean the corresponding SAFER screen or workflow is released');
     expect(host.textContent).toContain('Permitted by current Rules');
     expect(host.querySelector('table')).not.toBeNull();
-    expect(host.querySelector('th[scope="col"]')?.textContent).toContain('Capability');
+    expect([...host.querySelectorAll('th[scope="col"]')].map((header) => header.textContent?.trim())).toEqual([
+      'Area',
+      'Capability',
+      'Current status',
+    ]);
   });
 
   it.each(['manager', 'viewer'] as const)('shows no tenant operational capabilities for %s roles', async (role) => {
