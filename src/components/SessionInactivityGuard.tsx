@@ -20,6 +20,10 @@ export function useSessionTimeoutPreference(): SessionTimeoutContextValue {
   return value;
 }
 
+export function useOptionalSessionTimeoutPreference(): SessionTimeoutContextValue | null {
+  return useContext(SessionTimeoutContext);
+}
+
 function sessionScope(sessionKey: string): string {
   // A non-reversible local-storage namespace only; never used as an identity or security check.
   let first = 0x811c9dc5;
