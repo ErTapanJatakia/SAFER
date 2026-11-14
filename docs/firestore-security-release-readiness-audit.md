@@ -100,3 +100,13 @@ The original F-03 and F-04 findings have received implementation follow-up:
 ### Current release posture
 
 F-01 (browser-local operational data is not tenant/account isolated) and F-02 (candidate Rules are not production Console Rules) remain critical release blockers. Production Console rules remain deny-all. The candidate branch does not authorise publication, tenant provisioning, real operational data, localStorage migration, or deployment. The PR remains draft and unmerged.
+
+
+### F-06 — Tenant read paths did not enforce stored-record field allowlists
+
+**Severity:** Medium  
+**Evidence:** Personnel and incident write paths validated the proposed document, but their read paths checked tenant ID only. Evidence reads also checked tenant ID only. A malformed, legacy, or manually seeded document with additional fields could therefore be returned to an otherwise authorised owner/admin.
+
+**Remediation in candidate branch:** Personnel and incident reads now enforce exact allowed/required key sets, path/document identity, bounded fields, allowed enums, and expected primitive/timestamp types. Evidence reads now enforce an explicit metadata-only key allowlist, bounded optional metadata, and paired SHA-256 algorithm/digest fields; unapproved fields such as raw evidence URLs are denied. No evidence writes or operational data migration were enabled.
+
+**Status:** Implemented in the candidate branch. New emulator regressions seed extra fields into personnel, incident, and evidence documents and assert that reads fail. Latest CI evidence is pending; do not close this finding until the exact latest head passes.
