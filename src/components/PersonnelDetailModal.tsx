@@ -407,11 +407,11 @@ export const PersonnelDetailModal: React.FC<PersonnelDetailModalProps> = ({
                           ) : evalCert.status === 'EXPIRING_SOON' ? (
                             <span className="text-amber-700 font-bold inline-flex items-center gap-1">
                               <Clock className="w-3.5 h-3.5" />
-                              {toDDMMYYYY(c.expiryDate)} ({evalCert.daysRemaining}d)
+                              {formatAccountDate(c.expiryDate, accountPreferences)} ({evalCert.daysRemaining}d)
                             </span>
                           ) : (
                             <span className="text-teal-700 font-medium">
-                              {toDDMMYYYY(c.expiryDate)}
+                              {formatAccountDate(c.expiryDate, accountPreferences)}
                             </span>
                           )
                         ) : (
