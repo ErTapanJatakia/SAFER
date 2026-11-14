@@ -4,11 +4,13 @@ import { createDpdpGovernanceRepository } from '../utils/dpdpGovernanceRepositor
 import { canMarkPurposeReviewed, canApproveNoticeForDemo, canRecordSyntheticConsent, createSyntheticWithdrawal, getLatestConsentState } from '../utils/dpdpGovernance.ts';
 import type { PrivacyGovernanceSnapshot, PrivacyPurposeRecord, VersionedPrivacyNotice, ConsentLifecycleEvent } from '../types/dpdpGovernance.ts';
 import { DpdpCaseworkPanel } from './DpdpCaseworkPanel.tsx';
+import { formatAccountDateTime, readAccountPreferences } from '../utils/accountFormatting.ts';
 
 const input = 'w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500';
 const button = 'rounded-lg border border-teal-600 bg-teal-800 px-3 py-2 text-xs font-semibold text-white';
 
 export const PrivacyGovernancePanel: React.FC = () => {
+  const accountPreferences = readAccountPreferences();
   const repository = useMemo(() => {
     try { return typeof window === 'undefined' ? null : createDpdpGovernanceRepository(window.localStorage); }
     catch { return null; }
@@ -180,7 +182,7 @@ export const PrivacyGovernancePanel: React.FC = () => {
             {latest?.state === 'granted' && <button className={button + ' mt-2'} type="button" disabled={!acknowledged} onClick={() => withdrawConsent(latest)}>Append withdrawal</button>}
           </article>;
         }))}
-      {snapshot.consentHistory.map((event) => <p key={event.id} className="text-xs text-slate-400">{event.subjectRef} · {event.purposeId} · {event.state} · {event.recordedAt}</p>)}
+      {snapshot.consentHistory.map((event) => <p key={event.id} className="text-xs text-slate-400">{event.subjectRef} · {event.purposeId} · {event.state} · {formatAccountDateTime(event.recordedAt, accountPreferences)}</p>)}
     </section>
   </section>;
 };
