@@ -1,7 +1,15 @@
 import React, {act} from 'react';
 import {createRoot, type Root} from 'react-dom/client';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {SessionInactivityGuard} from './SessionInactivityGuard';
+import {SessionInactivityGuard, useSessionTimeoutPreference} from './SessionInactivityGuard';
+
+const PreferenceHarness = () => {
+  const {timeoutMinutes, setTimeoutMinutes} = useSessionTimeoutPreference();
+  return <label>Account inactivity timeout
+    <input aria-label="Account inactivity timeout in minutes" type="number" min={5} max={60} value={timeoutMinutes}
+      onChange={(event) => setTimeoutMinutes(Number(event.target.value))} />
+  </label>;
+};
 
 describe('session inactivity guard', () => {
   let host: HTMLElement;
@@ -26,68 +34,75 @@ describe('session inactivity guard', () => {
     vi.restoreAllMocks();
   });
 
-  const renderGuard = async () => {
+  const renderGuard = async (sessionKey = 'user-a') => {
     await act(async () => {
-      root.render(<SessionInactivityGuard sessionKey="user-a" onExpire={onExpire}><main>Protected session</main></SessionInactivityGuard>);
+      root.render(<SessionInactivityGuard sessionKey={sessionKey} onExpire={onExpire}><main>Protected session</main><PreferenceHarness /></SessionInactivityGuard>);
     });
   };
 
-  const timeoutSelect = () => host.querySelector('select[aria-label="Inactivity timeout"]') as HTMLSelectElement;
-  const changeTimeout = (value: string) => {
-    const select = timeoutSelect();
-    const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set;
-    if (!setter) throw new Error('HTMLSelectElement value setter unavailable');
-    setter.call(select, value);
-    select.dispatchEvent(new Event('change', {bubbles: true}));
+  const timeoutInput = () => host.querySelector('input[aria-label="Account inactivity timeout in minutes"]') as HTMLInputElement;
+  const changeTimeout = async (value: number) => {
+    await act(async () => {
+      const input = timeoutInput();
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+      if (!setter) throw new Error('HTMLInputElement value setter unavailable');
+      setter.call(input, String(value));
+      input.dispatchEvent(new Event('change', {bubbles: true}));
+    });
   };
 
-  it('defaults to a 15-minute timeout and offers only bounded timeout choices', async () => {
+  it('defaults to ten minutes and exposes the requested five-to-sixty-minute range', async () => {
     await renderGuard();
-    expect(timeoutSelect().value).toBe('15');
-    expect([...timeoutSelect().options].map((option) => option.value)).toEqual(['5', '10', '15', '30']);
+    expect(timeoutInput().value).toBe('10');
+    expect(timeoutInput().min).toBe('5');
+    expect(timeoutInput().max).toBe('60');
     expect(host.textContent).toContain('Protected session');
-    expect(host.textContent).toContain('15 min remaining');
+    expect(host.textContent).toContain('10 min remaining');
   });
 
   it('warns two minutes before expiry and allows the user to continue', async () => {
     await renderGuard();
-    await act(async () => { await vi.advanceTimersByTimeAsync(13 * 60_000); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(8 * 60_000); });
     expect(host.querySelector('[role="alertdialog"]')).not.toBeNull();
     expect(host.textContent).toContain('Your session is about to expire');
-    await act(async () => {
-      (host.querySelector('button') as HTMLButtonElement).click();
-    });
+    await act(async () => { (host.querySelector('button') as HTMLButtonElement).click(); });
     expect(host.querySelector('[role="alertdialog"]')).toBeNull();
     expect(onExpire).not.toHaveBeenCalled();
   });
 
   it('keeps keyboard focus in the warning and treats Escape as continue', async () => {
     await renderGuard();
-    await act(async () => { await vi.advanceTimersByTimeAsync(13 * 60_000); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(8 * 60_000); });
     const dialog = host.querySelector('[role="alertdialog"]') as HTMLElement;
     expect(dialog.contains(document.activeElement)).toBe(true);
-    await act(async () => {
-      document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true}));
-    });
+    await act(async () => { document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true})); });
     expect(host.querySelector('[role="alertdialog"]')).toBeNull();
     expect(onExpire).not.toHaveBeenCalled();
   });
 
   it('expires the session when the configured inactivity period elapses', async () => {
     await renderGuard();
-    await act(async () => {
-      changeTimeout('5');
-    });
+    await changeTimeout(5);
     await act(async () => { await vi.advanceTimersByTimeAsync(5 * 60_000); });
     expect(onExpire).toHaveBeenCalledTimes(1);
     expect(host.textContent).toContain('Session expired');
   });
 
+  it('accepts any whole-minute timeout from five through sixty', async () => {
+    await renderGuard();
+    await changeTimeout(60);
+    expect(timeoutInput().value).toBe('60');
+    await changeTimeout(5);
+    expect(timeoutInput().value).toBe('5');
+    await changeTimeout(4);
+    expect(timeoutInput().value).toBe('5');
+    await changeTimeout(61);
+    expect(timeoutInput().value).toBe('5');
+  });
+
   it('resets the inactivity window on real user activity', async () => {
     await renderGuard();
-    await act(async () => {
-      changeTimeout('5');
-    });
+    await changeTimeout(5);
     await act(async () => { await vi.advanceTimersByTimeAsync(4 * 60_000); });
     await act(async () => { window.dispatchEvent(new Event('pointerdown')); });
     await act(async () => { await vi.advanceTimersByTimeAsync(4 * 60_000); });
@@ -97,34 +112,46 @@ describe('session inactivity guard', () => {
 
   it('accepts a newer activity timestamp from another same-origin tab', async () => {
     await renderGuard();
-    await act(async () => {
-      changeTimeout('5');
-    });
+    await changeTimeout(5);
     await act(async () => { await vi.advanceTimersByTimeAsync(4 * 60_000); });
     await act(async () => {
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: 'safer_session_last_activity_v1',
-        newValue: String(Date.now()),
-      }));
+      const activityKey = window.localStorage.key(1) ?? window.localStorage.key(0);
+      const storedKeys = Array.from({length: window.localStorage.length}, (_, index) => window.localStorage.key(index));
+      const key = storedKeys.find((candidate) => candidate?.startsWith('safer_session_last_activity_v2_'));
+      expect(activityKey || key).toBeTruthy();
+      window.dispatchEvent(new StorageEvent('storage', {key, newValue: String(Date.now())}));
     });
     await act(async () => { await vi.advanceTimersByTimeAsync(2 * 60_000); });
     expect(host.querySelector('[role="alertdialog"]')).toBeNull();
     expect(onExpire).not.toHaveBeenCalled();
   });
 
-  it('normalizes tampered or unsupported stored timeout values to the secure default', async () => {
-    window.localStorage.setItem('safer_session_timeout_minutes_v1', '0');
+  it('keeps authenticated and Demo Guest timeout preferences separate on the same browser', async () => {
+    await renderGuard('user-a');
+    await changeTimeout(25);
+    const authenticatedValue = timeoutInput().value;
+    expect(authenticatedValue).toBe('25');
+    await renderGuard('demo-guest');
+    expect(timeoutInput().value).toBe('10');
+    await renderGuard('user-a');
+    expect(timeoutInput().value).toBe('25');
+  });
+
+  it('normalizes tampered or unsupported stored timeout values to the ten-minute default', async () => {
+    window.localStorage.setItem('safer_session_timeout_minutes_v2_invalid', '0');
     await renderGuard();
-    expect(timeoutSelect().value).toBe('15');
+    expect(timeoutInput().value).toBe('10');
     expect(onExpire).not.toHaveBeenCalled();
   });
 
-  it('persists the selected timeout without storing identity or session credentials', async () => {
+  it('persists only a bounded numeric timeout preference, not identity or credentials', async () => {
     await renderGuard();
-    await act(async () => {
-      changeTimeout('10');
+    await changeTimeout(12);
+    const entries = Array.from({length: window.localStorage.length}, (_, index) => {
+      const key = window.localStorage.key(index) ?? '';
+      return [key, window.localStorage.getItem(key)] as const;
     });
-    expect(window.localStorage.getItem('safer_session_timeout_minutes_v1')).toBe('10');
-    expect(window.localStorage.getItem('safer_session_timeout_minutes_v1')).not.toMatch(/uid|token|password|user-a/i);
+    expect(entries.some(([key, value]) => key.startsWith('safer_session_timeout_minutes_v2_') && value === '12')).toBe(true);
+    expect(JSON.stringify(entries)).not.toMatch(/user-a|demo-guest|token|password/i);
   });
 });
