@@ -48,8 +48,8 @@ describe('AuthGate membership session handling',()=>{
   expect(host.textContent).toContain('user-b@example.test');
  });
  it('does not touch operational browser storage while signed out or authenticated',async()=>{const read=vi.spyOn(window.Storage.prototype,'getItem');expect(read).not.toHaveBeenCalled();auth(makeUser('user-a'));await flush();expect(read).not.toHaveBeenCalled();expect(host.textContent).not.toContain('Operational app shell');});
- it('probes all operational storage keys only after explicit Demo Guest entry',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');expect(read).not.toHaveBeenCalled();button('Continue as Demo Guest').click();await flush();expect(read).toHaveBeenCalledTimes(5);expect(read).toHaveBeenNthCalledWith(1,'prot_ops_personnel_v2');expect(read).toHaveBeenNthCalledWith(2,'prot_ops_incidents_v2');expect(read).toHaveBeenNthCalledWith(3,'prot_ops_cyber_v2');expect(read).toHaveBeenNthCalledWith(4,'prot_ops_checklist_v2');expect(host.textContent).toContain('Operational app shell');});
- it('unmounts the Demo Guest workspace when an authenticated identity appears and revokes retained access',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');button('Continue as Demo Guest').click();await flush();expect(read).toHaveBeenCalledTimes(5);auth(makeUser('user-a'));await flush();expect(host.textContent).not.toContain('Operational app shell');expect(host.textContent).toContain('Account verified — workspace not yet released');expect(read).toHaveBeenCalledTimes(5);expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);expect(read).toHaveBeenCalledTimes(5);});
+ it('probes all operational storage keys only after explicit Demo Guest entry',async()=>{const read=vi.spyOn(window.Storage.prototype,'getItem');expect(read).not.toHaveBeenCalled();button('Continue as Demo Guest').click();await flush();expect(read).toHaveBeenCalledTimes(5);expect(read).toHaveBeenNthCalledWith(1,'prot_ops_personnel_v2');expect(read).toHaveBeenNthCalledWith(2,'prot_ops_incidents_v2');expect(read).toHaveBeenNthCalledWith(3,'prot_ops_cyber_v2');expect(read).toHaveBeenNthCalledWith(4,'prot_ops_checklist_v2');expect(host.textContent).toContain('Operational app shell');});
+ it('unmounts the Demo Guest workspace when an authenticated identity appears and revokes retained access',async()=>{const read=vi.spyOn(window.Storage.prototype,'getItem');button('Continue as Demo Guest').click();await flush();expect(read).toHaveBeenCalledTimes(5);auth(makeUser('user-a'));await flush();expect(host.textContent).not.toContain('Operational app shell');expect(host.textContent).toContain('Account verified — workspace not yet released');expect(read).toHaveBeenCalledTimes(5);expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);expect(read).toHaveBeenCalledTimes(5);});
  it('restores the authenticated lifecycle when Firebase sign-out fails but the same user remains current',async()=>{
   vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'manager',status:'active'});
   auth(makeUser('user-a'));await flush();
@@ -63,8 +63,8 @@ describe('AuthGate membership session handling',()=>{
   expect(verifiedWorkspace()?.textContent).toContain('Manager');
   expect(resolveTenantMembership).toHaveBeenCalledWith({name:'test-db'},{uid:'user-a'},'org-a');
  });
- it('revokes retained repository access during Demo Guest sign-out',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');button('Continue as Demo Guest').click();await flush();expect(retainedRepository).not.toBeNull();button('Sign out').click();await flush();expect(host.textContent).toContain('Continue as Demo Guest');expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);expect(read).toHaveBeenCalledTimes(5);});
- it('revokes the Demo Guest workspace when another tab signals an account boundary',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');button('Continue as Demo Guest').click();await flush();expect(retainedRepository).not.toBeNull();act(()=>window.dispatchEvent(new StorageEvent('storage',{key:'safer:session-boundary-signal',newValue:'other-tab-signout'})));await flush();expect(host.textContent).toContain('Continue as Demo Guest');expect(host.textContent).not.toContain('Operational app shell');expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);expect(read).toHaveBeenCalledTimes(5);});
+ it('revokes retained repository access during Demo Guest sign-out',async()=>{const read=vi.spyOn(window.Storage.prototype,'getItem');button('Continue as Demo Guest').click();await flush();expect(retainedRepository).not.toBeNull();button('Sign out').click();await flush();expect(host.textContent).toContain('Continue as Demo Guest');expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);expect(read).toHaveBeenCalledTimes(5);});
+ it('revokes the Demo Guest workspace when another tab signals an account boundary',async()=>{const read=vi.spyOn(window.Storage.prototype,'getItem');button('Continue as Demo Guest').click();await flush();expect(retainedRepository).not.toBeNull();act(()=>window.dispatchEvent(new StorageEvent('storage',{key:'safer:session-boundary-signal',newValue:'other-tab-signout'})));await flush();expect(host.textContent).toContain('Continue as Demo Guest');expect(host.textContent).not.toContain('Operational app shell');expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);expect(read).toHaveBeenCalledTimes(5);});
 
  it('allows an authenticated user to re-check membership after a peer-tab boundary',async()=>{
   vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-b',role:'manager',status:'active'});
@@ -223,7 +223,7 @@ describe('AuthGate membership session handling',()=>{
  it('clears membership on account switch and sign-out',async()=>{vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'admin',status:'active'});auth(makeUser('user-a'));await flush();let field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();expect(verifiedWorkspace()?.textContent).toContain('Organisation administrator');auth(makeUser('user-b'));await flush();expect(verifiedWorkspace()).toBeNull();field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;expect(field.value).toBe('');change(field,'org-b');await flush();submit(field.closest('form')!);await flush();expect(verifiedWorkspace()?.textContent).toContain('Organisation administrator');button('Sign out').click();await flush();expect(verifiedWorkspace()).toBeNull();expect(host.textContent).toContain('Continue as Demo Guest');expect(resolveTenantMembership).toHaveBeenCalledTimes(2);});
 
  it('revokes Demo Guest access and pending authority when the auth observer errors',async()=>{
-  const read=vi.spyOn(dom.window.Storage.prototype,'getItem');
+  const read=vi.spyOn(window.Storage.prototype,'getItem');
   const publish=vi.spyOn(sessionInvalidation,'publishSessionInvalidation');
   button('Continue as Demo Guest').click();await flush();
   expect(host.textContent).toContain('Operational app shell');
@@ -283,7 +283,7 @@ describe('AuthGate membership session handling',()=>{
   expect(host.textContent).not.toContain('user-stale@example.test');
  });
  it('does not resurrect a previous Demo Guest workspace after an auth identity appears and signs out',async()=>{
-  const read=vi.spyOn(dom.window.Storage.prototype,'getItem');
+  const read=vi.spyOn(window.Storage.prototype,'getItem');
   button('Continue as Demo Guest').click();await flush();
   expect(host.textContent).toContain('Operational app shell');
   expect(retainedRepository).not.toBeNull();
