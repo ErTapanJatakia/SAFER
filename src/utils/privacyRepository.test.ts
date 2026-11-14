@@ -149,11 +149,102 @@ describe('SAFER privacy demo repository', () => {
     }
   });
 
+
+  it('rejects records beyond per-collection and per-field limits before writing', () => {
+    const storage = memoryStorage();
+    const repository = createPrivacyDemoRepository(storage);
+    const tooMany = {
+      ...EMPTY_PRIVACY_DEMO_WORKSPACE,
+      noticeDrafts: Array.from({ length: 501 }, (_, index) => ({
+        id: `notice-${index}`, title: 'Draft', content: 'Synthetic',
+        versionLabel: 'draft', updatedAt: 'now',
+      })),
+    };
+    assert.throws(() => repository.saveWorkspace(tooMany), /invalid or oversized/);
+    const tooLong = {
+      ...EMPTY_PRIVACY_DEMO_WORKSPACE,
+      noticeDrafts: [{
+        id: 'notice-long', title: 'Draft', content: 'x'.repeat(8001),
+        versionLabel: 'draft', updatedAt: 'now',
+      }],
+    };
+    assert.throws(() => repository.saveWorkspace(tooLong), /invalid or oversized/);
+    assert.equal(storage.getItem(PRIVACY_DEMO_STORAGE_KEY), null);
+  });
+
+  it('rejects oversized stored bytes without parsing or replacing them', () => {
+    const original = ' '.repeat(1_000_001);
+    const storage: PrivacyStorage = {
+      getItem: () => original,
+      setItem: () => { throw new Error('must not write'); },
+      removeItem: () => undefined,
+    };
+    assert.throws(
+      () => createPrivacyDemoRepository(storage).loadWorkspace(),
+      /exceeds the 1 MB safety limit/,
+    );
+    assert.equal(storage.getItem(PRIVACY_DEMO_STORAGE_KEY), original);
+  });
+
+
   it('verifies clear operations and leaves no stored demo workspace', () => {
     const storage = memoryStorage();
     const repository = createPrivacyDemoRepository(storage);
     repository.saveWorkspace(EMPTY_PRIVACY_DEMO_WORKSPACE);
     repository.clearWorkspace();
     assert.equal(storage.getItem(PRIVACY_DEMO_STORAGE_KEY), null);
+  });
+
+  it('rejects a stale save from a second repository instance without overwriting newer data', () => {
+    const storage = memoryStorage();
+    const first = createPrivacyDemoRepository(storage);
+    const second = createPrivacyDemoRepository(storage);
+    const firstSnapshot = first.loadWorkspace();
+    const secondSnapshot = second.loadWorkspace();
+    firstSnapshot.noticeDrafts.push({
+      id: 'notice-first', title: 'First tab', content: 'Newer synthetic content',
+      versionLabel: 'draft', updatedAt: '2026-11-13T00:00:00.000Z',
+    });
+    first.saveWorkspace(firstSnapshot);
+    secondSnapshot.noticeDrafts.push({
+      id: 'notice-stale', title: 'Second tab', content: 'Stale synthetic content',
+      versionLabel: 'draft', updatedAt: '2026-11-13T00:01:00.000Z',
+    });
+    assert.throws(() => second.saveWorkspace(secondSnapshot), /changed in another tab or session/);
+    assert.deepEqual(first.loadWorkspace().noticeDrafts.map((item) => item.id), ['notice-first']);
+  });
+
+  it('rejects clearing a workspace that changed after it was loaded', () => {
+    const storage = memoryStorage();
+    const stale = createPrivacyDemoRepository(storage);
+    const writer = createPrivacyDemoRepository(storage);
+    stale.loadWorkspace();
+    const newer = writer.loadWorkspace();
+    newer.grievances.push({
+      id: 'grievance-newer', subjectRef: 'synthetic-subject',
+      category: 'General', description: 'Newer synthetic grievance',
+      status: 'open', submittedAt: '2026-11-13T00:00:00.000Z',
+      updatedAt: '2026-11-13T00:00:00.000Z',
+    });
+    writer.saveWorkspace(newer);
+    assert.throws(() => stale.clearWorkspace(), /changed in another tab or session/);
+    assert.deepEqual(writer.loadWorkspace().grievances.map((item) => item.id), ['grievance-newer']);
+  });
+
+  it('allows a repository instance to continue after its own verified save', () => {
+    const storage = memoryStorage();
+    const repository = createPrivacyDemoRepository(storage);
+    const workspace = repository.loadWorkspace();
+    workspace.noticeDrafts.push({
+      id: 'notice-one', title: 'First save', content: 'Synthetic',
+      versionLabel: 'draft', updatedAt: '2026-11-13T00:00:00.000Z',
+    });
+    repository.saveWorkspace(workspace);
+    workspace.noticeDrafts.push({
+      id: 'notice-two', title: 'Second save', content: 'Synthetic',
+      versionLabel: 'draft', updatedAt: '2026-11-13T00:01:00.000Z',
+    });
+    repository.saveWorkspace(workspace);
+    assert.equal(repository.loadWorkspace().noticeDrafts.length, 2);
   });
 });

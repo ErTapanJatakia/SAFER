@@ -54,6 +54,7 @@ import { AccountSettingsModal } from './components/AccountSettingsModal.tsx';
 import { PrivacyConsoleModal } from './components/PrivacyConsoleModal.tsx';
 import { PersonnelExportModal } from './components/PersonnelExportModal.tsx';
 import { LiveAnnouncer } from './components/LiveAnnouncer.tsx';
+import { ACCOUNT_SETTINGS_STORAGE_KEY } from './utils/accountSettings.ts';
 import {
   evaluatePersonnelReadiness,
   computeOperationalMetrics,
@@ -203,6 +204,9 @@ export default function App() {
   const [summaryTargetPerson, setSummaryTargetPerson] = useState<PersonnelRecord | null>(null);
   const [exportPerson, setExportPerson] = useState<PersonnelRecord | null | undefined>(undefined);
 
+  // Re-render preference consumers when another same-origin tab changes local account settings.
+  const [, setAccountSettingsRevision] = useState(0);
+
   // Feedback & Screen Reader Announcements
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [liveAnnouncement, setLiveAnnouncement] = useState<string | null>(null);
@@ -317,6 +321,19 @@ export default function App() {
       localStorage.setItem('prot_ops_a11y_v2', JSON.stringify(accessibilitySettings));
     } catch {}
   }, [accessibilitySettings]);
+
+  // Browser-local account preferences are shared by same-origin tabs. React's
+  // storage event fires only in other documents, so same-tab saves continue to
+  // use the existing onSaved feedback render path.
+  useEffect(() => {
+    const handleAccountSettingsStorage = (event: StorageEvent) => {
+      if (event.storageArea !== window.localStorage) return;
+      if (event.key !== ACCOUNT_SETTINGS_STORAGE_KEY && event.key !== null) return;
+      setAccountSettingsRevision((revision) => revision + 1);
+    };
+    window.addEventListener('storage', handleAccountSettingsStorage);
+    return () => window.removeEventListener('storage', handleAccountSettingsStorage);
+  }, []);
 
   // Apply Accessibility attributes to <html> root
   useEffect(() => {

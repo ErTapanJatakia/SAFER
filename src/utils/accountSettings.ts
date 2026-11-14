@@ -1,7 +1,10 @@
 export type AccountDateFormat = 'DD-MM-YYYY' | 'YYYY-MM-DD' | 'DD/MM/YYYY';
 export type AccountTimeFormat = '24h' | '12h';
-export type AccountTimezone = 'Asia/Kolkata' | 'UTC';
-export type AccountNumberFormat = 'en-IN' | 'en-US';
+export type AccountTimezone = string;
+export type AccountLocale = string;
+export type AccountNumberFormat = string;
+export type AccountExportFormat = 'txt' | 'csv' | 'xlsx' | 'pdf' | 'docx';
+export type AccountRedactionLevel = 'standard' | 'strict';
 
 export interface AccountProfile {
   displayName: string;
@@ -13,7 +16,10 @@ export interface AccountPreferences {
   dateFormat: AccountDateFormat;
   timeFormat: AccountTimeFormat;
   timezone: AccountTimezone;
+  locale: AccountLocale;
   numberFormat: AccountNumberFormat;
+  defaultExportFormat: AccountExportFormat;
+  defaultRedactionLevel: AccountRedactionLevel;
 }
 
 export interface AccountSettings {
@@ -29,11 +35,24 @@ export const DEFAULT_ACCOUNT_SETTINGS: AccountSettings = {
     dateFormat: 'DD-MM-YYYY',
     timeFormat: '24h',
     timezone: 'Asia/Kolkata',
+    locale: 'en-IN',
     numberFormat: 'en-IN',
+    defaultExportFormat: 'txt',
+    defaultRedactionLevel: 'standard',
   },
 };
 
 export const ACCOUNT_SETTINGS_STORAGE_KEY = 'safer_account_settings_v1';
+
+function isValidTimezone(value: unknown): value is string {
+  if (typeof value !== 'string' || value.length > 64) return false;
+  try { new Intl.DateTimeFormat('en-US', { timeZone: value }); return true; } catch { return false; }
+}
+
+function normalizeLocale(value: unknown, fallback: string): string {
+  if (typeof value !== 'string' || value.length > 64) return fallback;
+  try { return Intl.getCanonicalLocales(value)[0] ?? fallback; } catch { return fallback; }
+}
 
 export function normalizeAccountSettings(raw: unknown): AccountSettings {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return structuredClone(DEFAULT_ACCOUNT_SETTINGS);
@@ -53,8 +72,12 @@ export function normalizeAccountSettings(raw: unknown): AccountSettings {
       dateFormat: ['DD-MM-YYYY', 'YYYY-MM-DD', 'DD/MM/YYYY'].includes(String(preferences.dateFormat))
         ? preferences.dateFormat as AccountDateFormat : DEFAULT_ACCOUNT_SETTINGS.preferences.dateFormat,
       timeFormat: preferences.timeFormat === '12h' ? '12h' : '24h',
-      timezone: preferences.timezone === 'UTC' ? 'UTC' : 'Asia/Kolkata',
-      numberFormat: preferences.numberFormat === 'en-US' ? 'en-US' : 'en-IN',
+      timezone: isValidTimezone(preferences.timezone) ? preferences.timezone : DEFAULT_ACCOUNT_SETTINGS.preferences.timezone,
+      locale: normalizeLocale(preferences.locale, DEFAULT_ACCOUNT_SETTINGS.preferences.locale),
+      numberFormat: normalizeLocale(preferences.numberFormat, DEFAULT_ACCOUNT_SETTINGS.preferences.numberFormat),
+      defaultExportFormat: ['txt', 'csv', 'xlsx', 'pdf', 'docx'].includes(String(preferences.defaultExportFormat))
+        ? preferences.defaultExportFormat as AccountExportFormat : DEFAULT_ACCOUNT_SETTINGS.preferences.defaultExportFormat,
+      defaultRedactionLevel: preferences.defaultRedactionLevel === 'strict' ? 'strict' : 'standard',
     },
   };
 }
@@ -78,4 +101,21 @@ export function createAccountSettingsExport(settings: AccountSettings, exportedA
     },
     settings: normalizeAccountSettings(settings),
   };
+}
+
+
+/**
+ * Read the optional browser-local profile for display only.
+ * This value is not a Firebase identity and must never be used for authorization.
+ */
+export function readAccountProfile(storage?: Pick<Storage, 'getItem'>): AccountProfile {
+  try {
+    const target = storage ?? (typeof window !== 'undefined' ? window.localStorage : undefined);
+    if (!target) return { ...DEFAULT_ACCOUNT_SETTINGS.profile };
+    const raw = target.getItem(ACCOUNT_SETTINGS_STORAGE_KEY);
+    if (!raw) return { ...DEFAULT_ACCOUNT_SETTINGS.profile };
+    return normalizeAccountSettings(JSON.parse(raw)).profile;
+  } catch {
+    return { ...DEFAULT_ACCOUNT_SETTINGS.profile };
+  }
 }

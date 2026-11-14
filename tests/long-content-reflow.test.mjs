@@ -19,7 +19,7 @@ test('personnel identity and qualification details wrap without hiding identifie
 
 test('personnel qualification dates and status badges can wrap independently', () => {
   assert.match(personnel, /flex flex-wrap items-start justify-between gap-x-2 gap-y-1 text-\[10px\] text-slate-500/);
-  assert.match(personnel, /Completed: \{cert\.completionDate\}/);
+  assert.match(personnel, /Completed: \{formatAccountDate\(cert\.completionDate, accountPreferences\)\}/);
   assert.match(personnel, /flex flex-wrap items-start justify-between gap-1 pt-0\.5 border-t/);
 });
 

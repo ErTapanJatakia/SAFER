@@ -9,6 +9,7 @@ import {
 } from '../utils/incidentDraftGenerator.ts';
 import { copyToClipboard } from '../utils/clipboard.ts';
 import { getCurrentLocalDateTime } from '../utils/dateUtils.ts';
+import { formatAccountDateTime, readAccountPreferences } from '../utils/accountFormatting.ts';
 import {
   FileText,
   Plus,
@@ -39,6 +40,7 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
   onAddIncident,
   onUpdateStatus,
 }) => {
+  const accountPreferences = readAccountPreferences();
   // Modal states
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
@@ -79,7 +81,7 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
 
   const handleQuickCopyDraft = async (inc: IncidentReport) => {
     const draft = inc.structuredDraft || generateStructuredIncidentDraft(
-      `Date/Time: ${inc.dateReported}\nLocation: ${inc.location}\nReporter: ${inc.reportedBy}\nNotes: ${inc.summary}`,
+      `Date/Time: ${formatAccountDateTime(inc.dateReported, accountPreferences)}\nLocation: ${inc.location}\nReporter: ${inc.reportedBy}\nNotes: ${inc.summary}`,
       inc.referenceNumber
     );
     const text = formatStructuredDraftAsText(draft);

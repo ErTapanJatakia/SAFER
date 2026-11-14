@@ -5,7 +5,7 @@ import {
   evaluatePersonnelReadiness,
   evaluateCertification,
 } from '../utils/readinessRules.ts';
-import { toDDMMYYYY } from '../utils/dateUtils.ts';
+import { formatAccountDate, readAccountPreferences } from '../utils/accountFormatting.ts';
 import {
   Shield,
   X,
@@ -48,6 +48,7 @@ export const PersonnelDetailModal: React.FC<PersonnelDetailModalProps> = ({
   onResolveRequirement,
   onExport,
 }) => {
+  const accountPreferences = readAccountPreferences();
   const [showSignOffForm, setShowSignOffForm] = useState(false);
   const [supervisorName, setSupervisorName] = useState('Director S. Holloway');
   const [reviewNote, setReviewNote] = useState('');
@@ -185,10 +186,10 @@ export const PersonnelDetailModal: React.FC<PersonnelDetailModalProps> = ({
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
                 <span className="text-[10px] uppercase text-slate-500 font-semibold block">
-                  Birth Date (DD-MM-YYYY)
+                  Birth Date ({accountPreferences.dateFormat})
                 </span>
                 <span className="font-semibold text-slate-900 text-xs font-mono">
-                  {person.birthDate ? toDDMMYYYY(person.birthDate) : 'Not documented'}
+                  {person.birthDate ? formatAccountDate(person.birthDate, accountPreferences) : 'Not documented'}
                 </span>
               </div>
 
@@ -322,11 +323,11 @@ export const PersonnelDetailModal: React.FC<PersonnelDetailModalProps> = ({
                       </span>
                       <div className="flex items-center space-x-2 text-[11px] text-slate-600">
                         <span className="font-mono">
-                          {toDDMMYYYY(we.startDate)} to{' '}
+                          {formatAccountDate(we.startDate, accountPreferences)} to{' '}
                           {we.currentlyWorkingHere ? (
                             <strong className="text-teal-700">Currently Active</strong>
                           ) : (
-                            toDDMMYYYY(we.endDate) || 'N/A'
+                            formatAccountDate(we.endDate, accountPreferences) || 'N/A'
                           )}
                         </span>
                       </div>
@@ -392,25 +393,25 @@ export const PersonnelDetailModal: React.FC<PersonnelDetailModalProps> = ({
 
                     <div className="sm:text-right shrink-0">
                       <div className="text-xs font-mono text-slate-700">
-                        <span className="text-slate-500 font-sans text-[11px]">Completion Date (DD-MM-YYYY): </span>
-                        {toDDMMYYYY(c.completionDate)}
+                        <span className="text-slate-500 font-sans text-[11px]">Completion Date ({accountPreferences.dateFormat}): </span>
+                        {formatAccountDate(c.completionDate, accountPreferences)}
                       </div>
                       <div className="text-xs font-mono mt-0.5">
-                        <span className="text-slate-500 font-sans text-[11px]">Expiry Date (DD-MM-YYYY): </span>
+                        <span className="text-slate-500 font-sans text-[11px]">Expiry Date ({accountPreferences.dateFormat}): </span>
                         {c.expiryDate ? (
                           evalCert.status === 'EXPIRED' ? (
                             <span className="text-rose-700 font-bold inline-flex items-center gap-1">
                               <AlertTriangle className="w-3.5 h-3.5" />
-                              {toDDMMYYYY(c.expiryDate)} (Expired)
+                              {formatAccountDate(c.expiryDate, accountPreferences)} (Expired)
                             </span>
                           ) : evalCert.status === 'EXPIRING_SOON' ? (
                             <span className="text-amber-700 font-bold inline-flex items-center gap-1">
                               <Clock className="w-3.5 h-3.5" />
-                              {toDDMMYYYY(c.expiryDate)} ({evalCert.daysRemaining}d)
+                              {formatAccountDate(c.expiryDate, accountPreferences)} ({evalCert.daysRemaining}d)
                             </span>
                           ) : (
                             <span className="text-teal-700 font-medium">
-                              {toDDMMYYYY(c.expiryDate)}
+                              {formatAccountDate(c.expiryDate, accountPreferences)}
                             </span>
                           )
                         ) : (
@@ -472,7 +473,7 @@ export const PersonnelDetailModal: React.FC<PersonnelDetailModalProps> = ({
               <div>
                 <strong>Last Supervisor Review: </strong>
                 {person.lastSupervisorReviewDate
-                  ? `${toDDMMYYYY(person.lastSupervisorReviewDate)} by ${person.reviewedBy || 'Supervisor'}`
+                  ? `${formatAccountDate(person.lastSupervisorReviewDate, accountPreferences)} by ${person.reviewedBy || 'Supervisor'}`
                   : 'Pending initial supervisory review'}
               </div>
               {person.notes && (

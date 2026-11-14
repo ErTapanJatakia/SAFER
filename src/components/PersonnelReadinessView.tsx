@@ -5,7 +5,7 @@ import {
   evaluateCertification,
   type RecordIndicatorStatus,
 } from '../utils/readinessRules.ts';
-import { toDDMMYYYY } from '../utils/dateUtils.ts';
+import { formatAccountDate, readAccountPreferences } from '../utils/accountFormatting.ts';
 import {
   Users,
   Search,
@@ -47,6 +47,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
   onResolveRequirement,
   onOpenExport,
 }) => {
+  const accountPreferences = readAccountPreferences();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState<string>('ALL');
   const [selectedIndicatorFilter, setSelectedIndicatorFilter] = useState<string>('ALL');
@@ -453,7 +454,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
                             {cert.name}
                           </div>
                           <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1 text-[10px] text-slate-500">
-                            <span className="min-w-0 break-words">Completed: {cert.completionDate}</span>
+                            <span className="min-w-0 break-words">Completed: {formatAccountDate(cert.completionDate, accountPreferences)}</span>
                             <span
                               className={`font-semibold break-words ${
                                 isExpired
@@ -469,7 +470,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
                                 ? `Expires in ${evalCert.daysRemaining}d`
                                 : isNonExpiring
                                 ? 'No Expiry'
-                                : `Exp: ${cert.expiryDate}`}
+                                : `Exp: ${formatAccountDate(cert.expiryDate, accountPreferences)}`}
                             </span>
                           </div>
                           <div className="text-[10px] text-slate-400 flex flex-wrap items-start justify-between gap-1 pt-0.5 border-t border-slate-100">

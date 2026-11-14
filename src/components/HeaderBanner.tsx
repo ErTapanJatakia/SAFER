@@ -1,6 +1,8 @@
 import type { LogoConfig } from '../types/theme.ts';
 import { isSafeImageDataUrl } from '../utils/securitySanitizer.ts';
 import { SaferWordmark } from './SaferWordmark.tsx';
+import { formatAccountDate, formatAccountNumber, readAccountPreferences } from '../utils/accountFormatting.ts';
+import { readAccountProfile } from '../utils/accountSettings.ts';
 import {
   Shield,
   AlertTriangle,
@@ -42,6 +44,11 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
   topLogo,
   themeCamoPattern,
 }) => {
+  const accountPreferences = readAccountPreferences();
+  const localProfile = readAccountProfile();
+  const profileName = localProfile.displayName.trim();
+  const profileCallSign = localProfile.callSign.trim();
+  const todayLabel = formatAccountDate(new Date(), accountPreferences);
   const showTopLogoLeft =
     topLogo.enabled && isSafeImageDataUrl(topLogo.dataUrl) && topLogo.position === 'top-left';
   const showTopLogoRight =
@@ -132,6 +139,19 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
             <span className="font-semibold text-[11px]">Account</span>
           </button>
 
+          {profileName && (
+            <span
+              className="inline-flex max-w-[220px] items-center gap-1.5 rounded border border-cyan-800 bg-cyan-950/60 px-2.5 py-1 text-[11px] text-cyan-100"
+              aria-label={`Browser-local profile: ${profileName}${profileCallSign ? `, call sign ${profileCallSign}` : ''}. This is not the signed-in identity.`}
+              title="Browser-local profile only; not your authenticated sign-in identity"
+            >
+              <UserRound className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="truncate font-semibold">{profileName}</span>
+              {profileCallSign && <span className="truncate text-cyan-300">· {profileCallSign}</span>}
+              <span className="sr-only">Local profile, not signed-in identity</span>
+            </span>
+          )}
+
           <button
             type="button"
             onClick={onOpenBranding}
@@ -145,7 +165,7 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
 
           <span className="hidden md:inline-flex items-center text-slate-400 text-xs">
             <Calendar className="w-3.5 h-3.5 mr-1" />
-            Oct 15, 2026
+            Today: {todayLabel}
           </span>
         </div>
       </div>
@@ -181,7 +201,7 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
               <div className="min-w-0">
                 <div className="text-[10px] uppercase text-slate-400 font-medium">Expired Certs</div>
                 <div className="font-semibold text-white break-words">
-                  {expiredCertsCount} {expiredCertsCount === 1 ? 'Action Item' : 'Action Items'}
+                  {formatAccountNumber(expiredCertsCount, accountPreferences)} {expiredCertsCount === 1 ? 'Action Item' : 'Action Items'}
                 </div>
               </div>
             </div>
@@ -195,7 +215,7 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
               <div className="min-w-0">
                 <div className="text-[10px] uppercase text-slate-400 font-medium">Human Review Queue</div>
                 <div className="font-semibold text-white break-words">
-                  {requiringReviewCount} Personnel Pending
+                  {formatAccountNumber(requiringReviewCount, accountPreferences)} Personnel Pending
                 </div>
               </div>
             </div>

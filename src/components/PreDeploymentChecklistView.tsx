@@ -14,6 +14,7 @@ import { DEFAULT_FICTIONAL_SCENARIO } from '../data/mockData.ts';
 import { PreDeploymentSummaryModal } from './PreDeploymentSummaryModal.tsx';
 import { copyToClipboard } from '../utils/clipboard.ts';
 import { getCurrentISODate } from '../utils/dateUtils.ts';
+import { formatAccountDate, readAccountPreferences } from '../utils/accountFormatting.ts';
 import {
   ClipboardList,
   CheckCircle2,
@@ -52,6 +53,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
   onAddTask,
   onResetScenario,
 }) => {
+  const accountPreferences = readAccountPreferences();
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -401,7 +403,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                 <div className="text-[11px] text-slate-500">
                   <span className="font-semibold text-slate-700">{item.category}</span>
                   {item.targetDeadline && (
-                    <span> &bull; Due: {item.targetDeadline}</span>
+                    <span> &bull; Due: {formatAccountDate(item.targetDeadline, accountPreferences)}</span>
                   )}
                 </div>
                 <p className="text-slate-600 break-words">{item.description}</p>
@@ -639,7 +641,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                       {item.targetDeadline && (
                         <span className="flex items-center">
                           <Calendar className="w-3.5 h-3.5 mr-1 text-slate-400" />
-                          Target Deadline: {item.targetDeadline}
+                          Target Deadline: {formatAccountDate(item.targetDeadline, accountPreferences)}
                         </span>
                       )}
                       {item.assignedRoleOrPerson && (
@@ -650,7 +652,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                       {item.reviewedBy ? (
                         <span className="text-teal-700 font-semibold flex items-start min-w-0 break-words">
                           <UserCheck className="w-3.5 h-3.5 mr-1" />
-                          Supervisory Sign-Off: {item.reviewedBy} ({item.reviewDate || getCurrentISODate()})
+                          Supervisory Sign-Off: {item.reviewedBy} ({formatAccountDate(item.reviewDate || getCurrentISODate(), accountPreferences)})
                         </span>
                       ) : item.requiresHumanReview ? (
                         <span className="text-amber-800 font-semibold flex items-start min-w-0 break-words">

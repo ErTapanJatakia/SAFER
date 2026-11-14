@@ -11,6 +11,9 @@ export interface PrivacyStorage {
 
 export const PRIVACY_DEMO_STORAGE_KEY = 'safer_privacy_demo_workspace_v1';
 
+const MAX_SERIALIZED_BYTES = 1_000_000;
+const MAX_RECORDS_PER_COLLECTION = 500;
+
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -63,6 +66,42 @@ function isPrivacyWorkspace(value: unknown): value is PrivacyDemoWorkspace {
     Array.isArray(collection) && collection.every(validate) && hasUniqueIds(collection));
 }
 
+
+function boundedString(value: unknown, max: number): value is string {
+  return isString(value) && value.length <= max;
+}
+
+function boundedStringArray(value: unknown, maxItems: number, maxLength: number): value is string[] {
+  return Array.isArray(value) && value.length <= maxItems &&
+    value.every((item) => boundedString(item, maxLength));
+}
+
+function isWithinWorkspaceLimits(value: unknown): boolean {
+  if (!isObject(value)) return false;
+  const limits: Array<[unknown, (record: Record<string, unknown>) => boolean]> = [
+    [value.noticeDrafts, (r) => boundedString(r.id, 100) && boundedString(r.title, 120) &&
+      boundedString(r.content, 8000) && boundedString(r.versionLabel, 40) && boundedString(r.updatedAt, 64)],
+    [value.processingActivities, (r) => boundedString(r.id, 100) && boundedString(r.purpose, 240) &&
+      boundedStringArray(r.dataCategories, 50, 160) && boundedStringArray(r.recipients, 50, 160) &&
+      boundedString(r.retentionDescription, 1000)],
+    [value.consentEvents, (r) => boundedString(r.id, 100) && boundedString(r.subjectRef, 120) &&
+      boundedString(r.purposeRef, 120) && boundedString(r.recordedAt, 64) &&
+      (r.note === undefined || boundedString(r.note, 500))],
+    [value.rightsRequests, (r) => boundedString(r.id, 100) && boundedString(r.subjectRef, 120) &&
+      boundedString(r.description, 3000) && boundedString(r.submittedAt, 64) &&
+      boundedString(r.updatedAt, 64) && (r.resolutionNote === undefined || boundedString(r.resolutionNote, 2000))],
+    [value.grievances, (r) => boundedString(r.id, 100) && boundedString(r.subjectRef, 120) &&
+      boundedString(r.category, 100) && boundedString(r.description, 3000) &&
+      boundedString(r.submittedAt, 64) && boundedString(r.updatedAt, 64) &&
+      (r.responseNote === undefined || boundedString(r.responseNote, 2000))],
+    [value.retentionReviews, (r) => boundedString(r.id, 100) && boundedString(r.dataCategory, 120) &&
+      boundedString(r.reviewNote, 3000) && (r.reviewedAt === undefined || boundedString(r.reviewedAt, 64))],
+  ];
+  return limits.every(([collection, validate]) =>
+    Array.isArray(collection) && collection.length <= MAX_RECORDS_PER_COLLECTION &&
+    collection.every((record) => isObject(record) && validate(record)));
+}
+
 function cloneEmptyWorkspace(): PrivacyDemoWorkspace {
   return structuredClone(EMPTY_PRIVACY_DEMO_WORKSPACE);
 }
@@ -72,6 +111,9 @@ function cloneEmptyWorkspace(): PrivacyDemoWorkspace {
  * It deliberately has no authenticated-user or operational-record API.
  */
 export function createPrivacyDemoRepository(storage: PrivacyStorage) {
+  // Track exact bytes last loaded or verified to reject stale cross-tab writes.
+  let expectedRaw: string | null | undefined;
+
   const readRaw = (): string | null => {
     try {
       return storage.getItem(PRIVACY_DEMO_STORAGE_KEY);
@@ -82,7 +124,11 @@ export function createPrivacyDemoRepository(storage: PrivacyStorage) {
 
   const loadWorkspace = (): PrivacyDemoWorkspace => {
     const raw = readRaw();
+    expectedRaw = raw;
     if (raw === null) return cloneEmptyWorkspace();
+    if (new TextEncoder().encode(raw).byteLength > MAX_SERIALIZED_BYTES) {
+      throw new Error('Stored privacy demo workspace exceeds the 1 MB safety limit; no data was replaced.');
+    }
 
     let parsed: unknown;
     try {
@@ -90,17 +136,25 @@ export function createPrivacyDemoRepository(storage: PrivacyStorage) {
     } catch (error) {
       throw new Error('Stored privacy demo data is malformed; no data was replaced.', { cause: error });
     }
-    if (!isPrivacyWorkspace(parsed)) {
-      throw new Error('Stored privacy demo data failed schema validation; workspace access is blocked to protect it.');
+    if (!isPrivacyWorkspace(parsed) || !isWithinWorkspaceLimits(parsed)) {
+      throw new Error('Stored privacy demo data failed schema validation or size limits; workspace access is blocked to protect it.');
     }
     return structuredClone(parsed);
   };
 
   const saveWorkspace = (workspace: PrivacyDemoWorkspace): void => {
-    if (!isPrivacyWorkspace(workspace)) {
-      throw new Error('Refusing to persist invalid privacy demo data.');
+    if (!isPrivacyWorkspace(workspace) || !isWithinWorkspaceLimits(workspace)) {
+      throw new Error('Refusing to persist invalid privacy demo data (invalid or oversized).');
+    }
+    const currentRaw = readRaw();
+    if (expectedRaw === undefined) expectedRaw = currentRaw;
+    if (currentRaw !== expectedRaw) {
+      throw new Error('Privacy demo workspace changed in another tab or session. Close and reopen the Privacy Console to load the latest saved data before retrying.');
     }
     const serialized = JSON.stringify(workspace);
+    if (new TextEncoder().encode(serialized).byteLength > MAX_SERIALIZED_BYTES) {
+      throw new Error('Privacy demo workspace exceeds the 1 MB storage safety limit.');
+    }
     try {
       storage.setItem(PRIVACY_DEMO_STORAGE_KEY, serialized);
     } catch (error) {
@@ -109,9 +163,15 @@ export function createPrivacyDemoRepository(storage: PrivacyStorage) {
     if (readRaw() !== serialized) {
       throw new Error('Unable to verify SAFER privacy demo storage after writing.');
     }
+    expectedRaw = serialized;
   };
 
   const clearWorkspace = (): void => {
+    const currentRaw = readRaw();
+    if (expectedRaw === undefined) expectedRaw = currentRaw;
+    if (currentRaw !== expectedRaw) {
+      throw new Error('Privacy demo workspace changed in another tab or session. Close and reopen the Privacy Console to load the latest saved data before clearing.');
+    }
     try {
       storage.removeItem(PRIVACY_DEMO_STORAGE_KEY);
     } catch (error) {
@@ -120,6 +180,7 @@ export function createPrivacyDemoRepository(storage: PrivacyStorage) {
     if (readRaw() !== null) {
       throw new Error('Unable to verify SAFER privacy demo storage after clearing.');
     }
+    expectedRaw = null;
   };
 
   return Object.freeze({ loadWorkspace, saveWorkspace, clearWorkspace });

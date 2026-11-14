@@ -3,6 +3,7 @@ import {
   createAccountSettingsExport,
   DEFAULT_ACCOUNT_SETTINGS,
   normalizeAccountSettings,
+  readAccountProfile,
   validateAccountProfile,
 } from './accountSettings.ts';
 
@@ -16,12 +17,32 @@ describe('account settings normalization', () => {
   it('preserves supported values and normalizes unknown preference values', () => {
     expect(normalizeAccountSettings({
       profile: { displayName: 'Operator', callSign: 'ALPHA', bio: 'Bio' },
-      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', numberFormat: 'en-US' },
+      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', locale: 'en-IN', numberFormat: 'en-US', defaultExportFormat: 'xlsx', defaultRedactionLevel: 'strict' },
     })).toEqual({
       version: 1,
       profile: { displayName: 'Operator', callSign: 'ALPHA', bio: 'Bio' },
-      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', numberFormat: 'en-US' },
+      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', locale: 'en-IN', numberFormat: 'en-US', defaultExportFormat: 'xlsx', defaultRedactionLevel: 'strict' },
     });
+  });
+
+
+  it('accepts valid IANA timezones and canonical locale identifiers while preserving legacy defaults', () => {
+    const normalized = normalizeAccountSettings({ preferences: { timezone: 'Europe/Paris', locale: 'fr-fr', numberFormat: 'de-DE' } });
+    expect(normalized.preferences.timezone).toBe('Europe/Paris');
+    expect(normalized.preferences.locale).toBe('fr-FR');
+    expect(normalized.preferences.numberFormat).toBe('de-DE');
+    const invalid = normalizeAccountSettings({ preferences: { timezone: 'Not/A_Timezone', locale: 'not a locale', numberFormat: 'bad locale' } });
+    expect(invalid.preferences.timezone).toBe(DEFAULT_ACCOUNT_SETTINGS.preferences.timezone);
+    expect(invalid.preferences.locale).toBe(DEFAULT_ACCOUNT_SETTINGS.preferences.locale);
+    expect(invalid.preferences.numberFormat).toBe(DEFAULT_ACCOUNT_SETTINGS.preferences.numberFormat);
+  });
+
+  it('normalizes unsupported export preferences to the safe existing defaults', () => {
+    const normalized = normalizeAccountSettings({
+      preferences: { defaultExportFormat: 'exe', defaultRedactionLevel: 'minimal' },
+    });
+    expect(normalized.preferences.defaultExportFormat).toBe('txt');
+    expect(normalized.preferences.defaultRedactionLevel).toBe('standard');
   });
 
   it('bounds imported profile strings', () => {
@@ -60,5 +81,29 @@ describe('personal settings export', () => {
   it('does not include a user identifier or authentication token', () => {
     const serialized = JSON.stringify(createAccountSettingsExport(DEFAULT_ACCOUNT_SETTINGS));
     expect(serialized).not.toMatch(/uid|token|password/i);
+  });
+});
+
+
+describe('browser-local profile display reader', () => {
+  const storage = (value: string | null) => ({
+    getItem: () => value,
+  });
+
+  it('returns only the normalized profile from valid local preferences', () => {
+    expect(readAccountProfile(storage(JSON.stringify({
+      profile: { displayName: '  Operator  ', callSign: 'ALPHA', bio: 'Private bio' },
+    })))).toEqual({
+      displayName: '  Operator  ',
+      callSign: 'ALPHA',
+      bio: 'Private bio',
+    });
+  });
+
+  it('returns an empty profile when storage is absent, malformed or unavailable', () => {
+    expect(readAccountProfile(storage(null))).toEqual(DEFAULT_ACCOUNT_SETTINGS.profile);
+    expect(readAccountProfile(storage('{invalid-json'))).toEqual(DEFAULT_ACCOUNT_SETTINGS.profile);
+    expect(readAccountProfile({ getItem: () => { throw new Error('storage unavailable'); } }))
+      .toEqual(DEFAULT_ACCOUNT_SETTINGS.profile);
   });
 });
