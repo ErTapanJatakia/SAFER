@@ -288,3 +288,10 @@ The repository's `firestore.rules` is a tested, conservative tenant-scoped **can
 The production Firebase Console rules remain separately published deny-all according to `docs/firestore-security-release-readiness-audit.md`. This implementation and validation do not approve production Rules publication, tenant provisioning, operational-data onboarding, or local-to-remote migration. The trusted provisioning ADR remains in force: no client membership mutation or audit writer; manual owner-operated administration remains outside the client app. The application operational workspace remains unreleased.
 
 The source-to-destination reconciliation and end-to-end migration security review are still open. SAFER-Remix remains reference-only and must not be retired without explicit owner confirmation.
+
+
+## Trust-anchor schema hardening — 2026-11-15
+
+A follow-up static review found that the shared tenant authorization helper did not apply the exact membership and organisation key/schema checks consistently across all authorization paths. The candidate Rules now require membership documents to contain exactly `uid`, `orgId`, `role`, and `status`, and organisation documents to contain exactly `orgId`, `displayName`, `status`, and `schemaVersion` with a bounded non-empty display name and schema version 1. This validation is applied before tenant metadata or operational access is granted.
+
+New emulator regressions reject extra membership fields, extra organisation metadata, unsupported schema versions, and malformed display names. These changes are awaiting a fresh mandatory CI pass on the current branch head; the earlier `f02edc2...` CI pass does not validate this follow-up.
