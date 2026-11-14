@@ -40,6 +40,10 @@ function isSupportedTimeout(value: number): boolean {
   return Number.isInteger(value) && value >= MIN_SESSION_TIMEOUT_MINUTES && value <= MAX_SESSION_TIMEOUT_MINUTES;
 }
 
+export function getSessionTimeoutPreferenceStorageKey(sessionKey: string): string {
+  return `${SETTINGS_KEY_PREFIX}${sessionScope(sessionKey)}`;
+}
+
 function readTimeout(storageKey: string): number {
   try {
     const value = Number(window.localStorage.getItem(storageKey));
@@ -60,7 +64,7 @@ export const SessionInactivityGuard: React.FC<SessionInactivityGuardProps> = ({
   sessionKey, onExpire, children,
 }) => {
   const scope = sessionScope(sessionKey);
-  const storageKey = `${SETTINGS_KEY_PREFIX}${scope}`;
+  const storageKey = getSessionTimeoutPreferenceStorageKey(sessionKey);
   const activityKey = `${ACTIVITY_KEY_PREFIX}${scope}`;
   const [timeoutMinutes, setTimeoutMinutesState] = useState<number>(() => readTimeout(storageKey));
   const [remainingMs, setRemainingMs] = useState(timeoutMinutes * 60_000);
