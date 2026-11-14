@@ -126,7 +126,7 @@ export const SessionInactivityGuard: React.FC<SessionInactivityGuardProps> = ({
 
   return (
     <>
-      <div className="sticky top-[42px] z-40 flex flex-wrap items-center justify-end gap-2 border-b border-slate-800 bg-slate-900 px-4 py-1.5 text-[11px] text-slate-300">
+      <div className="relative z-40 flex flex-wrap items-center justify-end gap-2 border-b border-slate-800 bg-slate-900 px-4 py-1.5 text-[11px] text-slate-300">
         <label className="flex items-center gap-2">
           <span>Auto sign-out</span>
           <select aria-label="Inactivity timeout" value={timeoutMinutes} onChange={(event) => changeTimeout(event.target.value)}
