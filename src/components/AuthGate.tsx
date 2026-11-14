@@ -354,7 +354,14 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
                   <input
                     name="organisationId"
                     value={organisationId}
-                    onChange={(event) => {sessionLifecycleRef.current.selectOrganisation(event.target.value); setMembershipBusy(false); setOrganisationId(event.target.value); setMembership(null); setMembershipError('');}}
+                    onInput={(event) => {
+                      const nextOrganisationId = event.currentTarget.value;
+                      sessionLifecycleRef.current.selectOrganisation(nextOrganisationId);
+                      setMembershipBusy(false);
+                      setOrganisationId(nextOrganisationId);
+                      setMembership(null);
+                      setMembershipError('');
+                    }}
                     autoComplete="off"
                     spellCheck={false}
                     maxLength={128}
