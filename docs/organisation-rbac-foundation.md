@@ -248,3 +248,10 @@ This is a presentation/domain mirror of the current `firestore.rules`, not a new
 The exact organisation metadata reader now validates its Firestore adapter result as a plain data object with precisely the four current organisation fields. It rejects accessor-backed values without executing getters, inherited/exotic objects, symbol or extra keys, and proxy inspection failures. Malformed profiles return one generic `invalid-profile` error and are never rendered.
 
 The owner/admin role check, exact organisation document read, active status, bounded display name, and schema version checks remain unchanged. Firestore Rules still authorize the read; this parser does not provision a tenant or grant operational access. Regression coverage is authored for hostile object shapes and remains pending consolidated validation.
+
+
+## Privileged membership input validation for profile reads
+
+The exported organisation profile reader now independently validates its membership argument before constructing a Firestore document reference. It accepts only an exact plain data object containing UID, organisation ID, active status and owner/admin role. Accessors, inherited/exotic objects, symbol/extra keys, malformed IDs and proxy inspection failures are rejected before any Firestore call. The reader copies validated primitives into a frozen internal value, so later profile-path construction does not re-read caller-controlled properties.
+
+This is defence in depth for direct callers; the normal AuthGate path already resolves and validates the exact membership response. It does not replace Firestore Rules or independently prove the membership belongs to the current Firebase user. That provenance remains the responsibility of the authenticated resolver and Rules. Regression tests are authored and pending consolidated validation.
