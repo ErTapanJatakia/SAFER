@@ -25,7 +25,7 @@ export function useOptionalSessionTimeoutPreference(): SessionTimeoutContextValu
 }
 
 function sessionScope(sessionKey: string): string {
-  // A non-reversible local-storage namespace only; never used as an identity or security check.
+  // An opaque local-storage namespace only; never used as an identity or security check.
   let first = 0x811c9dc5;
   let second = 0x9e3779b9;
   for (let index = 0; index < sessionKey.length; index += 1) {
@@ -71,6 +71,13 @@ export const SessionInactivityGuard: React.FC<SessionInactivityGuardProps> = ({
   const expiredRef = useRef(false);
 
   useEffect(() => { onExpireRef.current = onExpire; }, [onExpire]);
+
+  useEffect(() => {
+    setTimeoutMinutesState(readTimeout(storageKey));
+    lastActivityRef.current = Date.now();
+    expiredRef.current = false;
+    setExpired(false);
+  }, [sessionKey, storageKey]);
 
   const recordActivity = useCallback((broadcast = true) => {
     if (expiredRef.current) return;
