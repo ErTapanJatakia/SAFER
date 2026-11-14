@@ -257,7 +257,7 @@ service cloud.firestore {
       match /personnel/{recordId} {
         // Read paths validate the stored document too; write-time validation
         // alone cannot protect against legacy or manually seeded extra fields.
-        allow get, list: if ownerOrAdmin(orgId)
+        allow get: if ownerOrAdmin(orgId)
           && resource.data.keys().hasOnly([
             'recordId', 'orgId', 'employeeRef', 'displayLabel',
             'operationalRoles', 'specialisations', 'assignmentSector',
@@ -294,6 +294,8 @@ service cloud.firestore {
           && resource.data.createdByUid is string
           && resource.data.updatedAt is timestamp
           && resource.data.updatedByUid is string;
+        // Collection listing stays disabled until a separately reviewed, schema-safe index model exists.
+        allow list: if false;
         allow create: if ownerOrAdmin(orgId)
           && validPersonnelCreate(orgId, recordId);
         allow update: if ownerOrAdmin(orgId)
@@ -302,7 +304,7 @@ service cloud.firestore {
       }
 
       match /incidents/{incidentId} {
-        allow get, list: if ownerOrAdmin(orgId)
+        allow get: if ownerOrAdmin(orgId)
           && resource.data.keys().hasOnly([
             'incidentId', 'orgId', 'referenceNumber', 'incidentType',
             'dateReported', 'title', 'status', 'priority', 'summary',
@@ -345,6 +347,8 @@ service cloud.firestore {
           && resource.data.createdByUid is string
           && resource.data.updatedAt is timestamp
           && resource.data.updatedByUid is string;
+        // Collection listing stays disabled until a separately reviewed, schema-safe index model exists.
+        allow list: if false;
         allow create: if ownerOrAdmin(orgId)
           && validIncidentCreate(orgId, incidentId);
         allow update: if ownerOrAdmin(orgId)
@@ -355,7 +359,7 @@ service cloud.firestore {
       match /evidence/{evidenceId} {
         // Evidence is read-only and limited to an explicit metadata envelope.
         // Raw evidence, URLs, storage paths and unknown fields are never exposed.
-        allow get, list: if ownerOrAdmin(orgId)
+        allow get: if ownerOrAdmin(orgId)
           && resource.data.keys().hasOnly([
             'evidenceId', 'orgId', 'incidentRef', 'evidenceType',
             'description', 'referenceCode', 'recordedAt', 'recordedByUid',
@@ -400,6 +404,8 @@ service cloud.firestore {
           && (!('updatedByUid' in resource.data)
             || (resource.data.updatedByUid is string
               && resource.data.updatedByUid.matches('^[A-Za-z0-9_-]{1,128}$')));
+        // Evidence collection listing stays disabled; direct metadata gets remain schema-validated.
+        allow list: if false;
         allow create, update, delete: if false;
       }
 
