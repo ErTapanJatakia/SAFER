@@ -85,7 +85,7 @@ export function validatePrivacyGovernanceSnapshot(value: unknown): value is Priv
   const item = value as Record<string, unknown>;
   const keys = ['schemaVersion','workspaceMode','purposes','notices','consentHistory','rightsCases',
     'retentionSchedules','retentionDispositions','breachCases','assignments','assuranceEvidence'];
-  if (item.schemaVersion !== 1 || item.workspaceMode !== 'synthetic-demo' ||
+  if (item.schemaVersion !== 2 || item.workspaceMode !== 'synthetic-demo' ||
       Object.keys(item).some((key) => !keys.includes(key)) || keys.some((key) => !(key in item))) return false;
   const validators: Array<(record: unknown) => boolean> = [
     isPrivacyPurposeRecord, isVersionedPrivacyNotice, isConsentLifecycleEvent,
