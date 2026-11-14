@@ -1,6 +1,6 @@
 # Organisation and RBAC implementation baseline
 
-**Status:** Domain/UI contracts only; existing Firestore Rules remain authoritative  
+**Status:** Domain/UI contracts and candidate Firestore Rules implemented; Rules remain authoritative for every database operation  
 **Parent:** Privacy Console safety hardening  
 **Cost boundary:** INR 0; Firebase Spark only  
 **Data boundary:** Synthetic development data only
@@ -277,3 +277,14 @@ The audit envelope validator now treats all runtime input as untrusted. It accep
 These checks establish only that the supplied JavaScript values have an expected shape and that adjacent supplied previousEventHash strings link in array order with non-decreasing timestamps. They do not recompute eventHash from canonical event content, establish that the digest corresponds to the event, authenticate actorUid, verify a signature, prove writer authorization, establish a globally unique/concurrent ordering, or prevent later alteration/deletion/replacement. A syntactically valid 64-character digest may be arbitrary. No append API or trusted writer exists; Firestore Rules continue to deny audit reads and writes. This remains a dormant contract, not a live audit-log feature.
 
 Regression cases now cover symbols, non-enumerable fields, getter non-execution, exotic prototypes, hostile object/array proxies, sparse arrays, malformed optional values, and equal-timestamp hash-linked sequences. They are authored only; consolidated validation has not been run.
+
+
+## Consolidated validation and current release boundary — 2026-11-15
+
+This update supersedes the earlier provisional statements above that describe the organisation suites as not yet executed. On exact commit `f02edc221066edab232902d5471dc790feebea88`, the required `validate` workflow passed, including the Firestore Security Rules Emulator, tenant membership resolver, organisation domain, workspace/profile UI, membership lifecycle and audit-envelope test steps. The independent DPDP governance validation also passed on that exact commit. Later changes require fresh checks.
+
+The repository's `firestore.rules` is a tested, conservative tenant-scoped **candidate ruleset**; it is not deny-all. It allows only the explicitly described profile, self-membership read, owner/admin organisation metadata, personnel/incident, and evidence-read operations. Membership mutations, organisation metadata writes, operational deletes, evidence writes, private/restricted paths, audit events, and unmodelled paths remain denied. Manager/viewer receive no tenant operational access. See `docs/firestore-rules-testing.md` and `docs/ORGANISATION-SECURITY-ASSURANCE-MATRIX.md` for the current policy and exact test evidence.
+
+The production Firebase Console rules remain separately published deny-all according to `docs/firestore-security-release-readiness-audit.md`. This implementation and validation do not approve production Rules publication, tenant provisioning, operational-data onboarding, or local-to-remote migration. The trusted provisioning ADR remains in force: no client membership mutation or audit writer; manual owner-operated administration remains outside the client app. The application operational workspace remains unreleased.
+
+The source-to-destination reconciliation and end-to-end migration security review are still open. SAFER-Remix remains reference-only and must not be retired without explicit owner confirmation.
