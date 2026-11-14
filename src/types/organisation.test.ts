@@ -50,7 +50,7 @@ test('active membership helper binds UID, organisation and status exactly', () =
   assert.equal(isCurrentUserActiveMember(membership, 'synthetic-user-a', 'synthetic-org-a'), true);
   assert.equal(isCurrentUserActiveMember(membership, 'synthetic-user-b', 'synthetic-org-a'), false);
   assert.equal(isCurrentUserActiveMember(membership, 'synthetic-user-a', 'synthetic-org-b'), false);
-  assert.equal(isCurrentUserActiveMember({ ...membership, status: 'suspended' } as OrganisationMembership, 'synthetic-user-a', 'synthetic-org-a'), false);
+  assert.equal(isCurrentUserActiveMember({ ...membership, status: 'suspended' } as unknown as OrganisationMembership, 'synthetic-user-a', 'synthetic-org-a'), false);
 });
 
 test('active membership boundary rejects malformed runtime values without throwing', () => {
