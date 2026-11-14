@@ -270,7 +270,7 @@ export function canApproveRetentionDisposition(
   record: RetentionDispositionRecord,
 ): boolean {
   return isRetentionDispositionRecord(record) && record.executed === false &&
-    record.approvedByRole === undefined &&
+    record.approvedByRole !== undefined &&
     record.requestedByRole !== record.approvedByRole &&
     record.disposition !== 'delete-after-approval';
 }
