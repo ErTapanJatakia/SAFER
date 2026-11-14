@@ -26,6 +26,10 @@ export const DpdpCaseworkPanel: React.FC<Props> = ({ snapshot, acknowledged, sav
   const [control, setControl] = useState('');
   const [evidenceRef, setEvidenceRef] = useState('');
 
+  const updateBreach = (item: PersonalDataBreachCase, update: Partial<PersonalDataBreachCase>) => {
+    const next = { ...item, ...update };
+    save({ ...snapshot, breachCases: snapshot.breachCases.map((entry) => entry.id === item.id ? next : entry) });
+  };
   const approveDisposition = (item: RetentionDispositionRecord) => {
     const approved = approveRetentionDisposition(item, 'organisation-owner');
     if (approved) save({ ...snapshot, retentionDispositions: snapshot.retentionDispositions.map((entry) => entry.id === item.id ? approved : entry) });
@@ -164,7 +168,11 @@ export const DpdpCaseworkPanel: React.FC<Props> = ({ snapshot, acknowledged, sav
       {snapshot.breachCases.map((item) => <article key={item.id} className="rounded border border-slate-700 p-2 text-xs">
         <strong>{item.reference} · {item.severity}</strong><p>{item.summary}</p>
         <p>Status: {item.status}; notification assessment: {item.notificationAssessment}</p>
-        <p className="text-slate-400">Containment and remediation evidence must be separately documented; this initial record does not imply response completion.</p>
+        <p className="text-slate-400">Synthetic action markers only; do not enter actual breach details or notify anyone from this demonstration.</p>
+        {item.status === 'reported' && <button className={action} disabled={!acknowledged} onClick={() => updateBreach(item,{status:'assessing',severity:'moderate'})}>Begin assessment (demo)</button>}
+        {item.status === 'assessing' && <button className={action} disabled={!acknowledged} onClick={() => updateBreach(item,{status:'contained',containmentActions:['Synthetic containment action recorded'],notificationAssessment:'under-review'})}>Record containment (demo)</button>}
+        {item.status === 'contained' && <button className={action} disabled={!acknowledged} onClick={() => updateBreach(item,{status:'remediating',remediationActions:['Synthetic remediation action recorded'],notificationAssessment:'organisation-decided',notificationDecisionNote:'Organisation decision marker only; not a legal reportability assessment.'})}>Record remediation and assessment marker</button>}
+        {item.status === 'remediating' && <button className={action} disabled={!acknowledged} onClick={() => updateBreach(item,{status:'closed'})}>Close synthetic case</button>}
       </article>)}
     </section>
 
