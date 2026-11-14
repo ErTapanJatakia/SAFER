@@ -210,7 +210,9 @@ export function isPrincipalRightsCase(value: unknown): boolean {
     safeRefs(x.evidenceRefs) && x.syntheticOnly === true &&
     (x.scopeNote === undefined || boundedText(x.scopeNote,1500)) &&
     (x.decision === undefined || ['fulfilled','partially-fulfilled','declined','not-applicable'].includes(String(x.decision))) &&
-    (x.decisionReason === undefined || boundedText(x.decisionReason,2000));
+    (x.decisionReason === undefined || boundedText(x.decisionReason,2000)) &&
+    (!['in-progress','completed'].includes(String(x.status)) || x.identityCheck === 'synthetic-reference-matched') &&
+    (x.status !== 'completed' || x.decision !== undefined);
 }
 export function isRetentionSchedule(value: unknown): boolean {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -230,7 +232,7 @@ export function isRetentionDispositionRecord(value: unknown): boolean {
     ['retain','restrict-review','delete-after-approval','defer'].includes(String(x.disposition)) &&
     safeRole(x.requestedByRole) && boundedText(x.decisionNote,1500) &&
     typeof x.recordedAt === 'string' && validDate(x.recordedAt) && x.executed === false &&
-    (x.approvedByRole === undefined || safeRole(x.approvedByRole)) &&
+    (x.approvedByRole === undefined || (safeRole(x.approvedByRole) && x.approvedByRole !== x.requestedByRole)) &&
     (x.evidenceRef === undefined || boundedText(x.evidenceRef,160));
 }
 export function isPersonalDataBreachCase(value: unknown): boolean {
@@ -248,7 +250,8 @@ export function isPersonalDataBreachCase(value: unknown): boolean {
     stringList(x.containmentActions) && stringList(x.remediationActions) &&
     ['not-assessed','under-review','organisation-decided'].includes(String(x.notificationAssessment)) &&
     (x.notificationDecisionNote === undefined || boundedText(x.notificationDecisionNote,2000)) &&
-    safeRole(x.ownerRole) && safeRefs(x.evidenceRefs) && x.syntheticOnly === true;
+    safeRole(x.ownerRole) && safeRefs(x.evidenceRefs) && x.syntheticOnly === true &&
+    (x.status !== 'closed' || (x.containmentActions.length > 0 && x.remediationActions.length > 0 && x.notificationAssessment !== 'not-assessed'));
 }
 export function isAccountabilityAssignment(value: unknown): boolean {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
