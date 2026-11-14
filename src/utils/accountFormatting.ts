@@ -89,7 +89,7 @@ export function formatAccountTime(
   if (value === null || value === undefined || value === '') return fallback;
   const date = value instanceof Date ? value : parseDisplayDateTime(value);
   if (!date || !Number.isFinite(date.getTime())) return fallback;
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat(preferences.locale, {
     timeZone: preferences.timezone,
     hour: '2-digit',
     minute: '2-digit',
