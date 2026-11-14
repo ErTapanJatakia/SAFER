@@ -70,7 +70,7 @@ export interface AssuranceEvidenceRecord {
   reviewedAt: string; limitations: string;
 }
 export interface PrivacyGovernanceSnapshot {
-  schemaVersion: 1; workspaceMode: 'synthetic-demo';
+  schemaVersion: 2; workspaceMode: 'synthetic-demo';
   purposes: PrivacyPurposeRecord[]; notices: VersionedPrivacyNotice[];
   consentHistory: ConsentLifecycleEvent[]; rightsCases: PrincipalRightsCase[];
   retentionSchedules: RetentionSchedule[]; retentionDispositions: RetentionDispositionRecord[];
@@ -78,7 +78,7 @@ export interface PrivacyGovernanceSnapshot {
   assuranceEvidence: AssuranceEvidenceRecord[];
 }
 export const EMPTY_PRIVACY_GOVERNANCE: PrivacyGovernanceSnapshot = {
-  schemaVersion: 1, workspaceMode: 'synthetic-demo', purposes: [], notices: [],
+  schemaVersion: 2, workspaceMode: 'synthetic-demo', purposes: [], notices: [],
   consentHistory: [], rightsCases: [], retentionSchedules: [], retentionDispositions: [],
   breachCases: [], assignments: [], assuranceEvidence: [],
 };
