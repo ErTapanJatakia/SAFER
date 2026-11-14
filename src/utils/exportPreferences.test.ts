@@ -3,10 +3,10 @@ import { getDefaultExportRedactionKeys } from './exportPreferences.ts';
 import type { ExportableField } from './personnelExport.ts';
 
 const fields = [
-  { key: 'name', label: 'Name', category: 'Identity', isSensitive: false },
-  { key: 'email', label: 'Email', category: 'Contact', isSensitive: true },
-  { key: 'health', label: 'Health', category: 'Personal', isSensitive: true },
-] as ExportableField[];
+  { key: 'name', label: 'Name', category: 'Identification', isSensitive: false },
+  { key: 'email', label: 'Email', category: 'Contact Details', isSensitive: true },
+  { key: 'health', label: 'Health', category: 'Personal & Health', isSensitive: true },
+] satisfies ExportableField[];
 
 describe('default export redaction preferences', () => {
   it('keeps standard mode aligned with the current sensitive-field defaults', () => {
