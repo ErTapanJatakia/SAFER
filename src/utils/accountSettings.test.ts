@@ -91,7 +91,7 @@ describe('browser-local profile display reader', () => {
 
   it('returns an empty profile when storage is absent, malformed or unavailable', () => {
     expect(readAccountProfile(storage(null))).toEqual(DEFAULT_ACCOUNT_SETTINGS.profile);
-    expect(readAccountProfile(storage('{invalid-json')).toEqual(DEFAULT_ACCOUNT_SETTINGS.profile);
+    expect(readAccountProfile(storage('{invalid-json'))).toEqual(DEFAULT_ACCOUNT_SETTINGS.profile);
     expect(readAccountProfile({ getItem: () => { throw new Error('storage unavailable'); } }))
       .toEqual(DEFAULT_ACCOUNT_SETTINGS.profile);
   });
