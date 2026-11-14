@@ -45,6 +45,56 @@ const REQUIRED_EVENT_KEYS = [
   'schemaVersion',
 ] as const;
 const OPTIONAL_EVENT_KEYS = ['targetUid'] as const;
+const ALLOWED_EVENT_KEYS = new Set<string>([
+  ...REQUIRED_EVENT_KEYS,
+  ...OPTIONAL_EVENT_KEYS,
+]);
+
+type EventSnapshot = {
+  actorUid: unknown;
+  eventHash: unknown;
+  eventId: unknown;
+  eventType: unknown;
+  occurredAt: unknown;
+  orgId: unknown;
+  previousEventHash: unknown;
+  schemaVersion: unknown;
+  targetUid?: unknown;
+};
+
+function snapshotAuditEvent(value: unknown): EventSnapshot | null {
+  try {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    const prototype = Object.getPrototypeOf(value);
+    if (prototype !== Object.prototype && prototype !== null) return null;
+
+    const keys = Reflect.ownKeys(value);
+    if (keys.some((key) => typeof key !== 'string' || !ALLOWED_EVENT_KEYS.has(key))) {
+      return null;
+    }
+    if (keys.length < REQUIRED_EVENT_KEYS.length
+      || keys.length > REQUIRED_EVENT_KEYS.length + OPTIONAL_EVENT_KEYS.length) {
+      return null;
+    }
+
+    const snapshot: Record<string, unknown> = Object.create(null) as Record<string, unknown>;
+    for (const key of REQUIRED_EVENT_KEYS) {
+      const descriptor = Object.getOwnPropertyDescriptor(value, key);
+      if (!descriptor || !descriptor.enumerable || !('value' in descriptor)) return null;
+      snapshot[key] = descriptor.value;
+    }
+
+    if (keys.includes('targetUid')) {
+      const descriptor = Object.getOwnPropertyDescriptor(value, 'targetUid');
+      if (!descriptor || !descriptor.enumerable || !('value' in descriptor)) return null;
+      snapshot.targetUid = descriptor.value;
+    }
+    return snapshot as EventSnapshot;
+  } catch {
+    // Proxies and exotic runtime objects are untrusted adapter input.
+    return null;
+  }
+}
 
 export function isOrganisationAuditEventType(
   value: unknown,
@@ -53,26 +103,19 @@ export function isOrganisationAuditEventType(
     && (ORGANISATION_AUDIT_EVENT_TYPES as readonly string[]).includes(value);
 }
 
-/** Strict shape validation; trust and authenticity must be established elsewhere. */
+/**
+ * Strict runtime-shape validation; it does not establish trust or authenticity.
+ * Only enumerable own data properties on plain objects are accepted.
+ */
 export function isOrganisationAuditEvent(
   value: unknown,
 ): value is OrganisationAuditEvent {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
-  const record = value as Record<string, unknown>;
-  const keys = Object.keys(record).sort();
-  const expected = [...REQUIRED_EVENT_KEYS].sort();
-  const requiredKeysPresent = expected.every((key) => keys.includes(key));
-  const onlyKnownKeys = keys.every((key) =>
-    (REQUIRED_EVENT_KEYS as readonly string[]).includes(key)
-    || (OPTIONAL_EVENT_KEYS as readonly string[]).includes(key));
-  const exactKeys = requiredKeysPresent && onlyKnownKeys
-    && keys.length >= REQUIRED_EVENT_KEYS.length
-    && keys.length <= REQUIRED_EVENT_KEYS.length + OPTIONAL_EVENT_KEYS.length;
-  const targetValid = record.targetUid === undefined
+  const record = snapshotAuditEvent(value);
+  if (!record) return false;
+  const targetValid = !('targetUid' in record)
     || (typeof record.targetUid === 'string' && ID.test(record.targetUid));
 
-  return exactKeys
-    && typeof record.eventId === 'string' && ID.test(record.eventId)
+  return typeof record.eventId === 'string' && ID.test(record.eventId)
     && typeof record.orgId === 'string' && ID.test(record.orgId)
     && typeof record.actorUid === 'string' && ID.test(record.actorUid)
     && isOrganisationAuditEventType(record.eventType)
@@ -92,22 +135,37 @@ export function isOrganisationAuditEvent(
 export function hasContinuousAuditHashLinks(
   events: readonly OrganisationAuditEvent[],
 ): boolean {
-  const seenEventIds = new Set<string>();
-  let chainOrganisationId: string | null = null;
+  try {
+    if (!Array.isArray(events)) return false;
+    const seenEventIds = new Set<string>();
+    let chainOrganisationId: string | null = null;
+    let previousHash: string | null = null;
+    let previousTimestamp: number | null = null;
 
-  for (let index = 0; index < events.length; index += 1) {
-    const current = events[index];
-    if (!isOrganisationAuditEvent(current)) return false;
+    for (let index = 0; index < events.length; index += 1) {
+      const current = events[index];
+      if (!isOrganisationAuditEvent(current)) return false;
 
-    if (chainOrganisationId === null) chainOrganisationId = current.orgId;
-    if (current.orgId !== chainOrganisationId || seenEventIds.has(current.eventId)) return false;
-    seenEventIds.add(current.eventId);
+      // Read validated primitive values once; do not rely on caller-owned objects.
+      const snapshot = snapshotAuditEvent(current);
+      if (!snapshot) return false;
+      const eventId = snapshot.eventId as string;
+      const orgId = snapshot.orgId as string;
+      const occurredAt = snapshot.occurredAt as number;
+      const eventHash = snapshot.eventHash as string;
+      const currentPreviousHash = snapshot.previousEventHash as string | null;
 
-    const expectedPrevious = index === 0 ? null : events[index - 1].eventHash;
-    if (current.previousEventHash !== expectedPrevious) return false;
-    // Equal timestamps are allowed: millisecond clocks do not establish a
-    // unique total order. The hash link and array position establish sequence.
-    if (index > 0 && current.occurredAt < events[index - 1].occurredAt) return false;
+      if (chainOrganisationId === null) chainOrganisationId = orgId;
+      if (orgId !== chainOrganisationId || seenEventIds.has(eventId)) return false;
+      if (currentPreviousHash !== previousHash) return false;
+      if (previousTimestamp !== null && occurredAt < previousTimestamp) return false;
+
+      seenEventIds.add(eventId);
+      previousHash = eventHash;
+      previousTimestamp = occurredAt;
+    }
+    return true;
+  } catch {
+    return false;
   }
-  return true;
 }
