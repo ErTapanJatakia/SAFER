@@ -2,7 +2,7 @@
 
 **Status:** Proposed design; not an implementation approval  
 **Scope:** Architecture and security boundaries for future tenant-scoped Firestore access  
-**Baseline:** Firestore client access remains deny-all
+**Historical baseline:** Firestore client access was deny-all when this proposal was authored. The current repository candidate rules are described in `docs/firestore-rules-testing.md`; production Console rules remain separately deny-all per the release-readiness audit.
 
 ## 1. Decision summary
 
@@ -110,3 +110,8 @@ Passing the current deny-all baseline tests is not evidence that tenant authoriz
 ## 10. Explicit non-goals
 
 This ADR does not implement tenant creation, membership management, roles in the UI, Firestore reads/writes, operational data migration, audit-event writes, or platform administration. It does not change `firestore.rules` or the production Firebase project.
+
+
+## Implementation status update — 2026-11-15
+
+This document remains an architecture rationale and must not be read as a current inventory of repository implementation. The candidate tenant-scoped Rules and exact membership/profile readers have since been implemented and validated against the Firebase Emulator on commit `f02edc221066edab232902d5471dc790feebea88`. The candidate policy grants only the explicit operations listed in `docs/firestore-rules-testing.md`; membership mutations, audit access, private/restricted records, and unmodelled paths remain denied. Production Console rules remain separately deny-all. This update does not authorise publishing candidate Rules or onboarding operational data.
