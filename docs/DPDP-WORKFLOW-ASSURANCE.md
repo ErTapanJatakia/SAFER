@@ -36,14 +36,14 @@
 
 - Responsibilities can be assigned to a workflow role.
 - Evidence references record a control description, reference, reviewer role, timestamp and limitations.
-- The governance snapshot can be exported as JSON with a warning. It is not encrypted, immutable, independently verified or a statutory filing.
+- The governance snapshot can be explicitly exported as JSON with a warning. It is not encrypted, immutable, independently verified or a statutory filing.
 - Hash-chain types and self-entered evidence references do not establish a trusted writer or tamper-proof audit trail.
 
 ## DPDP-06 — Security controls and validation
 
 | Control | Implementation |
 |---|---|
-| Data boundary | Separate key `safer_dpdp_governance_demo_v1`; synthetic-only workspace mode |
+| Data boundary | Separate key `safer_dpdp_governance_demo_v1`; schema version 2; synthetic-only workspace mode |
 | Schema | Required exact top-level collection set; record validators reject unsupported states/roles/fields |
 | Uniqueness | Unique IDs checked within each collection |
 | Resource bounds | Maximum 500 records per collection; 1 MB serialized workspace |
