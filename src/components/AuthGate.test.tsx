@@ -13,7 +13,7 @@ import * as sessionInvalidation from '../lib/sessionInvalidation';
 vi.mock('firebase/auth',()=>({GoogleAuthProvider:vi.fn(),createUserWithEmailAndPassword:vi.fn(),onAuthStateChanged:vi.fn(),sendEmailVerification:vi.fn(),sendPasswordResetEmail:vi.fn(),signInWithEmailAndPassword:vi.fn(),signInWithPopup:vi.fn(),signOut:vi.fn()}));
 vi.mock('../lib/firebase.ts',()=>({auth:{name:'test-auth',currentUser:null},db:{name:'test-db'},isFirebaseConfigured:true}));
 vi.mock('../lib/tenantMembership.ts',()=>({resolveTenantMembership:vi.fn()}));
-const makeUser=(uid:string)=>({uid,email:uid+'@example.test',emailVerified:true});
+const makeUser=(uid:string)=>({uid,email:uid+'@example.test',emailVerified:true,providerData:[{providerId:'password'}]});
 let retainedRepository: DemoWorkspaceRepository | null = null;
 const StorageProbe=()=>{const repository=useDemoWorkspaceRepository();retainedRepository=repository;const [stored]=React.useState(()=>window.localStorage.getItem('prot_ops_personnel_v2'));return <div>Operational app shell {stored||''}</div>;};
 
@@ -136,7 +136,7 @@ describe('AuthGate membership session handling',()=>{
   const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
   change(field,'org-a');await flush();submit(field.closest('form')!);await flush();
   expect(verifiedWorkspace()).toBeNull();
-  expect(host.querySelector('[role="alert"]')?.textContent).toContain('Membership could not be verified.');
+  expect(host.querySelector('[role="alert"]')?.textContent).toContain('No active membership could be verified.');
  });
  it('resolves the exact organisation for the authenticated UID',async()=>{vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'manager',status:'active'});auth(makeUser('user-a'));await flush();const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();expect(verifiedWorkspace()).not.toBeNull();expect(verifiedWorkspace()?.textContent).toContain('Manager');expect(resolveTenantMembership).toHaveBeenCalledWith({name:'test-db'},{uid:'user-a'},'org-a');});
  it('removes previously verified workspace metadata while re-verification is pending and after it fails',async()=>{
