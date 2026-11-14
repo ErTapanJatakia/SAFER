@@ -80,12 +80,15 @@ describe('OrganisationProfilePanel', () => {
       <OrganisationProfilePanel database={database} membership={{...member('owner'), uid: 'user-b'}} />,
     ));
 
+    // The previous account's profile must disappear immediately while the
+    // new account's independently authorised profile request is pending.
     expect(host.textContent).not.toContain('Alpha Operations');
     expect(host.textContent).toContain('Loading verified organisation profile');
     await act(async () => finish({
-      orgId: 'org-alpha', displayName: 'Stale Alpha Profile', status: 'active', schemaVersion: 1,
+      orgId: 'org-alpha', displayName: 'User B Verified Profile', status: 'active', schemaVersion: 1,
     }));
-    expect(host.textContent).not.toContain('Stale Alpha Profile');
+    expect(host.textContent).toContain('User B Verified Profile');
+    expect(host.textContent).not.toContain('Alpha Operations');
   });
 
 
