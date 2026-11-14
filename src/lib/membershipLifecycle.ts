@@ -63,6 +63,29 @@ const UID = /^[A-Za-z0-9_-]{1,128}$/;
 const TENANT_ROLES: readonly TenantRole[] = ['owner', 'admin', 'manager', 'viewer'];
 const MEMBERSHIP_STATUSES: readonly ManagedMembershipStatus[] = ['active', 'suspended', 'revoked'];
 
+/** Snapshot exact plain data objects without invoking accessors. */
+function readExactDataObject(value: unknown, expectedKeys: readonly string[]): Record<string, unknown> | null {
+  try {
+    if (value === null || typeof value !== 'object' || Array.isArray(value)
+      || (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null)) return null;
+    const keys = Reflect.ownKeys(value);
+    if (keys.length !== expectedKeys.length
+      || keys.some((key) => typeof key !== 'string' || !expectedKeys.includes(key))) return null;
+    const descriptors = Object.getOwnPropertyDescriptors(value);
+    const snapshot: Record<string, unknown> = Object.create(null);
+    for (const key of expectedKeys) {
+      const descriptor = descriptors[key];
+      if (!descriptor || !('value' in descriptor) || descriptor.enumerable !== true) return null;
+      snapshot[key] = descriptor.value;
+    }
+    return snapshot;
+  } catch {
+    return null;
+  }
+}
+const MEMBERSHIP_CHANGE_KEYS = ['actorUid', 'actorRole', 'targetUid', 'currentRole', 'nextRole', 'currentStatus', 'nextStatus', 'activeOwnerCount'] as const;
+const OWNER_TRANSFER_KEYS = ['actorUid', 'actorRole', 'targetUid', 'targetRole', 'targetStatus'] as const;
+
 /** Only owners may delegate administrator invitations. */
 export function canIssueInvitation(
   actorRole: TenantRole,
@@ -185,17 +208,18 @@ export function assessOwnerTransfer(input: {
   readonly targetRole: TenantRole;
   readonly targetStatus: ManagedMembershipStatus;
 }): OwnerTransferAssessment {
-  if (
-    !input || typeof input !== 'object'
-    || !UID.test(input.actorUid) || !UID.test(input.targetUid)
-    || !TENANT_ROLES.includes(input.actorRole)
-    || !TENANT_ROLES.includes(input.targetRole)
-    || !MEMBERSHIP_STATUSES.includes(input.targetStatus)
-  ) return { eligible: false, reason: 'invalid-context' };
-  if (input.actorRole !== 'owner') return { eligible: false, reason: 'actor-not-owner' };
-  if (input.actorUid === input.targetUid) return { eligible: false, reason: 'self-transfer-forbidden' };
-  if (input.targetStatus !== 'active') return { eligible: false, reason: 'target-not-active' };
-  if (input.targetRole === 'owner') return { eligible: false, reason: 'target-already-owner' };
+  const record = readExactDataObject(input, OWNER_TRANSFER_KEYS);
+  if (!record || typeof record.actorUid !== 'string' || !UID.test(record.actorUid)
+    || typeof record.targetUid !== 'string' || !UID.test(record.targetUid)
+    || !TENANT_ROLES.includes(record.actorRole as TenantRole)
+    || !TENANT_ROLES.includes(record.targetRole as TenantRole)
+    || !MEMBERSHIP_STATUSES.includes(record.targetStatus as ManagedMembershipStatus)) {
+    return { eligible: false, reason: 'invalid-context' };
+  }
+  if (record.actorRole !== 'owner') return { eligible: false, reason: 'actor-not-owner' };
+  if (record.actorUid === record.targetUid) return { eligible: false, reason: 'self-transfer-forbidden' };
+  if (record.targetStatus !== 'active') return { eligible: false, reason: 'target-not-active' };
+  if (record.targetRole === 'owner') return { eligible: false, reason: 'target-already-owner' };
   return { eligible: true, disposition: 'trusted-authority-required' };
 }
 
@@ -207,13 +231,12 @@ export function assessOwnerTransfer(input: {
 export function evaluateMembershipChange(
   proposal: MembershipChangeProposal,
 ): MembershipPolicyDecision {
-  if (!proposal || typeof proposal !== 'object') {
-    return { allowed: false, reason: 'invalid-context' };
-  }
+  const record = readExactDataObject(proposal, MEMBERSHIP_CHANGE_KEYS);
+  if (!record) return { allowed: false, reason: 'invalid-context' };
   const {
     actorUid, actorRole, targetUid, currentRole, nextRole,
     currentStatus, nextStatus, activeOwnerCount,
-  } = proposal;
+  } = record;
 
   if (
     !UID.test(actorUid) || !UID.test(targetUid)
