@@ -17,14 +17,25 @@ describe('account settings normalization', () => {
   it('preserves supported values and normalizes unknown preference values', () => {
     expect(normalizeAccountSettings({
       profile: { displayName: 'Operator', callSign: 'ALPHA', bio: 'Bio' },
-      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', numberFormat: 'en-US', defaultExportFormat: 'xlsx', defaultRedactionLevel: 'strict' },
+      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', locale: 'en-IN', numberFormat: 'en-US', defaultExportFormat: 'xlsx', defaultRedactionLevel: 'strict' },
     })).toEqual({
       version: 1,
       profile: { displayName: 'Operator', callSign: 'ALPHA', bio: 'Bio' },
-      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', numberFormat: 'en-US', defaultExportFormat: 'xlsx', defaultRedactionLevel: 'strict' },
+      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', locale: 'en-IN', numberFormat: 'en-US', defaultExportFormat: 'xlsx', defaultRedactionLevel: 'strict' },
     });
   });
 
+
+  it('accepts valid IANA timezones and canonical locale identifiers while preserving legacy defaults', () => {
+    const normalized = normalizeAccountSettings({ preferences: { timezone: 'Europe/Paris', locale: 'fr-fr', numberFormat: 'de-DE' } });
+    expect(normalized.preferences.timezone).toBe('Europe/Paris');
+    expect(normalized.preferences.locale).toBe('fr-FR');
+    expect(normalized.preferences.numberFormat).toBe('de-DE');
+    const invalid = normalizeAccountSettings({ preferences: { timezone: 'Not/A_Timezone', locale: 'not a locale', numberFormat: 'bad locale' } });
+    expect(invalid.preferences.timezone).toBe(DEFAULT_ACCOUNT_SETTINGS.preferences.timezone);
+    expect(invalid.preferences.locale).toBe(DEFAULT_ACCOUNT_SETTINGS.preferences.locale);
+    expect(invalid.preferences.numberFormat).toBe(DEFAULT_ACCOUNT_SETTINGS.preferences.numberFormat);
+  });
 
   it('normalizes unsupported export preferences to the safe existing defaults', () => {
     const normalized = normalizeAccountSettings({
