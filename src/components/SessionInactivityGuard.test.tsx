@@ -1,7 +1,7 @@
 import React, {act} from 'react';
 import {createRoot, type Root} from 'react-dom/client';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {SessionInactivityGuard, useSessionTimeoutPreference} from './SessionInactivityGuard';
+import {getSessionTimeoutPreferenceStorageKey, SessionInactivityGuard, useSessionTimeoutPreference} from './SessionInactivityGuard';
 
 const PreferenceHarness = () => {
   const {timeoutMinutes, setTimeoutMinutes} = useSessionTimeoutPreference();
@@ -138,7 +138,7 @@ describe('session inactivity guard', () => {
   });
 
   it('normalizes tampered or unsupported stored timeout values to the ten-minute default', async () => {
-    window.localStorage.setItem('safer_session_timeout_minutes_v2_invalid', '0');
+    window.localStorage.setItem(getSessionTimeoutPreferenceStorageKey('user-a'), '0');
     await renderGuard();
     expect(timeoutInput().value).toBe('10');
     expect(onExpire).not.toHaveBeenCalled();
