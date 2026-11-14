@@ -23,6 +23,7 @@ const change=(el:HTMLInputElement,value:string)=>{const view=el.ownerDocument.de
 const submit=(form:HTMLFormElement)=>act(()=>{form.dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));});
 const auth=(user:ReturnType<typeof makeUser>|null)=>{Object.defineProperty(firebaseAuth,'currentUser',{configurable:true,value:user});act(()=>listener?.(user));};
 beforeEach(async()=>{
+ Object.defineProperty(globalThis,'IS_REACT_ACT_ENVIRONMENT',{configurable:true,value:true});
  window.localStorage.clear();
  host=document.createElement('div');document.body.append(host);root=createRoot(host);listener=undefined;authError=undefined;retainedRepository=null;
  vi.mocked(onAuthStateChanged).mockImplementation((_auth,cb,error)=>{listener=cb as typeof listener;authError=error as typeof authError;listener!(null);return vi.fn();});
@@ -30,7 +31,7 @@ beforeEach(async()=>{
  await act(async()=>{root.render(<AuthGate><StorageProbe /></AuthGate>);});
  await flush();
 });
-afterEach(async()=>{await act(async()=>root.unmount());host.remove();window.localStorage.clear();vi.clearAllMocks();});
+afterEach(async()=>{await act(async()=>root.unmount());delete (globalThis as typeof globalThis & {IS_REACT_ACT_ENVIRONMENT?:boolean}).IS_REACT_ACT_ENVIRONMENT;host.remove();window.localStorage.clear();vi.clearAllMocks();});
 
 const verifiedWorkspace = () => host.querySelector('[data-testid="verified-organisation-workspace"]');
 
