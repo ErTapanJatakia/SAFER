@@ -4,7 +4,7 @@ import type {
   RetentionDispositionRecord, PersonalDataBreachCase, AccountabilityAssignment,
   AssuranceEvidenceRecord,
 } from '../types/dpdpGovernance.ts';
-import { canAdvanceRightsCase, approveRetentionDisposition } from '../utils/dpdpGovernance.ts';
+import { canAdvanceRightsCase, approveRetentionDisposition, canCloseBreachCase } from '../utils/dpdpGovernance.ts';
 
 const field = 'w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-slate-100';
 const action = 'rounded-lg border border-teal-600 bg-teal-800 px-3 py-2 text-xs font-semibold text-white';
@@ -34,6 +34,11 @@ export const DpdpCaseworkPanel: React.FC<Props> = ({ snapshot, acknowledged, sav
     const approved = approveRetentionDisposition(item, 'organisation-owner');
     if (approved) save({ ...snapshot, retentionDispositions: snapshot.retentionDispositions.map((entry) => entry.id === item.id ? approved : entry) });
   };
+  const updateBreach = (item: PersonalDataBreachCase, update: Partial<PersonalDataBreachCase>) => {
+    const next = { ...item, ...update };
+    if (next.status === 'closed' && !canCloseBreachCase(next)) return;
+    save({ ...snapshot, breachCases: snapshot.breachCases.map((entry) => entry.id === item.id ? next : entry) });
+  };
   const addRightsCase = (event: React.FormEvent) => {
     event.preventDefault();
     if (!acknowledged || !subject.trim() || !description.trim()) return;
@@ -49,7 +54,7 @@ export const DpdpCaseworkPanel: React.FC<Props> = ({ snapshot, acknowledged, sav
     }
   };
   const advanceCase = (item: PrincipalRightsCase, next: PrincipalRightsCase['status']) => {
-    const updated = { ...item, identityCheck: 'synthetic-reference-matched' as const,
+    const updated = { ...item, identityCheck: next === 'identity-check' ? 'pending' as const : 'synthetic-reference-matched' as const,
       status: next, updatedAt: new Date().toISOString(),
       ...(next === 'completed' ? { decision: 'fulfilled' as const,
         decisionReason: 'Synthetic workflow completion only; no real request was processed.' } : {}) };
