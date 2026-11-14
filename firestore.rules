@@ -14,14 +14,36 @@ service cloud.firestore {
       return /databases/$(database)/documents/organisations/$(orgId);
     }
 
-    function activeTenantRole(orgId) {
-      return signedIn()
-        && exists(membershipPath(orgId))
+    function validActiveMembership(orgId) {
+      return exists(membershipPath(orgId))
+        && get(membershipPath(orgId)).data.keys().hasOnly(['uid', 'orgId', 'role', 'status'])
+        && get(membershipPath(orgId)).data.keys().hasAll(['uid', 'orgId', 'role', 'status'])
         && get(membershipPath(orgId)).data.uid == request.auth.uid
         && get(membershipPath(orgId)).data.orgId == orgId
         && get(membershipPath(orgId)).data.status == 'active'
+        && get(membershipPath(orgId)).data.role in ['owner', 'admin', 'manager', 'viewer'];
+    }
+
+    function validActiveOrganisation(orgId) {
+      return exists(organisationPath(orgId))
+        && get(organisationPath(orgId)).data.keys().hasOnly([
+          'orgId', 'displayName', 'status', 'schemaVersion'
+        ])
+        && get(organisationPath(orgId)).data.keys().hasAll([
+          'orgId', 'displayName', 'status', 'schemaVersion'
+        ])
         && get(organisationPath(orgId)).data.orgId == orgId
-        && get(organisationPath(orgId)).data.status == 'active';
+        && get(organisationPath(orgId)).data.displayName is string
+        && get(organisationPath(orgId)).data.displayName.size() >= 1
+        && get(organisationPath(orgId)).data.displayName.size() <= 120
+        && get(organisationPath(orgId)).data.status == 'active'
+        && get(organisationPath(orgId)).data.schemaVersion == 1;
+    }
+
+    function activeTenantRole(orgId) {
+      return signedIn()
+        && validActiveMembership(orgId)
+        && validActiveOrganisation(orgId);
     }
 
     function ownerOrAdmin(orgId) {
@@ -214,8 +236,7 @@ service cloud.firestore {
 
     match /organisations/{orgId} {
       allow get: if ownerOrAdmin(orgId)
-        && resource.data.orgId == orgId
-        && resource.data.status == 'active';
+        && validActiveOrganisation(orgId);
       allow list, create, update, delete: if false;
 
       match /members/{uid} {
@@ -229,9 +250,7 @@ service cloud.firestore {
           && resource.data.orgId == orgId
           && resource.data.status == 'active'
           && resource.data.role in ['owner', 'admin', 'manager', 'viewer']
-          && exists(organisationPath(orgId))
-          && get(organisationPath(orgId)).data.orgId == orgId
-          && get(organisationPath(orgId)).data.status == 'active';
+          && validActiveOrganisation(orgId);
         allow list, create, update, delete: if false;
       }
 
