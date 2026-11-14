@@ -3,6 +3,9 @@ import type {
   PrivacyPurposeRecord,
   PrivacyGovernanceSnapshot,
   VersionedPrivacyNotice,
+  PrincipalRightsCase,
+  RetentionDispositionRecord,
+  PersonalDataBreachCase,
 } from '../types/dpdpGovernance.ts';
 
 const ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$/;
@@ -271,12 +274,21 @@ export function canApproveRetentionDisposition(
 ): boolean {
   return isRetentionDispositionRecord(record) && record.executed === false &&
     record.approvedByRole !== undefined &&
-    record.requestedByRole !== record.approvedByRole &&
-    record.disposition !== 'delete-after-approval';
+    record.requestedByRole !== record.approvedByRole;
 }
 export function canCloseBreachCase(record: PersonalDataBreachCase): boolean {
   return isPersonalDataBreachCase(record) &&
     ['contained','remediating'].includes(record.status) &&
     record.containmentActions.length > 0 && record.remediationActions.length > 0 &&
     record.notificationAssessment !== 'not-assessed';
+}
+
+
+export function approveRetentionDisposition(
+  record: RetentionDispositionRecord,
+  approverRole: RetentionDispositionRecord['requestedByRole'],
+): RetentionDispositionRecord | null {
+  if (!isRetentionDispositionRecord(record) || record.executed ||
+      record.approvedByRole !== undefined || record.requestedByRole === approverRole) return null;
+  return { ...record, approvedByRole: approverRole };
 }
