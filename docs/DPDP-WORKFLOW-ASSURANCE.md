@@ -2,7 +2,7 @@
 
 **Scope:** SAFER's browser-local, synthetic demonstration workspace only.
 **Cost:** INR 0; no new service, provider, Firebase collection, Cloud Function or paid API.
-**Status:** DPDP-01 through DPDP-06 workflow foundations implemented on the feature branch. Automated tests are authored but have not yet been executed.
+**Status:** DPDP-01 through DPDP-06 workflow foundations implemented on the feature branch, including synthetic JSON governance export. Automated tests are authored but have not yet been executed.
 
 ## DPDP-01 — Privacy governance
 
@@ -44,7 +44,7 @@
 | Control | Implementation |
 |---|---|
 | Data boundary | Separate key `safer_dpdp_governance_demo_v1`; schema version 2; synthetic-only workspace mode |
-| Schema | Required exact top-level collection set; record validators reject unsupported states/roles/fields |
+| Schema | Schema version 2; exact top-level collection set; record validators reject unsupported states/roles/fields; cross-record purpose/notice/schedule references are checked |
 | Uniqueness | Unique IDs checked within each collection |
 | Resource bounds | Maximum 500 records per collection; 1 MB serialized workspace |
 | Storage behavior | Fail-closed malformed/oversized input; write/read-back verification; stale-snapshot rejection |
