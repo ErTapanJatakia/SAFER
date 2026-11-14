@@ -19,6 +19,7 @@ import {enterDemoGuest} from '../lib/dataBoundary.ts';
 import {DemoGuestWorkspaceProvider} from './DemoGuestWorkspaceProvider.tsx';
 import {AccountSecurityPanel} from './AccountSecurityPanel.tsx';
 import {OrganisationWorkspacePanel} from './OrganisationWorkspacePanel.tsx';
+import {SessionInactivityGuard} from './SessionInactivityGuard.tsx';
 
 type AuthMode = 'signin' | 'register' | 'reset' | 'verify';
 
@@ -334,7 +335,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
 
   if (user || demoGuest) {
     return (
-      <>
+      <SessionInactivityGuard sessionKey={user?.uid ?? 'demo-guest'} onExpire={leaveAccount}>
         <div className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-2 border-b border-slate-700 bg-slate-950 px-4 py-2 text-xs text-slate-100">
           <span>{user ? `Signed in: ${user.email || 'verified account'}` : 'Demo Guest session'}</span>
           <button type="button" onClick={leaveAccount} className="rounded border border-slate-600 px-3 py-1.5 hover:bg-slate-800">Sign out</button>
@@ -399,7 +400,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
             </section>
           </main>
         )}
-      </>
+      </SessionInactivityGuard>
     );
   }
 
