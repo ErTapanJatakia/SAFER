@@ -222,7 +222,7 @@ test('revoked memberships cannot be reactivated and non-admins cannot manage mem
 });
 
 test('owner transfer assessment requires a distinct active non-owner and trusted authority', () => {
-  assert.deepEqual(ownerTransferReason({
+  assert.deepEqual(assessOwnerTransfer({
     actorUid: 'owner-001', actorRole: 'owner',
     targetUid: 'member-001', targetRole: 'admin', targetStatus: 'active',
   }), { eligible: true, disposition: 'trusted-authority-required' });
