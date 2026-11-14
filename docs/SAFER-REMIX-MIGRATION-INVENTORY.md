@@ -621,3 +621,34 @@ The candidate Rules model remains deliberately narrower than the UI lifecycle pr
 Documentation reconciliation identified historical deny-all/pending-validation descriptions. The current testing, assurance, architecture, RBAC and production-foundation notes have been updated to distinguish the repository candidate policy from the separately deny-all production Console policy. No production Rules publication, tenant provisioning, operational data migration, or SAFER-Remix retirement is authorised.
 
 Remaining review: reconcile every Remix candidate and canonical destination, inspect migration-specific functional/security regressions, and retain explicit rejected/deferred dispositions.
+
+
+## Source-to-destination reconciliation — settings, identity, privacy and tenancy
+
+Structural comparison was performed against the inventory baseline Remix commit `17c1dfa904f3b32144fb27cdcd0c5ec07afb1bca` and the current SAFER candidate branch. A filename difference is not treated as a missing feature; each source capability is classified by behavior and security semantics.
+
+| SAFER-Remix source | Canonical SAFER destination / disposition | Security and migration decision |
+|---|---|---|
+| `AccountMenuDropdown.tsx` | `HeaderBanner.tsx` account entry | Already represented; no duplicate menu. |
+| `AuthGatewayView.tsx`, `firebaseAuth.ts`, `authValidation.ts` | `AuthGate.tsx`, canonical Firebase setup, `AccountSecurityPanel.tsx` | Canonical verified-email admission, password policy, re-authentication and session invalidation retained. Do not copy the old auth gateway or Firebase configuration. |
+| `MyAccountSettingsView.tsx`, `accountSettingsHelpers.ts`, `types/settings.ts` | `AccountSettingsModal.tsx`, `accountSettings.ts`, `accountFormatting.ts`, dedicated theme/accessibility controls | Profile, local preferences, export/redaction defaults and regional preferences are represented. Global regional formatting has been integrated into reviewed user-visible surfaces. |
+| Legacy appearance/accessibility settings | Existing 20-theme system and dedicated accessibility controls | Retain canonical controls and storage; do not create a second settings store. Legacy density/camouflage-only settings are not separately ported where no canonical behavior exists. |
+| Legacy notification preferences | **Deferred** | Source toggles claim operational/audit alerts, batching and delivery behavior without a corresponding trustworthy event/notification service. Audit alerts are especially unsupported because there is no in-app audit writer/feed. Do not expose non-functional controls or imply delivery. |
+| Legacy inactivity-timeout preference | **Deferred** | A numeric preference alone is not an enforced session timeout. Revisit only with a separately designed and tested session-expiry control that cannot weaken Firebase/session invalidation. |
+| Legacy analytics-consent preference | **Deferred** | No old settings boolean is treated as proof of valid telemetry consent. Review actual analytics collection, notice, opt-in/opt-out semantics and platform controls independently before adding a preference. |
+| `OrganisationModal.tsx`, `types/multiorg.ts` | `OrganisationWorkspacePanel.tsx`, `OrganisationProfilePanel.tsx`, `types/organisation.ts`, candidate Firestore Rules | Canonical four-role model and read-only verified context retained. Remix six-role vocabulary, sample organisations, client administration, and simulated audit claims rejected. |
+| `multiOrgRbac.test.ts` | Firestore Rules Emulator suite plus tenant/domain/UI contract tests | Replaced mock role/rule assertions with actual emulator-backed allow/deny tests and separate pure-policy/UI tests. |
+| `PrivacyNoticeModal.tsx` | `DemonstrationNoticeModal.tsx` | Replaced unsupported claims about zero transmission, data handling and organisation identity with an explicit, honest demonstration-scope notice. |
+| `privacyService.ts`, `types/privacy.ts` | Privacy Console repository plus DPDP-01 through DPDP-06 synthetic governance/casework models | Safe workflow concepts are represented synthetically. Fictional fiduciary/DPO identities, unsupported legal conclusions, fabricated statutory SLAs, fake notification/filing claims, and account-erasure execution are rejected. No real request or statutory submission is made. |
+| `firestoreService.ts` | Canonical Firebase setup, exact tenant membership resolver and reviewed candidate Rules | Old project/service configuration and generic collection access are not portable; no old Firebase project ID, settings collection or credentials are reused. |
+| `userSettingsService.ts` | **Rejected as-is**; canonical account settings remain browser-local | Its cache-first writes can return `success: true` after Firestore persistence fails, and its `userSettings` remote path is outside the approved Rules schema. No remote settings sync or cache fallback is introduced. |
+| `accountSettingsHelpers.test.ts`, `userSettingsService.test.ts`, `privacyService.test.ts` | Canonical account-settings, privacy repository, DPDP governance and casework tests | Replaced where the behavior was safe; tests for rejected remote persistence/legal assertions are not copied as product guarantees. |
+
+### Remaining migration classifications
+
+- **Already present / ported safely:** account entry, authenticated identity/security lifecycle, profile and local account preferences, themes/accessibility, regional formatting, synthetic privacy governance and casework, read-only organisation context, tenant membership resolver, conservative candidate Rules and emulator/domain tests.
+- **Rejected as-is:** Remix Firebase project/configuration, cache-first remote settings service, mock-only RBAC as authorization proof, six-role/sample-tenant model, fictional privacy notice/fiduciary data, unsupported statutory SLA/filing/notification claims, and simulated immutable audit activity.
+- **Deferred pending independent design:** notification preference/dispatch system, inactivity timeout, analytics consent semantics, self-service invitations/membership changes, trusted audit writer, operational data migration, and production Rules publication.
+- **Still open:** full end-to-end regression/security review across all migrated operational capabilities and final sign-off that every source candidate has a verified destination or explicit disposition.
+
+This reconciliation does not authorise production configuration changes, remote operational-data writes, tenant provisioning, or retirement of SAFER-Remix.
