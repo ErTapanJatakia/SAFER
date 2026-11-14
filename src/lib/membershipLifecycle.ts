@@ -239,11 +239,14 @@ export function evaluateMembershipChange(
   } = record;
 
   if (
-    !UID.test(actorUid) || !UID.test(targetUid)
-    || !TENANT_ROLES.includes(actorRole) || !TENANT_ROLES.includes(currentRole)
-    || !TENANT_ROLES.includes(nextRole)
-    || !MEMBERSHIP_STATUSES.includes(currentStatus) || !MEMBERSHIP_STATUSES.includes(nextStatus)
-    || !Number.isSafeInteger(activeOwnerCount) || activeOwnerCount < 0
+    typeof actorUid !== 'string' || !UID.test(actorUid)
+    || typeof targetUid !== 'string' || !UID.test(targetUid)
+    || typeof actorRole !== 'string' || !TENANT_ROLES.includes(actorRole as TenantRole)
+    || typeof currentRole !== 'string' || !TENANT_ROLES.includes(currentRole as TenantRole)
+    || typeof nextRole !== 'string' || !TENANT_ROLES.includes(nextRole as TenantRole)
+    || typeof currentStatus !== 'string' || !MEMBERSHIP_STATUSES.includes(currentStatus as ManagedMembershipStatus)
+    || typeof nextStatus !== 'string' || !MEMBERSHIP_STATUSES.includes(nextStatus as ManagedMembershipStatus)
+    || typeof activeOwnerCount !== 'number' || !Number.isSafeInteger(activeOwnerCount) || activeOwnerCount < 0
   ) return { allowed: false, reason: 'invalid-context' };
 
   // A proposal about an active owner must include that owner in the supplied
