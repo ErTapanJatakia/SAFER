@@ -453,14 +453,24 @@ test("membership mutation attempts fail for every role, including cross-user and
     }));
   }
 });
-test("tenant list queries must constrain the organisation field", async () => {
+test("tenant operational collection listing remains disabled until a schema-safe index is approved", async () => {
   await seedTenant();
   const db = dbFor("owner-a");
-  await assertSucceeds(getDocs(query(
+  // Firestore cannot prove arbitrary keys().hasOnly() predicates from a query.
+  // Do not weaken per-document read validation to make a collection query pass.
+  await assertFails(getDocs(query(
     collection(db, "organisations/org-a/personnel"),
     where("orgId", "==", "org-a"),
   )));
   await assertFails(getDocs(collection(db, "organisations/org-a/personnel")));
+  await assertFails(getDocs(query(
+    collection(db, "organisations/org-a/incidents"),
+    where("orgId", "==", "org-a"),
+  )));
+  await assertFails(getDocs(query(
+    collection(db, "organisations/org-a/evidence"),
+    where("orgId", "==", "org-a"),
+  )));
 });
 
 test("evidence metadata is read-only and deletes remain disabled", async () => {
