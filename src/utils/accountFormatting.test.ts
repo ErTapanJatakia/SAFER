@@ -37,7 +37,7 @@ describe('account regional formatting', () => {
   it('honours 12-hour and 24-hour time preferences', () => {
     const timestamp = '2026-11-13T13:05:00.000Z';
     expect(formatAccountTime(timestamp, prefs({ timezone: 'UTC', timeFormat: '24h' }))).toBe('13:05');
-    expect(formatAccountTime(timestamp, prefs({ timezone: 'UTC', timeFormat: '12h' }))).toMatch(/01:05\sPM/);
+    expect(formatAccountTime(timestamp, prefs({ timezone: 'UTC', locale: 'en-US', timeFormat: '12h' }))).toMatch(/01:05\sPM/);
   });
 
   it('uses selected display locale and global IANA timezone for timestamp formatting', () => {
