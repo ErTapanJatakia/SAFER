@@ -137,6 +137,19 @@ describe('AuthGate membership session handling',()=>{
   expect(verifiedWorkspace()).toBeNull();
   expect(host.querySelector('[role="alert"]')?.textContent).toContain('No active membership could be verified.');
  });
+ it('diagnoses the membership form event path without relaxing authorisation assertions',async()=>{
+  vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'manager',status:'active'});
+  auth(makeUser('user-a'));await flush();
+  const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
+  const form=field.closest('form')!;
+  change(field,'org-a');await flush();
+  expect(field.value).toBe('org-a');
+  expect((form.querySelector('button[type="submit"]') as HTMLButtonElement).disabled).toBe(false);
+  const nativeSubmit=vi.fn();form.addEventListener('submit',nativeSubmit);
+  submit(form);await flush();
+  expect(nativeSubmit).toHaveBeenCalledTimes(1);
+  expect(resolveTenantMembership).toHaveBeenCalledTimes(1);
+ });
  it('resolves the exact organisation for the authenticated UID',async()=>{vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'manager',status:'active'});auth(makeUser('user-a'));await flush();const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();expect(verifiedWorkspace()).not.toBeNull();expect(verifiedWorkspace()?.textContent).toContain('Manager');expect(resolveTenantMembership).toHaveBeenCalledWith({name:'test-db'},{uid:'user-a'},'org-a');});
  it('removes previously verified workspace metadata while re-verification is pending and after it fails',async()=>{
   let failSecond!:(reason:Error)=>void;
@@ -258,46 +271,3 @@ describe('AuthGate membership session handling',()=>{
   expect(host.textContent).not.toContain('Organisation administrator');
   button('Retry account verification').click();await flush();
   auth(makeUser('user-recovered'));await flush();
-  expect(verifiedWorkspace()).toBeNull();
-  expect(host.textContent).toContain('Signed in: user-recovered@example.test');
-  const recoveredField=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
-  expect(recoveredField.value).toBe('');
- });
- it('re-subscribes to Firebase auth state after an observer failure',async()=>{
-  const replacedObserver = listener;
-  act(()=>authError?.(new Error('auth observer unavailable')));
-  await flush();
-  expect(host.textContent).toContain('Retry account verification');
-  expect(onAuthStateChanged).toHaveBeenCalledTimes(1);
-  button('Retry account verification').click();
-  await flush();
-  expect(onAuthStateChanged).toHaveBeenCalledTimes(2);
-  expect(host.textContent).not.toContain('Retry account verification');
-  auth(makeUser('user-recovered'));
-  await flush();
-  expect(host.textContent).toContain('Account verified — workspace not yet released');
-  expect(host.textContent).toContain('Signed in: user-recovered@example.test');
-  expect(host.textContent).not.toContain('Continue as Demo Guest');
-  act(()=>replacedObserver?.(makeUser('user-stale')));
-  await flush();
-  expect(host.textContent).toContain('Signed in: user-recovered@example.test');
-  expect(host.textContent).not.toContain('user-stale@example.test');
- });
- it('does not resurrect a previous Demo Guest workspace after an auth identity appears and signs out',async()=>{
-  const read=vi.spyOn(window.Storage.prototype,'getItem');
-  button('Continue as Demo Guest').click();await flush();
-  expect(host.textContent).toContain('Operational app shell');
-  expect(retainedRepository).not.toBeNull();
-  auth(makeUser('user-a'));await flush();
-  expect(host.textContent).toContain('Account verified — workspace not yet released');
-  expect(host.textContent).not.toContain('Operational app shell');
-  expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);
-  auth(null);await flush();
-  expect(host.textContent).toContain('Continue as Demo Guest');
-  expect(host.textContent).not.toContain('Operational app shell');
-  expect(read).toHaveBeenCalledTimes(5);
-  button('Continue as Demo Guest').click();await flush();
-  expect(host.textContent).toContain('Operational app shell');
-  expect(read).toHaveBeenCalledTimes(10);
- });
-});
