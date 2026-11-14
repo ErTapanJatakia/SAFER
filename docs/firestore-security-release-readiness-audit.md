@@ -110,3 +110,10 @@ F-01 (browser-local operational data is not tenant/account isolated) and F-02 (c
 **Remediation in candidate branch:** Personnel and incident reads now enforce exact allowed/required key sets, path/document identity, bounded fields, allowed enums, and expected primitive/timestamp types. Evidence reads now enforce an explicit metadata-only key allowlist, bounded optional metadata, and paired SHA-256 algorithm/digest fields; unapproved fields such as raw evidence URLs are denied. No evidence writes or operational data migration were enabled.
 
 **Status:** Implemented in the candidate branch. New emulator regressions seed extra fields into personnel, incident, and evidence documents and assert that reads fail. Latest CI evidence is pending; do not close this finding until the exact latest head passes.
+
+
+### F-01 containment clarification — 2026-11-15
+
+The current AuthGate/Demo Guest boundary now prevents authenticated sessions from mounting the operational application: authenticated users see only the membership-verification/read-only organisation context, and the operational children are mounted only inside the explicitly authorised Demo Guest provider. `App.tsx` obtains its operational repository through the provider hook; `DemoGuestWorkspaceProvider` fails closed when browser storage cannot be safely probed. This is an important containment control and prevents authenticated users from inheriting the global Demo Guest repository.
+
+F-01 nevertheless remains a release blocker for real operational data. Demo Guest records remain browser-profile-local and are not tenant/account-isolated, and there is no approved tenant operational repository or data migration. The current release boundary is therefore synthetic Demo Guest data only; authenticated tenant operational access remains unavailable. Do not onboard real data or treat the candidate Firestore Rules as a data migration solution.
