@@ -260,4 +260,39 @@ test('membership policy rejects malformed role and status values at runtime', ()
     currentStatus: 'pending' as never,
   })).reason, 'invalid-context');
 });
+
+test('membership policy rejects accessor-backed, exotic and hostile proxy inputs without executing getters', () => {
+  let getterCalls = 0;
+  const accessorProposal = proposal();
+  Object.defineProperty(accessorProposal, 'actorUid', {
+    enumerable: true,
+    get() { getterCalls += 1; return 'owner-001'; },
+  });
+  assert.deepEqual(evaluateMembershipChange(accessorProposal), {
+    allowed: false, reason: 'invalid-context',
+  });
+  assert.equal(getterCalls, 0);
+
+  const proxyProposal = new Proxy(proposal(), {
+    ownKeys() { throw new Error('hostile proxy'); },
+  });
+  assert.deepEqual(evaluateMembershipChange(proxyProposal), {
+    allowed: false, reason: 'invalid-context',
+  });
+
+  const exoticTransfer = Object.assign(Object.create({ inherited: true }), {
+    actorUid: 'owner-001', actorRole: 'owner',
+    targetUid: 'member-001', targetRole: 'manager', targetStatus: 'active',
+  });
+  assert.deepEqual(assessOwnerTransfer(exoticTransfer), {
+    eligible: false, reason: 'invalid-context',
+  });
+
+  const proxyTransfer = new Proxy({
+    actorUid: 'owner-001', actorRole: 'owner',
+    targetUid: 'member-001', targetRole: 'manager', targetStatus: 'active',
+  }, { getOwnPropertyDescriptor() { throw new Error('hostile proxy'); } });
+  assert.deepEqual(assessOwnerTransfer(proxyTransfer), {
+    eligible: false, reason: 'invalid-context',
+  });
 });
