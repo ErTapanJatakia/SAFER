@@ -272,7 +272,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
     if (!requestToken || requestToken.uid !== requestedUid || requestToken.orgId !== requestedOrganisationId) {
       setMembership(null);
       setMembershipBusy(false);
-      setMembershipError('Membership could not be verified. Check your connection and organisation ID, then retry or contact an authorised administrator.');
+      setMembershipError('No active membership could be verified. The organisation ID may be incorrect, the membership or organisation may be suspended, access may have been revoked, or the service may be unavailable. Check the ID and retry, or contact an authorised administrator.');
       return;
     }
     setMembershipBusy(true);
@@ -285,7 +285,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
         // resolver. A mismatched adapter/result must never publish tenant UI.
         if (!isCurrentUserActiveMember(resolved, requestToken.uid, requestToken.orgId)) {
           setMembership(null);
-          setMembershipError('Membership could not be verified. Check the organisation ID or contact its authorised administrator.');
+          setMembershipError('No active membership could be verified. The organisation ID may be incorrect, the membership or organisation may be suspended, access may have been revoked, or the service may be unavailable. Check the ID and retry, or contact an authorised administrator.');
         } else {
           // Keep the verified result in memory only; never persist roles or tenant authority.
           setMembership(resolved);
