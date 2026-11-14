@@ -131,7 +131,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
 
           {activeTab === 'preferences' && (
             <div className="space-y-4">
-              <div><h3 className="font-semibold text-slate-900">Regional preferences</h3><p className="text-xs text-slate-600 mt-1">Regional preferences now control visible dates in personnel details, readiness cards, deployment checklists and incident lists; timestamps and counts in the Privacy Console; and numeric counts in the dashboard and personnel export preview. Stored records, calculations and formal evidence exports retain their existing formats.</p></div>
+              <div><h3 className="font-semibold text-slate-900">Regional preferences</h3><p className="text-xs text-slate-600 mt-1">Regional preferences now control visible dates in personnel details, readiness cards, deployment checklists and incident lists; timestamps and counts in the Privacy Console and DPDP governance workspace; and numeric counts in the dashboard and personnel export preview. Stored records, calculations and formal evidence exports retain their existing formats.</p></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label className={labelClass}>Date format
                   <select className={inputClass} value={settings.preferences.dateFormat} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, dateFormat: event.target.value as AccountSettings['preferences']['dateFormat'] } }))}>
