@@ -107,11 +107,7 @@ export function isOrganisationAuditEventType(
  * Strict runtime-shape validation; it does not establish trust or authenticity.
  * Only enumerable own data properties on plain objects are accepted.
  */
-export function isOrganisationAuditEvent(
-  value: unknown,
-): value is OrganisationAuditEvent {
-  const record = snapshotAuditEvent(value);
-  if (!record) return false;
+function isValidAuditSnapshot(record: EventSnapshot): boolean {
   const targetValid = !('targetUid' in record)
     || (typeof record.targetUid === 'string' && ID.test(record.targetUid));
 
@@ -126,6 +122,13 @@ export function isOrganisationAuditEvent(
     && (record.previousEventHash === null
       || (typeof record.previousEventHash === 'string' && HASH.test(record.previousEventHash)))
     && typeof record.eventHash === 'string' && HASH.test(record.eventHash);
+}
+
+export function isOrganisationAuditEvent(
+  value: unknown,
+): value is OrganisationAuditEvent {
+  const record = snapshotAuditEvent(value);
+  return record !== null && isValidAuditSnapshot(record);
 }
 
 /**
@@ -143,12 +146,10 @@ export function hasContinuousAuditHashLinks(
     let previousTimestamp: number | null = null;
 
     for (let index = 0; index < events.length; index += 1) {
-      const current = events[index];
-      if (!isOrganisationAuditEvent(current)) return false;
-
-      // Read validated primitive values once; do not rely on caller-owned objects.
-      const snapshot = snapshotAuditEvent(current);
-      if (!snapshot) return false;
+      // Snapshot each caller-owned event once; validation and linkage use the
+      // same primitive values, avoiding proxy time-of-check/time-of-use changes.
+      const snapshot = snapshotAuditEvent(events[index]);
+      if (!snapshot || !isValidAuditSnapshot(snapshot)) return false;
       const eventId = snapshot.eventId as string;
       const orgId = snapshot.orgId as string;
       const occurredAt = snapshot.occurredAt as number;
