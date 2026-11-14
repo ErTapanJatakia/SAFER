@@ -106,8 +106,16 @@ describe('session inactivity guard', () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(4 * 60_000); });
     await act(async () => { document.dispatchEvent(new Event('pointerdown', {bubbles: true})); });
     expect(host.textContent).toContain('5 min remaining');
-    await act(async () => { await vi.advanceTimersByTimeAsync(4 * 60_000); });
+
+    // Two minutes after activity, three minutes remain: no warning and no expiry.
+    await act(async () => { await vi.advanceTimersByTimeAsync(2 * 60_000); });
+    expect(host.textContent).toContain('3 min remaining');
     expect(host.querySelector('[role="alertdialog"]')).toBeNull();
+    expect(onExpire).not.toHaveBeenCalled();
+
+    // The warning then appears at the configured two-minute threshold.
+    await act(async () => { await vi.advanceTimersByTimeAsync(60_000); });
+    expect(host.querySelector('[role="alertdialog"]')).not.toBeNull();
     expect(onExpire).not.toHaveBeenCalled();
   });
 
