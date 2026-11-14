@@ -3,6 +3,7 @@ import { AlertTriangle, ClipboardCheck, PlusCircle } from 'lucide-react';
 import { createDpdpGovernanceRepository } from '../utils/dpdpGovernanceRepository.ts';
 import { canMarkPurposeReviewed, canApproveNoticeForDemo, canRecordSyntheticConsent, createSyntheticWithdrawal, getLatestConsentState } from '../utils/dpdpGovernance.ts';
 import type { PrivacyGovernanceSnapshot, PrivacyPurposeRecord, VersionedPrivacyNotice, ConsentLifecycleEvent } from '../types/dpdpGovernance.ts';
+import { DpdpCaseworkPanel } from './DpdpCaseworkPanel.tsx';
 
 const input = 'w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500';
 const button = 'rounded-lg border border-teal-600 bg-teal-800 px-3 py-2 text-xs font-semibold text-white';
@@ -144,7 +145,7 @@ export const PrivacyGovernancePanel: React.FC = () => {
       {notice.status === 'draft' && <button className={button + ' mt-2'} type="button" disabled={!acknowledged || !canApproveNoticeForDemo(notice, snapshot.purposes)} onClick={() => approveNotice(notice)}>Approve for demo only</button>}
     </article>)}</div>
 
-    <section className="space-y-3 rounded-lg border border-slate-700 p-3">
+    <DpdpCaseworkPanel snapshot={snapshot} acknowledged={acknowledged} save={save} />\n    <section className="space-y-3 rounded-lg border border-slate-700 p-3">
       <h4 className="font-semibold">Consent lifecycle ledger</h4>
       <p className="text-xs text-slate-400">Events are appended; current state is derived from history. This is not a legally valid consent mechanism.</p>
       <input className={input} value={consentSubject} onChange={(e) => setConsentSubject(e.target.value)} placeholder="Synthetic subject reference" maxLength={120} />
