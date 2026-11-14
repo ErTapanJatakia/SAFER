@@ -79,10 +79,14 @@ export const PrivacyGovernancePanel: React.FC = () => {
 
   const approveNotice = (notice: VersionedPrivacyNotice) => {
     if (!snapshot || !canApproveNoticeForDemo(notice, snapshot.purposes)) return;
-    const nextNotices = snapshot.notices.map((item) => item.id === notice.id
-      ? { ...item, status: 'approved-for-demo' as const, approvedAt: new Date().toISOString(),
-          reviewNote: 'Approved for synthetic demonstration only; not legal approval or public delivery.' }
-      : item);
+    const approvedAt = new Date().toISOString();
+    const nextNotices = snapshot.notices.map((item) => {
+      if (item.id === notice.id) return { ...item, status: 'approved-for-demo' as const, approvedAt,
+        reviewNote: 'Approved for synthetic demonstration only; not legal approval or public delivery.' };
+      if (item.noticeCode === notice.noticeCode && item.version < notice.version &&
+          item.status === 'approved-for-demo') return { ...item, status: 'superseded' as const };
+      return item;
+    });
     save({ ...snapshot, notices: nextNotices });
   };
 
