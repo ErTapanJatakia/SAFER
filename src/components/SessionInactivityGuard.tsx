@@ -116,7 +116,7 @@ export const SessionInactivityGuard: React.FC<SessionInactivityGuardProps> = ({
     recordActivity(true);
     const activityEvents: Array<keyof WindowEventMap> = ['pointerdown', 'keydown', 'touchstart', 'scroll', 'wheel'];
     const onActivity = () => recordActivity(true);
-    activityEvents.forEach((eventName) => window.addEventListener(eventName, onActivity, {passive: true}));
+    activityEvents.forEach((eventName) => document.addEventListener(eventName, onActivity, {passive: true, capture: true}));
     const onStorage = (event: StorageEvent) => {
       if (event.key === storageKey && event.newValue) {
         const remoteTimeout = Number(event.newValue);
@@ -140,7 +140,7 @@ export const SessionInactivityGuard: React.FC<SessionInactivityGuardProps> = ({
     const interval = window.setInterval(check, 1000);
     document.addEventListener('visibilitychange', check);
     return () => {
-      activityEvents.forEach((eventName) => window.removeEventListener(eventName, onActivity));
+      activityEvents.forEach((eventName) => document.removeEventListener(eventName, onActivity, true));
       window.removeEventListener('storage', onStorage);
       document.removeEventListener('visibilitychange', check);
       window.clearInterval(interval);
