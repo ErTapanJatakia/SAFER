@@ -84,6 +84,9 @@ export const TENANT_ROLE_UI_CAPABILITIES: Readonly<
 
 const TENANT_ROLES: readonly TenantRole[] = ['owner', 'admin', 'manager', 'viewer'];
 
+// Keep the runtime membership parser aligned with the exact Firestore schema.
+const MEMBERSHIP_KEYS = ['uid', 'orgId', 'role', 'status'] as const;
+
 export function isTenantRole(value: unknown): value is TenantRole {
   return typeof value === 'string' && TENANT_ROLES.includes(value as TenantRole);
 }
