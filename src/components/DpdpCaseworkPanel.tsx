@@ -4,7 +4,7 @@ import type {
   RetentionDispositionRecord, PersonalDataBreachCase, AccountabilityAssignment,
   AssuranceEvidenceRecord,
 } from '../types/dpdpGovernance.ts';
-import { canAdvanceRightsCase } from '../utils/dpdpGovernance.ts';
+import { canAdvanceRightsCase, approveRetentionDisposition } from '../utils/dpdpGovernance.ts';
 
 const field = 'w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-slate-100';
 const action = 'rounded-lg border border-teal-600 bg-teal-800 px-3 py-2 text-xs font-semibold text-white';
@@ -26,6 +26,10 @@ export const DpdpCaseworkPanel: React.FC<Props> = ({ snapshot, acknowledged, sav
   const [control, setControl] = useState('');
   const [evidenceRef, setEvidenceRef] = useState('');
 
+  const approveDisposition = (item: RetentionDispositionRecord) => {
+    const approved = approveRetentionDisposition(item, 'organisation-owner');
+    if (approved) save({ ...snapshot, retentionDispositions: snapshot.retentionDispositions.map((entry) => entry.id === item.id ? approved : entry) });
+  };
   const addRightsCase = (event: React.FormEvent) => {
     event.preventDefault();
     if (!acknowledged || !subject.trim() || !description.trim()) return;
@@ -146,7 +150,7 @@ export const DpdpCaseworkPanel: React.FC<Props> = ({ snapshot, acknowledged, sav
         <div className="flex flex-wrap gap-2">{(['retain','restrict-review','delete-after-approval','defer'] as const).map((value) =>
           <button key={value} className={action} disabled={!acknowledged} onClick={() => proposeDisposition(item,value)}>{value}</button>)}</div>
       </article>)}
-      {snapshot.retentionDispositions.map((item) => <p key={item.id} className="text-xs text-slate-400">{item.disposition} · executed: no · {item.decisionNote}</p>)}
+      {snapshot.retentionDispositions.map((item) => <article key={item.id} className="rounded border border-slate-700 p-2 text-xs"><p>{item.disposition} · approved by: {item.approvedByRole ?? 'pending'} · executed: no</p><p className="text-slate-400">{item.decisionNote}</p>{!item.approvedByRole && <button className={action} disabled={!acknowledged} onClick={() => approveDisposition(item)}>Approve with separate owner role</button>}</article>)}
     </section>
 
     <section className="space-y-3 rounded-lg border border-slate-700 p-3">
