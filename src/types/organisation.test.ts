@@ -105,3 +105,29 @@ test('active membership boundary rejects accessor-backed and exotic objects', ()
     false,
   );
 });
+
+test('active membership boundary rejects non-enumerable fields and hostile proxies', () => {
+  const hiddenField = {
+    uid: 'synthetic-user-a',
+    orgId: 'synthetic-org-a',
+    role: 'owner',
+    status: 'active',
+  };
+  Object.defineProperty(hiddenField, 'uid', {
+    value: 'synthetic-user-a', enumerable: false, configurable: true,
+  });
+  assert.equal(isCurrentUserActiveMember(hiddenField, 'synthetic-user-a', 'synthetic-org-a'), false);
+
+  const hostileProxy = new Proxy({
+    uid: 'synthetic-user-a',
+    orgId: 'synthetic-org-a',
+    role: 'owner',
+    status: 'active',
+  }, {
+    ownKeys() { throw new Error('hostile membership proxy'); },
+  });
+  assert.equal(isCurrentUserActiveMember(hostileProxy, 'synthetic-user-a', 'synthetic-org-a'), false);
+  assert.equal(isCurrentUserActiveMember({
+    uid: 'synthetic-user-a', orgId: 'invalid/org', role: 'owner', status: 'active',
+  }, 'synthetic-user-a', 'invalid/org'), false);
+});
