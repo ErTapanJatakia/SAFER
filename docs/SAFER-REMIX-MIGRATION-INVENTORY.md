@@ -574,15 +574,15 @@ The hardened audit validator checks exact runtime shape and supplied hash-link c
 
 ## DPDP implementation progress (2026-11-14)
 
-The canonical SAFER branch is now implementing the privacy capabilities identified in SAFER-Remix as a staged DPDP programme. The status below distinguishes existing synthetic demonstrations from newly implemented workflow foundations; it does not assert legal compliance.
+The canonical SAFER branch has implemented the DPDP-01 through DPDP-06 synthetic workflow foundations identified during SAFER-Remix reconciliation. The status below distinguishes workflow scaffolding from real legal/operational processing; it does not assert legal compliance.
 
 | DPDP workstream | Current implementation status | Remaining implementation / release boundary |
 |---|---|---|
 | DPDP-01 — Privacy governance | Implemented as a synthetic-only workflow foundation on this branch: purpose register and organisation-review marker; versioned notice drafts; demo-only approval gated on reviewed linked purposes; supersession of the prior approved notice; consent grant and append-only withdrawal events; derived current consent state; separate browser-local repository with schema validation, 1 MB bound and stale-write detection. | Consolidated validation and accessibility review remain pending. No public notice delivery, legal approval, determination of lawful grounds, or claim of valid consent. |
-| DPDP-02 — Data principal rights | Existing synthetic access/correction/erasure request and grievance examples remain in the Privacy Console. | Add explicit identity-verification state boundaries, request scope/response tracking and decision evidence. No real submissions, statutory deadline claims or real erasure. |
-| DPDP-03 — Retention/deletion governance | Existing manual synthetic retention review notes; new DPDP purpose records capture organisation-defined retention rules without asserting statutory periods. | Add schedule/review workflow, approval and disposition evidence. No automatic or destructive deletion. |
-| DPDP-04 — Personal data breach management | Not yet implemented as a dedicated DPDP workflow. | Add synthetic incident register, assessment, containment/response actions, evidence references and notification decision tracking; no actual regulator/data-principal notification. |
-| DPDP-05 — Accountability and assurance | Existing processing register/export and dormant audit contract; new purpose and notice review metadata. | Add responsibility assignments, review history and evidence export with explicit integrity/trust limitations. No immutable audit or trusted writer claim. |
+| DPDP-02 — Data principal rights | Implemented synthetic casework foundation: access, correction, completion, erasure and grievance case types; identity-check states; synthetic-reference match gate before progress/completion; assigned workflow role, scope, decision and evidence-reference fields. | Real identity verification, statutory timelines, external submissions and actual rights fulfilment remain outside the demo. |
+| DPDP-03 — Retention/deletion governance | Implemented organisation-defined retention schedule and review date records; disposition proposals for retain/restrict/defer/delete-after-approval; separate organisation-owner approval role; execution is fixed false. | Real deletion remains manual, external and separately authorised; no automated purge or destructive record mutation. |
+| DPDP-04 — Personal data breach management | Implemented synthetic breach register with discovery/record timestamps, affected data/system categories, severity, response state, containment/remediation markers, notification assessment and evidence references. | Actual incident response, reportability decision, regulator/data-principal notification and external evidence ingestion are not provided. |
+| DPDP-05 — Accountability and assurance | Implemented responsibility assignments and evidence-reference records with reviewer role, timestamp and explicit limitations; purpose/notice review metadata retained. | Full approval history, trusted evidence verification and integrity-protected export remain future work; no immutable audit or trusted-writer claim. |
 | DPDP-06 — Security and validation | Existing synthetic-only repository boundary, field/collection/byte limits, fail-closed storage and stale-write checks; new governance repository uses the same local-only and bounded approach. | Consolidated tests, tenant/role review and emulator-backed security assurance before any authenticated/remote workflow. |
 
 New DPDP governance files on this feature branch:
@@ -591,6 +591,8 @@ New DPDP governance files on this feature branch:
 - `src/utils/dpdpGovernance.test.ts`
 - `src/utils/dpdpGovernanceRepository.ts`
 - `src/utils/dpdpGovernanceRepository.test.ts`
+- `src/utils/dpdpCasework.test.ts`
 - `src/components/PrivacyGovernancePanel.tsx`
+- `src/components/DpdpCaseworkPanel.tsx`
 
-The existing privacy workspace schema and operational collections have not been migrated or rewritten. The new governance workspace uses its own key, `safer_dpdp_governance_demo_v1`, and accepts synthetic examples only. Its demo approval labels are workflow states, not legal determinations. DPDP-01 domain, repository and UI regression tests have been authored but not executed in this implementation batch.
+The existing privacy workspace schema and operational collections have not been migrated or rewritten. The new governance workspace uses its own key, `safer_dpdp_governance_demo_v1`, and accepts synthetic examples only. Its demo approval labels are workflow states, not legal determinations. DPDP-01 through DPDP-06 domain, repository and workflow regression tests have been authored and registered under `test:dpdp-governance`; they have not been executed in this implementation batch.
