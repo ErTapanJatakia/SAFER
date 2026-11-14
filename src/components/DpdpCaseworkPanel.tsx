@@ -5,6 +5,7 @@ import type {
   AssuranceEvidenceRecord,
 } from '../types/dpdpGovernance.ts';
 import { canAdvanceRightsCase, approveRetentionDisposition, canCloseBreachCase } from '../utils/dpdpGovernance.ts';
+import { formatAccountDateTime, readAccountPreferences } from '../utils/accountFormatting.ts';
 
 const field = 'w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-slate-100';
 const action = 'rounded-lg border border-teal-600 bg-teal-800 px-3 py-2 text-xs font-semibold text-white';
@@ -15,6 +16,7 @@ interface Props {
   save: (next: PrivacyGovernanceSnapshot) => boolean;
 }
 export const DpdpCaseworkPanel: React.FC<Props> = ({ snapshot, acknowledged, save }) => {
+  const accountPreferences = readAccountPreferences();
   const [subject, setSubject] = useState('');
   const [kind, setKind] = useState<PrincipalRightsCase['requestKind']>('access');
   const [description, setDescription] = useState('');
@@ -135,6 +137,7 @@ export const DpdpCaseworkPanel: React.FC<Props> = ({ snapshot, acknowledged, sav
       {snapshot.rightsCases.map((item) => <article key={item.id} className="rounded border border-slate-700 p-2 text-xs">
         <strong>{item.requestKind.toUpperCase()} · {item.subjectRef}</strong>
         <p>Status: {item.status}; identity: {item.identityCheck}; assigned: {item.assignedRole}</p>
+        <p className="text-slate-500">Received {formatAccountDateTime(item.receivedAt, accountPreferences)} · Updated {formatAccountDateTime(item.updatedAt, accountPreferences)}</p>
         <p className="text-slate-400">{item.description}</p>
         {item.status === 'received' && <button className={action} disabled={!acknowledged} onClick={() => advanceCase(item,'identity-check')}>Start identity-check workflow</button>}
         {item.status === 'identity-check' && <button className={action} disabled={!acknowledged} onClick={() => advanceCase(item,'in-progress')}>Mark synthetic reference matched and progress</button>}
@@ -151,7 +154,7 @@ export const DpdpCaseworkPanel: React.FC<Props> = ({ snapshot, acknowledged, sav
         <button className={action} disabled={!acknowledged || snapshot.purposes.length === 0}>Add retention schedule</button>
       </form>
       {snapshot.retentionSchedules.map((item) => <article key={item.id} className="rounded border border-slate-700 p-2 text-xs">
-        <strong>{item.dataCategory}</strong><p>{item.retentionRule} · review {item.reviewAt}</p>
+        <strong>{item.dataCategory}</strong><p>{item.retentionRule} · review {formatAccountDateTime(item.reviewAt, accountPreferences)}</p>
         <div className="flex flex-wrap gap-2">{(['retain','restrict-review','delete-after-approval','defer'] as const).map((value) =>
           <button key={value} className={action} disabled={!acknowledged} onClick={() => proposeDisposition(item,value)}>{value}</button>)}</div>
       </article>)}
@@ -168,6 +171,7 @@ export const DpdpCaseworkPanel: React.FC<Props> = ({ snapshot, acknowledged, sav
       </form>
       {snapshot.breachCases.map((item) => <article key={item.id} className="rounded border border-slate-700 p-2 text-xs">
         <strong>{item.reference} · {item.severity}</strong><p>{item.summary}</p>
+        <p className="text-slate-500">Discovered {formatAccountDateTime(item.discoveredAt, accountPreferences)} · Recorded {formatAccountDateTime(item.recordedAt, accountPreferences)}</p>
         <p>Status: {item.status}; notification assessment: {item.notificationAssessment}</p>
         <p className="text-slate-400">Synthetic action markers only; do not enter actual breach details or notify anyone from this demonstration.</p>
         {item.status === 'reported' && <button className={action} disabled={!acknowledged} onClick={() => updateBreach(item,{status:'assessing',severity:'moderate'})}>Begin assessment (demo)</button>}
@@ -189,7 +193,7 @@ export const DpdpCaseworkPanel: React.FC<Props> = ({ snapshot, acknowledged, sav
         <input className={field} value={evidenceRef} onChange={(e) => setEvidenceRef(e.target.value)} placeholder="Evidence reference (no upload)" maxLength={200} required />
         <button className={action} disabled={!acknowledged}>Add evidence reference</button>
       </form>
-      {snapshot.assuranceEvidence.map((item) => <p key={item.id} className="text-xs text-slate-400">{item.controlCode} · {item.controlDescription} · {item.evidenceRef} · {item.limitations}</p>)}
+      {snapshot.assuranceEvidence.map((item) => <p key={item.id} className="text-xs text-slate-400">{item.controlCode} · {item.controlDescription} · {item.evidenceRef} · reviewed {formatAccountDateTime(item.reviewedAt, accountPreferences)} · {item.limitations}</p>)}
     </section>
 
     <section className="rounded-lg border border-slate-700 p-3">
