@@ -255,3 +255,10 @@ The owner/admin role check, exact organisation document read, active status, bou
 The exported organisation profile reader now independently validates its membership argument before constructing a Firestore document reference. It accepts only an exact plain data object containing UID, organisation ID, active status and owner/admin role. Accessors, inherited/exotic objects, symbol/extra keys, malformed IDs and proxy inspection failures are rejected before any Firestore call. The reader copies validated primitives into a frozen internal value, so later profile-path construction does not re-read caller-controlled properties.
 
 This is defence in depth for direct callers; the normal AuthGate path already resolves and validates the exact membership response. It does not replace Firestore Rules or independently prove the membership belongs to the current Firebase user. That provenance remains the responsibility of the authenticated resolver and Rules. Regression tests are authored and pending consolidated validation.
+
+
+## Membership lifecycle policy input boundary
+
+The advisory membership-change and owner-transfer evaluators now snapshot exact plain data objects before reading policy fields. Accessor properties, inherited or exotic prototypes, symbol/extra keys, missing fields, and proxy inspection failures return the same invalid-context decision. Accessor getters are not invoked. The evaluators validate the copied primitive values before applying role, status, and owner-count policy.
+
+This is defensive runtime validation for pure client-side policy helpers only. It does not authenticate the actor, establish tenant membership, authorize a write, make owner counts transactional, or change Firestore Rules. Trusted administration remains unavailable until a separately reviewed execution authority exists. Regression cases cover getter non-execution, exotic prototypes, and hostile proxies; they are authored but have not been executed.
