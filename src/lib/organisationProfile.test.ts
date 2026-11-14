@@ -38,6 +38,30 @@ describe('readOrganisationProfile', () => {
     expect(doc).not.toHaveBeenCalled();
   });
 
+
+  it('rejects hostile or malformed membership objects before any organisation read', async () => {
+    let getterExecuted = false;
+    const accessor = Object.defineProperties({}, {
+      uid: {enumerable: true, value: 'user-a'},
+      orgId: {enumerable: true, value: 'org-alpha'},
+      role: {enumerable: true, get() { getterExecuted = true; return 'owner'; }},
+      status: {enumerable: true, value: 'active'},
+    });
+    const valid = membership('owner');
+    const exotic = Object.assign(Object.create({inherited: true}), valid);
+    const symbolKeyed = {...valid, [Symbol('unexpected')]: true};
+    const hostileProxy = new Proxy(valid, {ownKeys() { throw new Error('inspection trap'); }});
+
+    for (const invalid of [accessor, exotic, symbolKeyed, hostileProxy, null, undefined]) {
+      await expect(readOrganisationProfile(database, invalid as any)).rejects.toMatchObject({
+        code: 'not-authorised',
+      });
+    }
+    expect(getterExecuted).toBe(false);
+    expect(doc).not.toHaveBeenCalled();
+    expect(getDoc).not.toHaveBeenCalled();
+  });
+
   it('rejects a profile whose organisation ID does not match the verified membership', async () => {
     vi.mocked(getDoc).mockResolvedValue({exists: () => true, data: () => ({...profile, orgId: 'org-other'})} as any);
     await expect(readOrganisationProfile(database, membership())).rejects.toBeInstanceOf(OrganisationProfileError);
