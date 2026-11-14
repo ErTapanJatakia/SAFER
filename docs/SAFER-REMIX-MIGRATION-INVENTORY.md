@@ -596,3 +596,15 @@ New DPDP governance files on this feature branch:
 - `src/components/DpdpCaseworkPanel.tsx`
 
 The existing privacy workspace schema and operational collections have not been migrated or rewritten. The new governance workspace uses its own key, `safer_dpdp_governance_demo_v1`, and accepts synthetic examples only. Its demo approval labels are workflow states, not legal determinations. DPDP-01 through DPDP-06 domain, repository and workflow regression tests have been authored and registered under `test:dpdp-governance`; they have not been executed in this implementation batch.
+
+
+## Validation and regional-format follow-up — 2026-11-15
+
+This dated update supersedes earlier provisional statements in this inventory that described all DPDP automated validation as pending. It does not erase the historical audit notes above.
+
+- **Verified CI baseline:** On exact commit `63077a145197ebaad29eef7492609d11633c4c1`, the repository `validate` check and independent DPDP governance validation check both passed. This evidence applies to that exact commit only; later commits require fresh checks.
+- **DPDP assurance documentation:** The assurance note now records the verified CI baseline and separates it from manual accessibility review and any separately evidenced emulator or end-to-end work.
+- **Regional-format integration:** The shared account-formatting utilities are applied across the header, dashboard, personnel details/readiness, pre-deployment, incident lists, privacy console, and personnel export preview. The DPDP casework panel was identified as an additional visible timestamp surface and has now been updated to use the account's regional date/time preferences. Stored ISO timestamps, date calculations, sorting, and formal evidence serialization remain unchanged.
+- **Remaining UX-01 gate:** Re-run mandatory checks on the latest branch head, then perform a final source-level scan for any remaining user-visible timestamp/number surfaces before marking regional-format integration complete. Do not count CI on the earlier baseline as validation of the newer casework/documentation commits.
+- **Migration gate:** End-to-end regression/security review and final source-to-destination reconciliation remain open. SAFER-Remix remains reference-only and must not be archived or deleted without explicit owner confirmation.
+- **Release posture:** PR #138 remains open and draft. No merge, deployment, production authentication/rules change, trusted provisioning, or real operational-data migration is authorized by this update.
