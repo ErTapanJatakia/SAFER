@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Download, RotateCcw, Save, UserRound, X } from 'lucide-react';
 import { useModalFocus } from '../hooks/useModalFocus.ts';
+import { MAX_SESSION_TIMEOUT_MINUTES, MIN_SESSION_TIMEOUT_MINUTES, useOptionalSessionTimeoutPreference } from './SessionInactivityGuard.tsx';
 import {
   ACCOUNT_SETTINGS_STORAGE_KEY,
   createAccountSettingsExport,
@@ -27,6 +28,7 @@ function readStoredSettings(): AccountSettings {
 
 export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOpen, onClose, onSaved }) => {
   const modalRef = useModalFocus<HTMLDivElement>(isOpen, onClose);
+  const sessionTimeout = useOptionalSessionTimeoutPreference();
   const [settings, setSettings] = useState<AccountSettings>(readStoredSettings);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'preferences' | 'data'>('profile');
@@ -131,6 +133,36 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
 
           {activeTab === 'preferences' && (
             <div className="space-y-4">
+              <section aria-labelledby="session-timeout-preference-title" className="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-3">
+                <div>
+                  <h3 id="session-timeout-preference-title" className="font-semibold text-slate-900">Session security</h3>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-700">Choose how long SAFER can remain inactive before automatically signing out this session. The default is 10 minutes. Your selection is saved immediately for this signed-in account or Demo Guest session on this browser.</p>
+                </div>
+                {sessionTimeout ? (
+                  <label className="block max-w-xs space-y-1 text-xs font-semibold text-slate-700">
+                    Inactivity timeout (minutes)
+                    <input
+                      aria-label="Account inactivity timeout in minutes"
+                      className={inputClass}
+                      type="number"
+                      inputMode="numeric"
+                      min={MIN_SESSION_TIMEOUT_MINUTES}
+                      max={MAX_SESSION_TIMEOUT_MINUTES}
+                      step={1}
+                      value={sessionTimeout.timeoutMinutes}
+                      onChange={(event) => {
+                        const next = Number(event.target.value);
+                        if (Number.isInteger(next) && next >= MIN_SESSION_TIMEOUT_MINUTES && next <= MAX_SESSION_TIMEOUT_MINUTES) {
+                          sessionTimeout.setTimeoutMinutes(next);
+                        }
+                      }}
+                    />
+                    <span className="block font-normal text-slate-600">Allowed range: {MIN_SESSION_TIMEOUT_MINUTES}–{MAX_SESSION_TIMEOUT_MINUTES} minutes. Applies to this session and other tabs for the same account on this browser.</span>
+                  </label>
+                ) : (
+                  <p className="text-xs text-slate-700">Session-specific settings are available while signed in or using Demo Guest.</p>
+                )}
+              </section>
               <div><h3 className="font-semibold text-slate-900">Regional preferences</h3><p className="text-xs text-slate-600 mt-1">Regional preferences now control visible dates in personnel details, readiness cards, deployment checklists and incident lists; timestamps and counts in the Privacy Console and DPDP governance workspace; and numeric counts in the dashboard and personnel export preview. Stored records, calculations and formal evidence exports retain their existing formats.</p></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label className={labelClass}>Date format
