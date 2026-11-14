@@ -1,4 +1,5 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {useModalFocus} from '../hooks/useModalFocus.ts';
 
 const TIMEOUT_OPTIONS = [5, 10, 15, 30] as const;
 type TimeoutMinutes = typeof TIMEOUT_OPTIONS[number];
@@ -121,6 +122,7 @@ export const SessionInactivityGuard: React.FC<SessionInactivityGuardProps> = ({
 
   const minutes = Math.ceil(remainingMs / 60_000);
   const warning = !expired && remainingMs <= WARNING_MS;
+  const warningModalRef = useModalFocus<HTMLElement>(warning, () => recordActivity(true));
 
   return (
     <>
@@ -137,11 +139,11 @@ export const SessionInactivityGuard: React.FC<SessionInactivityGuardProps> = ({
       {warning && (
         <div role="alertdialog" aria-modal="true" aria-labelledby="session-timeout-title"
           className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 p-4">
-          <section className="w-full max-w-md rounded-xl border border-amber-500 bg-slate-900 p-6 text-slate-100 shadow-2xl">
+          <section ref={warningModalRef} tabIndex={-1} className="w-full max-w-md rounded-xl border border-amber-500 bg-slate-900 p-6 text-slate-100 shadow-2xl">
             <h2 id="session-timeout-title" className="text-lg font-semibold">Your session is about to expire</h2>
             <p className="mt-2 text-sm text-slate-300">For your security, SAFER will sign you out after inactivity. Your session expires in approximately {minutes} minute{minutes === 1 ? '' : 's'}.</p>
             <div className="mt-5 flex flex-wrap justify-end gap-2">
-              <button type="button" onClick={() => {recordActivity(true);}} autoFocus
+              <button type="button" onClick={() => {recordActivity(true);}}
                 className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600">Continue session</button>
               <button type="button" onClick={expire}
                 className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-800">Sign out now</button>
