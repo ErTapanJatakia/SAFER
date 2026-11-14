@@ -144,3 +144,19 @@ test('audit chain accepts equal timestamps while preserving explicit hash order'
   });
   assert.equal(hasContinuousAuditHashLinks([first, second]), true);
 });
+
+test('audit chain snapshots each event once to avoid proxy time-of-check/time-of-use changes', () => {
+  const base = event();
+  let eventHashDescriptorReads = 0;
+  const changing = new Proxy(base, {
+    getOwnPropertyDescriptor(target, property) {
+      if (property === 'eventHash') {
+        eventHashDescriptorReads += 1;
+        return Reflect.getOwnPropertyDescriptor(target, property);
+      }
+      return Reflect.getOwnPropertyDescriptor(target, property);
+    },
+  });
+  assert.equal(hasContinuousAuditHashLinks([changing]), true);
+  assert.equal(eventHashDescriptorReads, 1);
+});
