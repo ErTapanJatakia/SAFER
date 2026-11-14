@@ -175,7 +175,7 @@ describe('OrganisationProfilePanel', () => {
 
   it('does not display profile metadata for a suspended membership', async () => {
     await act(async () => root.render(
-      <OrganisationProfilePanel database={database} membership={{...member('owner'), status: 'suspended'}} />,
+      <OrganisationProfilePanel database={database} membership={{...member('owner'), status: 'suspended'} as unknown as ReturnType<typeof member>} />,
     ));
     expect(readOrganisationProfile).not.toHaveBeenCalled();
     expect(host.textContent).toContain('active owner or administrator membership is required');
