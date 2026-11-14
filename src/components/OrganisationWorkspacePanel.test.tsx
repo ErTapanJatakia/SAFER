@@ -34,7 +34,7 @@ describe('OrganisationWorkspacePanel', () => {
     expect(host.textContent).toContain('org-alpha');
     expect(host.textContent).toContain('Organisation owner');
     expect(host.textContent).toContain('Membership verified at check time');
-    expect(host.textContent).toContain('Active when checked');
+    expect(host.textContent).toContain('Membership and organisation active when checked');
     expect(host.textContent).toContain('point-in-time result, not continuous monitoring');
     expect(host.textContent).toContain('re-evaluate each database request');
     expect(host.textContent).toContain('Operational workspace access is not released');
