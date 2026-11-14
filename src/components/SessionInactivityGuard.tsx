@@ -22,14 +22,6 @@ function persistTimeout(value: TimeoutMinutes): void {
   }
 }
 
-function readActivity(): number {
-  try {
-    const value = Number(window.localStorage.getItem(ACTIVITY_KEY));
-    return Number.isSafeInteger(value) && value > 0 && value <= Date.now() ? value : Date.now();
-  } catch {
-    return Date.now();
-  }
-}
 
 interface SessionInactivityGuardProps {
   sessionKey: string;
