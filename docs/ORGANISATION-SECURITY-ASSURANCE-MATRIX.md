@@ -24,9 +24,13 @@
 | Operational record provenance | Client changes tenant ID, record ID, creator, reporter, or timestamps | Firestore Rules | Existing personnel/incident mutation tests | Deny |
 | Invitation policy | Invalid digest, excessive expiry, terminal-state reuse, untrusted role | Pure policy model | src/lib/membershipLifecycle.test.ts | Reject; not authorization |
 | Last-owner safety | Last active owner demoted, suspended, or revoked | Pure policy model | Existing lifecycle tests | Reject; trusted backend must enforce atomically |
-| Audit envelope shape | Unknown event, extra field, malformed digest, invalid identifier; optional target omitted | TypeScript contract | src/types/organisationAudit.test.ts | Accept valid optional-field omission; reject malformed envelope |
-| Audit chain linkage | Broken previous hash or time reversal | TypeScript contract | Existing audit contract tests | Reject malformed sequence; not proof of immutability |
+| Audit envelope shape | Unknown event, extra/symbol keys, accessors, non-enumerable fields, exotic prototypes, hostile proxies, malformed digest/identifier/optional target | TypeScript contract | src/types/organisationAudit.test.ts | Accept exact plain data envelope; reject malformed or hostile input without invoking getters |
+| Audit chain linkage | Broken previous hash, duplicate ID, mixed organisation, time reversal, sparse/hostile array | TypeScript contract | src/types/organisationAudit.test.ts | Reject malformed sequence; equal timestamps allowed; not proof of immutability |
 | UI capability accuracy | UI conflates Rules-level permission with a released application workflow | UI/domain tests | Organisation workspace and capability tests | Label Rules permission separately; state that UI workflow is not released |
+
+## Audit assurance precision
+
+The audit validator accepts a strict runtime envelope and checks linkage between the supplied array elements. The 64-character hexadecimal fields are format-checked only: eventHash is not recomputed from event contents and previousEventHash is not independently authenticated. There is no signature verification, trusted writer identity, key custody, atomic sequence allocator, append-only persistence, or tamper-evident retention. A valid result therefore means only “shape and supplied-link continuity checks passed”; it must never be presented as proof of a genuine, complete, immutable, or tamper-proof audit log. Firestore Rules deny client audit reads and writes, and no trusted audit writer is implemented.
 
 ## Validation tiers
 
