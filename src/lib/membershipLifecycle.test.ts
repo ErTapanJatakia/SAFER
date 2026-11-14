@@ -30,6 +30,11 @@ function invitation(overrides: Partial<MembershipInvitation> = {}): MembershipIn
   };
 }
 
+function ownerTransferReason(input: Parameters<typeof assessOwnerTransfer>[0]) {
+  const assessment = assessOwnerTransfer(input);
+  return assessment.eligible ? undefined : assessment.reason;
+}
+
 function proposal(overrides: Partial<MembershipChangeProposal> = {}): MembershipChangeProposal {
   return {
     actorUid: 'owner-001',
@@ -222,7 +227,7 @@ test('owner transfer assessment requires a distinct active non-owner and trusted
     targetUid: 'member-001', targetRole: 'admin', targetStatus: 'active',
   }), { eligible: true, disposition: 'trusted-authority-required' });
 
-  assert.equal(assessOwnerTransfer({
+  assert.equal(ownerTransferReason({
     actorUid: 'owner-001', actorRole: 'owner',
     targetUid: 'owner-001', targetRole: 'admin', targetStatus: 'active',
   }).reason, 'self-transfer-forbidden');
@@ -303,7 +308,7 @@ test('membership policy rejects accessor-backed, exotic and hostile proxy inputs
   const exoticTransfer = Object.assign(Object.create({ inherited: true }), {
     actorUid: 'owner-001', actorRole: 'owner',
     targetUid: 'member-001', targetRole: 'manager', targetStatus: 'active',
-  });
+  } as const);
   assert.deepEqual(assessOwnerTransfer(exoticTransfer), {
     eligible: false, reason: 'invalid-context',
   });
@@ -311,7 +316,7 @@ test('membership policy rejects accessor-backed, exotic and hostile proxy inputs
   const proxyTransfer = new Proxy({
     actorUid: 'owner-001', actorRole: 'owner',
     targetUid: 'member-001', targetRole: 'manager', targetStatus: 'active',
-  }, { getOwnPropertyDescriptor() { throw new Error('hostile proxy'); } });
+  } as const, { getOwnPropertyDescriptor() { throw new Error('hostile proxy'); } });
   assert.deepEqual(assessOwnerTransfer(proxyTransfer), {
     eligible: false, reason: 'invalid-context',
   });
