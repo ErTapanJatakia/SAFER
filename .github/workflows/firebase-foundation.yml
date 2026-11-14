@@ -259,6 +259,9 @@ jobs:
       - name: Cross-tab session invalidation tests
         run: npm run test:session-invalidation
 
+      - name: Session inactivity timeout UI tests
+        run: npm run test:session-inactivity
+
       - name: Real Chromium cross-tab repository tests
         run: npm run test:browser-cross-tab
 
