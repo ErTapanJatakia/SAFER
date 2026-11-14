@@ -165,6 +165,7 @@ test('suspended memberships can be restored by an authorised actor but not by a 
     actorRole: 'manager', currentStatus: 'suspended', nextStatus: 'active',
   })).reason, 'actor-not-authorised');
   assert.equal(evaluateMembershipChange(proposal({
+    currentRole: 'manager', nextRole: 'manager',
     currentStatus: 'suspended', nextStatus: 'suspended',
   })).reason, 'invalid-transition');
 });
