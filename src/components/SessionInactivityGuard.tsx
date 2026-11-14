@@ -134,14 +134,14 @@ export const SessionInactivityGuard: React.FC<SessionInactivityGuardProps> = ({
             {TIMEOUT_OPTIONS.map((option) => <option key={option} value={option}>{option} minutes</option>)}
           </select>
         </label>
-        <span aria-live="off">Locks after inactivity · {minutes} min remaining</span>
+        <span aria-live="off">Signs out after inactivity · {minutes} min remaining</span>
       </div>
       {warning && (
-        <div role="alertdialog" aria-modal="true" aria-labelledby="session-timeout-title"
+        <div role="alertdialog" aria-modal="true" aria-labelledby="session-timeout-title" aria-describedby="session-timeout-description"
           className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 p-4">
           <section ref={warningModalRef} tabIndex={-1} className="w-full max-w-md rounded-xl border border-amber-500 bg-slate-900 p-6 text-slate-100 shadow-2xl">
             <h2 id="session-timeout-title" className="text-lg font-semibold">Your session is about to expire</h2>
-            <p className="mt-2 text-sm text-slate-300">For your security, SAFER will sign you out after inactivity. Your session expires in approximately {minutes} minute{minutes === 1 ? '' : 's'}.</p>
+            <p id="session-timeout-description" className="mt-2 text-sm text-slate-300">For your security, SAFER will sign you out after inactivity. Your session expires in approximately {minutes} minute{minutes === 1 ? '' : 's'}.</p>
             <div className="mt-5 flex flex-wrap justify-end gap-2">
               <button type="button" onClick={() => {recordActivity(true);}}
                 className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600">Continue session</button>
