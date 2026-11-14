@@ -47,7 +47,7 @@ describe('session inactivity guard', () => {
       const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
       if (!setter) throw new Error('HTMLInputElement value setter unavailable');
       setter.call(input, String(value));
-      input.dispatchEvent(new Event('change', {bubbles: true}));
+      input.dispatchEvent(new Event('input', {bubbles: true}));
     });
   };
 
@@ -115,10 +115,9 @@ describe('session inactivity guard', () => {
     await changeTimeout(5);
     await act(async () => { await vi.advanceTimersByTimeAsync(4 * 60_000); });
     await act(async () => {
-      const activityKey = window.localStorage.key(1) ?? window.localStorage.key(0);
       const storedKeys = Array.from({length: window.localStorage.length}, (_, index) => window.localStorage.key(index));
       const key = storedKeys.find((candidate) => candidate?.startsWith('safer_session_last_activity_v2_'));
-      expect(activityKey || key).toBeTruthy();
+      expect(key).toBeTruthy();
       window.dispatchEvent(new StorageEvent('storage', {key, newValue: String(Date.now())}));
     });
     await act(async () => { await vi.advanceTimersByTimeAsync(2 * 60_000); });
