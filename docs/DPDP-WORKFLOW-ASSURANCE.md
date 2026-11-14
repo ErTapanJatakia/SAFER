@@ -2,7 +2,7 @@
 
 **Scope:** SAFER's browser-local, synthetic demonstration workspace only.
 **Cost:** INR 0; no new service, provider, Firebase collection, Cloud Function or paid API.
-**Status:** DPDP-01 through DPDP-06 workflow foundations implemented on the feature branch, including synthetic JSON governance export. Automated tests are authored but have not yet been executed.
+**Status:** DPDP-01 through DPDP-06 workflow foundations implemented on the feature branch, including synthetic JSON governance export. The DPDP governance validation and main `validate` check passed on commit `63077a145197ebaad29eef7492609d11633c4c1` (2026-11-15). This records CI evidence for that exact commit; it is not a production release or a blanket claim that every manual, accessibility, emulator, or end-to-end review is complete.
 
 ## DPDP-01 — Privacy governance
 
@@ -54,16 +54,18 @@
 | Authorization | Role labels are workflow metadata only; not an authenticated authorization mechanism |
 | Evidence | References only; no independent verification or immutable audit claim |
 | Export | Explicit synthetic-only JSON export; unencrypted warning |
-| Validation | Domain and repository tests registered in `test:dpdp-governance`; execution pending consolidated validation |
+| Validation | Domain and repository validation passed in the independent DPDP governance check on `63077a145197ebaad29eef7492609d11633c4c1`; main `validate` check also passed on that exact commit. Manual accessibility review and any separately identified emulator/E2E work remain subject to their own evidence. |
 
-## Validation plan (not yet executed)
+## Validation evidence and remaining review
 
-1. Run the DPDP domain/repository suite.
-2. Run TypeScript typecheck and production build.
-3. Run existing privacy repository and export regression suites.
-4. Run the consolidated Firebase emulator Rules suite to ensure no tenant/operational authorization regressions.
-5. Review UI keyboard/screen-reader behavior, storage-failure states, and export warning.
-6. Review all findings; do not weaken or delete tests to obtain a pass.
+**CI evidence recorded 2026-11-15:** On exact commit `63077a145197ebaad29eef7492609d11633c4c1`, both the repository `validate` check and independent DPDP governance validation check passed. These checks are evidence for that commit only; subsequent changes require fresh checks.
+
+Remaining review is deliberately separated from the completed CI evidence:
+
+1. Confirm whether the consolidated Firebase emulator Rules suite is included in the required validation workflow; record its own result rather than inferring it from the DPDP check.
+2. Review UI keyboard/screen-reader behavior, storage-failure states, and export warning.
+3. Complete end-to-end regression and security review of migrated capabilities.
+4. Review all findings; do not weaken or delete tests to obtain a pass.
 
 ## Release boundary
 
