@@ -19,9 +19,9 @@ const StorageProbe=()=>{const repository=useDemoWorkspaceRepository();retainedRe
 
 let dom: JSDOM, root:Root, host:HTMLElement, listener:((user:ReturnType<typeof makeUser>|null)=>void)|undefined, authError:((error:Error)=>void)|undefined;
 const flush=async()=>{await act(async()=>{await Promise.resolve();await Promise.resolve();});};
-const button=(name:string)=>[...host.querySelectorAll('button')].find(b=>b.textContent?.trim()===name) as HTMLButtonElement;
-const change=(el:HTMLInputElement,value:string)=>{const view=el.ownerDocument.defaultView;if(!view)throw new Error('Input has no owning window');const setter=Object.getOwnPropertyDescriptor(view.HTMLInputElement.prototype,'value')?.set;if(!setter)throw new Error('HTMLInputElement value setter unavailable');setter.call(el,value);el.dispatchEvent(new view.Event('input',{bubbles:true}));el.dispatchEvent(new view.Event('change',{bubbles:true}));};
-const submit=(form:HTMLFormElement)=>form.dispatchEvent(new dom.window.Event('submit',{bubbles:true,cancelable:true}));
+const button=(name:string)=>{const element=[...host.querySelectorAll('button')].find(b=>b.textContent?.trim()===name) as HTMLButtonElement|undefined;if(!element)throw new Error(`Button not found: ${name}`);const nativeClick=element.click.bind(element);element.click=()=>act(()=>nativeClick());return element;};
+const change=(el:HTMLInputElement,value:string)=>{const view=el.ownerDocument.defaultView;if(!view)throw new Error('Input has no owning window');const setter=Object.getOwnPropertyDescriptor(view.HTMLInputElement.prototype,'value')?.set;if(!setter)throw new Error('HTMLInputElement value setter unavailable');act(()=>{setter.call(el,value);el.dispatchEvent(new view.Event('input',{bubbles:true}));el.dispatchEvent(new view.Event('change',{bubbles:true}));});};
+const submit=(form:HTMLFormElement)=>act(()=>{form.dispatchEvent(new dom.window.Event('submit',{bubbles:true,cancelable:true}));});
 const auth=(user:ReturnType<typeof makeUser>|null)=>{Object.defineProperty(firebaseAuth,'currentUser',{configurable:true,value:user});act(()=>listener?.(user));};
 beforeEach(async()=>{
  dom=new JSDOM('<!doctype html><html><body></body></html>',{url:'http://localhost'});
