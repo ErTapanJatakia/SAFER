@@ -74,6 +74,13 @@ export const SessionInactivityGuard: React.FC<SessionInactivityGuardProps> = ({
     const onActivity = () => recordActivity(true);
     activityEvents.forEach((eventName) => window.addEventListener(eventName, onActivity, {passive: true}));
     const onStorage = (event: StorageEvent) => {
+      if (event.key === SETTINGS_KEY && event.newValue) {
+        const remoteTimeout = Number(event.newValue);
+        if (TIMEOUT_OPTIONS.includes(remoteTimeout as TimeoutMinutes)) {
+          setTimeoutMinutes(remoteTimeout as TimeoutMinutes);
+        }
+        return;
+      }
       if (event.key !== ACTIVITY_KEY || !event.newValue) return;
       const remoteTime = Number(event.newValue);
       if (!Number.isSafeInteger(remoteTime) || remoteTime <= 0 || remoteTime > Date.now()) return;
@@ -152,7 +159,7 @@ export const SessionInactivityGuard: React.FC<SessionInactivityGuardProps> = ({
       )}
       {expired && (
         <div role="alert" className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950 p-6 text-center text-white">
-          <div><h2 className="text-lg font-semibold">Session expired</h2><p className="mt-2 text-sm text-slate-300">SAFER is ending this session. Sign in again to continue.</p></div>
+          <div><h2 className="text-lg font-semibold">Session expired</h2><p className="mt-2 text-sm text-slate-300">SAFER is ending this session. Sign in again to continue.</p><button type="button" onClick={() => onExpireRef.current()} className="mt-4 rounded-lg border border-slate-600 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">Retry sign out</button></div>
         </div>
       )}
       {children}
