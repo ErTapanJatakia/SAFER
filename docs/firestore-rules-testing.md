@@ -19,13 +19,13 @@ The checked-in `firestore.rules` is a conservative tenant-scoped **candidate rul
 
 - A signed-in user may get only their own `users/{uid}` profile and may create/update only the allowlisted profile fields bound to that UID. Profile listing and deletion are denied.
 - A signed-in user may get only their own exact active membership document when its UID, organisation ID, role and parent organisation state match the requested path. Every tenant authorization decision also requires the exact membership key set (`uid`, `orgId`, `role`, `status`) and the exact active organisation key set (`orgId`, `displayName`, `status`, `schemaVersion`), including a bounded display name and schema version 1. Membership listing and all client membership mutations are denied.
-- Only active `owner` and `admin` memberships may read the organisation metadata document and access the approved personnel and incident operations. Create/update operations enforce strict field allowlists, path binding, immutable creator/reporter provenance and server timestamps.
-- Owner/admin roles may read evidence metadata, but evidence create/update/delete is denied.
+- Only active `owner` and `admin` memberships may read the organisation metadata document and access the approved personnel and incident operations. Both read and write paths enforce exact field allowlists, path/document identity, bounded values, supported enums and expected types; create/update additionally enforce immutable creator/reporter provenance and server timestamps.
+- Owner/admin roles may read only an explicit metadata-only evidence envelope with bounded optional fields; unknown fields (including raw evidence URLs/storage paths) are denied. Evidence create/update/delete is denied.
 - `personnelPrivate`, `incidentRestricted`, and `auditEvents` deny all client access.
 - Manager and viewer memberships can resolve their own minimal membership but receive no tenant operational-data access under this candidate policy.
 - Organisation metadata writes, collection listing at the organisation root, membership list/create/update/delete, operational record deletion, and unmodelled paths remain denied.
 
-The emulator suite includes positive and negative cases for profile ownership, owner/admin access, manager/viewer denial, missing/suspended/revoked membership, suspended organisations, malformed trust anchors (including extra membership/organisation fields, unsupported organisation schema versions and invalid display names), tenant/path/UID binding, immutable provenance, constrained tenant queries, membership mutation attempts for every supported role, cross-tenant access, evidence restrictions, audit denial and restricted paths.
+The emulator suite includes positive and negative cases for profile ownership, owner/admin access, manager/viewer denial, missing/suspended/revoked membership, suspended organisations, malformed trust anchors (including extra membership/organisation fields, unsupported organisation schema versions and invalid display names), tenant/path/UID binding, immutable provenance, constrained tenant queries, malformed stored-record read denial for personnel/incidents/evidence, membership mutation attempts for every supported role, cross-tenant access, evidence restrictions, audit denial and restricted paths.
 
 ## Verified CI baseline
 
@@ -54,3 +54,10 @@ Passing emulator tests does not authorise production Rules publication, tenant p
 A follow-up review identified that the earlier tenant authorization helper did not apply the exact membership and organisation document key/schema checks consistently to every authorization path. The candidate Rules now centralise those checks, and new emulator cases reject extra membership fields, extra organisation metadata, unsupported schema versions, and malformed display names before organisation metadata or operational access is granted.
 
 The prior exact-head baseline above remains valid for `f02edc221066edab232902d5471dc790feebea88`. The additional trust-anchor changes and tests require a fresh mandatory CI pass on the current branch head before this follow-up can be considered validated.
+
+
+## Stored-record read validation — follow-up pending CI
+
+A further review closed the gap where a tenant-matching but malformed stored personnel, incident, or evidence document could pass the read rule despite carrying unexpected fields. Read rules now validate the stored document's exact key set and core schema before returning it. The evidence read path is restricted to an explicit metadata-only allowlist.
+
+The emulator regression `tenant reads reject stored personnel, incident, and evidence documents with unapproved fields` has been added. The latest candidate changes require a fresh mandatory CI pass before being treated as validated.
