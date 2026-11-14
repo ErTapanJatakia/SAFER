@@ -382,120 +382,24 @@ service cloud.firestore {
             || resource.data.recordedAt is timestamp)
           && (!('recordedByUid' in resource.data)
             || (resource.data.recordedByUid is string
-              && resource.data.recordedByUid.matches('^[A-Za-z0-9_-]{1,128}
-        allow create, update, delete: if false;
-      }
-
-      match /personnelPrivate/{recordId} {
-        allow read, write: if false;
-      }
-
-      match /incidentRestricted/{incidentId} {
-        allow read, write: if false;
-      }
-
-      match /auditEvents/{eventId} {
-        allow read, write: if false;
-      }
-    }
-
-    // Every unmodelled path, including collection-group and future paths,
-    // remains inaccessible unless a later reviewed rule explicitly grants it.
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}
-)))
+              && resource.data.recordedByUid.matches('^[A-Za-z0-9_-]{1,128}$')))
+          && (('integrityAlgorithm' in resource.data)
+            == ('integrityDigest' in resource.data))
           && (!('integrityAlgorithm' in resource.data)
             || resource.data.integrityAlgorithm == 'SHA-256')
           && (!('integrityDigest' in resource.data)
             || (resource.data.integrityDigest is string
-              && resource.data.integrityDigest.matches('^[a-fA-F0-9]{64}
-        allow create, update, delete: if false;
-      }
-
-      match /personnelPrivate/{recordId} {
-        allow read, write: if false;
-      }
-
-      match /incidentRestricted/{incidentId} {
-        allow read, write: if false;
-      }
-
-      match /auditEvents/{eventId} {
-        allow read, write: if false;
-      }
-    }
-
-    // Every unmodelled path, including collection-group and future paths,
-    // remains inaccessible unless a later reviewed rule explicitly grants it.
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}
-)))
-          && (('integrityAlgorithm' in resource.data)
-            == ('integrityDigest' in resource.data))
+              && resource.data.integrityDigest.matches('^[a-fA-F0-9]{64}$')))
           && (!('createdAt' in resource.data)
             || resource.data.createdAt is timestamp)
           && (!('createdByUid' in resource.data)
             || (resource.data.createdByUid is string
-              && resource.data.createdByUid.matches('^[A-Za-z0-9_-]{1,128}
-        allow create, update, delete: if false;
-      }
-
-      match /personnelPrivate/{recordId} {
-        allow read, write: if false;
-      }
-
-      match /incidentRestricted/{incidentId} {
-        allow read, write: if false;
-      }
-
-      match /auditEvents/{eventId} {
-        allow read, write: if false;
-      }
-    }
-
-    // Every unmodelled path, including collection-group and future paths,
-    // remains inaccessible unless a later reviewed rule explicitly grants it.
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}
-)))
+              && resource.data.createdByUid.matches('^[A-Za-z0-9_-]{1,128}$')))
           && (!('updatedAt' in resource.data)
             || resource.data.updatedAt is timestamp)
           && (!('updatedByUid' in resource.data)
             || (resource.data.updatedByUid is string
-              && resource.data.updatedByUid.matches('^[A-Za-z0-9_-]{1,128}
-        allow create, update, delete: if false;
-      }
-
-      match /personnelPrivate/{recordId} {
-        allow read, write: if false;
-      }
-
-      match /incidentRestricted/{incidentId} {
-        allow read, write: if false;
-      }
-
-      match /auditEvents/{eventId} {
-        allow read, write: if false;
-      }
-    }
-
-    // Every unmodelled path, including collection-group and future paths,
-    // remains inaccessible unless a later reviewed rule explicitly grants it.
-    match /{document=**} {
-      allow read, write: if false;
-    }
-  }
-}
-)));
+              && resource.data.updatedByUid.matches('^[A-Za-z0-9_-]{1,128}$')));
         allow create, update, delete: if false;
       }
 
