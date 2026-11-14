@@ -1,6 +1,5 @@
 import React, {act} from 'react';
 import {createRoot, type Root} from 'react-dom/client';
-import {JSDOM} from 'jsdom';
 import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
 import {AuthGate} from './AuthGate';
 import {useDemoWorkspaceRepository} from './DemoGuestWorkspaceProvider';
@@ -17,22 +16,21 @@ const makeUser=(uid:string)=>({uid,email:uid+'@example.test',emailVerified:true,
 let retainedRepository: DemoWorkspaceRepository | null = null;
 const StorageProbe=()=>{const repository=useDemoWorkspaceRepository();retainedRepository=repository;const [stored]=React.useState(()=>window.localStorage.getItem('prot_ops_personnel_v2'));return <div>Operational app shell {stored||''}</div>;};
 
-let dom: JSDOM, root:Root, host:HTMLElement, listener:((user:ReturnType<typeof makeUser>|null)=>void)|undefined, authError:((error:Error)=>void)|undefined;
+let root:Root, host:HTMLElement, listener:((user:ReturnType<typeof makeUser>|null)=>void)|undefined, authError:((error:Error)=>void)|undefined;
 const flush=async()=>{await act(async()=>{await Promise.resolve();await Promise.resolve();});};
 const button=(name:string)=>{const element=[...host.querySelectorAll('button')].find(b=>b.textContent?.trim()===name) as HTMLButtonElement|undefined;if(!element)throw new Error(`Button not found: ${name}`);const nativeClick=element.click.bind(element);element.click=()=>act(()=>nativeClick());return element;};
 const change=(el:HTMLInputElement,value:string)=>{const view=el.ownerDocument.defaultView;if(!view)throw new Error('Input has no owning window');const setter=Object.getOwnPropertyDescriptor(view.HTMLInputElement.prototype,'value')?.set;if(!setter)throw new Error('HTMLInputElement value setter unavailable');act(()=>{setter.call(el,value);el.dispatchEvent(new view.Event('input',{bubbles:true}));el.dispatchEvent(new view.Event('change',{bubbles:true}));});};
-const submit=(form:HTMLFormElement)=>act(()=>{form.dispatchEvent(new dom.window.Event('submit',{bubbles:true,cancelable:true}));});
+const submit=(form:HTMLFormElement)=>act(()=>{form.dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));});
 const auth=(user:ReturnType<typeof makeUser>|null)=>{Object.defineProperty(firebaseAuth,'currentUser',{configurable:true,value:user});act(()=>listener?.(user));};
 beforeEach(async()=>{
- dom=new JSDOM('<!doctype html><html><body></body></html>',{url:'http://localhost'});
- Object.assign(globalThis,{window:dom.window,document:dom.window.document,navigator:dom.window.navigator,HTMLElement:dom.window.HTMLElement,HTMLInputElement:dom.window.HTMLInputElement,Event:dom.window.Event,IS_REACT_ACT_ENVIRONMENT:true});
+ window.localStorage.clear();
  host=document.createElement('div');document.body.append(host);root=createRoot(host);listener=undefined;authError=undefined;retainedRepository=null;
  vi.mocked(onAuthStateChanged).mockImplementation((_auth,cb,error)=>{listener=cb as typeof listener;authError=error as typeof authError;listener!(null);return vi.fn();});
  vi.mocked(signOut).mockImplementation(async()=>{Object.defineProperty(firebaseAuth,'currentUser',{configurable:true,value:null});listener?.(null);});
  await act(async()=>{root.render(<AuthGate><StorageProbe /></AuthGate>);});
  await flush();
 });
-afterEach(async()=>{await act(async()=>root.unmount());dom.window.close();vi.clearAllMocks();});
+afterEach(async()=>{await act(async()=>root.unmount());host.remove();window.localStorage.clear();vi.clearAllMocks();});
 
 const verifiedWorkspace = () => host.querySelector('[data-testid="verified-organisation-workspace"]');
 
@@ -49,7 +47,7 @@ describe('AuthGate membership session handling',()=>{
   expect(next.value).toBe('');
   expect(host.textContent).toContain('user-b@example.test');
  });
- it('does not touch operational browser storage while signed out or authenticated',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');expect(read).not.toHaveBeenCalled();auth(makeUser('user-a'));await flush();expect(read).not.toHaveBeenCalled();expect(host.textContent).not.toContain('Operational app shell');});
+ it('does not touch operational browser storage while signed out or authenticated',async()=>{const read=vi.spyOn(window.Storage.prototype,'getItem');expect(read).not.toHaveBeenCalled();auth(makeUser('user-a'));await flush();expect(read).not.toHaveBeenCalled();expect(host.textContent).not.toContain('Operational app shell');});
  it('probes all operational storage keys only after explicit Demo Guest entry',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');expect(read).not.toHaveBeenCalled();button('Continue as Demo Guest').click();await flush();expect(read).toHaveBeenCalledTimes(5);expect(read).toHaveBeenNthCalledWith(1,'prot_ops_personnel_v2');expect(read).toHaveBeenNthCalledWith(2,'prot_ops_incidents_v2');expect(read).toHaveBeenNthCalledWith(3,'prot_ops_cyber_v2');expect(read).toHaveBeenNthCalledWith(4,'prot_ops_checklist_v2');expect(host.textContent).toContain('Operational app shell');});
  it('unmounts the Demo Guest workspace when an authenticated identity appears and revokes retained access',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');button('Continue as Demo Guest').click();await flush();expect(read).toHaveBeenCalledTimes(5);auth(makeUser('user-a'));await flush();expect(host.textContent).not.toContain('Operational app shell');expect(host.textContent).toContain('Account verified — workspace not yet released');expect(read).toHaveBeenCalledTimes(5);expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);expect(read).toHaveBeenCalledTimes(5);});
  it('restores the authenticated lifecycle when Firebase sign-out fails but the same user remains current',async()=>{
