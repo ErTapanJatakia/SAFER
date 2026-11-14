@@ -231,7 +231,7 @@ test('owner transfer assessment requires a distinct active non-owner and trusted
     actorUid: 'owner-001', actorRole: 'owner',
     targetUid: 'owner-001', targetRole: 'admin', targetStatus: 'active',
   }), 'self-transfer-forbidden');
-  assert.equal(assessOwnerTransfer({
+  assert.equal(ownerTransferReason({
     actorUid: 'admin-001', actorRole: 'admin',
     targetUid: 'member-001', targetRole: 'manager', targetStatus: 'active',
   }), 'actor-not-owner');
