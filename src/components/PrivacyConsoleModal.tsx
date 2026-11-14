@@ -10,8 +10,9 @@ import {
 import { createPrivacyDemoRepository } from '../utils/privacyRepository.ts';
 import { createPrivacyDemoExport } from '../utils/privacyExport.ts';
 import { formatAccountDateTime, formatAccountNumber, readAccountPreferences } from '../utils/accountFormatting.ts';
+import { PrivacyGovernancePanel } from './PrivacyGovernancePanel.tsx';
 
-type Tab = 'overview' | 'processing' | 'notices' | 'requests' | 'grievances' | 'consent' | 'retention';
+type Tab = 'overview' | 'processing' | 'notices' | 'requests' | 'grievances' | 'consent' | 'retention' | 'governance';
 
 const tabs: Array<{ id: Tab; label: string }> = [
   { id: 'overview', label: 'Overview' },
@@ -21,6 +22,7 @@ const tabs: Array<{ id: Tab; label: string }> = [
   { id: 'grievances', label: 'Grievances' },
   { id: 'consent', label: 'Consent events' },
   { id: 'retention', label: 'Retention reviews' },
+  { id: 'governance', label: 'DPDP governance' },
 ];
 
 const inputClass = 'w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-400';
@@ -424,6 +426,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
             </article>)}
             {workspace.retentionReviews.length === 0 && <p className="text-sm text-slate-400">No retention reviews recorded.</p>}
           </section>}
+          {activeTab === 'governance' && <PrivacyGovernancePanel />}
         </div>
 
         <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-700 bg-slate-950 px-5 py-3">
