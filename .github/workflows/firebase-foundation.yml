@@ -209,6 +209,27 @@ jobs:
       - name: Operational data-boundary unit tests
         run: npm run test:data-boundary
 
+      - name: Organisation domain contract tests
+        run: npm run test:organisation-domain
+
+      - name: Organisation workspace UI tests
+        run: npm run test:organisation-workspace
+
+      - name: Organisation profile access and UI tests
+        run: npm run test:organisation-profile
+
+      - name: Membership lifecycle policy tests
+        run: npm run test:membership-lifecycle
+
+      - name: Organisation audit envelope contract tests
+        run: npm run test:organisation-audit-contract
+
+      - name: DPDP governance, repository, and casework tests
+        run: npm run test:dpdp-governance
+
+      - name: Account settings preference tests
+        run: npm run test:account-settings
+
       - name: Demo Guest repository tests
         run: npm run test:demo-repository
 
