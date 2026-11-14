@@ -125,17 +125,13 @@ Contains any raw notes, factual chronology, people and roles involved, witness i
 
 ### 3.8 Evidence metadata: `/organisations/{orgId}/evidence/{evidenceId}`
 
-Potential fields, only after a separate evidence-handling review:
-- `evidenceId`, `orgId`, `incidentRef`.
-- `evidenceType`: allowlisted enum.
-- `description`: maximum 500 characters; no sensitive narrative.
-- `referenceCode`: opaque reference, maximum 80 characters.
-- `recordedAt`: Firestore timestamp.
-- `recordedByUid`: authenticated UID.
-- `integrityAlgorithm` and `integrityDigest`: optional validated metadata only, never a substitute for chain-of-custody controls.
-- `createdAt`, `createdByUid`, `updatedAt`, `updatedByUid`.
+Candidate read-only metadata allowlist in the current Rules (not an evidence-ingestion workflow):
+- Required: `evidenceId` (exact document ID) and `orgId` (exact tenant path ID).
+- Optional: `incidentRef` (maximum 128 characters), `evidenceType` (1–40 characters; controlled vocabulary still requires separate approval), `description` (maximum 500 characters; no sensitive narrative), and `referenceCode` (maximum 80 characters).
+- Optional provenance metadata: `recordedAt`, `recordedByUid`, `createdAt`, `createdByUid`, `updatedAt`, `updatedByUid`, each type-checked when present.
+- Optional integrity metadata must be supplied as a pair: `integrityAlgorithm: "SHA-256"` and a 64-character hexadecimal `integrityDigest`. This is format validation only, never a substitute for chain-of-custody controls.
 
-No binary files, download URLs, storage paths, secrets, raw evidence, or attachment bytes. Firebase Storage is out of scope. Evidence metadata remains restricted; manager/viewer access is disabled in v1.
+The candidate Rules allow owner/admin reads only for this exact metadata key set and reject unknown fields. All evidence writes remain denied. No binary files, download URLs, storage paths, secrets, raw evidence, or attachment bytes. Firebase Storage is out of scope. Evidence metadata remains restricted; manager/viewer access is disabled in v1. The evidence schema and controlled `evidenceType` vocabulary still require a separate evidence-handling review before any trusted writer or operational use is introduced.
 
 ### 3.9 Audit events: `/organisations/{orgId}/auditEvents/{eventId}`
 
