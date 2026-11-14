@@ -222,7 +222,7 @@ test('revoked memberships cannot be reactivated and non-admins cannot manage mem
 });
 
 test('owner transfer assessment requires a distinct active non-owner and trusted authority', () => {
-  assert.deepEqual(assessOwnerTransfer({
+  assert.deepEqual(ownerTransferReason({
     actorUid: 'owner-001', actorRole: 'owner',
     targetUid: 'member-001', targetRole: 'admin', targetStatus: 'active',
   }), { eligible: true, disposition: 'trusted-authority-required' });
@@ -234,28 +234,28 @@ test('owner transfer assessment requires a distinct active non-owner and trusted
   assert.equal(assessOwnerTransfer({
     actorUid: 'admin-001', actorRole: 'admin',
     targetUid: 'member-001', targetRole: 'manager', targetStatus: 'active',
-  }).reason, 'actor-not-owner');
-  assert.equal(assessOwnerTransfer({
+  }), 'actor-not-owner');
+  assert.equal(ownerTransferReason({
     actorUid: 'owner-001', actorRole: 'owner',
     targetUid: 'member-001', targetRole: 'manager', targetStatus: 'suspended',
-  }).reason, 'target-not-active');
-  assert.equal(assessOwnerTransfer({
+  }), 'target-not-active');
+  assert.equal(ownerTransferReason({
     actorUid: 'owner-001', actorRole: 'owner',
     targetUid: 'owner-002', targetRole: 'owner', targetStatus: 'active',
-  }).reason, 'target-already-owner');
+  }), 'target-already-owner');
 });
 
 test('owner transfer assessment rejects malformed runtime role and status values', () => {
-  assert.equal(assessOwnerTransfer({
+  assert.equal(ownerTransferReason({
     actorUid: 'owner-001', actorRole: 'owner',
     targetUid: 'member-001', targetRole: 'platform_super_admin' as never,
     targetStatus: 'active',
-  }).reason, 'invalid-context');
-  assert.equal(assessOwnerTransfer({
+  }), 'invalid-context');
+  assert.equal(ownerTransferReason({
     actorUid: 'owner-001', actorRole: 'owner',
     targetUid: 'member-001', targetRole: 'manager',
     targetStatus: 'pending' as never,
-  }).reason, 'invalid-context');
+  }), 'invalid-context');
 });
 
 test('membership policy rejects malformed role and status values at runtime', () => {
