@@ -3,7 +3,7 @@
 **Scope:** Organisation profile, membership resolution, tenant isolation, lifecycle policy, and audit boundaries  
 **Environment:** Synthetic data and Firebase Emulator only  
 **Release boundary:** Firebase Spark; INR 0; no production Rules/configuration changes  
-**Validation status:** Test cases added or mapped; consolidated execution is intentionally pending
+**Validation status:** Consolidated mandatory CI passed on exact commit `f02edc221066edab232902d5471dc790feebea88` (2026-11-15). This includes Firestore Rules and tenant-membership emulator tests plus the listed organisation domain, UI, lifecycle and audit-contract suites. Production publication remains not approved.
 
 ## Assurance matrix
 
@@ -76,3 +76,12 @@ At the next planned validation milestone:
 ## Evidence and maintenance
 
 Update this matrix whenever Rules schema, tenant paths, membership roles, trusted provisioning, or audit design changes. Each row must continue to point to executable evidence or be explicitly marked as a documented limitation.
+
+
+## Verified execution record — 2026-11-15
+
+On exact candidate commit `f02edc221066edab232902d5471dc790feebea88`, the required `validate` workflow completed successfully. The job explicitly reports success for Firestore Security Rules Emulator tests, Tenant membership resolver Emulator tests, Organisation domain contract tests, Organisation workspace UI tests, Organisation profile access and UI tests, Membership lifecycle policy tests, and Organisation audit envelope contract tests. The independent DPDP governance validation also passed on that exact commit.
+
+This closes the consolidated CI execution gate for that commit. It does not close manual production configuration review, a production penetration test, live tenant provisioning, operational-data onboarding, or the separately approved production Rules publication gate. No such publication or provisioning is authorised here.
+
+The emulator scenarios use synthetic fixtures and validate the checked-in candidate Rules file only. The production Firebase Console rules remain deny-all as recorded by the release-readiness audit; this branch must not be described as the production policy.
