@@ -91,7 +91,7 @@ export function validatePrivacyGovernanceSnapshot(value: unknown): value is Priv
     isPersonalDataBreachCase, isAccountabilityAssignment, isAssuranceEvidenceRecord,
   ];
   const collections = keys.slice(2).map((key) => item[key]);
-  return collections.every((records, index) => {
+  const validCollections = collections.every((records, index) => {
     if (!Array.isArray(records) || records.length > 500) return false;
     const ids = new Set<string>();
     return records.every((record) => {
@@ -102,6 +102,21 @@ export function validatePrivacyGovernanceSnapshot(value: unknown): value is Priv
       return true;
     });
   });
+  if (!validCollections) return false;
+  const purposes = item.purposes as PrivacyPurposeRecord[];
+  const notices = item.notices as VersionedPrivacyNotice[];
+  const purposeIds = new Set(purposes.map((record) => record.id));
+  const noticeById = new Map(notices.map((record) => [record.id, record]));
+  const scheduleIds = new Set((item.retentionSchedules as RetentionSchedule[]).map((record) => record.id));
+  return notices.every((notice) => notice.purposeIds.every((id) => purposeIds.has(id))) &&
+    (item.consentHistory as ConsentLifecycleEvent[]).every((event) => {
+      const notice = noticeById.get(event.noticeId);
+      return purposeIds.has(event.purposeId) && Boolean(notice &&
+        notice.version === event.noticeVersion && notice.purposeIds.includes(event.purposeId));
+    }) &&
+    (item.retentionSchedules as RetentionSchedule[]).every((schedule) => purposeIds.has(schedule.purposeId)) &&
+    (item.retentionDispositions as RetentionDispositionRecord[]).every((record) => scheduleIds.has(record.scheduleId)) &&
+    (item.assignments as AccountabilityAssignment[]).every((record) => record.purposeId === undefined || purposeIds.has(record.purposeId));
 }
 
 /** A purpose can be approved only after an organisation has documented its review. */
