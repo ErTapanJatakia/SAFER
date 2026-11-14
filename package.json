@@ -73,7 +73,7 @@
     "test:membership-lifecycle": "tsx --test src/lib/membershipLifecycle.test.ts",
     "test:organisation-audit-contract": "tsx --test src/types/organisationAudit.test.ts",
     "test:account-settings": "vitest run src/utils/accountSettings.test.ts",
-    "test:dpdp-governance": "tsx --test src/utils/dpdpGovernance.test.ts src/utils/dpdpGovernanceRepository.test.ts"
+    "test:dpdp-governance": "tsx --test src/utils/dpdpGovernance.test.ts src/utils/dpdpGovernanceRepository.test.ts src/utils/dpdpCasework.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
