@@ -100,34 +100,31 @@ export function isCurrentUserActiveMember(
       typeof membership !== 'object' ||
       Array.isArray(membership) ||
       (Object.getPrototypeOf(membership) !== Object.prototype &&
-        Object.getPrototypeOf(membership) !== null)
-    ) {
-      return false;
-    }
+        Object.getPrototypeOf(membership) !== null) ||
+      typeof authenticatedUid !== 'string' ||
+      authenticatedUid.length === 0 ||
+      typeof expectedOrgId !== 'string' ||
+      !/^[A-Za-z0-9_-]{1,128}$/.test(expectedOrgId)
+    ) return false;
 
     const keys = Reflect.ownKeys(membership);
-    const expectedKeys = ['orgId', 'role', 'status', 'uid'];
     if (
-      keys.length !== expectedKeys.length ||
-      keys.some((key) => typeof key !== 'string' || !expectedKeys.includes(key))
-    ) {
-      return false;
-    }
+      keys.length !== MEMBERSHIP_KEYS.length ||
+      keys.some((key) => typeof key !== 'string' || !MEMBERSHIP_KEYS.includes(key as typeof MEMBERSHIP_KEYS[number]))
+    ) return false;
 
     const descriptors = Object.getOwnPropertyDescriptors(membership);
-    if (expectedKeys.some((key) => !('value' in descriptors[key]))) {
-      return false;
+    const snapshot: Record<string, unknown> = Object.create(null);
+    for (const key of MEMBERSHIP_KEYS) {
+      const descriptor = descriptors[key];
+      if (!descriptor || !('value' in descriptor) || descriptor.enumerable !== true) return false;
+      snapshot[key] = descriptor.value;
     }
 
-    const candidate = membership as Record<string, unknown>;
-    return typeof authenticatedUid === 'string' &&
-      authenticatedUid.length > 0 &&
-      typeof expectedOrgId === 'string' &&
-      expectedOrgId.length > 0 &&
-      candidate.uid === authenticatedUid &&
-      candidate.orgId === expectedOrgId &&
-      candidate.status === 'active' &&
-      isTenantRole(candidate.role);
+    return snapshot.uid === authenticatedUid &&
+      snapshot.orgId === expectedOrgId &&
+      snapshot.status === 'active' &&
+      isTenantRole(snapshot.role);
   } catch {
     return false;
   }
