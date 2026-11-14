@@ -204,6 +204,46 @@ test("suspended organisation denies otherwise active owner", async () => {
 });
 
 
+test("tenant authorization rejects membership trust anchors with unexpected fields", async () => {
+  const orgId = "org-extra-membership-field";
+  const uid = "owner-extra-membership-field";
+  await seedTenant({ orgId, uid });
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await updateDoc(doc(context.firestore(), "organisations", orgId, "members", uid), {
+      unexpectedPrivilegeMetadata: "synthetic-secret",
+    });
+  });
+
+  const db = dbFor(uid);
+  await assertFails(getDoc(doc(db, "organisations", orgId)));
+  await assertFails(setDoc(
+    doc(db, "organisations", orgId, "personnel", "blocked-personnel"),
+    validPersonnel(uid, orgId, "blocked-personnel"),
+  ));
+});
+
+test("tenant authorization rejects organisation documents with unexpected or malformed metadata", async () => {
+  const fixtures = [
+    { orgId: "org-extra-metadata", uid: "owner-extra-metadata", patch: { internalSecret: "synthetic-secret" } },
+    { orgId: "org-invalid-schema", uid: "owner-invalid-schema", patch: { schemaVersion: 2 } },
+    { orgId: "org-invalid-display-name", uid: "owner-invalid-display-name", patch: { displayName: 42 } },
+  ];
+
+  for (const fixture of fixtures) {
+    await seedTenant({ orgId: fixture.orgId, uid: fixture.uid });
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), "organisations", fixture.orgId), fixture.patch);
+    });
+
+    const db = dbFor(fixture.uid);
+    await assertFails(getDoc(doc(db, "organisations", fixture.orgId)));
+    await assertFails(setDoc(
+      doc(db, "organisations", fixture.orgId, "personnel", "blocked-personnel"),
+      validPersonnel(fixture.uid, fixture.orgId, "blocked-personnel"),
+    ));
+  }
+});
+
 test("bootstrap trust anchor rejects mismatched UID, tenant, role, and missing organisation", async () => {
   const fixtures = [
     { orgId: "bootstrap-wrong-uid", uid: "wrong-uid-user", member: {
