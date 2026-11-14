@@ -86,8 +86,7 @@ describe('session inactivity guard', () => {
   it('resets the inactivity window on real user activity', async () => {
     await renderGuard();
     await act(async () => {
-      timeoutSelect().value = '5';
-      timeoutSelect().dispatchEvent(new Event('change', {bubbles: true}));
+      changeTimeout('5');
     });
     await act(async () => { await vi.advanceTimersByTimeAsync(4 * 60_000); });
     await act(async () => { window.dispatchEvent(new Event('pointerdown')); });
@@ -99,8 +98,7 @@ describe('session inactivity guard', () => {
   it('accepts a newer activity timestamp from another same-origin tab', async () => {
     await renderGuard();
     await act(async () => {
-      timeoutSelect().value = '5';
-      timeoutSelect().dispatchEvent(new Event('change', {bubbles: true}));
+      changeTimeout('5');
     });
     await act(async () => { await vi.advanceTimersByTimeAsync(4 * 60_000); });
     await act(async () => {
