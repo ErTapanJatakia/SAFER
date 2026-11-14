@@ -39,6 +39,7 @@ describe('DPDP-03 retention governance', () => {
     assert.equal(approved?.approvedByRole,'organisation-owner');
     assert.equal(approved?.executed,false);
     assert.equal(approveRetentionDisposition(approved!,'organisation-owner'), null);
+    assert.equal(isRetentionDispositionRecord({...approved!,approvedByRole:'organisation-admin'}), false);
   });
   it('validates disposition records with explicit non-execution state', () => {
     assert.equal(isRetentionDispositionRecord(disposition), true);
@@ -73,5 +74,7 @@ describe('DPDP-05 accountability and DPDP-06 validation', () => {
     assert.equal(validatePrivacyGovernanceSnapshot({...EMPTY_PRIVACY_GOVERNANCE,rightsCases:[rights,rights]}),false);
     assert.equal(validatePrivacyGovernanceSnapshot({...EMPTY_PRIVACY_GOVERNANCE,breachCases:[{syntheticOnly:false}]}),false);
     assert.equal(validatePrivacyGovernanceSnapshot({...EMPTY_PRIVACY_GOVERNANCE,extra:true}),false);
+    const orphanSchedule = { id:'retention-1', dataCategory:'synthetic', purposeId:'missing-purpose', retentionRule:'review', reviewAt:now, ownerRole:'organisation-admin', status:'draft' };
+    assert.equal(validatePrivacyGovernanceSnapshot({...EMPTY_PRIVACY_GOVERNANCE,retentionSchedules:[orphanSchedule]}),false);
   });
 });
