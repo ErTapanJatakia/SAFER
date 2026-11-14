@@ -20,7 +20,7 @@ let root:Root, host:HTMLElement, listener:((user:ReturnType<typeof makeUser>|nul
 const flush=async()=>{await act(async()=>{await Promise.resolve();await Promise.resolve();});};
 const button=(name:string)=>{const element=[...host.querySelectorAll('button')].find(b=>b.textContent?.trim()===name) as HTMLButtonElement|undefined;if(!element)throw new Error(`Button not found: ${name}`);const nativeClick=element.click.bind(element);element.click=()=>act(()=>nativeClick());return element;};
 const change=(el:HTMLInputElement,value:string)=>{const view=el.ownerDocument.defaultView;if(!view)throw new Error('Input has no owning window');const setter=Object.getOwnPropertyDescriptor(view.HTMLInputElement.prototype,'value')?.set;if(!setter)throw new Error('HTMLInputElement value setter unavailable');act(()=>{setter.call(el,value);el.dispatchEvent(new view.InputEvent('input',{bubbles:true,inputType:'insertText',data:value}));});};
-const submit=(form:HTMLFormElement)=>act(()=>{form.dispatchEvent(new window.Event('submit',{bubbles:true,cancelable:true}));});
+const submit=(form:HTMLFormElement)=>act(()=>{form.requestSubmit();});
 const auth=(user:ReturnType<typeof makeUser>|null)=>{Object.defineProperty(firebaseAuth,'currentUser',{configurable:true,value:user});act(()=>listener?.(user));};
 beforeEach(async()=>{
  Object.defineProperty(globalThis,'IS_REACT_ACT_ENVIRONMENT',{configurable:true,value:true});
