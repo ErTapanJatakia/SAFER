@@ -11,14 +11,14 @@
 |---|---|---|---|---|
 | Authenticated identity binding | Unauthenticated user requests tenant or membership data | Firestore Rules | tests/firestore-rules.test.mjs | Deny |
 | Exact membership provenance | Membership UID, embedded UID, org ID, or parent organisation is mismatched; adapter returns getters, exotic objects, symbols, or hostile proxies | Firestore Rules + tenantMembership.ts | Firestore Rules and src/lib/tenantMembership.test.ts | Deny / resolver fails closed without invoking accessors |
-| Minimal membership schema | Extra keys, invalid role, inactive status | Firestore Rules + parser | Firestore Rules and parser tests | Deny |
+| Minimal membership schema | Extra/missing keys, invalid role, inactive status | Firestore Rules + parser | Firestore Rules, tenant membership parser tests, and new emulator trust-anchor regression | Deny |
 | Self-only membership read | User reads another member or lists membership collection | Firestore Rules | Firestore Rules test | Deny |
 | No client membership mutation | Every role attempts create, update, or delete | Firestore Rules | Existing denial test plus expanded role-by-role test | Deny for every role |
 | No privilege escalation | User promotes self or another member to owner/admin | Firestore Rules | Expanded role-by-role test; pure policy tests are supplementary only | Deny |
 | Tenant isolation | Tenant A member reads/writes tenant B organisation, membership, personnel, or incident records | Firestore Rules | New cross-tenant emulator test | Deny |
 | Role separation | Manager/viewer attempt operational data access | Firestore Rules | Existing manager/viewer tests | Deny |\n| Explicit operation denials | Owner/admin attempt personnel or incident deletion, evidence create/update/delete, membership mutation, or audit read/write | Firestore Rules + capability matrix | Firestore Rules tests and organisation domain/UI tests | Deny; UI must display the denial |
 | Organisation lifecycle | Suspended organisation or suspended/revoked membership is used | Firestore Rules | Existing suspended/revoked fixtures | Deny |
-| Organisation metadata integrity | Client creates/updates/deletes organisation metadata; profile adapter returns getters, exotic objects, symbols, or hostile proxies | Firestore Rules + organisationProfile.ts | Existing organisation write denial test and src/lib/organisationProfile.test.ts | Deny / parser fails closed without invoking accessors |
+| Organisation metadata integrity | Client creates/updates/deletes organisation metadata; metadata has extra/missing keys, unsupported schema version, invalid display name; profile adapter returns getters, exotic objects, symbols, or hostile proxies | Firestore Rules + organisationProfile.ts | Existing organisation write denial test, src/lib/organisationProfile.test.ts, and new emulator trust-anchor regression | Deny / parser fails closed without invoking accessors |
 | Audit confidentiality and integrity boundary | Client reads or writes audit events | Firestore Rules | Expanded cross-tenant audit read/write test; existing same-tenant write denial | Deny |
 | Restricted records | Client reads/writes private personnel or restricted incidents | Firestore Rules | Existing restricted-path tests | Deny |
 | Operational record provenance | Client changes tenant ID, record ID, creator, reporter, or timestamps | Firestore Rules | Existing personnel/incident mutation tests | Deny |
@@ -85,3 +85,6 @@ On exact candidate commit `f02edc221066edab232902d5471dc790feebea88`, the requir
 This closes the consolidated CI execution gate for that commit. It does not close manual production configuration review, a production penetration test, live tenant provisioning, operational-data onboarding, or the separately approved production Rules publication gate. No such publication or provisioning is authorised here.
 
 The emulator scenarios use synthetic fixtures and validate the checked-in candidate Rules file only. The production Firebase Console rules remain deny-all as recorded by the release-readiness audit; this branch must not be described as the production policy.
+
+
+**Follow-up trust-anchor hardening:** The candidate Rules now enforce exact membership and organisation schemas in the shared tenant authorization helpers, not only in the self-membership read/profile parser. Emulator regressions for unexpected membership/organisation fields, unsupported organisation schema version, and malformed display name have been added. Their execution is pending the current latest-head CI run; the previously recorded `f02edc2...` pass does not validate these subsequent changes.
