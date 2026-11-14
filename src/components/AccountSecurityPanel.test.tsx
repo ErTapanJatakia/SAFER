@@ -92,7 +92,7 @@ describe('authenticated account security lifecycle',()=>{
  });
  it('does not complete a password change after its account identity is replaced',async()=>{
   let finishReauthentication!:()=>void;
-  vi.mocked(reauthenticateWithCredential).mockReturnValueOnce(new Promise<void>(resolve=>{finishReauthentication=resolve;}));
+  vi.mocked(reauthenticateWithCredential).mockReturnValueOnce(new Promise<Awaited<ReturnType<typeof reauthenticateWithCredential>>>(resolve=>{finishReauthentication=()=>resolve({} as Awaited<ReturnType<typeof reauthenticateWithCredential>>);}));
   change(input('Current password'),'CurrentPass!123');
   change(input('New password'),'NewSecurePass!456');
   change(input('Confirm new password'),'NewSecurePass!456');
