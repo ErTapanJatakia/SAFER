@@ -539,3 +539,34 @@ The canonical application already provides separate theme and accessibility cont
 - Corrected an AuthGate notice that inaccurately described production Firestore Rules as deny-all. The checked-in Rules do permit narrowly defined owner/admin operations on selected tenant paths; they continue to deny membership mutations, audit access, private/restricted records and unmodelled paths.
 - The authenticated UI still does not load or expose operational records. Its notice now distinguishes that UI release boundary from the independent Rules-level permissions.
 - Added an AuthGate regression assertion for the corrected disclosure. No authorization rule or runtime data-access path was changed.
+
+
+## Current migration status update (2026-11-14)
+
+This section supersedes earlier provisional wording where later canonical implementation work has changed the disposition. The feature branch contains the following selective migration outcomes; none of the branch-only work is considered released until consolidated validation and merge.
+
+| Remix capability area | Current canonical SAFER status | Remaining work / disposition |
+|---|---|---|
+| Budget policy inspector | Implemented on canonical main; fail-closed and advisory-only | No further migration. Do not claim technical billing enforcement or live quota inspection. |
+| Authentication gateway and account lifecycle | Core flows already represented by canonical AuthGate, verified-email gate, password/Google sign-in, credential re-authentication and session invalidation | No Remix gateway transplant. Complete consolidated regression/security validation of branch changes. |
+| Account menu/profile/settings | Local profile, call sign, scoped preferences, JSON export/reset and authenticated account-security lifecycle implemented on branch | No duplicate dropdown or settings store. Branch validation/release remains. |
+| Theme and accessibility preferences | Already represented by canonical theme/accessibility controls | No duplicate migration. |
+| Default export format and redaction profile | Implemented on branch as validated local preferences; standard preserves existing sensitive-field redaction and strict redacts all exportable fields | Validate export formats, preference fallback and user review/preview behavior; no automatic export. |
+| Regional date/time/timezone/number display | Partially integrated on branch across header, dashboard, personnel detail/readiness, pre-deployment, incidents, privacy console and export preview | Remaining screens require per-surface audit; preserve stored timestamps, sorting, date calculations and evidence serialization. |
+| Privacy notice and privacy console | Synthetic-only console and safe notice concepts already represented; synthetic acknowledgement/storage safeguards are on the parent branch | No real statutory submissions, legal deadline assertions, real DPO/contact claims, automatic erasure or destructive retention purge. Validate synthetic boundary and storage behavior. |
+| Organisation profile and workspace context | Read-only verified organisation context/profile implemented on branch | No organisation directory/switcher or operational workspace release until trusted model and Rules gates are separately approved. |
+| Multi-organisation RBAC | Canonical four-role tenant model and Firestore Rules foundation already exist; lifecycle policy and UI/domain mirrors implemented on branch | No Remix six-role model. Membership invites, role changes, suspension/revocation writes, owner transfer and provisioning remain unavailable without trusted execution and emulator-backed gates. |
+| Audit log | Strict dormant event envelope and supplied-link continuity checker implemented/hardened on branch | No trusted writer, canonical hash recomputation, signatures/key custody, atomic ordering, append-only storage, audit UI, or client read/write. Firestore Rules deny audit access. |
+| Trusted provisioning | SAFER-specific Spark-era manual owner-operated provisioning ADR documented | In-app provisioning and privileged automation deferred; no paid backend or Firebase plan change. |
+| In-app notification preferences / alert controls | Not migrated; canonical status indicators/toasts/accessibility announcements exist, but Remix settings do not prove a complete event/delivery pipeline | Defer until real event sources, severity, deduplication, persistence, user-visible and accessible delivery are implemented. No push/email/SMS/background-delivery claims. |
+| Layout density (comfortable/compact) | Not migrated | Defer until a consistent app-wide density contract is available and accessibility/reflow/target-size regressions are covered. |
+| English/Hindi language preference | Not migrated | Defer until end-to-end translated resources cover screens, validation, dialogs, announcements and exports. |
+| Analytics consent | Not migrated | Defer until exact analytics events, provider boundary, exclusions, retention, consent enforcement and withdrawal are defined. Keep product analytics separate from operational security records. |
+| Inactivity timeout | Not migrated | Defer until integrated with the actual AuthGate/session lifecycle, multi-tab behavior and warning/sign-out semantics; do not add a second timer. |
+| Statutory privacy requests/account deletion | Synthetic examples only | Real submissions, legal deadlines, identity/DPO details and actual erasure require a trusted backend, verified process and separate approval. |
+| Legacy Firebase config, rules and services | Rejected as-is; canonical SAFER Firebase project/schema/Rules remain authoritative | Never transplant Remix project IDs, credentials, old rules, cache-first settings service, or mock RBAC as authorization proof. |
+| Final repository reconciliation / Remix retirement | Not complete | Complete final source-to-destination review, consolidated tests/security review, classify every item as ported/already present/rejected/deferred, then obtain explicit owner approval before archiving/deleting Remix. |
+
+### Audit validation limitation (reaffirmed)
+
+The hardened audit validator checks exact runtime shape and supplied hash-link continuity only. It does not calculate or authenticate event hashes, verify signatures/writers, or provide immutable/append-only storage. The current client has no audit writer, and Firestore Rules deny audit reads and writes. These limitations are intentional release boundaries, not unfinished UI polish.
