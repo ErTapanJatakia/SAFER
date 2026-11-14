@@ -270,8 +270,8 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
     // Read the submitted locator from the form itself, then synchronise the
     // lifecycle gate at the trust boundary. This avoids relying on two
     // separately-updated copies of the same input during rapid session changes.
-    const formData = new FormData(event.currentTarget);
-    const requestedOrganisationId = String(formData.get('organisationId') ?? organisationId).trim();
+    const submittedLocator = event.currentTarget.elements.namedItem('organisationId') as HTMLInputElement | null;
+    const requestedOrganisationId = (submittedLocator?.value ?? organisationId).trim();
     sessionLifecycleRef.current.selectOrganisation(requestedOrganisationId);
     const requestToken = sessionLifecycleRef.current.beginRequest();
     if (!requestToken || requestToken.uid !== requestedUid || requestToken.orgId !== requestedOrganisationId) {
