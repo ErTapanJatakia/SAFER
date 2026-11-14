@@ -14,7 +14,7 @@ const PreferenceHarness = () => {
 describe('session inactivity guard', () => {
   let host: HTMLElement;
   let root: Root;
-  let onExpire: ReturnType<typeof vi.fn>;
+  let onExpire: ReturnType<typeof vi.fn<() => void>>;
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -23,7 +23,7 @@ describe('session inactivity guard', () => {
     host = document.createElement('div');
     document.body.append(host);
     root = createRoot(host);
-    onExpire = vi.fn();
+    onExpire = vi.fn<() => void>();
   });
 
   afterEach(async () => {
