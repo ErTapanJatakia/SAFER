@@ -259,7 +259,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
     setMessage('Sign in with your email and password to request another verification message.');
   };
 
-  const handleResolveMembership = async (event: React.FormEvent) => {
+  const handleResolveMembership = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!user || !db) {
       setMembership(null);
