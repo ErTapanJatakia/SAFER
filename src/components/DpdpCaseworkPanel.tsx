@@ -26,10 +26,6 @@ export const DpdpCaseworkPanel: React.FC<Props> = ({ snapshot, acknowledged, sav
   const [control, setControl] = useState('');
   const [evidenceRef, setEvidenceRef] = useState('');
 
-  const updateBreach = (item: PersonalDataBreachCase, update: Partial<PersonalDataBreachCase>) => {
-    const next = { ...item, ...update };
-    save({ ...snapshot, breachCases: snapshot.breachCases.map((entry) => entry.id === item.id ? next : entry) });
-  };
   const approveDisposition = (item: RetentionDispositionRecord) => {
     const approved = approveRetentionDisposition(item, 'organisation-owner');
     if (approved) save({ ...snapshot, retentionDispositions: snapshot.retentionDispositions.map((entry) => entry.id === item.id ? approved : entry) });
