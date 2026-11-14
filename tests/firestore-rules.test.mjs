@@ -481,6 +481,33 @@ test("evidence metadata is read-only and deletes remain disabled", async () => {
 });
 
 
+test("tenant reads reject stored personnel, incident, and evidence documents with unapproved fields", async () => {
+  const orgId = "org-read-schema";
+  const uid = "owner-read-schema";
+  await seedTenant({ orgId, uid });
+
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(
+      doc(db, "organisations", orgId, "personnel", "person-extra-field"),
+      { ...validPersonnel(uid, orgId, "person-extra-field"), medicalDetails: "synthetic-private-value" },
+    );
+    await setDoc(
+      doc(db, "organisations", orgId, "incidents", "incident-extra-field"),
+      { ...validIncident(uid, orgId, "incident-extra-field"), restrictedWitnessNotes: "synthetic-private-value" },
+    );
+    await setDoc(
+      doc(db, "organisations", orgId, "evidence", "evidence-extra-field"),
+      { evidenceId: "evidence-extra-field", orgId, rawEvidenceUrl: "https://example.invalid/private" },
+    );
+  });
+
+  const db = dbFor(uid);
+  await assertFails(getDoc(doc(db, "organisations", orgId, "personnel", "person-extra-field")));
+  await assertFails(getDoc(doc(db, "organisations", orgId, "incidents", "incident-extra-field")));
+  await assertFails(getDoc(doc(db, "organisations", orgId, "evidence", "evidence-extra-field")));
+});
+
 test("personnel updates reject extra keys, immutable identity/provenance changes, invalid values, and spoofed timestamps", async () => {
   await seedTenant({ orgId: "org-personnel-update", uid: "owner-personnel-update" });
   const db = dbFor("owner-personnel-update");
