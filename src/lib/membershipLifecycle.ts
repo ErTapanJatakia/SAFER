@@ -64,16 +64,18 @@ const TENANT_ROLES: readonly TenantRole[] = ['owner', 'admin', 'manager', 'viewe
 const MEMBERSHIP_STATUSES: readonly ManagedMembershipStatus[] = ['active', 'suspended', 'revoked'];
 
 /** Snapshot exact plain data objects without invoking accessors. */
-function readExactDataObject(value: unknown, expectedKeys: readonly string[]): Record<string, unknown> | null {
+function readExactDataObject(value: unknown, expectedKeys: readonly string[], optionalKeys: readonly string[] = []): Record<string, unknown> | null {
   try {
     if (value === null || typeof value !== 'object' || Array.isArray(value)
       || (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null)) return null;
     const keys = Reflect.ownKeys(value);
-    if (keys.length !== expectedKeys.length
-      || keys.some((key) => typeof key !== 'string' || !expectedKeys.includes(key))) return null;
+    const allowedKeys = [...expectedKeys, ...optionalKeys];
+    if (expectedKeys.some((key) => !keys.includes(key)) || keys.length < expectedKeys.length
+      || keys.length > allowedKeys.length
+      || keys.some((key) => typeof key !== 'string' || !allowedKeys.includes(key))) return null;
     const descriptors = Object.getOwnPropertyDescriptors(value);
     const snapshot: Record<string, unknown> = Object.create(null);
-    for (const key of expectedKeys) {
+    for (const key of keys as string[]) {
       const descriptor = descriptors[key];
       if (!descriptor || !('value' in descriptor) || descriptor.enumerable !== true) return null;
       snapshot[key] = descriptor.value;
@@ -85,6 +87,7 @@ function readExactDataObject(value: unknown, expectedKeys: readonly string[]): R
 }
 const MEMBERSHIP_CHANGE_KEYS = ['actorUid', 'actorRole', 'targetUid', 'currentRole', 'nextRole', 'currentStatus', 'nextStatus', 'activeOwnerCount'] as const;
 const OWNER_TRANSFER_KEYS = ['actorUid', 'actorRole', 'targetUid', 'targetRole', 'targetStatus'] as const;
+const INVITATION_KEYS = ['invitationId', 'orgId', 'invitedEmail', 'role', 'invitedByUid', 'status', 'createdAt', 'expiresAt', 'tokenDigest'] as const;
 
 /** Only owners may delegate administrator invitations. */
 export function canIssueInvitation(
@@ -107,23 +110,24 @@ export function validateInvitationForIssuance(
   invitation: MembershipInvitation,
   now: number,
 ): boolean {
-  if (!invitation || typeof invitation !== 'object') return false;
-  return INVITATION_ID.test(invitation.invitationId)
-    && INVITATION_ID.test(invitation.orgId)
-    && UID.test(invitation.invitedByUid)
-    && invitation.status === 'draft'
-    && invitation.role !== 'owner'
-    && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(invitation.invitedEmail)
-    && invitation.invitedEmail.length <= 254
-    && SHA256_HEX.test(invitation.tokenDigest)
-    && Number.isSafeInteger(invitation.createdAt)
-    && Number.isSafeInteger(invitation.expiresAt)
+  const record = readExactDataObject(invitation, INVITATION_KEYS, ['acceptedByUid']);
+  if (!record) return false;
+  return typeof record.invitationId === 'string' && INVITATION_ID.test(record.invitationId)
+    && typeof record.orgId === 'string' && INVITATION_ID.test(record.orgId)
+    && typeof record.invitedByUid === 'string' && UID.test(record.invitedByUid)
+    && record.status === 'draft'
+    && typeof record.role === 'string' && ['admin', 'manager', 'viewer'].includes(record.role)
+    && typeof record.invitedEmail === 'string'
+    && /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(record.invitedEmail)
+    && record.invitedEmail.length <= 254
+    && typeof record.tokenDigest === 'string' && SHA256_HEX.test(record.tokenDigest)
+    && Number.isSafeInteger(record.createdAt) && Number.isSafeInteger(record.expiresAt)
     && Number.isSafeInteger(now)
-    && invitation.createdAt <= now
-    && invitation.expiresAt > now
-    && invitation.expiresAt > invitation.createdAt
-    && invitation.expiresAt - invitation.createdAt <= MAX_INVITATION_LIFETIME_MS
-    && invitation.acceptedByUid === undefined;
+    && (record.createdAt as number) <= now
+    && (record.expiresAt as number) > now
+    && (record.expiresAt as number) > (record.createdAt as number)
+    && (record.expiresAt as number) - (record.createdAt as number) <= MAX_INVITATION_LIFETIME_MS
+    && record.acceptedByUid === undefined;
 }
 
 
@@ -139,31 +143,23 @@ export function canAcceptInvitationForRecipient(
   verifiedEmail: string,
   now: number,
 ): boolean {
-  if (
-    !invitation || typeof invitation !== 'object'
-    || !UID.test(authenticatedUid)
-    || !Number.isSafeInteger(now)
-    || invitation.status !== 'issued'
-    || invitation.acceptedByUid !== undefined
-    || !Number.isSafeInteger(invitation.expiresAt)
-    || now >= invitation.expiresAt
-    || !Number.isSafeInteger(invitation.createdAt)
-    || invitation.createdAt > now
-    || invitation.expiresAt <= invitation.createdAt
-    || invitation.expiresAt - invitation.createdAt > MAX_INVITATION_LIFETIME_MS
-    || !UID.test(invitation.invitedByUid)
-    || !INVITATION_ID.test(invitation.invitationId)
-    || !INVITATION_ID.test(invitation.orgId)
-    || !SHA256_HEX.test(invitation.tokenDigest)
-    || !['admin', 'manager', 'viewer'].includes(invitation.role)
-    || typeof invitation.invitedEmail !== 'string'
-    || invitation.invitedEmail.length > 254
-    || typeof verifiedEmail !== 'string'
-    || verifiedEmail.length > 254
-  ) return false;
+  const record = readExactDataObject(invitation, INVITATION_KEYS, ['acceptedByUid']);
+  if (!record || !UID.test(authenticatedUid) || !Number.isSafeInteger(now)
+    || record.status !== 'issued' || record.acceptedByUid !== undefined
+    || !Number.isSafeInteger(record.expiresAt) || now >= (record.expiresAt as number)
+    || !Number.isSafeInteger(record.createdAt) || (record.createdAt as number) > now
+    || (record.expiresAt as number) <= (record.createdAt as number)
+    || (record.expiresAt as number) - (record.createdAt as number) > MAX_INVITATION_LIFETIME_MS
+    || typeof record.invitedByUid !== 'string' || !UID.test(record.invitedByUid)
+    || typeof record.invitationId !== 'string' || !INVITATION_ID.test(record.invitationId)
+    || typeof record.orgId !== 'string' || !INVITATION_ID.test(record.orgId)
+    || typeof record.tokenDigest !== 'string' || !SHA256_HEX.test(record.tokenDigest)
+    || typeof record.role !== 'string' || !['admin', 'manager', 'viewer'].includes(record.role)
+    || typeof record.invitedEmail !== 'string' || record.invitedEmail.length > 254
+    || typeof verifiedEmail !== 'string' || verifiedEmail.length > 254) return false;
 
   const normalizeEmail = (value: string) => value.trim().toLocaleLowerCase('en-US');
-  const recipient = normalizeEmail(invitation.invitedEmail);
+  const recipient = normalizeEmail(record.invitedEmail as string);
   const account = normalizeEmail(verifiedEmail);
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)
     && recipient === account;
