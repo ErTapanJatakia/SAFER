@@ -104,6 +104,21 @@ export const PrivacyGovernancePanel: React.FC = () => {
     if (save({ ...snapshot, consentHistory: [event, ...snapshot.consentHistory] })) setConsentSubject('');
   };
 
+  const exportGovernanceSnapshot = () => {
+    if (!snapshot || !acknowledged) return;
+    const payload = JSON.stringify({
+      exportedAt: new Date().toISOString(),
+      warning: 'Synthetic demonstration export only. Not a statutory record, compliance certificate or independently verified evidence.',
+      snapshot,
+    }, null, 2);
+    const url = URL.createObjectURL(new Blob([payload], { type: 'application/json' }));
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'safer-dpdp-governance-demo.json';
+    anchor.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
   const withdrawConsent = (grant: ConsentLifecycleEvent) => {
     if (!snapshot) return;
     const event = createSyntheticWithdrawal(grant, 'withdrawal-' + crypto.randomUUID(), new Date().toISOString());
@@ -114,6 +129,10 @@ export const PrivacyGovernancePanel: React.FC = () => {
 
   return <section className="space-y-4 rounded-xl border border-slate-700 bg-slate-950/50 p-4" aria-labelledby="dpdp-governance-title">
     <div className="flex items-center gap-2"><ClipboardCheck className="h-5 w-5 text-teal-400" /><h3 id="dpdp-governance-title" className="font-bold">DPDP governance workspace</h3></div>
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <p className="text-xs text-slate-400">Export includes synthetic governance records only. JSON is not encrypted; store it accordingly.</p>
+      <button className={button} type="button" disabled={!acknowledged} onClick={exportGovernanceSnapshot}>Export synthetic governance snapshot</button>
+    </div>
     <div className="rounded-lg border border-amber-700/60 bg-amber-950/40 p-3 text-xs text-amber-100">
       <div className="flex gap-2"><AlertTriangle className="h-4 w-4 shrink-0" /><p><strong>Synthetic demonstration only.</strong> This workspace does not determine lawful grounds, publish notices, establish valid consent or demonstrate DPDP Act compliance. Do not enter real personal data.</p></div>
       <label className="mt-3 flex items-start gap-2"><input type="checkbox" checked={acknowledged} onChange={(e) => setAcknowledged(e.target.checked)} /><span>I will use synthetic examples only.</span></label>
