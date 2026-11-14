@@ -105,3 +105,15 @@ All test records are synthetic. Membership and organisation fixtures are inserte
 5. a separate production release step is explicitly approved.
 
 No application Firestore reads/writes, localStorage migration, background upload, Storage, Cloud Functions, Cloud Run, Admin SDK credentials, SMS, Analytics, or billing are introduced here. Existing localStorage records remain local.
+
+
+## 8. Exact trust anchors and read-side validation — 2026-11-15
+
+The current candidate Rules apply exact trust-anchor schemas on every tenant authorization path:
+
+- Membership: exactly `uid`, `orgId`, `role`, and `status`; UID and organisation path binding must match; role must be one of the four supported values; status must be active.
+- Organisation: exactly `orgId`, `displayName`, `status`, and `schemaVersion`; display name must be a non-empty string no longer than 120 characters; schema version must equal 1; organisation status must be active.
+
+Read paths now validate stored personnel and incident document key sets, path IDs, core types, bounds, and enums, rather than relying only on create/update validation. Evidence reads are restricted to the metadata-only allowlist described in `docs/firestore-schema-data-classification.md`; unknown fields and all evidence writes are denied.
+
+New emulator regressions cover malformed membership/organisation trust anchors and stored personnel/incident/evidence records containing unapproved fields. These follow-up changes require a fresh mandatory CI pass on the exact latest branch head before they can be treated as validated. They do not change the separate production deny-all posture or authorise production publication.
