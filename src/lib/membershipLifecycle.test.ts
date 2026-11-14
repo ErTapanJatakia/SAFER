@@ -261,6 +261,25 @@ test('membership policy rejects malformed role and status values at runtime', ()
   })).reason, 'invalid-context');
 });
 
+test('invitation policy rejects accessor-backed and hostile proxy inputs without executing getters', () => {
+  let getterCalls = 0;
+  const accessorInvitation = invitation();
+  Object.defineProperty(accessorInvitation, 'invitedEmail', {
+    enumerable: true,
+    get() { getterCalls += 1; return 'member@example.test'; },
+  });
+  assert.equal(validateInvitationForIssuance(accessorInvitation, now), false);
+  assert.equal(getterCalls, 0);
+
+  const proxyInvitation = new Proxy(invitation(), {
+    ownKeys() { throw new Error('hostile invitation proxy'); },
+  });
+  assert.equal(validateInvitationForIssuance(proxyInvitation, now), false);
+  assert.equal(canAcceptInvitationForRecipient(
+    proxyInvitation, 'member-001', 'member@example.test', now,
+  ), false);
+});
+
 test('membership policy rejects accessor-backed, exotic and hostile proxy inputs without executing getters', () => {
   let getterCalls = 0;
   const accessorProposal = proposal();
