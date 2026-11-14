@@ -143,14 +143,21 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
                     <option value="24h">24-hour</option><option value="12h">12-hour</option>
                   </select>
                 </label>
-                <label className={labelClass}>Timezone
-                  <select className={inputClass} value={settings.preferences.timezone} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, timezone: event.target.value as AccountSettings['preferences']['timezone'] } }))}>
-                    <option value="Asia/Kolkata">Asia/Kolkata (IST)</option><option value="UTC">UTC</option>
+                <label className={labelClass}>Timezone (IANA)
+                  <select className={inputClass} value={settings.preferences.timezone} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, timezone: event.target.value } }))}>
+                    {[['Asia/Kolkata', 'India (IST)'], ['UTC', 'UTC'], ['Asia/Dubai', 'Dubai'], ['Asia/Singapore', 'Singapore'], ['Asia/Tokyo', 'Tokyo'], ['Asia/Shanghai', 'Shanghai'], ['Asia/Jakarta', 'Jakarta'], ['Asia/Bangkok', 'Bangkok'], ['Asia/Kathmandu', 'Kathmandu'], ['Europe/London', 'London'], ['Europe/Paris', 'Paris'], ['Europe/Berlin', 'Berlin'], ['Europe/Moscow', 'Moscow'], ['America/New_York', 'New York'], ['America/Chicago', 'Chicago'], ['America/Denver', 'Denver'], ['America/Los_Angeles', 'Los Angeles'], ['America/Toronto', 'Toronto'], ['Australia/Sydney', 'Sydney'], ['Pacific/Auckland', 'Auckland']].map(([value, label]) => <option key={value} value={value}>{label} ({value})</option>)}
+                    {!['Asia/Kolkata', 'UTC', 'Asia/Dubai', 'Asia/Singapore', 'Asia/Tokyo', 'Asia/Shanghai', 'Asia/Jakarta', 'Asia/Bangkok', 'Asia/Kathmandu', 'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Moscow', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles', 'America/Toronto', 'Australia/Sydney', 'Pacific/Auckland'].includes(settings.preferences.timezone) && <option value={settings.preferences.timezone}>{settings.preferences.timezone}</option>}
                   </select>
                 </label>
-                <label className={labelClass}>Number format
-                  <select className={inputClass} value={settings.preferences.numberFormat} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, numberFormat: event.target.value as AccountSettings['preferences']['numberFormat'] } }))}>
-                    <option value="en-IN">India (1,23,456.78)</option><option value="en-US">International (123,456.78)</option>
+                <label className={labelClass}>Display locale
+                  <select className={inputClass} value={settings.preferences.locale} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, locale: event.target.value } }))}>
+                    {['en-IN', 'en-US', 'en-GB', 'hi-IN', 'fr-FR', 'de-DE', 'es-ES', 'pt-BR', 'ar-SA', 'ja-JP', 'zh-CN'].map((locale) => <option key={locale} value={locale}>{locale}</option>)}
+                  </select>
+                </label>
+                <label className={labelClass}>Number format locale
+                  <select className={inputClass} value={settings.preferences.numberFormat} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, numberFormat: event.target.value } }))}>
+                    {['en-IN', 'en-US', 'en-GB', 'hi-IN', 'fr-FR', 'de-DE', 'es-ES', 'pt-BR', 'ar-SA', 'ja-JP', 'zh-CN'].map((locale) => <option key={locale} value={locale}>{locale}</option>)}
+                    {!['en-IN', 'en-US', 'en-GB', 'hi-IN', 'fr-FR', 'de-DE', 'es-ES', 'pt-BR', 'ar-SA', 'ja-JP', 'zh-CN'].includes(settings.preferences.numberFormat) && <option value={settings.preferences.numberFormat}>{settings.preferences.numberFormat}</option>}
                   </select>
                 </label>
                 <label className={labelClass}>Default personnel export format
