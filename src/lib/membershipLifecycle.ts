@@ -118,7 +118,7 @@ export function validateInvitationForIssuance(
     && record.status === 'draft'
     && typeof record.role === 'string' && ['admin', 'manager', 'viewer'].includes(record.role)
     && typeof record.invitedEmail === 'string'
-    && /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(record.invitedEmail)
+    && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(record.invitedEmail)
     && record.invitedEmail.length <= 254
     && typeof record.tokenDigest === 'string' && SHA256_HEX.test(record.tokenDigest)
     && Number.isSafeInteger(record.createdAt) && Number.isSafeInteger(record.expiresAt)
@@ -269,15 +269,15 @@ export function evaluateMembershipChange(
   if (nextStatus === 'revoked' && nextRole !== currentRole) {
     return { allowed: false, reason: 'invalid-transition' };
   }
+  if (actorRole === 'admin' && (currentRole === 'owner' || currentRole === 'admin' || nextRole === 'admin')) {
+    return { allowed: false, reason: 'admin-cannot-manage-admin' };
+  }
   if (
     currentRole === 'owner' && currentStatus === 'active'
     && (nextRole !== 'owner' || nextStatus !== 'active')
     && activeOwnerCount <= 1
   ) return { allowed: false, reason: 'owner-protection' };
 
-  if (actorRole === 'admin' && (currentRole === 'owner' || currentRole === 'admin' || nextRole === 'admin')) {
-    return { allowed: false, reason: 'admin-cannot-manage-admin' };
-  }
   if (currentStatus === nextStatus && currentRole === nextRole) {
     return { allowed: false, reason: 'invalid-transition' };
   }
