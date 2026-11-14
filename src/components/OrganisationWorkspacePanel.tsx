@@ -64,7 +64,7 @@ export const OrganisationWorkspacePanel: React.FC<OrganisationWorkspacePanelProp
           </dl>
         </div>
         <span className="rounded-full border border-emerald-700 bg-emerald-950 px-3 py-1 text-xs font-semibold text-emerald-200">
-          Active when checked
+          Membership and organisation active when checked
         </span>
       </header>
 
@@ -118,7 +118,7 @@ export const OrganisationWorkspacePanel: React.FC<OrganisationWorkspacePanelProp
             </ul>
           </div>
           <p className="mt-3 text-[11px] leading-relaxed text-amber-200/80">
-            “Permitted” describes the current Firestore Rules model only; it does not mean the corresponding SAFER screen or workflow is released. Membership status is a point-in-time result, not continuous monitoring; it may change after this check. Firestore Security Rules re-evaluate each database request and remain authoritative. This matrix is informational UI guidance, not authorization. No audit feed or simulated activity is displayed.
+            “Permitted” describes the current Firestore Rules model only; it does not mean the corresponding SAFER screen or workflow is released. The membership read is permitted only while both this membership and its organisation are active. This is a point-in-time result, not continuous monitoring; either status may change after this check. Firestore Security Rules re-evaluate each database request and remain authoritative. This matrix is informational UI guidance, not authorization. No audit feed or simulated activity is displayed.
           </p>
         </aside>
       </div>
