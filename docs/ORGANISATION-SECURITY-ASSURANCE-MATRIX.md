@@ -21,7 +21,7 @@
 | Organisation metadata integrity | Client creates/updates/deletes organisation metadata; metadata has extra/missing keys, unsupported schema version, invalid display name; profile adapter returns getters, exotic objects, symbols, or hostile proxies | Firestore Rules + organisationProfile.ts | Existing organisation write denial test, src/lib/organisationProfile.test.ts, and new emulator trust-anchor regression | Deny / parser fails closed without invoking accessors |
 | Audit confidentiality and integrity boundary | Client reads or writes audit events | Firestore Rules | Expanded cross-tenant audit read/write test; existing same-tenant write denial | Deny |
 | Restricted records | Client reads/writes private personnel or restricted incidents | Firestore Rules | Existing restricted-path tests | Deny |
-| Operational record provenance | Client changes tenant ID, record ID, creator, reporter, or timestamps | Firestore Rules | Existing personnel/incident mutation tests | Deny |
+| Operational record provenance | Client changes tenant ID, record ID, creator, reporter, or timestamps; stored record has extra keys or malformed fields | Firestore Rules | Personnel/incident update tests plus new stored-record read-schema emulator regression | Deny |
 | Invitation policy | Invalid digest, excessive expiry, terminal-state reuse, untrusted role | Pure policy model | src/lib/membershipLifecycle.test.ts | Reject; not authorization |
 | Last-owner safety | Last active owner demoted, suspended, or revoked | Pure policy model | Existing lifecycle tests | Reject; trusted backend must enforce atomically |
 | Audit envelope shape | Unknown event, extra/symbol keys, accessors, non-enumerable fields, exotic prototypes, hostile proxies, malformed digest/identifier/optional target | TypeScript contract | src/types/organisationAudit.test.ts | Accept exact plain data envelope; reject malformed or hostile input without invoking getters |
@@ -88,3 +88,6 @@ The emulator scenarios use synthetic fixtures and validate the checked-in candid
 
 
 **Follow-up trust-anchor hardening:** The candidate Rules now enforce exact membership and organisation schemas in the shared tenant authorization helpers, not only in the self-membership read/profile parser. Emulator regressions for unexpected membership/organisation fields, unsupported organisation schema version, and malformed display name have been added. Their execution is pending the current latest-head CI run; the previously recorded `f02edc2...` pass does not validate these subsequent changes.
+
+
+**Stored-record read-path hardening:** Candidate read rules now apply exact field allowlists and core schema checks to personnel and incident documents, and an explicit metadata-only allowlist to evidence. The new malformed stored-record regression is awaiting current-head CI.
