@@ -40,6 +40,12 @@ describe('account regional formatting', () => {
     expect(formatAccountTime(timestamp, prefs({ timezone: 'UTC', timeFormat: '12h' }))).toMatch(/01:05\sPM/);
   });
 
+  it('uses selected display locale and global IANA timezone for timestamp formatting', () => {
+    const timestamp = '2026-11-13T13:05:00.000Z';
+    expect(formatAccountTime(timestamp, prefs({ timezone: 'Europe/Paris', locale: 'fr-FR', timeFormat: '24h' }))).toBe('14:05');
+    expect(formatAccountNumber(123456.78, prefs({ numberFormat: 'de-DE' }))).toBe('123.456,78');
+  });
+
   it('formats numbers using the selected numbering convention', () => {
     expect(formatAccountNumber(123456.78, prefs({ numberFormat: 'en-IN' }))).toBe('1,23,456.78');
     expect(formatAccountNumber(123456.78, prefs({ numberFormat: 'en-US' }))).toBe('123,456.78');
