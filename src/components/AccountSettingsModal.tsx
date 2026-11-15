@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Download, RotateCcw, Save, UserRound, X } from 'lucide-react';
 import { useModalFocus } from '../hooks/useModalFocus.ts';
-import {LOCALE_OPTIONS, setLocale, type SupportedLocale} from '../i18n/locale.ts';
+import {LOCALE_OPTIONS, setLocale, translate, type SupportedLocale} from '../i18n/locale.ts';
 import {
   ACCOUNT_SETTINGS_STORAGE_KEY,
   createAccountSettingsExport,
@@ -96,7 +96,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
         <header className="bg-slate-900 text-white px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <UserRound className="w-6 h-6 text-cyan-300 shrink-0" />
-            <div><h2 id="account-settings-title" className="font-bold text-base">My Account</h2>
+            <div><h2 id="account-settings-title" className="font-bold text-base">{translate('myAccount')}</h2>
               <p className="text-xs text-slate-300">Profile and personal workstation preferences</p></div>
           </div>
           <button type="button" onClick={onClose} aria-label="Close account settings" className="text-slate-300 hover:text-white p-2 rounded-md"><X className="w-5 h-5" /></button>
@@ -112,7 +112,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
               <button key={tab} type="button" role="tab" aria-selected={activeTab === tab}
                 onClick={() => setActiveTab(tab)}
                 className={`rounded-md px-3 py-2 text-xs font-semibold capitalize focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 ${activeTab === tab ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
-                {tab === 'data' ? 'Data & privacy' : tab}
+                {tab === 'data' ? translate('dataPrivacy') : translate(tab)}
               </button>
             ))}
           </div>
@@ -135,29 +135,29 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
 
           {activeTab === 'preferences' && (
             <div className="space-y-4">
-              <div><h3 className="font-semibold text-slate-900">Regional preferences</h3><p className="text-xs text-slate-600 mt-1">These preferences apply to supported date, time and number formatting. Language applies to the authentication screen, navigation and account settings; operational content is being localised progressively.</p></div>
+              <div><h3 className="font-semibold text-slate-900">{translate('regionalPreferences')}</h3><p className="text-xs text-slate-600 mt-1">These preferences apply to supported date, time and number formatting. Language applies to the authentication screen, navigation and account settings; operational content is being localised progressively.</p></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <label className={labelClass}>Language
+                <label className={labelClass}>{translate('language')}
                   <select className={inputClass} value={settings.preferences.locale} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, locale: event.target.value as SupportedLocale } }))}>
                     {LOCALE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.nativeName} — {option.label}</option>)}
                   </select>
                 </label>
-                <label className={labelClass}>Date format
+                <label className={labelClass}>{translate('dateFormat')}
                   <select className={inputClass} value={settings.preferences.dateFormat} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, dateFormat: event.target.value as AccountSettings['preferences']['dateFormat'] } }))}>
                     <option value="DD-MM-YYYY">DD-MM-YYYY</option><option value="YYYY-MM-DD">YYYY-MM-DD</option><option value="DD/MM/YYYY">DD/MM/YYYY</option>
                   </select>
                 </label>
-                <label className={labelClass}>Time format
+                <label className={labelClass}>{translate('timeFormat')}
                   <select className={inputClass} value={settings.preferences.timeFormat} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, timeFormat: event.target.value as AccountSettings['preferences']['timeFormat'] } }))}>
                     <option value="24h">24-hour</option><option value="12h">12-hour</option>
                   </select>
                 </label>
-                <label className={labelClass}>Timezone
+                <label className={labelClass}>{translate('timezone')}
                   <select className={inputClass} value={settings.preferences.timezone} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, timezone: event.target.value as AccountSettings['preferences']['timezone'] } }))}>
                     <option value="Asia/Kolkata">Asia/Kolkata (IST)</option><option value="UTC">UTC</option>
                   </select>
                 </label>
-                <label className={labelClass}>Number format
+                <label className={labelClass}>{translate('numberFormat')}
                   <select className={inputClass} value={settings.preferences.numberFormat} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, numberFormat: event.target.value as AccountSettings['preferences']['numberFormat'] } }))}>
                     <option value="en-IN">India (1,23,456.78)</option><option value="en-US">International (123,456.78)</option>
                   </select>
@@ -182,7 +182,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
         </div>
 
         <footer className="border-t border-slate-200 px-4 sm:px-6 py-3 flex flex-wrap justify-between gap-2">
-          <button type="button" onClick={onClose} className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Close</button>
+          <button type="button" onClick={onClose} className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">{translate('close')}</button>
           <button type="button" onClick={save} className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"><Save className="w-4 h-4" /> Save preferences</button>
         </footer>
       </section>
