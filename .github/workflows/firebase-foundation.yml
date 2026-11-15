@@ -66,8 +66,6 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      - name: Synchronize npm lockfile for dependency audit
-        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
 
@@ -263,7 +261,7 @@ jobs:
         run: npm run test:security-assessment
 
       - name: Dependency security audit
-        run: npm audit --omit=dev --audit-level=high
+        run: bun audit --prod --audit-level=high
 
       - name: Type-check
         run: npm run lint
