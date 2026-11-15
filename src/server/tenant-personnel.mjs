@@ -30,6 +30,15 @@ function boundedList(value,maxItems,maxLength) {
   if(!Array.isArray(value)||value.length>maxItems||value.some(v=>typeof v!=='string'||!v.trim()||v.length>maxLength)) fail('invalid_personnel_data');
   return [...new Set(value.map(v=>v.trim()))];
 }
+function validEmployeeMembership(value, uid, orgId) {
+  const fields=['uid','orgId','role','status','createdAt','createdByUid','updatedAt','updatedByUid','schemaVersion'].sort();
+  const keys=value&&typeof value==='object'&&!Array.isArray(value)?Object.keys(value).sort():[];
+  return keys.length===fields.length && keys.every((key,index)=>key===fields[index])
+    && value.uid===uid && value.orgId===orgId && value.role==='tenant_employee'
+    && value.status==='active' && value.schemaVersion===1
+    && UID.test(value.createdByUid??'') && UID.test(value.updatedByUid??'')
+    && value.createdAt!=null && value.updatedAt!=null;
+}
 function validRecord(value, recordId, orgId) {
   if(!value||typeof value!=='object'||Array.isArray(value)) return false;
   const keys=Object.keys(value).sort();
@@ -113,9 +122,9 @@ export async function createTenantPersonnel({orgId,actorUid,input,database,serve
     await authorize(tx,database,actorUid,orgId,'personnel:create');
     if(record.employeeUid) {
       const target=await tx.get(database.doc(`organisations/${orgId}/members/${record.employeeUid}`));
-      if(!target.exists||target.data().uid!==record.employeeUid||target.data().orgId!==orgId
-        ||target.data().role!=='tenant_employee'||target.data().status!=='active'
-        ||target.data().schemaVersion!==1) fail('active_employee_assignee_required');
+      if(!target.exists||!validEmployeeMembership(target.data(),record.employeeUid,orgId)) {
+        fail('active_employee_assignee_required');
+      }
     }
     tx.create(ref,record);
     tx.create(audit,{
