@@ -1,7 +1,7 @@
 # RBAC-01 — Canonical tenant permission engine
 
 **Status:** Implementation foundation; not yet wired to live tenant endpoints or Firestore Rules.  
-**Parent:** `feature/iam-01-platform-owner-backend`  
+**Parent:** `feature/iam-01-platform-owner-backend` (IAM-01 must land first).  
 **Cost:** Uses the existing Vercel Node.js / Firebase Admin SDK architecture; no new service or paid dependency.
 
 ## Governing identity model
