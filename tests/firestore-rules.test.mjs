@@ -34,6 +34,18 @@ after(async () => {
   await testEnv?.cleanup();
 });
 
+function membershipRecord(uid, orgId, role = "tenant_super_admin", status = "active") {
+  const now = Timestamp.fromDate(new Date("2026-01-01T00:00:00.000Z"));
+  return {
+    uid, orgId, role, status,
+    createdAt: now,
+    createdByUid: "trusted-platform-owner",
+    updatedAt: now,
+    updatedByUid: "trusted-platform-owner",
+    schemaVersion: 1,
+  };
+}
+
 async function seedTenant({
   orgId = "org-a",
   uid = "owner-a",
@@ -49,18 +61,10 @@ async function seedTenant({
       status: organisationStatus,
       schemaVersion: 1,
     });
-    const now = Timestamp.fromDate(new Date("2026-01-01T00:00:00.000Z"));
-    await setDoc(doc(db, "organisations", orgId, "members", uid), {
-      uid,
-      orgId,
-      role,
-      status: membershipStatus,
-      createdAt: now,
-      createdByUid: "trusted-platform-owner",
-      updatedAt: now,
-      updatedByUid: "trusted-platform-owner",
-      schemaVersion: 1,
-    });
+    await setDoc(
+      doc(db, "organisations", orgId, "members", uid),
+      membershipRecord(uid, orgId, role, membershipStatus),
+    );
   });
 }
 
@@ -323,10 +327,10 @@ test("users can get only their own active canonical membership across all five t
 
 test("self-membership get fails closed for invalid membership or organisation trust anchors", async () => {
   const fixtures = [
-    { orgId: "self-inactive-member", uid: "inactive-member", role: "owner", membershipStatus: "suspended" },
-    { orgId: "self-revoked-member", uid: "revoked-member", role: "owner", membershipStatus: "revoked" },
+    { orgId: "self-inactive-member", uid: "inactive-member", role: "tenant_super_admin", membershipStatus: "suspended" },
+    { orgId: "self-revoked-member", uid: "revoked-member", role: "tenant_super_admin", membershipStatus: "revoked" },
     { orgId: "self-invalid-role", uid: "invalid-role", role: "platform-admin" },
-    { orgId: "self-suspended-org", uid: "suspended-org-member", role: "owner", organisationStatus: "suspended" },
+    { orgId: "self-suspended-org", uid: "suspended-org-member", role: "tenant_super_admin", organisationStatus: "suspended" },
   ];
   for (const fixture of fixtures) {
     await seedTenant(fixture);
@@ -339,18 +343,15 @@ test("self-membership get fails closed for invalid membership or organisation tr
     await setDoc(doc(db, "organisations/self-mismatch-uid"), {
       orgId: "self-mismatch-uid", displayName: "Synthetic", status: "active", schemaVersion: 1,
     });
-    await setDoc(doc(db, "organisations/self-mismatch-uid/members/mismatch-user"), {
-      uid: "different-user", orgId: "self-mismatch-uid", role: "owner", status: "active",
-    });
+    await setDoc(doc(db, "organisations/self-mismatch-uid/members/mismatch-user"),
+      membershipRecord("different-user", "self-mismatch-uid"));
     await setDoc(doc(db, "organisations/self-mismatch-org"), {
       orgId: "another-org", displayName: "Synthetic", status: "active", schemaVersion: 1,
     });
-    await setDoc(doc(db, "organisations/self-mismatch-org/members/mismatch-org-user"), {
-      uid: "mismatch-org-user", orgId: "another-org", role: "owner", status: "active",
-    });
-    await setDoc(doc(db, "organisations/self-missing-parent/members/orphan-user"), {
-      uid: "orphan-user", orgId: "self-missing-parent", role: "owner", status: "active",
-    });
+    await setDoc(doc(db, "organisations/self-mismatch-org/members/mismatch-org-user"),
+      membershipRecord("mismatch-org-user", "another-org"));
+    await setDoc(doc(db, "organisations/self-missing-parent/members/orphan-user"),
+      membershipRecord("orphan-user", "self-missing-parent"));
   });
 
   await assertFails(getDoc(doc(dbFor("mismatch-user"), "organisations/self-mismatch-uid/members/mismatch-user")));
