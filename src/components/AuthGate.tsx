@@ -420,7 +420,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
           </div>
           {mode === 'verify' ? (
             <div className="space-y-3" role="status">
-              <h2 className="font-semibold">Verify your email</h2>
+              <h2 className="font-semibold">{translate('verifyEmail')}</h2>
               <p className="text-sm text-slate-300">A verification link was requested for {verificationEmail || email}. Follow the link, then return here and sign in again.</p>
               <button type="button" onClick={handleRefreshVerification} className="w-full rounded-lg border border-slate-600 px-4 py-2.5 text-sm hover:bg-slate-800">I have verified — return to sign in</button>
               <button type="button" onClick={handleResendVerification} className="w-full text-xs text-blue-300 underline">Return to sign in to request another verification email</button>
@@ -450,7 +450,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
                   </span>
                 </label>
               )}
-              <button type="submit" disabled={busy || !isFirebaseConfigured || authObserverFailed} className="w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-bold text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Please wait…' : mode === 'register' ? 'Create Account' : mode === 'reset' ? 'Send reset instructions' : 'Log In'}</button>
+              <button type="submit" disabled={busy || !isFirebaseConfigured || authObserverFailed} className="w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-bold text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50">{busy ? translate('pleaseWait') : mode === 'register' ? translate('createAccount') : mode === 'reset' ? translate('sendResetInstructions') : translate('login')}</button>
             </form>
           )}
           {mode === 'signin' && isFirebaseConfigured && (
