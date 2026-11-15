@@ -1,6 +1,7 @@
 import {
   inviteTenantMember,
   manageTenantMember,
+  revokeTenantInvitation,
   TenantMembershipError,
 } from '../../src/server/tenant-membership-admin.mjs';
 import { resolveTenantAuthorization, TenantAuthorizationError } from '../../src/server/tenant-authorization.mjs';
@@ -29,6 +30,8 @@ function responseError(error) {
     ['invitee_not_found', 404],
     ['verified_invitee_required', 403],
     ['membership_conflict', 409],
+    ['invitation_not_found', 404],
+    ['invitation_not_pending', 409],
     ['service_unavailable', 503],
     ['identity_service_unavailable', 503],
   ]);
@@ -128,6 +131,13 @@ export default async function handler(request, response) {
     }
 
     const action = request.body?.action;
+    if (action === 'members:invitation:revoke') {
+      const result = await revokeTenantInvitation({
+        ...common,
+        invitationId: request.body?.invitationId,
+      });
+      return response.status(200).json(result);
+    }
     if (!['members:suspend', 'members:role:assign'].includes(action)) {
       return response.status(400).json({ error: 'invalid_request' });
     }
