@@ -46,7 +46,7 @@ export async function resolveTenantAuthorization({
   } catch {
     throw new TenantAuthorizationError('unauthenticated', 401);
   }
-  if (!decoded || typeof decoded.uid !== 'string' || !decoded.uid) {
+  if (!decoded || !/^[A-Za-z0-9_-]{1,128}$/.test(decoded.uid ?? '')) {
     throw new TenantAuthorizationError('unauthenticated', 401);
   }
 
