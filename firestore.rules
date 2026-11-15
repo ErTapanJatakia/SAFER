@@ -17,9 +17,26 @@ service cloud.firestore {
     function activeTenantRole(orgId) {
       return signedIn()
         && exists(membershipPath(orgId))
+        && get(membershipPath(orgId)).data.keys().hasOnly([
+          'uid', 'orgId', 'role', 'status', 'createdAt', 'createdByUid',
+          'updatedAt', 'updatedByUid', 'schemaVersion'
+        ])
+        && get(membershipPath(orgId)).data.keys().hasAll([
+          'uid', 'orgId', 'role', 'status', 'createdAt', 'createdByUid',
+          'updatedAt', 'updatedByUid', 'schemaVersion'
+        ])
         && get(membershipPath(orgId)).data.uid == request.auth.uid
         && get(membershipPath(orgId)).data.orgId == orgId
+        && get(membershipPath(orgId)).data.role in [
+          'tenant_super_admin', 'tenant_admin', 'tenant_manager',
+          'tenant_employee', 'tenant_auditor'
+        ]
         && get(membershipPath(orgId)).data.status == 'active'
+        && get(membershipPath(orgId)).data.createdAt is timestamp
+        && get(membershipPath(orgId)).data.createdByUid is string
+        && get(membershipPath(orgId)).data.updatedAt is timestamp
+        && get(membershipPath(orgId)).data.updatedByUid is string
+        && get(membershipPath(orgId)).data.schemaVersion == 1
         && get(organisationPath(orgId)).data.orgId == orgId
         && get(organisationPath(orgId)).data.status == 'active';
     }
