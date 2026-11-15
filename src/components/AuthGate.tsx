@@ -336,7 +336,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
   if (user || demoGuest) {
     return (
       <SessionInactivityGuard sessionKey={user?.uid ?? 'demo-guest'} onExpire={leaveAccount}>
-        <div role="group" aria-label="Account session" className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-2 border-b border-slate-700 bg-slate-950 px-4 py-2 text-xs text-slate-100">
+        <div role="region" aria-label="Account session" className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-2 border-b border-slate-700 bg-slate-950 px-4 py-2 text-xs text-slate-100">
           <span>{user ? `Signed in: ${user.email || 'verified account'}` : 'Demo Guest session'}</span>
           <button type="button" onClick={leaveAccount} className="rounded border border-slate-600 px-3 py-1.5 hover:bg-slate-800">Sign out</button>
         </div>
@@ -463,7 +463,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
           {message && <p role="status" className="rounded-lg border border-emerald-800 bg-emerald-950/50 p-3 text-xs text-emerald-200">{message}</p>}
           <div className="border-t border-slate-800 pt-4">
             <button type="button" onClick={() => {setDemoGuest(true); clearFeedback();}} className="w-full rounded-lg border border-slate-600 bg-slate-800 px-4 py-3 text-sm font-semibold hover:bg-slate-700">Continue as Demo Guest</button>
-            <p className="mt-2 text-center text-[10px] text-slate-500">Demo mode uses synthetic browser-local data. Do not enter real personal or operational information.</p>
+            <p className="mt-2 text-center text-[10px] text-slate-300">Demo mode uses synthetic browser-local data. Do not enter real personal or operational information.</p>
           </div>
         </div>
       </section>

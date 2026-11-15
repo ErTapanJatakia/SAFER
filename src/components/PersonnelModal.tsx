@@ -472,6 +472,7 @@ export const PersonnelModal: React.FC<PersonnelModalProps> = ({
   };
 
   return (
+    <section role="region" aria-label="Personnel record editor">
     <div
       className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
       ref={modalRef}
@@ -1338,5 +1339,6 @@ export const PersonnelModal: React.FC<PersonnelModalProps> = ({
         </form>
       </div>
     </div>
+    </section>
   );
 };

@@ -299,9 +299,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
               <div className="flex items-center space-x-2">
                 <FileCheck2 className="w-4 h-4 text-blue-900" />
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                   Pre-Deployment Checklist
-                </h4>
+                </h3>
                 {outstandingChecklistCount > 0 && (
                   <span className="text-xs px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-bold border border-amber-300">
                     {displayNumber(outstandingChecklistCount)} Due
@@ -362,9 +362,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center space-x-2">
                 <FileText className="w-4 h-4 text-slate-700" />
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                   Recent Incidents ({displayNumber(incidentList.length)})
-                </h4>
+                </h3>
               </div>
               <button
                 onClick={() => onNavigate('incidents')}
@@ -405,7 +405,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <ShieldAlert className="w-4 h-4 text-teal-400" />
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200">
                   Defensive Cyber Hygiene Guidance
-                </h4>
+                </h3>
               </div>
               <span className="text-[10px] font-mono bg-teal-900/60 text-teal-300 border border-teal-700/60 px-1.5 py-0.5 rounded">
                 DEMO REFERENCE
