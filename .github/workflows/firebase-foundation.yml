@@ -308,6 +308,8 @@ jobs:
           node-version: 22
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
+      - name: Regenerate Bun lockfile
+        run: bun install --lockfile-only
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: DPDP governance, repository, and casework tests
