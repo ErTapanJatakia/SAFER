@@ -66,6 +66,12 @@ test('rejects invalid, revoked and disabled identities', async () => {
     resolveTenantAuthorization({ token: 'valid-token', orgId: 'pmc-alpha', action: 'organisation:read', ...disabled }),
     (error) => error.code === 'account_unavailable',
   );
+  const unavailable = fixture();
+  unavailable.auth.getUser = async () => { throw new Error('identity provider unavailable'); };
+  await assert.rejects(
+    resolveTenantAuthorization({ token: 'valid-token', orgId: 'pmc-alpha', action: 'organisation:read', ...unavailable }),
+    (error) => error.code === 'identity_service_unavailable' && error.status === 503,
+  );
 });
 
 test('rejects missing membership and inactive or suspended tenant context', async () => {
