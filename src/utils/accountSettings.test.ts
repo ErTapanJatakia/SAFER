@@ -5,6 +5,7 @@ import {
   DEFAULT_ACCOUNT_SETTINGS,
   normalizeAccountSettings,
   readAccountProfile,
+  shouldShowVisualToast,
   validateAccountProfile,
 } from './accountSettings.ts';
 
@@ -82,6 +83,20 @@ describe('account settings normalization', () => {
     expect(normalized.profile.displayName).toHaveLength(80);
     expect(normalized.profile.callSign).toHaveLength(32);
     expect(normalized.profile.bio).toHaveLength(280);
+  });
+});
+
+
+describe('in-app notification preference boundary', () => {
+  it('suppresses only routine success visuals when explicitly disabled', () => {
+    const disabled = { preferences: { showSuccessToasts: false } };
+    expect(shouldShowVisualToast('success', disabled)).toBe(false);
+    expect(shouldShowVisualToast('status', disabled)).toBe(true);
+  });
+
+  it('keeps routine success visuals enabled when stored settings are malformed', () => {
+    expect(shouldShowVisualToast('success', '{invalid-json')).toBe(true);
+    expect(shouldShowVisualToast('success', null)).toBe(true);
   });
 });
 
