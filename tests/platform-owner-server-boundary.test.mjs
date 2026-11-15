@@ -12,7 +12,7 @@ const firestoreRules = readFileSync(new URL('../firestore.rules', import.meta.ur
 const packageManifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const vercelConfig = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
 
-test('only the explicit owner status route is present; helpers stay outside api routing', () => {
+test('Owner status route delegates to the shared handler; server helpers stay outside API routing', () => {
   assert.equal(existsSync(new URL('../api/_lib', import.meta.url)), false);
   assert.match(route, /owner-status-handler\.mjs/);
   assert.match(route, /platformAdministrators\/\$\{uid\}/);
