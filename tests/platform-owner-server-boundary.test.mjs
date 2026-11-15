@@ -7,6 +7,7 @@ const serverAdmin = readFileSync(new URL('../src/server/firebase-admin.js', impo
 const browserFirebase = readFileSync(new URL('../src/lib/firebase.ts', import.meta.url), 'utf8');
 const firestoreRules = readFileSync(new URL('../firestore.rules', import.meta.url), 'utf8');
 const packageManifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+const vercelConfig = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
 
 test('only the explicit owner status route is present; helpers stay outside api routing', () => {
   assert.equal(existsSync(new URL('../api/_lib', import.meta.url)), false);
@@ -30,4 +31,9 @@ test('client Firestore rules do not grant platform administrator or audit collec
 
 test('security override pins body-parser to the patched 1.20.9 release line', () => {
   assert.equal(packageManifest.overrides['body-parser'], '^1.20.9');
+});
+
+test('Vercel uses the committed frozen Bun lockfile rather than a stale npm lockfile', () => {
+  assert.equal(packageManifest.packageManager, 'bun@1.4.4');
+  assert.equal(vercelConfig.installCommand, 'bun install --frozen-lockfile');
 });
