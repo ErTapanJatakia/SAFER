@@ -91,6 +91,12 @@ test('tenant authorization fails closed for forged identity, wrong tenant, malfo
     membership: { ...membership('tenant_super_admin'), schemaVersion: 2 },
   }).allowed, false);
   assert.equal(authorize('tenant_super_admin', 'personnel:read', {
+    membership: { ...membership('tenant_super_admin'), createdAt: 'yesterday' },
+  }).allowed, false);
+  assert.equal(authorize('tenant_super_admin', 'personnel:read', {
+    membership: { ...membership('tenant_super_admin'), updatedByUid: 'bad uid' },
+  }).allowed, false);
+  assert.equal(authorize('tenant_super_admin', 'personnel:read', {
     membership: { ...membership('tenant_super_admin'), platformOverride: true },
   }).allowed, false);
   assert.equal(authorize('tenant_super_admin', 'unknown:action').allowed, false);
