@@ -149,6 +149,44 @@ describe('SAFER privacy demo repository', () => {
     }
   });
 
+
+  it('rejects records beyond per-collection and per-field limits before writing', () => {
+    const storage = memoryStorage();
+    const repository = createPrivacyDemoRepository(storage);
+    const tooMany = {
+      ...EMPTY_PRIVACY_DEMO_WORKSPACE,
+      noticeDrafts: Array.from({ length: 501 }, (_, index) => ({
+        id: `notice-${index}`, title: 'Draft', content: 'Synthetic',
+        versionLabel: 'draft', updatedAt: 'now',
+      })),
+    };
+    assert.throws(() => repository.saveWorkspace(tooMany), /invalid or oversized/);
+    const tooLong = {
+      ...EMPTY_PRIVACY_DEMO_WORKSPACE,
+      noticeDrafts: [{
+        id: 'notice-long', title: 'Draft', content: 'x'.repeat(8001),
+        versionLabel: 'draft', updatedAt: 'now',
+      }],
+    };
+    assert.throws(() => repository.saveWorkspace(tooLong), /invalid or oversized/);
+    assert.equal(storage.getItem(PRIVACY_DEMO_STORAGE_KEY), null);
+  });
+
+  it('rejects oversized stored bytes without parsing or replacing them', () => {
+    const original = ' '.repeat(1_000_001);
+    const storage: PrivacyStorage = {
+      getItem: () => original,
+      setItem: () => { throw new Error('must not write'); },
+      removeItem: () => undefined,
+    };
+    assert.throws(
+      () => createPrivacyDemoRepository(storage).loadWorkspace(),
+      /exceeds the 1 MB safety limit/,
+    );
+    assert.equal(storage.getItem(PRIVACY_DEMO_STORAGE_KEY), original);
+  });
+
+
   it('verifies clear operations and leaves no stored demo workspace', () => {
     const storage = memoryStorage();
     const repository = createPrivacyDemoRepository(storage);
