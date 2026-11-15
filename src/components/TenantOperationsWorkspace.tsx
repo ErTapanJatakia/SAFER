@@ -12,7 +12,7 @@ const TABS: {id:Tab;label:string;roles?:Role[]}[] = [
   {id:'personnel',label:'Personnel',roles:['tenant_super_admin','tenant_admin','tenant_manager','tenant_auditor','tenant_employee']},
   {id:'evidence',label:'Evidence',roles:['tenant_super_admin','tenant_admin','tenant_manager','tenant_auditor']},
   {id:'checklists',label:'Checklists'},
-  {id:'reports',label:'Reports'},
+  {id:'reports',label:'Reports',roles:['tenant_super_admin','tenant_admin','tenant_manager','tenant_auditor']},
   {id:'audit',label:'Audit',roles:['tenant_super_admin','tenant_admin','tenant_auditor']},
   {id:'members',label:'Members',roles:['tenant_super_admin','tenant_admin','tenant_auditor']},
   {id:'notifications',label:'Activity'},
@@ -61,7 +61,7 @@ export const TenantOperationsWorkspace:React.FC<Props>=({user,membership,onLeave
     setBusy(true);setError('');setNotice('');
     try{
       const q=`?orgId=${encodeURIComponent(membership.orgId)}`;
-      if(target==='overview'||target==='reports'){
+      if((target==='overview'||target==='reports')&&membership.role!=='tenant_employee'){
         const value=await request('/api/tenant/reports'+q);setReport(value);
       }
       if(target==='incidents'||target==='overview'){
@@ -70,7 +70,7 @@ export const TenantOperationsWorkspace:React.FC<Props>=({user,membership,onLeave
       if(target==='personnel'||target==='overview'){
         const value=await request('/api/tenant/personnel'+q);setPersonnel(array(value.records??value.personnel));
       }
-      if(target==='evidence'||target==='overview'){
+      if((target==='evidence'||target==='overview')&&membership.role!=='tenant_employee'){
         const value=await request('/api/tenant/evidence'+q);setEvidence(array(value.records??value.evidence));
       }
       if(target==='checklists'||target==='overview'){
@@ -105,6 +105,7 @@ export const TenantOperationsWorkspace:React.FC<Props>=({user,membership,onLeave
   const visibleTabs=TABS.filter(item=>!item.roles||item.roles.includes(membership.role));
   const canManage=membership.role==='tenant_super_admin'||membership.role==='tenant_admin';
   const canOperate=canManage||membership.role==='tenant_manager';
+  const canReportIncident=canOperate||membership.role==='tenant_employee';
   const filteredIncidents=useMemo(()=>incidents.filter(row=>JSON.stringify(row).toLowerCase().includes(search.toLowerCase())),[incidents,search]);
 
   const run=async(action:()=>Promise<void>)=>{setBusy(true);setError('');setNotice('');try{await action();}catch(e){setError(e instanceof Error?e.message:'operation_failed');}finally{setBusy(false);}};
@@ -188,7 +189,7 @@ export const TenantOperationsWorkspace:React.FC<Props>=({user,membership,onLeave
       </div>}
       {tab==='incidents'&&<div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
         {panel('Incident register','Search and review incidents within this PMC.',<><input className={inputClass} placeholder="Search incident records" value={search} onChange={e=>setSearch(e.target.value)}/>{filteredIncidents.length?filteredIncidents.map(row=><div key={String(row.incidentId)} className="border-b border-slate-100 py-3"><div className="flex flex-wrap items-center justify-between gap-2"><strong className="text-sm">{String(row.referenceNumber??row.title??'Incident')}</strong><span className="text-xs text-slate-500">{String(row.incidentType??'')}</span></div><p className="my-1 text-xs text-slate-600">{String(row.summary??'')} · {String(row.locationLabel??'')}</p>{canOperate&&<div className="flex flex-wrap gap-2"><select aria-label="Incident status" className="rounded border border-slate-300 p-1 text-xs" value={String(row.status??'')} onChange={e=>updateIncident(String(row.incidentId),{status:e.target.value})}>{['Logged - Pending Officer Review','Under Investigation / Human Review','Documented & Filed'].map(x=><option key={x}>{x}</option>)}</select><select aria-label="Incident priority" className="rounded border border-slate-300 p-1 text-xs" value={String(row.priority??'Routine')} onChange={e=>updateIncident(String(row.incidentId),{priority:e.target.value})}>{['Routine','Moderate','High Attention'].map(x=><option key={x}>{x}</option>)}</select></div>}</div>):<p className="py-5 text-sm text-slate-500">No incidents found.</p>}</>)}
-        {canOperate&&panel('Log incident','Use factual language. Investigation status remains subject to human review.',<div className="space-y-2"><input className={inputClass} placeholder="Incident title" maxLength={160} value={incidentForm.title} onChange={e=>setIncidentForm({...incidentForm,title:e.target.value})}/><select className={inputClass} value={incidentForm.incidentType} onChange={e=>setIncidentForm({...incidentForm,incidentType:e.target.value})}>{['Equipment Malfunction','Access Control Anomaly','Communications Drop','Logistics Delay','Medical First-Aid Event','Administrative Discrepancy'].map(x=><option key={x}>{x}</option>)}</select><select className={inputClass} value={incidentForm.priority} onChange={e=>setIncidentForm({...incidentForm,priority:e.target.value})}>{['Routine','Moderate','High Attention'].map(x=><option key={x}>{x}</option>)}</select><input className={inputClass} placeholder="Location label (optional)" maxLength={120} value={incidentForm.locationLabel} onChange={e=>setIncidentForm({...incidentForm,locationLabel:e.target.value})}/><textarea className={inputClass} rows={4} placeholder="Factual summary" maxLength={2000} value={incidentForm.summary} onChange={e=>setIncidentForm({...incidentForm,summary:e.target.value})}/><button className={buttonClass} disabled={busy||!incidentForm.title.trim()||!incidentForm.summary.trim()} onClick={createIncident}>Record incident</button></div>)}
+        {canReportIncident&&panel('Log incident','Use factual language. Investigation status remains subject to human review.',<div className="space-y-2"><input className={inputClass} placeholder="Incident title" maxLength={160} value={incidentForm.title} onChange={e=>setIncidentForm({...incidentForm,title:e.target.value})}/><select className={inputClass} value={incidentForm.incidentType} onChange={e=>setIncidentForm({...incidentForm,incidentType:e.target.value})}>{['Equipment Malfunction','Access Control Anomaly','Communications Drop','Logistics Delay','Medical First-Aid Event','Administrative Discrepancy'].map(x=><option key={x}>{x}</option>)}</select><select className={inputClass} value={incidentForm.priority} onChange={e=>setIncidentForm({...incidentForm,priority:e.target.value})}>{['Routine','Moderate','High Attention'].map(x=><option key={x}>{x}</option>)}</select><input className={inputClass} placeholder="Location label (optional)" maxLength={120} value={incidentForm.locationLabel} onChange={e=>setIncidentForm({...incidentForm,locationLabel:e.target.value})}/><textarea className={inputClass} rows={4} placeholder="Factual summary" maxLength={2000} value={incidentForm.summary} onChange={e=>setIncidentForm({...incidentForm,summary:e.target.value})}/><button className={buttonClass} disabled={busy||!incidentForm.title.trim()||!incidentForm.summary.trim()} onClick={createIncident}>Record incident</button></div>)}
       </div>}
       {tab==='personnel'&&<div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
         {panel('Personnel directory','Minimised operational directory; no personal, health or contact data is displayed.',(personnel.length?personnel.map(row=><div key={String(row.recordId)} className="border-b border-slate-100 py-3"><strong className="text-sm">{String(row.displayLabel??row.employeeRef??'Personnel record')}</strong><p className="my-1 text-xs text-slate-600">{String(row.operationalRoles??'')} · {String(row.specialisations??'')} · {String(row.assignmentSector??'')}</p><p className="text-[10px] text-slate-500">Readiness: {String(row.readinessStatus??'')} · Human review: {String(row.requiresHumanReview??'')}</p>{canManage&&<select aria-label="Personnel readiness" className="mt-2 rounded border border-slate-300 p-1 text-xs" value={String(row.readinessStatus??'REQUIRES_HUMAN_REVIEW')} onChange={e=>updatePersonnel(String(row.recordId),e.target.value)}>{['DOCS_CURRENT_AWAITING_REVIEW','REQUIRES_HUMAN_REVIEW','FLAGGED_EXPIRED_CERTS','UNVERIFIED_CREDENTIALS','PENDING_INTAKE_DOCS'].map(x=><option key={x}>{x}</option>)}</select>}</div>):<p className="py-5 text-sm text-slate-500">No personnel records available.</p>))}
