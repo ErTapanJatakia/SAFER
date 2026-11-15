@@ -78,7 +78,6 @@ const PLATFORM_ACTIONS = new Set([
   'platform:organisations:reactivate',
   'platform:organisations:close',
   'platform:tenant-data:read',
-  'platform:tenant-data:write',
   'platform:tenant-data:export',
   'platform:identities:manage',
   'platform:audit:read',
