@@ -187,7 +187,7 @@ export default function App() {
   const [accessibilitySettings, setAccessibilitySettings] = useState<AccessibilitySettings>(() => {
     try {
       const saved = localStorage.getItem('prot_ops_a11y_v2');
-      return saved ? JSON.parse(saved) : DEFAULT_ACCESSIBILITY_SETTINGS;
+      return saved ? { ...DEFAULT_ACCESSIBILITY_SETTINGS, ...JSON.parse(saved) } : DEFAULT_ACCESSIBILITY_SETTINGS;
     } catch {
       return DEFAULT_ACCESSIBILITY_SETTINGS;
     }
