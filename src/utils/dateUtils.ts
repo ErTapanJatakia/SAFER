@@ -89,7 +89,7 @@ export function toYYYYMMDD(dateStr: string | null | undefined): string {
 /**
  * Formats a display date in DD-MM-YYYY or returns fallback label.
  */
-export function formatDisplayDate(dateStr: string | null | undefined, fallback = 'N/A'): string {
+export function formatDisplayDate(dateStr: string | null | undefined, fallback = ''): string {
   if (!dateStr) return fallback;
   const iso = toYYYYMMDD(dateStr);
   const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
