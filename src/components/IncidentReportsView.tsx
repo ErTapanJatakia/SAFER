@@ -270,7 +270,7 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
               </div>
 
               <div className="min-w-0">
-                <h3 className="text-sm font-bold text-slate-900 break-words">{inc.title}</h3>
+                <h2 className="text-sm font-bold text-slate-900 break-words">{inc.title}</h2>
                 <p className="text-xs text-slate-700 mt-1 leading-relaxed break-words">{inc.summary}</p>
               </div>
 
