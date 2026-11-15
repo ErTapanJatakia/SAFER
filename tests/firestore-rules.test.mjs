@@ -179,18 +179,93 @@ test("active admin can create and update an incident without changing reporter p
   await assertFails(deleteDoc(incident));
 });
 
-test("Manager, Employee and Auditor remain denied direct operational access until scoped rules are implemented", async () => {
+test("Manager, Employee and Auditor receive only their approved candidate-rule scopes", async () => {
   for (const role of ["tenant_manager", "tenant_employee", "tenant_auditor"]) {
-    const uid = `${role}-a`;
-    await seedTenant({ uid, role });
+    await seedTenant({ uid: `${role}-a`, role });
+  }
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, "organisations/org-a/personnel/person-a"),
+      { ...validPersonnel("owner-a", "org-a", "person-a"), createdAt: Timestamp.now(), updatedAt: Timestamp.now() });
+    await setDoc(doc(db, "organisations/org-a/incidents/incident-employee"),
+      { ...validIncident("tenant_employee-a", "org-a", "incident-employee"), dateReported: Timestamp.now(), createdAt: Timestamp.now(), updatedAt: Timestamp.now() });
+    await setDoc(doc(db, "organisations/org-a/incidents/incident-other"),
+      { ...validIncident("reporter-x", "org-a", "incident-other"), dateReported: Timestamp.now(), createdAt: Timestamp.now(), updatedAt: Timestamp.now() });
+    await setDoc(doc(db, "organisations/org-a/evidence/evidence-a"), {
+      evidenceId: "evidence-a", orgId: "org-a",
+    });
+    await setDoc(doc(db, "organisations/org-a/auditEvents/audit-a"), {
+      eventId: "audit-a", orgId: "org-a", action: "synthetic.test",
+    });
+  });
+
+  const manager = dbFor("tenant_manager-a");
+  await assertSucceeds(getDoc(doc(manager, "organisations/org-a")));
+  await assertSucceeds(getDoc(doc(manager, "organisations/org-a/personnel/person-a")));
+  await assertSucceeds(getDoc(doc(manager, "organisations/org-a/incidents/incident-other")));
+  await assertSucceeds(getDoc(doc(manager, "organisations/org-a/evidence/evidence-a")));
+  await assertFails(getDoc(doc(manager, "organisations/org-a/auditEvents/audit-a")));
+  await assertFails(setDoc(
+    doc(manager, "organisations/org-a/personnel/manager-person"),
+    validPersonnel("tenant_manager-a", "org-a", "manager-person"),
+  ));
+  await assertSucceeds(setDoc(
+    doc(manager, "organisations/org-a/incidents/manager-incident"),
+    validIncident("tenant_manager-a", "org-a", "manager-incident"),
+  ));
+
+  const employee = dbFor("tenant_employee-a");
+  await assertSucceeds(getDoc(doc(employee, "organisations/org-a")));
+  await assertFails(getDoc(doc(employee, "organisations/org-a/personnel/person-a")));
+  await assertSucceeds(getDoc(doc(employee, "organisations/org-a/incidents/incident-employee")));
+  await assertFails(getDoc(doc(employee, "organisations/org-a/incidents/incident-other")));
+  await assertFails(getDoc(doc(employee, "organisations/org-a/evidence/evidence-a")));
+  await assertFails(getDoc(doc(employee, "organisations/org-a/auditEvents/audit-a")));
+  await assertSucceeds(setDoc(
+    doc(employee, "organisations/org-a/incidents/employee-incident"),
+    validIncident("tenant_employee-a", "org-a", "employee-incident"),
+  ));
+  await assertFails(updateDoc(doc(employee, "organisations/org-a/incidents/incident-employee"), {
+    title: "Employee cannot update after submission",
+    updatedAt: serverTimestamp(),
+    updatedByUid: "tenant_employee-a",
+  }));
+
+  const auditor = dbFor("tenant_auditor-a");
+  await assertSucceeds(getDoc(doc(auditor, "organisations/org-a")));
+  await assertSucceeds(getDoc(doc(auditor, "organisations/org-a/personnel/person-a")));
+  await assertSucceeds(getDoc(doc(auditor, "organisations/org-a/incidents/incident-other")));
+  await assertSucceeds(getDoc(doc(auditor, "organisations/org-a/evidence/evidence-a")));
+  await assertSucceeds(getDoc(doc(auditor, "organisations/org-a/auditEvents/audit-a")));
+  await assertFails(setDoc(
+    doc(auditor, "organisations/org-a/incidents/auditor-incident"),
+    validIncident("tenant_auditor-a", "org-a", "auditor-incident"),
+  ));
+  await assertFails(updateDoc(doc(auditor, "organisations/org-a/incidents/incident-other"), {
+    title: "Auditor cannot mutate",
+    updatedAt: serverTimestamp(),
+    updatedByUid: "tenant_auditor-a",
+  }));
+});
+
+test("member directory reads are limited to Super Admin, Admin and Auditor", async () => {
+  for (const role of ["tenant_super_admin", "tenant_admin", "tenant_manager", "tenant_employee", "tenant_auditor"]) {
+    const uid = `directory-${role}`;
+    const orgId = `directory-org-${role}`;
+    await seedTenant({ orgId, uid, role });
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, `organisations/${orgId}/members/other-member`),
+        membershipRecord("other-member", orgId, "tenant_employee"));
+    });
     const db = dbFor(uid);
-    await assertFails(getDoc(doc(db, "organisations/org-a")));
-    await assertFails(getDoc(doc(db, "organisations/org-a", "personnel", "person-a")));
-    await assertFails(setDoc(
-      doc(db, "organisations/org-a", "personnel", `${role}-person`),
-      validPersonnel(uid, "org-a", `${role}-person`),
-    ));
-    await assertFails(getDoc(doc(db, "organisations/org-a", "incidents", "incident-a")));
+    if (["tenant_super_admin", "tenant_admin", "tenant_auditor"].includes(role)) {
+      await assertSucceeds(getDoc(doc(db, `organisations/${orgId}/members/other-member`)));
+      await assertSucceeds(getDocs(collection(db, `organisations/${orgId}/members`)));
+    } else {
+      await assertFails(getDoc(doc(db, `organisations/${orgId}/members/other-member`)));
+      await assertFails(getDocs(collection(db, `organisations/${orgId}/members`)));
+    }
   }
 });
 
