@@ -1,4 +1,5 @@
 import React, {useEffect, useMemo, useState} from 'react';
+import {Eye, EyeOff} from 'lucide-react';
 import {
   EmailAuthProvider,
   GoogleAuthProvider,
@@ -50,6 +51,10 @@ export const AccountSecurityPanel: React.FC<AccountSecurityPanelProps> = ({user,
   const [confirmPassword, setConfirmPassword] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [emailCurrentPassword, setEmailCurrentPassword] = useState('');
+  const [currentPasswordVisible, setCurrentPasswordVisible] = useState(false);
+  const [newPasswordVisible, setNewPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
+  const [emailCurrentPasswordVisible, setEmailCurrentPasswordVisible] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -193,13 +198,28 @@ export const AccountSecurityPanel: React.FC<AccountSecurityPanelProps> = ({user,
             {hasPasswordProvider ? (
               <>
                 <label className="block text-xs text-slate-300">Current password
-                  <input type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} autoComplete="current-password" required className="mt-1 w-full rounded border border-slate-600 bg-slate-950 px-3 py-2 text-white" />
+                  <span className="relative mt-1 block">
+                    <input type={currentPasswordVisible ? 'text' : 'password'} value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} autoComplete="current-password" required className="w-full rounded border border-slate-600 bg-slate-950 px-3 py-2 pr-10 text-white" />
+                    <button type="button" onClick={() => setCurrentPasswordVisible((shown) => !shown)} aria-label={currentPasswordVisible ? 'Hide current password' : 'Show current password'} aria-pressed={currentPasswordVisible} className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400">
+                      {currentPasswordVisible ? <EyeOff aria-hidden="true" className="h-4 w-4" /> : <Eye aria-hidden="true" className="h-4 w-4" />}
+                    </button>
+                  </span>
                 </label>
                 <label className="block text-xs text-slate-300">New password
-                  <input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} autoComplete="new-password" required minLength={12} maxLength={128} className="mt-1 w-full rounded border border-slate-600 bg-slate-950 px-3 py-2 text-white" />
+                  <span className="relative mt-1 block">
+                    <input type={newPasswordVisible ? 'text' : 'password'} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} autoComplete="new-password" required minLength={12} maxLength={128} className="w-full rounded border border-slate-600 bg-slate-950 px-3 py-2 pr-10 text-white" />
+                    <button type="button" onClick={() => setNewPasswordVisible((shown) => !shown)} aria-label={newPasswordVisible ? 'Hide new password' : 'Show new password'} aria-pressed={newPasswordVisible} className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400">
+                      {newPasswordVisible ? <EyeOff aria-hidden="true" className="h-4 w-4" /> : <Eye aria-hidden="true" className="h-4 w-4" />}
+                    </button>
+                  </span>
                 </label>
                 <label className="block text-xs text-slate-300">Confirm new password
-                  <input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" required className="mt-1 w-full rounded border border-slate-600 bg-slate-950 px-3 py-2 text-white" />
+                  <span className="relative mt-1 block">
+                    <input type={confirmPasswordVisible ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} autoComplete="new-password" required className="w-full rounded border border-slate-600 bg-slate-950 px-3 py-2 pr-10 text-white" />
+                    <button type="button" onClick={() => setConfirmPasswordVisible((shown) => !shown)} aria-label={confirmPasswordVisible ? 'Hide confirm new password' : 'Show confirm new password'} aria-pressed={confirmPasswordVisible} className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400">
+                      {confirmPasswordVisible ? <EyeOff aria-hidden="true" className="h-4 w-4" /> : <Eye aria-hidden="true" className="h-4 w-4" />}
+                    </button>
+                  </span>
                 </label>
                 <p className="text-[11px] text-slate-400">12–128 characters, including uppercase, lowercase, a number and a special character.</p>
                 <button type="submit" disabled={busy} className="rounded-lg bg-blue-700 px-4 py-2 text-xs font-semibold hover:bg-blue-600 disabled:opacity-50">Update password</button>
@@ -214,8 +234,13 @@ export const AccountSecurityPanel: React.FC<AccountSecurityPanelProps> = ({user,
             <p className="text-[11px] text-slate-400">Current address: {user.email || 'Not available'}</p>
             {hasPasswordProvider && (
               <label className="block text-xs text-slate-300">Current password
-                <input type="password" value={emailCurrentPassword} onChange={(event) => setEmailCurrentPassword(event.target.value)} autoComplete="current-password" required className="mt-1 w-full rounded border border-slate-600 bg-slate-950 px-3 py-2 text-white" />
-              </label>
+                  <span className="relative mt-1 block">
+                    <input type={emailCurrentPasswordVisible ? 'text' : 'password'} value={emailCurrentPassword} onChange={(event) => setEmailCurrentPassword(event.target.value)} autoComplete="current-password" required className="w-full rounded border border-slate-600 bg-slate-950 px-3 py-2 pr-10 text-white" />
+                    <button type="button" onClick={() => setEmailCurrentPasswordVisible((shown) => !shown)} aria-label={emailCurrentPasswordVisible ? 'Hide current password' : 'Show current password'} aria-pressed={emailCurrentPasswordVisible} className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400">
+                      {emailCurrentPasswordVisible ? <EyeOff aria-hidden="true" className="h-4 w-4" /> : <Eye aria-hidden="true" className="h-4 w-4" />}
+                    </button>
+                  </span>
+                </label>
             )}
             <label className="block text-xs text-slate-300">New email address
               <input type="email" value={newEmail} onChange={(event) => setNewEmail(event.target.value)} autoComplete="email" required className="mt-1 w-full rounded border border-slate-600 bg-slate-950 px-3 py-2 text-white" />
