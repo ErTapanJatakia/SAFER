@@ -136,3 +136,17 @@ test('tenant authorization fails closed when the authoritative membership store 
       && error.status === 503,
   );
 });
+
+
+test('rejects malformed Firebase UIDs before constructing tenant document paths', async () => {
+  const current = fixture();
+  current.auth.verifyIdToken = async () => ({ uid: '../attacker' });
+  await assert.rejects(
+    resolveTenantAuthorization({
+      token: 'valid-token', orgId: 'pmc-alpha', action: 'organisation:read',
+      auth: current.auth, database: current.database,
+    }),
+    (error) => error.code === 'unauthenticated' && error.status === 401,
+  );
+  assert.equal(current.reads.length, 0);
+});
