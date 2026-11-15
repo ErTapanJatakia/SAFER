@@ -54,7 +54,7 @@ import { AccountSettingsModal } from './components/AccountSettingsModal.tsx';
 import { PrivacyConsoleModal } from './components/PrivacyConsoleModal.tsx';
 import { PersonnelExportModal } from './components/PersonnelExportModal.tsx';
 import { LiveAnnouncer } from './components/LiveAnnouncer.tsx';
-import { ACCOUNT_SETTINGS_STORAGE_KEY } from './utils/accountSettings.ts';
+import { ACCOUNT_SETTINGS_STORAGE_KEY, normalizeAccountSettings } from './utils/accountSettings.ts';
 import {
   evaluatePersonnelReadiness,
   computeOperationalMetrics,
@@ -217,9 +217,21 @@ export default function App() {
     setTimeout(() => setLiveAnnouncement(null), 3000);
   };
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
+  const showToast = (msg: string, kind: 'status' | 'success' = 'status') => {
+    // Notification preferences only control non-critical visual success feedback.
+    // Live-region announcements and all status/error/security warnings remain active.
     announce(msg);
+    let showSuccess = true;
+    if (kind === 'success') {
+      try {
+        const raw = localStorage.getItem(ACCOUNT_SETTINGS_STORAGE_KEY);
+        showSuccess = raw ? normalizeAccountSettings(JSON.parse(raw)).preferences.showSuccessToasts : true;
+      } catch {
+        showSuccess = true;
+      }
+    }
+    if (kind === 'success' && !showSuccess) return;
+    setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
 
@@ -268,7 +280,7 @@ export default function App() {
       await persist(next);
       current.current = next;
       publish(next);
-      if (successMessage) showToast(successMessage);
+      if (successMessage) showToast(successMessage, 'success');
     });
     queue.current = operation.catch(() => undefined);
     try {
@@ -585,7 +597,7 @@ export default function App() {
     link.click();
     link.remove();
     window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-    showToast('Downloaded this tab’s last confirmed Demo Guest records.');
+    showToast('Downloaded this tab’s last confirmed Demo Guest records.', 'success');
   };
 
   const handleResetDemoData = async () => {
@@ -613,7 +625,7 @@ export default function App() {
     setIncidentList([...INITIAL_INCIDENTS]);
     setCyberItems([...INITIAL_CYBER_ITEMS]);
     setChecklistItems([...INITIAL_CHECKLIST]);
-    showToast('Reset all demonstration data to baseline prototype state.');
+    showToast('Reset all demonstration data to baseline prototype state.', 'success');
   };
 
   // Theme Handlers
@@ -626,18 +638,18 @@ export default function App() {
 
   const handleActivateCustomTheme = () => {
     setIsCustomThemeActive(true);
-    showToast('Custom theme palette activated.');
+    showToast('Custom theme palette activated.', 'success');
   };
 
   const handleResetLogos = () => {
     setTopLogo(DEFAULT_TOP_LOGO);
     setBottomLogo(DEFAULT_BOTTOM_LOGO);
-    showToast('Restored default organisation branding layout.');
+    showToast('Restored default organisation branding layout.', 'success');
   };
 
   const handleResetAccessibility = () => {
     setAccessibilitySettings(DEFAULT_ACCESSIBILITY_SETTINGS);
-    showToast('Accessibility settings reset to default.');
+    showToast('Accessibility settings reset to default.', 'success');
   };
 
   const showBottomLogoLeft =
@@ -854,7 +866,7 @@ export default function App() {
       <AccountSettingsModal
         isOpen={isAccountSettingsOpen}
         onClose={() => setIsAccountSettingsOpen(false)}
-        onSaved={showToast}
+        onSaved={(message) => showToast(message, 'success')}
       />
 
       {/* Synthetic-only Privacy Operations Console */}
