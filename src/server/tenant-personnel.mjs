@@ -30,14 +30,12 @@ function boundedList(value,maxItems,maxLength) {
   if(!Array.isArray(value)||value.length>maxItems||value.some(v=>typeof v!=='string'||!v.trim()||v.length>maxLength)) fail('invalid_personnel_data');
   return [...new Set(value.map(v=>v.trim()))];
 }
-function validEmployeeMembership(value, uid, orgId) {
-  const fields=['uid','orgId','role','status','createdAt','createdByUid','updatedAt','updatedByUid','schemaVersion'].sort();
-  const keys=value&&typeof value==='object'&&!Array.isArray(value)?Object.keys(value).sort():[];
-  return keys.length===fields.length && keys.every((key,index)=>key===fields[index])
-    && value.uid===uid && value.orgId===orgId && value.role==='tenant_employee'
-    && value.status==='active' && value.schemaVersion===1
-    && UID.test(value.createdByUid??'') && UID.test(value.updatedByUid??'')
-    && value.createdAt!=null && value.updatedAt!=null;
+function validEmployeeMembership(value, uid, orgId, organisation) {
+  if(value?.role!=='tenant_employee') return false;
+  return authorizeTenantAction({
+    actorUid:uid,membership:value,organisation,
+    requestedOrgId:orgId,action:'organisation:read',
+  }).allowed;
 }
 function validRecord(value, recordId, orgId) {
   if(!value||typeof value!=='object'||Array.isArray(value)) return false;
@@ -67,7 +65,7 @@ async function authorize(tx,db,uid,orgId,action) {
     requestedOrgId:orgId,action,
   });
   if(!decision.allowed) fail(decision.reason);
-}
+  return {membership:member.data(),organisation:org.data()};
 function publicRecord(data) {
   return {
     recordId:data.recordId, employeeRef:data.employeeRef,
@@ -119,10 +117,10 @@ export async function createTenantPersonnel({orgId,actorUid,input,database,serve
     createdAt:timestamp,createdByUid:actorUid,updatedAt:timestamp,updatedByUid:actorUid,
   };
   await database.runTransaction(async tx=>{
-    await authorize(tx,database,actorUid,orgId,'personnel:create');
+    const {organisation}=await authorize(tx,database,actorUid,orgId,'personnel:create');
     if(record.employeeUid) {
       const target=await tx.get(database.doc(`organisations/${orgId}/members/${record.employeeUid}`));
-      if(!target.exists||!validEmployeeMembership(target.data(),record.employeeUid,orgId)) {
+      if(!target.exists||!validEmployeeMembership(target.data(),record.employeeUid,orgId,organisation)) {
         fail('active_employee_assignee_required');
       }
     }
