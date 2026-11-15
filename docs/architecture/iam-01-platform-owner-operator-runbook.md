@@ -4,7 +4,7 @@
 **Firebase project:** `safer-2026`  
 **Vercel project:** `safer-pmc`  
 **Runtime:** Vercel Node.js Function (project currently configured for Node.js 24.x)  
-**Billing target:** retain existing Vercel Hobby and Firebase Spark; do not enable billing
+**Billing target:** retain existing Vercel Hobby and Firebase Spark; do not enable billing. Vercel Hobby is restricted to personal, non-commercial use; PMC commercial/operational use must not be deployed there.
 
 ## 1. Security boundary implemented
 
@@ -45,7 +45,7 @@ Important controls:
 4. Do not add the production credential to Preview, Development, GitHub Actions, `VITE_*` variables, source files, or chat.
 5. Never print, log, or retrieve the secret value after saving it.
 6. If the minimum permissions cannot be established safely, leave the endpoint unconfigured; it returns a generic 503 and remains fail-closed.
-7. Do not enable Google Cloud billing or change Firebase billing as part of this work.
+7. Do not enable Google Cloud billing or change Firebase billing as part of this work. Confirm that the actual SAFER use is permitted by the selected Vercel plan before deploying any function; if it is commercial or client service use, stop and choose an explicitly approved compliant hosting plan instead of assuming Hobby eligibility.
 
 The runtime service identity is intentionally read-only. Provisioning and revocation are separate operator actions using the operator's approved local Google Application Default Credentials (ADC), not the Vercel runtime identity.
 
