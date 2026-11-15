@@ -128,7 +128,8 @@ export function authorizeTenantAction({
   }
 
   if (membership.uid !== actorUid || membership.orgId !== requestedOrgId
-    || membership.status !== 'active' || !TENANT_ROLES.includes(membership.role)) {
+    || membership.schemaVersion !== 1 || membership.status !== 'active'
+    || !TENANT_ROLES.includes(membership.role)) {
     return denied('active_tenant_membership_required');
   }
 
