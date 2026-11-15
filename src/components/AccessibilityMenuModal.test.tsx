@@ -152,4 +152,15 @@ describe('AccessibilityMenuModal spoken audio controls', () => {
     expect(cancelled).toBe(1);
     expect(spoken[0]).toMatchObject({ text: 'Ready', rate: 0.85, volume: 0.4 });
   });
+  it('announces the selected state of segmented accessibility preferences', () => {
+    act(() => host.querySelector('button')!.click());
+    const dialog = host.querySelector('[role="dialog"]')!;
+    const colorScheme = dialog.querySelector('[role="group"][aria-label="Browser control color scheme"]');
+    expect(colorScheme?.querySelector('button[aria-pressed="true"]')?.textContent).toBe('auto');
+    const lineSpacing = dialog.querySelector('[role="group"][aria-label="Line spacing"]');
+    expect(lineSpacing?.querySelector('button[aria-pressed="true"]')?.textContent).toBe('normal');
+    const letterSpacing = dialog.querySelector('[role="group"][aria-label="Text and letter spacing"]');
+    expect(letterSpacing?.querySelector('button[aria-pressed="true"]')?.textContent).toBe('Standard Spacing');
+  });
+
 });
