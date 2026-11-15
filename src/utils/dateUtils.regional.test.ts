@@ -9,6 +9,7 @@ describe('regional display preferences',()=>{
  it('formats dates using the selected convention without changing stored ISO values',()=>{
   writePreferences({dateFormat:'YYYY-MM-DD'}); expect(formatDisplayDate('15-11-2026')).toBe('2026-11-15');
   writePreferences({dateFormat:'DD/MM/YYYY'}); expect(formatDisplayDate('2026-11-15')).toBe('15/11/2026');
+  expect(formatDisplayDate('2026-11-15 13:05')).toBe('15/11/2026');
  });
  it('formats numeric values using the selected regional grouping',()=>{
   writePreferences({numberFormat:'en-IN'}); expect(formatDisplayNumber(123456.78)).toBe('1,23,456.78');
