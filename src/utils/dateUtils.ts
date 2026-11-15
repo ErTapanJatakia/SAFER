@@ -81,7 +81,7 @@ export function toYYYYMMDD(dateStr: string | null | undefined): string {
     return `${year}-${month}-${day}`;
   }
   // Accept canonical ISO dates and ISO datetime values without shifting timezone.
-  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})(?:$|T)/);
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})(?:$|T|\\s)/);
   if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
   return trimmed;
 }
