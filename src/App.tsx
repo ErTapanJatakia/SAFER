@@ -633,7 +633,7 @@ export default function App() {
     setCurrentThemeId(themeId);
     setIsCustomThemeActive(false);
     const theme = THEME_PRESETS.find((p) => p.id === themeId);
-    showToast(`Theme applied: ${theme?.name || themeId}`);
+    showToast(`Theme applied: ${theme?.name || themeId}`, 'success');
   };
 
   const handleActivateCustomTheme = () => {
