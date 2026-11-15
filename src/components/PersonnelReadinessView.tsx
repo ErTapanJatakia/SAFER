@@ -127,9 +127,9 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <Users className="w-5 h-5 text-blue-900" />
-            <h2 className="text-lg font-bold text-slate-900">
+            <h1 className="text-lg font-bold text-slate-900">
               Personnel Administrative Readiness & Qualifications
-            </h2>
+            </h1>
           </div>
           <p className="text-xs text-slate-600 mt-1 max-w-2xl">
             Audit operational records, qualification completion and expiry dates, verification statuses, and outstanding requirements.
@@ -182,7 +182,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
           }`}
         >
           <div>
-            <div className="text-[10px] uppercase font-bold text-slate-500">Valid Records</div>
+            <div className="text-[10px] uppercase font-bold text-slate-600">Valid Records</div>
             <div className="text-lg font-bold text-teal-800 mt-0.5">{validCount}</div>
           </div>
           <span className="w-7 h-7 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center text-xs font-bold">
@@ -201,7 +201,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
           }`}
         >
           <div>
-            <div className="text-[10px] uppercase font-bold text-slate-500">Expiring (&lt;45d)</div>
+            <div className="text-[10px] uppercase font-bold text-slate-600">Expiring (&lt;45d)</div>
             <div className="text-lg font-bold text-amber-800 mt-0.5">{expiringCount}</div>
           </div>
           <span className="w-7 h-7 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center text-xs font-bold">
@@ -220,7 +220,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
           }`}
         >
           <div>
-            <div className="text-[10px] uppercase font-bold text-slate-500">Expired Records</div>
+            <div className="text-[10px] uppercase font-bold text-slate-600">Expired Records</div>
             <div className="text-lg font-bold text-rose-800 mt-0.5">{expiredCount}</div>
           </div>
           <span className="w-7 h-7 rounded-full bg-rose-100 text-rose-800 flex items-center justify-center text-xs font-bold">
@@ -239,7 +239,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
           }`}
         >
           <div>
-            <div className="text-[10px] uppercase font-bold text-slate-500">Unverified Records</div>
+            <div className="text-[10px] uppercase font-bold text-slate-600">Unverified Records</div>
             <div className="text-lg font-bold text-purple-800 mt-0.5">{unverifiedCount}</div>
           </div>
           <span className="w-7 h-7 rounded-full bg-purple-100 text-purple-800 flex items-center justify-center text-xs font-bold">
@@ -253,7 +253,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           {/* Search box */}
           <div className="md:col-span-1 relative">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-600" />
             <input
               type="text"
               aria-label="Search personnel records"
@@ -315,7 +315,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
         </div>
 
         {/* Results Counter & Reset */}
-        <div className="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100">
+        <div className="flex items-center justify-between text-xs text-slate-600 pt-1 border-t border-slate-100">
           <span role="status" aria-live="polite" aria-atomic="true" data-personnel-filter-results>
             Showing <strong>{filteredPersonnel.length}</strong> of <strong>{personnelList.length}</strong> personnel records
           </span>
@@ -341,7 +341,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
         <div className="bg-white border border-slate-200 rounded-lg p-12 text-center shadow-xs">
           <HelpCircle className="w-10 h-10 text-slate-300 mx-auto mb-3" />
           <h3 className="text-sm font-bold text-slate-800">No personnel records found</h3>
-          <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+          <p className="text-xs text-slate-600 mt-1 max-w-sm mx-auto">
             Try adjusting your search query or filter selections.
           </p>
         </div>
@@ -370,7 +370,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
                       <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold break-all">
                         Call Sign: {person.callSign || person.callsign}
                       </span>
-                      <span className="text-xs font-mono text-slate-400 break-all">
+                      <span className="text-xs font-mono text-slate-600 break-all">
                         Badge: {person.badgeId}
                       </span>
                     </div>
@@ -390,7 +390,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
                         </strong>
                       </span>
                       <span>&bull;</span>
-                      <span className="text-slate-500 min-w-0 break-words">{person.assignmentSector}</span>
+                      <span className="text-slate-600 min-w-0 break-words">{person.assignmentSector}</span>
                     </div>
                   </div>
 
@@ -428,7 +428,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
 
                 {/* Training and Qualifications List */}
                 <div className="p-4 sm:p-5 bg-slate-50/40 border-b border-slate-100 space-y-2">
-                  <div className="text-[11px] uppercase font-bold text-slate-500 tracking-wider">
+                  <div className="text-[11px] uppercase font-bold text-slate-600 tracking-wider">
                     Training & Qualifications ({person.certifications.length})
                   </div>
 
@@ -453,7 +453,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
                           <div className="font-bold break-words text-[11px] sm:text-xs">
                             {cert.name}
                           </div>
-                          <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1 text-[10px] text-slate-500">
+                          <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1 text-[10px] text-slate-600">
                             <span className="min-w-0 break-words">Completed: {formatAccountDate(cert.completionDate, accountPreferences)}</span>
                             <span
                               className={`font-semibold break-words ${
@@ -473,7 +473,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
                                 : `Exp: ${formatAccountDate(cert.expiryDate, accountPreferences)}`}
                             </span>
                           </div>
-                          <div className="text-[10px] text-slate-400 flex flex-wrap items-start justify-between gap-1 pt-0.5 border-t border-slate-100">
+                          <div className="text-[10px] text-slate-600 flex flex-wrap items-start justify-between gap-1 pt-0.5 border-t border-slate-100">
                             <span className="min-w-0 break-words">{cert.issuer}</span>
                             <span className="font-mono text-[9px] px-1 py-0.2 bg-slate-100 rounded break-words">
                               {cert.verificationStatus}
@@ -529,7 +529,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-xs text-slate-500 italic">
+                    <p className="text-xs text-slate-600 italic">
                       No outstanding administrative requirements pending on file.
                     </p>
                   )}
