@@ -184,6 +184,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
                     <select className={inputClass} value={settings.preferences.inactivityTimeoutMinutes} onChange={(event) => setSettings((current) => ({...current, preferences: {...current.preferences, inactivityTimeoutMinutes: Number(event.target.value)}}))}>
                       {[5,10,15,20,30,45,60].map((minutes) => <option key={minutes} value={minutes}>{minutes} minutes</option>)}
                     </select>
+                    <span className="font-normal text-slate-500">Applies to this browser session, including Demo Guest; it does not sign out other devices.</span>
                   </label>
                 </div>
               </div>
