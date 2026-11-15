@@ -138,9 +138,9 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
         <div className="min-w-0">
           <div className="flex items-start flex-wrap gap-2 min-w-0">
             <FileText className="w-5 h-5 text-blue-900" />
-            <h2 className="text-lg font-bold text-slate-900 min-w-0 break-words">
+            <h1 className="text-lg font-bold text-slate-900 min-w-0 break-words">
               Administrative & Operational Incident Reports
-            </h2>
+            </h1>
           </div>
           <p className="text-xs text-slate-600 mt-1 max-w-2xl break-words">
             Input field observations to generate a 10-point structured incident draft.
