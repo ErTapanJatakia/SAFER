@@ -29,7 +29,7 @@ interface OwnerControlCentreProps {
  * Owner-only UI. The component renders only after the server independently
  * confirms the Platform Owner principal; client role claims are never used.
  */
-export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user}) => {
+export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onOwnerStatusChange}) => {
   const [ownerState, setOwnerState] = useState<'checking' | 'owner' | 'not-owner' | 'unavailable'>('checking');
   const [organisations, setOrganisations] = useState<Organisation[]>([]);
   const [loadingRegistry, setLoadingRegistry] = useState(false);
