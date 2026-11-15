@@ -40,7 +40,7 @@ The route must:
 6. Treat a retry by the same UID for an already accepted invitation as an idempotent success only when the existing membership exactly matches the accepted invitation. Reject conflicting, expired, revoked, mismatched, or duplicate invitations.
 7. Never allow a caller to choose the resulting role or tenant.
 
-Invitation IDs must be opaque, high-entropy, server-generated values. The invitation document must not be addressable solely by an email address. A pending invitation is not a login credential.
+Invitation IDs are now generated server-side from 32 random bytes (256 bits), stored as opaque document IDs, and expire after seven days. The invitation document is not addressable solely by an email address. The identifier is a locator, not a login credential; acceptance still requires the exact verified Firebase UID and matching verified email.
 
 ## 4. Activation gate
 
@@ -55,19 +55,18 @@ Acceptance and activation are separate states:
 
 Do not use the existing ORG-02 generic lifecycle endpoint to activate a provisioning organisation.
 
-## 5. Required compatibility work before activation
+## 5. Compatibility work completed and remaining before activation
 
-The current application has a legacy client resolver and Firestore membership-read rule that accept `owner`, `admin`, `manager`, and `viewer`. The canonical server RBAC engine rejects those legacy values and defines five tenant roles. This mismatch is a hard release blocker.
+The candidate branch now updates `src/lib/tenantMembership.ts`, its tests, and the Firestore self-membership read rule to accept only the canonical five tenant roles and exact version-1 membership schema. Legacy values are rejected. Client membership writes remain denied. Existing Firestore direct operational grants are limited to `tenant_super_admin` and `tenant_admin`; this is a conservative interim boundary, not full role parity.
 
-Required changes in one coordinated implementation batch:
+Remaining work before organisation activation and general tenant access:
 
-- Update `src/lib/tenantMembership.ts` and its tests to accept only the canonical five tenant roles and the versioned membership schema.
-- Update the exact-membership Firestore read rule to validate the canonical fields and five-role vocabulary without allowing client membership writes.
-- Align every Firestore operational permission function with the approved role matrix. Do not leave a broad `owner/admin` shortcut that accidentally grants Manager, Employee, or Auditor access.
-- Keep Employee record ownership and assigned-checklist constraints enforced server-side and in Rules where direct client access exists.
-- Keep Auditor read-only and deny export/write operations.
+- Implement and test Manager read scopes and constrained operational writes.
+- Implement Employee own-record and assigned-checklist access with both server-side and Rules enforcement.
+- Implement Auditor read-only access and explicit export denial.
+- Wire the RBAC engine into every tenant API and data access path; never trust browser-supplied membership.
 - Keep Platform Owner access separate and purpose-bound for cross-tenant operational data.
-- Review all existing legacy membership fixtures and any real records before migration. Never automatically promote an unverified legacy role.
+- Review existing legacy membership fixtures and any real records before migration. Never automatically promote an unverified legacy role.
 - Preserve deny-by-default behaviour for every unmodelled collection and field.
 
 Suggested explicit migration mapping for individually reviewed records only:
