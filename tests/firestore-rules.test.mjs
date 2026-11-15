@@ -533,3 +533,43 @@ test("incident updates reject extra keys, immutable identity/reporter provenance
     await assertFails(updateDoc(incident, changes));
   }
 });
+
+
+test("tenant membership in PMC A cannot read or write PMC B through direct Firestore paths", async () => {
+  await seedTenant({ orgId: "org-isolation-a", uid: "member-a", role: "tenant_super_admin" });
+  await seedTenant({ orgId: "org-isolation-b", uid: "member-b", role: "tenant_super_admin" });
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, "organisations/org-isolation-b/personnel/private-b"), {
+      ...validPersonnel("member-b", "org-isolation-b", "private-b"),
+      createdAt: Timestamp.now(), updatedAt: Timestamp.now(),
+    });
+    await setDoc(doc(db, "organisations/org-isolation-b/incidents/private-b"), {
+      ...validIncident("member-b", "org-isolation-b", "private-b"),
+      dateReported: Timestamp.now(), createdAt: Timestamp.now(), updatedAt: Timestamp.now(),
+    });
+  });
+
+  const memberA = dbFor("member-a");
+  await assertSucceeds(getDoc(doc(memberA, "organisations/org-isolation-a")));
+  await assertFails(getDoc(doc(memberA, "organisations/org-isolation-b")));
+  await assertFails(getDoc(doc(memberA, "organisations/org-isolation-b/personnel/private-b")));
+  await assertFails(getDoc(doc(memberA, "organisations/org-isolation-b/incidents/private-b")));
+  await assertFails(getDocs(query(
+    collection(memberA, "organisations/org-isolation-b/personnel"),
+    where("orgId", "==", "org-isolation-b"),
+  )));
+  await assertFails(setDoc(
+    doc(memberA, "organisations/org-isolation-b/incidents/forged-write"),
+    validIncident("member-a", "org-isolation-b", "forged-write"),
+  ));
+});
+
+test("tenant users cannot use collection-group or unmodelled paths to bypass tenant isolation", async () => {
+  await seedTenant({ orgId: "org-isolation-c", uid: "member-c", role: "tenant_super_admin" });
+  const db = dbFor("member-c");
+  await assertFails(getDoc(doc(db, "organisations/org-isolation-d/personnel/unknown")));
+  await assertFails(getDoc(doc(db, "platformSupportSessions/session-id")));
+  await assertFails(getDoc(doc(db, "platformAuditEvents/event-id")));
+  await assertFails(getDoc(doc(db, "organisations/org-isolation-c/unknownCollection/record-id")));
+});
