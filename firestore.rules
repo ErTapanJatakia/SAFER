@@ -302,8 +302,8 @@ service cloud.firestore {
       allow list, create, update, delete: if false;
 
       match /members/{uid} {
-        // A signed-in user may get only their own minimal membership record.
-        // This is a locator-bound read, not tenant discovery or role management.
+        // Self-resolution is allowed for every active tenant role. Directory
+        // reads are separately limited to Super Admin, Admin and Auditor.
         allow get: if (signedIn() && request.auth.uid == uid
           && validCanonicalMemberDocument(resource.data, uid, orgId)
           && exists(organisationPath(orgId))
