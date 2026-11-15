@@ -56,4 +56,5 @@ export interface AccessibilitySettings {
   lineSpacing: 'normal' | 'relaxed' | 'loose';
   letterSpacing: 'normal' | 'wide';
   dyslexicFont: boolean;
+  screenReaderAnnouncements: boolean;
 }
