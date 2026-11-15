@@ -44,16 +44,18 @@ The separate platform policy evaluator accepts only an active `platform_owner` p
 
 ## Current integration boundary
 
-This milestone includes the canonical policy engine, trusted server authorization boundary, and candidate rules for existing Firestore resources. It does **not** yet:
-- expose tenant-management or organisation-registry APIs;
-- issue or consume invitations;
-- write or mutate tenant memberships;
-- publish candidate Firestore Rules to production;
-- enable cross-tenant Owner data access;
-- release an operational tenant workspace;
-- release an operational tenant workspace.
+This milestone includes the canonical policy engine, trusted server authorization boundary, versioned membership validation, candidate Firestore Rules, and server API integration. The development chain now includes APIs for tenant membership administration and invitations, incidents, personnel, evidence metadata, checklists, tenant audit and aggregate reports, as well as Owner organisation provisioning and registry operations.
 
-The resolver and candidate Rules accept only the exact canonical five-role version-1 membership schema. Candidate Rules now grant Manager and Auditor only their documented read scopes, Employee only own-reported incident reads plus incident creation, and retain stricter denial for Employee personnel and unmodelled checklist/report resources. The trusted server boundary is integrated with the tenant API handlers in the current development chain. Membership, personnel, incident, evidence, checklist, audit and aggregate-report APIs re-check permissions at the server boundary. Production rules remain separately published deny-all.
+It does **not** yet:
+- publish the candidate Firestore Rules to production;
+- release an authenticated operational tenant workspace UI;
+- release a full Owner Control Centre UI;
+- expose cross-tenant tenant-record browsing or mutation endpoints;
+- complete Firestore emulator and production security validation.
+
+The AuthGate intentionally keeps the authenticated operational workspace unavailable until the candidate rules and API-backed UI are reviewed and released. Demo Guest remains isolated and is not an authenticated tenant workspace.
+
+The resolver and candidate Rules accept only the exact canonical five-role version-1 membership schema. Candidate Rules grant Manager and Auditor only their documented read scopes, Employee only own-reported incident reads plus incident creation, and retain stricter denial for Employee personnel and unmodelled checklist/report resources. The trusted server boundary is integrated with the tenant API handlers; each API re-checks the relevant permission at the server boundary. Production rules remain separately published deny-all.
 
 ## Regression coverage
 
