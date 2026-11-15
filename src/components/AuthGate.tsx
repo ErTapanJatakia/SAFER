@@ -14,6 +14,8 @@ import {
 import {auth, db, isFirebaseConfigured} from '../lib/firebase.ts';
 import {resolveTenantMembership, type TenantMembership} from '../lib/tenantMembership.ts';
 import {createSessionLifecycle} from '../lib/sessionLifecycle.ts';
+import {getAuthErrorMessage} from '../lib/authErrors.ts';
+import {beginAuthFlow, cleanupStaleAuthFlowMarker, endAuthFlow} from '../lib/sessionHygiene.ts';
 import {publishSessionInvalidation, subscribeToSessionInvalidation} from '../lib/sessionInvalidation.ts';
 import {enterDemoGuest} from '../lib/dataBoundary.ts';
 import {DemoGuestWorkspaceProvider} from './DemoGuestWorkspaceProvider.tsx';
@@ -55,6 +57,12 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
   const [membershipError, setMembershipError] = useState('');
   const sessionLifecycleRef = useRef(createSessionLifecycle());
   const lastAuthUidRef = useRef<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    // Clean only SAFER's short-lived auth-flow marker. Firebase's persisted
+    // identity and user preferences are intentionally left untouched.
+    cleanupStaleAuthFlowMarker();
+  }, []);
 
   useEffect(() => subscribeToSessionInvalidation(() => {
     // A different tab crossed an account/session boundary. Revoke the local
@@ -142,22 +150,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
     try {
       await action();
     } catch (err) {
-      const code = typeof err === 'object' && err && 'code' in err
-        ? String((err as {code?: unknown}).code || '')
-        : '';
-      if (code.includes('invalid-credential') || code.includes('wrong-password') || code.includes('user-not-found')) {
-        setError('Unable to sign in with those details. Check your email and password.');
-      } else if (code.includes('too-many-requests')) {
-        setError('Too many attempts. Please wait before trying again.');
-      } else if (code.includes('network-request-failed')) {
-        setError('Network connection failed. Check your connection and retry.');
-      } else if (code.includes('email-already-in-use')) {
-        setError('This account could not be created. Try signing in or use password reset.');
-      } else if (code.includes('popup-closed-by-user')) {
-        setError('Google sign-in was closed before completion.');
-      } else {
-        setError('The account request could not be completed. Check the Firebase configuration and try again.');
-      }
+      setError(getAuthErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -225,11 +218,18 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
     const firebaseAuth = auth;
     if (!firebaseAuth) return;
     void run(async () => {
-      const provider = new GoogleAuthProvider();
-      const credential = await signInWithPopup(firebaseAuth, provider);
-      if (!credential.user.emailVerified) {
-        await signOut(firebaseAuth);
-        throw new Error('Google account email is not verified.');
+      // sessionStorage is per-tab and contains no credentials. If unavailable,
+      // the popup flow still proceeds; the marker is optional diagnostics state.
+      beginAuthFlow();
+      try {
+        const provider = new GoogleAuthProvider();
+        const credential = await signInWithPopup(firebaseAuth, provider);
+        if (!credential.user.emailVerified) {
+          await signOut(firebaseAuth);
+          throw new Error('Google account email is not verified.');
+        }
+      } finally {
+        endAuthFlow();
       }
     });
   };

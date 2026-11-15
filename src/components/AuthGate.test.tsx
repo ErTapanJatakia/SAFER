@@ -6,7 +6,8 @@ import {AuthGate} from './AuthGate';
 import {useDemoWorkspaceRepository} from './DemoGuestWorkspaceProvider';
 import type {DemoWorkspaceRepository} from '../lib/demoWorkspace';
 import {resolveTenantMembership} from '../lib/tenantMembership';
-import {onAuthStateChanged,signOut} from 'firebase/auth';
+import {onAuthStateChanged,signInWithPopup,signOut} from 'firebase/auth';
+import {AUTH_FLOW_MARKER_KEY} from '../lib/sessionHygiene';
 import {auth as firebaseAuth} from '../lib/firebase.ts';
 import * as sessionInvalidation from '../lib/sessionInvalidation';
 
@@ -41,6 +42,14 @@ describe('AuthGate membership session handling',()=>{
   const event=new dom.window.MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2});
   expect(authScreen.dispatchEvent(event)).toBe(false);
   expect(event.defaultPrevented).toBe(true);
+ });
+ it('shows actionable Google OAuth domain diagnostics and clears its temporary marker',async()=>{
+  vi.mocked(signInWithPopup).mockRejectedValueOnce({code:'auth/unauthorized-domain',message:'private SDK detail'});
+  button('Continue with Google').click();
+  await flush();
+  expect(host.querySelector('[role="alert"]')?.textContent).toContain('Add its exact hostname');
+  expect(host.querySelector('[role="alert"]')?.textContent).not.toContain('private SDK detail');
+  expect(dom.window.sessionStorage.getItem(AUTH_FLOW_MARKER_KEY)).toBeNull();
  });
  it('uses the standardised authentication labels and accessible password visibility toggles',async()=>{
   expect(host.textContent).toContain('Log In');
