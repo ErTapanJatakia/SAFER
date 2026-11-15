@@ -3,6 +3,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { JSDOM } from 'jsdom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AccessibilityMenuModal } from './AccessibilityMenuModal';
+import { speakAccessibilityAnnouncement, type SpeechRuntime } from '../utils/speech.ts';
 
 let dom: JSDOM;
 let root: Root;
@@ -128,5 +129,27 @@ describe('AccessibilityMenuModal spoken audio controls', () => {
     const toggle = Array.from(host.querySelectorAll('button')).find((button) => button.textContent?.includes('Spoken Announcements Off'))!;
     act(() => toggle.click());
     expect(onUpdateSettings).toHaveBeenCalledWith({ spokenAnnouncements: true });
+  });
+
+  it('keeps speech opt-in and applies the configured speech rate and volume', () => {
+    const spoken: Array<{ text: string; rate: number; volume: number }> = [];
+    let cancelled = 0;
+    class FakeUtterance {
+      rate = 1;
+      volume = 1;
+      constructor(public text: string) {}
+    }
+    const runtime = {
+      speechSynthesis: { cancel: () => { cancelled += 1; }, speak: (utterance: FakeUtterance) => spoken.push(utterance) },
+      SpeechSynthesisUtterance: FakeUtterance,
+    } as unknown as SpeechRuntime;
+    expect(speakAccessibilityAnnouncement('Silent by default', {
+      spokenAnnouncements: false, speechRate: 'normal', speechVolume: 'high',
+    }, runtime)).toBe(false);
+    expect(speakAccessibilityAnnouncement('Ready', {
+      spokenAnnouncements: true, speechRate: 'slow', speechVolume: 'low',
+    }, runtime)).toBe(true);
+    expect(cancelled).toBe(1);
+    expect(spoken[0]).toMatchObject({ text: 'Ready', rate: 0.85, volume: 0.4 });
   });
 });
