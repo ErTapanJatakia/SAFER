@@ -23,6 +23,7 @@ const SUPPORT_ACTIONS: {value: SupportAction; label: string}[] = [
 
 interface OwnerControlCentreProps {
   user: User;
+  onOwnerStatusChange: (status: 'owner' | 'not-owner' | 'unavailable') => void;
 }
 
 /**
@@ -94,6 +95,12 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
     })();
     return () => { current = false; };
   }, [request]);
+
+  useEffect(() => {
+    if (ownerState === 'owner' || ownerState === 'not-owner' || ownerState === 'unavailable') {
+      onOwnerStatusChange(ownerState);
+    }
+  }, [ownerState, onOwnerStatusChange]);
 
   useEffect(() => {
     if (ownerState === 'owner') void loadRegistry();
