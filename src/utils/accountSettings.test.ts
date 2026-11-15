@@ -21,7 +21,7 @@ describe('account settings normalization', () => {
     })).toEqual({
       version: 1,
       profile: { displayName: 'Operator', callSign: 'ALPHA', bio: 'Bio' },
-      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', locale: 'en-IN', numberFormat: 'en-US', defaultExportFormat: 'xlsx', defaultRedactionLevel: 'strict' },
+      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', locale: 'en-IN', numberFormat: 'en-US', defaultExportFormat: 'xlsx', defaultRedactionLevel: 'strict', displayDensity: 'comfortable' },
     });
   });
 
