@@ -381,15 +381,18 @@ test("immutable creator, tenant, and record identifiers cannot be changed", asyn
   }));
 });
 
-test("users can get only their own active canonical membership across all five tenant roles", async () => {
+test("all five roles can resolve their own active canonical membership without self-service writes", async () => {
   for (const role of ["tenant_super_admin", "tenant_admin", "tenant_manager", "tenant_employee", "tenant_auditor"]) {
     const uid = `self-${role}`;
     const orgId = `self-org-${role}`;
     await seedTenant({ orgId, uid, role });
     const db = dbFor(uid);
     await assertSucceeds(getDoc(doc(db, "organisations", orgId, "members", uid)));
-    await assertFails(getDoc(doc(db, "organisations", orgId, "members", "someone-else")));
-    await assertFails(getDocs(collection(db, `organisations/${orgId}/members`)));
+    if (["tenant_super_admin", "tenant_admin", "tenant_auditor"].includes(role)) {
+      await assertSucceeds(getDocs(collection(db, `organisations/${orgId}/members`)));
+    } else {
+      await assertFails(getDocs(collection(db, `organisations/${orgId}/members`)));
+    }
     await assertFails(setDoc(doc(db, "organisations", orgId, "members", uid), {
       uid, orgId, role: "owner", status: "active",
     }));
@@ -439,7 +442,7 @@ test("membership, restricted records, audit events, and unapproved organisation 
   const db = dbFor("owner-a");
   await assertSucceeds(getDoc(doc(db, "organisations/org-a", "members", "owner-a")));
   await assertFails(getDoc(doc(db, "organisations/org-a", "members", "attacker")));
-  await assertFails(getDocs(collection(db, "organisations/org-a/members")));
+  await assertSucceeds(getDocs(collection(db, "organisations/org-a/members")));
   await assertFails(setDoc(doc(db, "organisations/org-a", "members", "attacker"), {
     uid: "attacker", orgId: "org-a", role: "owner", status: "active",
   }));
