@@ -1,6 +1,6 @@
 # ADR: self-service resolution of an explicitly supplied tenant membership
 
-**Status:** implemented in candidate rules and emulator tests; production publication remains separately gated  
+**Status:** candidate implementation updated to canonical versioned tenant schema; validation and production publication remain separately gated  
 **Scope:** application bootstrap and candidate Firestore authorization only  
 **Production posture:** Firebase Console-published rules remain deny-all  
 **Cost boundary:** Firebase Spark only; no Functions, Admin SDK, custom claims, paid services, or billing
@@ -19,7 +19,7 @@ Permit an authenticated user to **get exactly their own membership document**, b
 2. The stored `uid` equals that path UID.
 3. The stored `orgId` equals the parent organisation path.
 4. The membership status is exactly `active`.
-5. The membership role is one of the explicitly supported application roles: `owner`, `admin`, `manager`, or `viewer`.
+5. The membership role is exactly one of `tenant_super_admin`, `tenant_admin`, `tenant_manager`, `tenant_employee`, or `tenant_auditor`. The global `platform_owner` principal is stored separately and is never a tenant role.
 6. The parent organisation exists, its stored `orgId` matches the path, and its status is exactly `active`.
 
 The rule must grant **get only**. It must continue to deny membership list/query, create, update, and delete. A user cannot read another user's membership, enumerate members, or assign/change their own role.
@@ -35,14 +35,14 @@ The user supplies the opaque organisation ID through a controlled onboarding ste
 - The authenticated user sees only their own membership metadata.
 - Operational reads and writes continue to be independently authorized by the existing tenant rules, which re-check membership and organisation state.
 
-The membership document should contain only the minimum fields required for authorization and display: `uid`, `orgId`, `role`, and `status`. Do not add personal details, invitation secrets, credentials, or unnecessary profile data.
+The version-1 membership document has the exact fields `uid`, `orgId`, `role`, `status`, `createdAt`, `createdByUid`, `updatedAt`, `updatedByUid`, and `schemaVersion`. Do not add personal details, invitation secrets, credentials, or unnecessary profile data.
 
 ## Required emulator tests before implementation is accepted
 
 Positive:
 - Active authenticated user can get their own valid membership using the exact known organisation ID.
-- Each supported role can read its own membership.
-- Existing owner/admin operational permissions remain unchanged.
+- Each of the five canonical tenant roles can read its own membership.
+- Existing Super Admin/Admin direct operational permissions remain conservative; Manager, Employee and Auditor access is denied until record-level/query-level constraints are implemented.
 
 Negative:
 - Unauthenticated user cannot get membership.
@@ -77,7 +77,7 @@ This ADR does not implement invitations, organisation discovery, owner bootstrap
 
 This proposal changes no rules and enables no production access. Before implementation:
 1. Review this design against the current candidate rules and Firestore Rules get/list semantics.
-2. Implement the narrow `get` rule and the full positive/negative emulator test matrix in a dedicated change.
+2. Implement the narrow `get` rule and the full positive/negative emulator test matrix for the canonical schema in a dedicated change.
 3. Confirm the emulator suite, dependency audit, typecheck, production build, and Vercel preview pass on the final commit.
 4. Independently review the exact diff.
 5. Keep production rules deny-all until a separate, explicit production rules release is approved.
