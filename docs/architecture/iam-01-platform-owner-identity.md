@@ -55,7 +55,7 @@ Implementation constraints:
 - Restrict bootstrap to a one-time, authenticated, operator-controlled operation. Require a server-side secret/operational gate in addition to the preconfigured UID; do not expose a public endpoint that accepts an arbitrary UID.
 - Set a minimal trusted platform claim (for example, `platformRole: "platform_owner"`) only from the server after checking the approved UID and current provisioning state.
 - Verify the claim and current platform-admin record for privileged requests; do not rely on a decoded-but-unverified JWT.
-- Keep the authoritative platform administrator record under `/platform/administrators/{uid}`; clients cannot create, update, list, or delete it.
+- Keep the authoritative platform administrator record under `/platformAdministrators/{uid}`; clients cannot create, update, list, or delete it.
 - Never put tenant IDs, organisation lists, or client-supplied permissions into a global claim.
 - Do not expose a generic Admin SDK proxy or arbitrary Firestore path operation.
 - Keep the existing client app fail-closed when the trusted API is unavailable or owner identity is unverified.
@@ -122,3 +122,5 @@ IAM-01 is complete only when:
 6. The final PR CI passes and the diff receives security review.
 
 Production Firestore rule publication, Owner Control Centre release, and cross-tenant operational access remain separate approvals after IAM-01.
+
+**Firestore path correction:** Platform principal and audit records use valid document paths `platformAdministrators/{uid}` and `platformAuditEvents/{eventId}`; `platform/settings` remains the one-time bootstrap lock. The earlier nested three-segment sketches are superseded.
