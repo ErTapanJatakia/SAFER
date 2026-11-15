@@ -8,7 +8,7 @@ import {
   INCIDENT_LEGAL_DISCLAIMER,
 } from '../utils/incidentDraftGenerator.ts';
 import { copyToClipboard } from '../utils/clipboard.ts';
-import { getCurrentLocalDateTime, formatDisplayDate } from '../utils/dateUtils.ts';
+import { getCurrentLocalDateTime, formatDisplayDate, formatDisplayTime } from '../utils/dateUtils.ts';
 import {
   FileText,
   Plus,
@@ -79,7 +79,7 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
 
   const handleQuickCopyDraft = async (inc: IncidentReport) => {
     const draft = inc.structuredDraft || generateStructuredIncidentDraft(
-      `Date/Time: ${formatDisplayDate(inc.dateReported)}\nLocation: ${inc.location}\nReporter: ${inc.reportedBy}\nNotes: ${inc.summary}`,
+      `Date/Time: ${formatDisplayDate(inc.dateReported)} {formatDisplayTime(inc.dateReported)}\nLocation: ${inc.location}\nReporter: ${inc.reportedBy}\nNotes: ${inc.summary}`,
       inc.referenceNumber
     );
     const text = formatStructuredDraftAsText(draft);
