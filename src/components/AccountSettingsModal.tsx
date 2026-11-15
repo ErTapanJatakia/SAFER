@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Download, RotateCcw, Save, UserRound, X } from 'lucide-react';
 import { useModalFocus } from '../hooks/useModalFocus.ts';
+import {LOCALE_OPTIONS, setLocale, type SupportedLocale} from '../i18n/locale.ts';
 import {
   ACCOUNT_SETTINGS_STORAGE_KEY,
   createAccountSettingsExport,
@@ -45,6 +46,8 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
     }
     try {
       window.localStorage.setItem(ACCOUNT_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+      setLocale(settings.preferences.locale);
+      window.dispatchEvent(new CustomEvent('safer:preferences-changed'));
       setError(null);
       onSaved('Account preferences saved on this browser.');
     } catch {
@@ -75,6 +78,8 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
     try {
       window.localStorage.removeItem(ACCOUNT_SETTINGS_STORAGE_KEY);
       setSettings(normalizeAccountSettings(DEFAULT_ACCOUNT_SETTINGS));
+      setLocale('en');
+      window.dispatchEvent(new CustomEvent('safer:preferences-changed'));
       setError(null);
       onSaved('Personal account preferences reset. Operational records were not changed.');
     } catch {
@@ -131,8 +136,13 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
 
           {activeTab === 'preferences' && (
             <div className="space-y-4">
-              <div><h3 className="font-semibold text-slate-900">Regional preferences</h3><p className="text-xs text-slate-600 mt-1">These values are stored for future formatting integration; they do not yet change every date or number displayed in SAFER.</p></div>
+              <div><h3 className="font-semibold text-slate-900">Regional preferences</h3><p className="text-xs text-slate-600 mt-1">These preferences apply to supported date, time and number formatting. Language applies to the authentication screen, navigation and account settings; operational content is being localised progressively.</p></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className={labelClass}>Language
+                  <select className={inputClass} value={settings.preferences.locale} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, locale: event.target.value as SupportedLocale } }))}>
+                    {LOCALE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.nativeName} — {option.label}</option>)}
+                  </select>
+                </label>
                 <label className={labelClass}>Date format
                   <select className={inputClass} value={settings.preferences.dateFormat} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, dateFormat: event.target.value as AccountSettings['preferences']['dateFormat'] } }))}>
                     <option value="DD-MM-YYYY">DD-MM-YYYY</option><option value="YYYY-MM-DD">YYYY-MM-DD</option><option value="DD/MM/YYYY">DD/MM/YYYY</option>
