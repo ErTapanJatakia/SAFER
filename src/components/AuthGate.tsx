@@ -33,6 +33,40 @@ const passwordMeetsPolicy = (value: string) =>
   /[0-9]/.test(value) &&
   /[^A-Za-z0-9]/.test(value);
 
+const getFriendlyAuthErrorMessage = (code: string) => {
+  if (code.includes('operation-not-allowed')) {
+    return 'Google sign-in is not enabled for this application yet. Please use email sign-in or contact the SAFER administrator.';
+  }
+  if (code.includes('unauthorized-domain')) {
+    return 'This website is not authorised for Google sign-in. Please contact the SAFER administrator.';
+  }
+  if (code.includes('popup-blocked')) {
+    return 'Your browser blocked the Google sign-in window. Allow pop-ups for this site, then try again.';
+  }
+  if (code.includes('popup-closed-by-user') || code.includes('cancelled-popup-request')) {
+    return 'Google sign-in was cancelled. You can try again whenever you are ready.';
+  }
+  if (code.includes('network-request-failed')) {
+    return 'Google sign-in could not reach the authentication service. Check your connection and try again.';
+  }
+  if (code.includes('account-exists-with-different-credential')) {
+    return 'An account already exists with this email using a different sign-in method. Sign in with that method first.';
+  }
+  if (code.includes('user-disabled')) {
+    return 'This account is currently disabled. Please contact the SAFER administrator.';
+  }
+  if (code.includes('invalid-api-key') || code.includes('app-not-authorized') || code.includes('invalid-oauth-client-id')) {
+    return 'Google sign-in is temporarily unavailable because the authentication service is not configured correctly. Please contact the SAFER administrator.';
+  }
+  if (code.includes('invalid-credential') || code.includes('credential-already-in-use')) {
+    return 'Google could not verify this sign-in attempt. Please try again or use another sign-in method.';
+  }
+  if (code.includes('too-many-requests')) {
+    return 'Too many sign-in attempts. Please wait a while before trying again.';
+  }
+  return 'Google sign-in could not be completed. Please try again or use email sign-in.';
+};
+
 export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -147,16 +181,12 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
         : '';
       if (code.includes('invalid-credential') || code.includes('wrong-password') || code.includes('user-not-found')) {
         setError('Unable to sign in with those details. Check your email and password.');
-      } else if (code.includes('too-many-requests')) {
-        setError('Too many attempts. Please wait before trying again.');
-      } else if (code.includes('network-request-failed')) {
-        setError('Network connection failed. Check your connection and retry.');
       } else if (code.includes('email-already-in-use')) {
         setError('This account could not be created. Try signing in or use password reset.');
-      } else if (code.includes('popup-closed-by-user')) {
-        setError('Google sign-in was closed before completion.');
+      } else if (code.startsWith('auth/')) {
+        setError(getFriendlyAuthErrorMessage(code));
       } else {
-        setError('The account request could not be completed. Check the Firebase configuration and try again.');
+        setError('The account request could not be completed. Please try again or use another sign-in method.');
       }
     } finally {
       setBusy(false);

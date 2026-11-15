@@ -6,7 +6,7 @@ import {AuthGate} from './AuthGate';
 import {useDemoWorkspaceRepository} from './DemoGuestWorkspaceProvider';
 import type {DemoWorkspaceRepository} from '../lib/demoWorkspace';
 import {resolveTenantMembership} from '../lib/tenantMembership';
-import {onAuthStateChanged,signOut} from 'firebase/auth';
+import {onAuthStateChanged,signInWithPopup,signOut} from 'firebase/auth';
 import {auth as firebaseAuth} from '../lib/firebase.ts';
 import * as sessionInvalidation from '../lib/sessionInvalidation';
 
@@ -59,6 +59,28 @@ describe('AuthGate membership session handling',()=>{
   expect(confirm.type).toBe('password');
   (host.querySelector('button[aria-label="Show confirm password"]') as HTMLButtonElement).click();await flush();
   expect(confirm.type).toBe('text');
+ });
+ it('shows an actionable message when Google sign-in is not enabled',async()=>{
+  vi.mocked(signInWithPopup).mockRejectedValueOnce(Object.assign(new Error('provider disabled'),{code:'auth/operation-not-allowed'}));
+  button('Continue with Google').click();await flush();
+  expect(host.querySelector('[role="alert"]')?.textContent).toContain('Google sign-in is not enabled');
+  expect(host.textContent).not.toContain('Check the Firebase configuration');
+ });
+ it('explains when the deployed domain is not authorised for Google sign-in',async()=>{
+  vi.mocked(signInWithPopup).mockRejectedValueOnce(Object.assign(new Error('domain rejected'),{code:'auth/unauthorized-domain'}));
+  button('Continue with Google').click();await flush();
+  expect(host.querySelector('[role="alert"]')?.textContent).toContain('This website is not authorised');
+ });
+ it('explains when the browser blocks the Google sign-in popup',async()=>{
+  vi.mocked(signInWithPopup).mockRejectedValueOnce(Object.assign(new Error('popup blocked'),{code:'auth/popup-blocked'}));
+  button('Continue with Google').click();await flush();
+  expect(host.querySelector('[role="alert"]')?.textContent).toContain('browser blocked the Google sign-in window');
+ });
+ it('does not display the old generic Firebase configuration error for Google sign-in failures',async()=>{
+  vi.mocked(signInWithPopup).mockRejectedValueOnce(Object.assign(new Error('network down'),{code:'auth/network-request-failed'}));
+  button('Continue with Google').click();await flush();
+  expect(host.querySelector('[role="alert"]')?.textContent).toContain('Check your connection');
+  expect(host.textContent).not.toContain('The account request could not be completed. Check the Firebase configuration and try again.');
  });
  it('keeps the browser context menu enabled after entering Demo Guest',async()=>{
   button('Continue as Demo Guest').click();await flush();
