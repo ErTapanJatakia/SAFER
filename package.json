@@ -69,7 +69,9 @@
     "test:platform-owner": "node --test tests/platform-owner-authorization.test.mjs tests/platform-owner-bootstrap.test.mjs tests/platform-owner-server-boundary.test.mjs tests/tenant-rbac-policy.test.mjs",
     "provision:platform-owner": "node scripts/platform-owner.mjs",
     "test:organisation-invitation-acceptance": "node --test tests/organisation-invitation-acceptance.test.mjs",
-    "test:tenant-authorization": "node --test tests/tenant-authorization.test.mjs tests/tenant-rbac-policy.test.mjs"
+    "test:tenant-authorization": "node --test tests/tenant-authorization.test.mjs tests/tenant-rbac-policy.test.mjs tests/tenant-membership-admin.test.mjs tests/tenant-member-invitation-acceptance.test.mjs",
+    "test:tenant-membership-admin": "node --test tests/tenant-membership-admin.test.mjs",
+    "test:tenant-member-invitation-acceptance": "node --test tests/tenant-member-invitation-acceptance.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
