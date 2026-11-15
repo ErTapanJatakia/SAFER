@@ -336,10 +336,10 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
   if (user || demoGuest) {
     return (
       <SessionInactivityGuard sessionKey={user?.uid ?? 'demo-guest'} onExpire={leaveAccount}>
-        <div className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-2 border-b border-slate-700 bg-slate-950 px-4 py-2 text-xs text-slate-100">
+        <header aria-label="Account session" className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-2 border-b border-slate-700 bg-slate-950 px-4 py-2 text-xs text-slate-100">
           <span>{user ? `Signed in: ${user.email || 'verified account'}` : 'Demo Guest session'}</span>
           <button type="button" onClick={leaveAccount} className="rounded border border-slate-600 px-3 py-1.5 hover:bg-slate-800">Sign out</button>
-        </div>
+        </header>
         {error && <p role="alert" className="border-b border-red-800 bg-red-950/60 px-4 py-2 text-xs text-red-200">{error}</p>}
         {!!user && (
           <>
@@ -386,9 +386,9 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
         )}
         {demoGuest && !user ? (
           <>
-            <div className="border-b border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-950">
+            <aside aria-label="Demo workspace notice" className="border-b border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-950">
               <strong>Demo workspace:</strong> This session uses browser-local demonstration data only. Use synthetic records; do not enter real personal, personnel, incident or operational information.
-            </div>
+            </aside>
             <DemoGuestWorkspaceProvider accessState={enterDemoGuest(1)}>{children}</DemoGuestWorkspaceProvider>
           </>
         ) : (
