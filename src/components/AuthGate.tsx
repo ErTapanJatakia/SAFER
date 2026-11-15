@@ -102,7 +102,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       }
     };
     return startSessionInactivityMonitor(window, timeoutMinutes * 60 * 1000, expireSession);
-  }, [user?.uid, demoGuest, preferencesRevision]);
+  }, [user, demoGuest, preferencesRevision]);
 
   useEffect(() => {
     // Remove only SAFER's short-lived OAuth diagnostic marker; preserve Firebase
