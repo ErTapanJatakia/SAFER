@@ -79,6 +79,12 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
   }, [request]);
 
   useEffect(() => {
+    setOwnerState('checking');
+    setOrganisations([]);
+    setActiveSession(null);
+  }, [user.uid]);
+
+  useEffect(() => {
     let current = true;
     void (async () => {
       try {
