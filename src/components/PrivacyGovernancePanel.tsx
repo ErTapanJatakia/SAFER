@@ -4,6 +4,7 @@ import { createDpdpGovernanceRepository } from '../utils/dpdpGovernanceRepositor
 import { canMarkPurposeReviewed, canApproveNoticeForDemo, canRecordSyntheticConsent, createSyntheticWithdrawal, getLatestConsentState } from '../utils/dpdpGovernance.ts';
 import type { PrivacyGovernanceSnapshot, PrivacyPurposeRecord, VersionedPrivacyNotice, ConsentLifecycleEvent } from '../types/dpdpGovernance.ts';
 import { DpdpCaseworkPanel } from './DpdpCaseworkPanel.tsx';
+import { DpdpExtendedWorkflowsPanel } from './DpdpExtendedWorkflowsPanel.tsx';
 import { formatAccountDateTime, readAccountPreferences } from '../utils/accountFormatting.ts';
 
 const input = 'w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500';
@@ -184,5 +185,6 @@ export const PrivacyGovernancePanel: React.FC = () => {
         }))}
       {snapshot.consentHistory.map((event) => <p key={event.id} className="text-xs text-slate-400">{event.subjectRef} · {event.purposeId} · {event.state} · {formatAccountDateTime(event.recordedAt, accountPreferences)}</p>)}
     </section>
+    <DpdpExtendedWorkflowsPanel />
   </section>;
 };
