@@ -630,7 +630,7 @@ export default function App() {
       </a>
 
       {/* Screen Reader Live Notification Announcer */}
-      <LiveAnnouncer announcement={liveAnnouncement} />
+      <LiveAnnouncer announcement={liveAnnouncement} enabled={accessibilitySettings.screenReaderAnnouncements} />
 
       {/* Top Header Banner & Safety Principles */}
       <HeaderBanner
