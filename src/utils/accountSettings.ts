@@ -126,3 +126,9 @@ export function readAccountProfile(storage?: Pick<Storage, 'getItem'>): AccountP
     return { ...DEFAULT_ACCOUNT_SETTINGS.profile };
   }
 }
+
+/** Only routine success visuals are user-configurable; status and safety feedback stay visible. */
+export function shouldShowVisualToast(kind: 'status' | 'success', rawSettings: unknown): boolean {
+  if (kind !== 'success') return true;
+  return normalizeAccountSettings(rawSettings).preferences.showSuccessToasts;
+}
