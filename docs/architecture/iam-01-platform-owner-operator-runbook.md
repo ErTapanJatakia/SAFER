@@ -1,6 +1,7 @@
 # IAM-01 Platform Owner operator and deployment runbook
 
 **Status:** controlled implementation; not a production activation approval  
+**Implementation:** dedicated IAM-01 backend branch; merge and deployment remain separately gated  
 **Firebase project:** `safer-2026`  
 **Vercel project:** `safer-pmc`  
 **Runtime:** Vercel Node.js Function (project currently configured for Node.js 24.x)  
