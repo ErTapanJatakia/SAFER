@@ -36,14 +36,18 @@ afterEach(async()=>{await act(async()=>root.unmount());dom.window.close();vi.cle
 
 describe('AuthGate membership session handling',()=>{
  it('suppresses mouse right-click context menus on the signed-out login and sign-up screen',async()=>{
+  const authScreen=host.querySelector('main') as HTMLElement;
+  expect(authScreen).not.toBeNull();
   const event=new dom.window.MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2});
-  expect(host.dispatchEvent(event)).toBe(false);
+  expect(authScreen.dispatchEvent(event)).toBe(false);
   expect(event.defaultPrevented).toBe(true);
  });
  it('keeps the browser context menu enabled after entering Demo Guest',async()=>{
   button('Continue as Demo Guest').click();await flush();
+  const workspace=[...host.querySelectorAll('div')].find((element)=>element.textContent?.includes('Operational app shell')) as HTMLElement;
+  expect(workspace).not.toBeNull();
   const event=new dom.window.MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2});
-  expect(host.dispatchEvent(event)).toBe(true);
+  expect(workspace.dispatchEvent(event)).toBe(true);
   expect(event.defaultPrevented).toBe(false);
  });
 
