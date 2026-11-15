@@ -33,7 +33,9 @@ function boundedList(value,maxItems,maxLength) {
 function validRecord(value, recordId, orgId) {
   if(!value||typeof value!=='object'||Array.isArray(value)) return false;
   const keys=Object.keys(value).sort();
-  return keys.length===FIELDS.length && keys.every((k,i)=>k===FIELDS[i])
+  const expected=value.employeeUid===undefined?FIELDS:[...FIELDS,'employeeUid'].sort();
+  return keys.length===expected.length && keys.every((k,i)=>k===expected[i])
+    && (value.employeeUid===undefined || UID.test(value.employeeUid))
     && value.recordId===recordId && value.orgId===orgId
     && typeof value.employeeRef==='string' && value.employeeRef.length>0 && value.employeeRef.length<=64
     && (value.displayLabel===undefined || (typeof value.displayLabel==='string'&&value.displayLabel.length<=80))
@@ -70,11 +72,15 @@ function publicRecord(data) {
 }
 
 /** A minimized directory; it deliberately contains no personal/contact/health data. */
-export async function listTenantPersonnel({orgId,database,limit=100}) {
+export async function listTenantPersonnel({orgId,database,actorUid,role,limit=100}) {
   assertOrg(orgId);
   const cap=Math.min(Math.max(Number(limit)||100,1),100);
-  const snapshot=await database.collection(`organisations/${orgId}/personnel`)
-    .orderBy('updatedAt','desc').limit(cap+1).get();
+  let query=database.collection(`organisations/${orgId}/personnel`).orderBy('updatedAt','desc');
+  if(role==='tenant_employee') {
+    if(!UID.test(actorUid??'')) fail('invalid_request');
+    query=query.where('employeeUid','==',actorUid);
+  }
+  const snapshot=await query.limit(cap+1).get();
   const hasMore=snapshot.docs.length>cap;
   const records=snapshot.docs.slice(0,cap).flatMap(doc=>{
     const data=doc.data();
@@ -93,6 +99,7 @@ export async function createTenantPersonnel({orgId,actorUid,input,database,serve
   const timestamp=serverTimestamp();
   const record={
     recordId,orgId,
+    ...(input?.employeeUid!==undefined?{employeeUid:boundedString(input.employeeUid,128,true)}:{}),
     employeeRef:boundedString(input?.employeeRef,64,true),
     displayLabel:input?.displayLabel?boundedString(input.displayLabel,80):'',
     operationalRoles:boundedList(input?.operationalRoles??[],10,60),
@@ -104,6 +111,12 @@ export async function createTenantPersonnel({orgId,actorUid,input,database,serve
   };
   await database.runTransaction(async tx=>{
     await authorize(tx,database,actorUid,orgId,'personnel:create');
+    if(record.employeeUid) {
+      const target=await tx.get(database.doc(`organisations/${orgId}/members/${record.employeeUid}`));
+      if(!target.exists||target.data().uid!==record.employeeUid||target.data().orgId!==orgId
+        ||target.data().role!=='tenant_employee'||target.data().status!=='active'
+        ||target.data().schemaVersion!==1) fail('active_employee_assignee_required');
+    }
     tx.create(ref,record);
     tx.create(audit,{
       action:'tenant.personnel.created',actorUid,orgId,targetOrgId:orgId,
