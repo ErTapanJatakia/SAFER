@@ -135,6 +135,7 @@ export async function acceptSuperAdminInvitation({
       updatedAt: timestamp,
     });
     transaction.update(organisationRef, {
+      ownerUid: actorUid,
       lifecycleStage: 'super_admin_invitation_accepted',
       updatedAt: timestamp,
     });
