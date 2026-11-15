@@ -118,6 +118,9 @@ export function authorizeTenantAction({
   action,
   resourceOwnerUid,
   assignedToUid,
+  targetUid,
+  targetCurrentRole,
+  targetRole,
 } = {}) {
   if (!UID_PATTERN.test(actorUid ?? '') || !ORG_ID_PATTERN.test(requestedOrgId ?? '')
     || !TENANT_ACTIONS.includes(action) || !isRecord(membership) || !isRecord(organisation)) {
@@ -136,6 +139,20 @@ export function authorizeTenantAction({
   const permissions = ROLE_ACTIONS[membership.role];
   if (!permissions.has(action)) return denied('role_permission_denied');
 
+  if (action === 'members:invite' && !canAssignTenantRole(membership.role, targetRole)) {
+    return denied('role_delegation_denied');
+  }
+  if (action === 'members:suspend' || action === 'members:role:assign') {
+    if (!UID_PATTERN.test(targetUid ?? '') || targetUid === actorUid
+      || !canManageTenantRole(membership.role, targetCurrentRole)) {
+      return denied('target_membership_not_manageable');
+    }
+    if (action === 'members:role:assign'
+      && (!canAssignTenantRole(membership.role, targetRole) || targetRole === targetCurrentRole)) {
+      return denied('role_delegation_denied');
+    }
+  }
+
   if (action.endsWith(':own') && resourceOwnerUid !== actorUid) {
     return denied('record_owner_mismatch');
   }
@@ -144,6 +161,19 @@ export function authorizeTenantAction({
   }
 
   return permitted('tenant_role_permission_granted');
+}
+
+/**
+ * Check whether an actor may administer an existing tenant member. No tenant
+ * role can manage a peer or a higher role.
+ */
+export function canManageTenantRole(actorRole, targetCurrentRole) {
+  if (!TENANT_ROLES.includes(actorRole) || !TENANT_ROLES.includes(targetCurrentRole)) return false;
+  if (actorRole === 'tenant_super_admin') return targetCurrentRole !== 'tenant_super_admin';
+  if (actorRole === 'tenant_admin') {
+    return ['tenant_manager', 'tenant_employee', 'tenant_auditor'].includes(targetCurrentRole);
+  }
+  return false;
 }
 
 /**
