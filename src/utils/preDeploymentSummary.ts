@@ -4,7 +4,7 @@ import type {
   PreDeploymentStatus,
   FictionalDemonstrationScenario,
 } from '../types/index.ts';
-import { getCurrentISODate, toDDMMYYYY } from './dateUtils.ts';
+import { getCurrentISODate, formatDisplayDate } from './dateUtils.ts';
 
 export const ALL_PREDEPLOYMENT_CATEGORIES: PreDeploymentCategory[] = [
   'Required documentation and approvals',
@@ -87,7 +87,7 @@ export function generatePreDeploymentSummaryText(
   items: PreDeploymentChecklistItem[],
   scenario?: FictionalDemonstrationScenario,
   supervisorName = 'Veer Bahadur Singh (Call Sign: KAVACH-1)',
-  evaluationDate = toDDMMYYYY(getCurrentISODate())
+  evaluationDate = formatDisplayDate(getCurrentISODate())
 ): string {
   const metrics = computePreDeploymentMetrics(items);
   const scenarioTitle = scenario?.title || 'National Technology & Trade Envoy Protective Readiness Review';
@@ -130,7 +130,7 @@ export function generatePreDeploymentSummaryText(
       lines.push(`  ${index + 1}. [${item.priority.toUpperCase()} PRIORITY] ${item.task}`);
       lines.push(`     Category: ${item.category}`);
       lines.push(`     Status:   ${item.status.toUpperCase()}`);
-      lines.push(`     Target:   ${item.targetDeadline || 'Not specified'}`);
+      lines.push(`     Target:   ${formatDisplayDate(item.targetDeadline) || 'Not specified'}`);
       if (item.assignedRoleOrPerson) {
         lines.push(`     Assigned: ${item.assignedRoleOrPerson}`);
       }
@@ -156,7 +156,7 @@ export function generatePreDeploymentSummaryText(
         item.status === 'Complete' ? '[COMPLETED]' : item.status === 'Incomplete' ? '[OUTSTANDING]' : '[N/A]';
       lines.push(`     - ${statusIcon} ${item.task}`);
       if (item.reviewedBy) {
-        lines.push(`       Verified by: ${item.reviewedBy} on ${item.reviewDate || evaluationDate}`);
+        lines.push(`       Verified by: ${item.reviewedBy} on ${formatDisplayDate(item.reviewDate) || evaluationDate}`);
       }
     });
     lines.push('');
