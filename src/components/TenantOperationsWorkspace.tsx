@@ -6,6 +6,14 @@ type Tab = 'overview'|'incidents'|'personnel'|'evidence'|'checklists'|'reports'|
 type Row = Record<string, unknown>;
 type Membership = {uid:string;orgId:string;role:Role;status:'active';schemaVersion:1};
 
+const ROLE_DASHBOARDS: Record<Role,{title:string;description:string}> = {
+  tenant_super_admin: {title:'PMC Super Admin dashboard',description:'PMC-wide operational overview across incidents, personnel readiness, evidence metadata and assigned checklists.'},
+  tenant_admin: {title:'PMC Admin dashboard',description:'Member administration and day-to-day PMC operational administration, with permissions enforced by the tenant API.'},
+  tenant_manager: {title:'Manager dashboard',description:'Assignments, personnel readiness, incident oversight and checklist follow-up for this PMC.'},
+  tenant_employee: {title:'Employee dashboard',description:'Your assigned checklist work and incident reporting. Employee access remains limited to permitted records and assigned tasks.'},
+  tenant_auditor: {title:'Auditor dashboard',description:'Read-only reporting and audit access. Mutating controls and report exports remain unavailable.'},
+};
+
 const TABS: {id:Tab;label:string;roles?:Role[]}[] = [
   {id:'overview',label:'Overview'},
   {id:'incidents',label:'Incidents'},
@@ -188,8 +196,13 @@ export const TenantOperationsWorkspace:React.FC<Props>=({user,membership,onLeave
       {notice&&<p role="status" className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-800">{notice}</p>}
       {busy&&<p role="status" className="text-xs text-slate-500">Processing…</p>}
       {tab==='overview'&&<div className="space-y-4">
-        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">{Object.entries((report?.counts??{}) as Row).map(([key,value])=><div key={key} className={cardClass}><p className="text-xs capitalize text-slate-500">{key.replaceAll(/([A-Z])/g,' $1')}</p><p className="mt-2 text-2xl font-bold tabular-nums">{String(value)}</p></div>)}</section>
-        <div className="grid gap-4 lg:grid-cols-2">{panel('Recent incidents','Tenant-scoped operational records.',list(incidents.slice(0,5),['referenceNumber','status','priority']))}{panel('Outstanding checklists','Assignment and completion status.',list(checklists.filter(row=>row.status==='Incomplete').slice(0,5),['assignedToUid','priority','updatedAt']))}</div>
+        <section aria-labelledby="role-dashboard-title" className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-[.16em] text-blue-700">Role-based workspace</p>
+          <h2 id="role-dashboard-title" className="mt-1 text-lg font-bold text-slate-950">{ROLE_DASHBOARDS[membership.role].title}</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{ROLE_DASHBOARDS[membership.role].description}</p>
+        </section>
+        {membership.role!=='tenant_employee'&&<section aria-label="PMC operational summary" className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-5">{Object.entries((report?.counts??{}) as Row).map(([key,value])=><div key={key} className={cardClass}><p className="break-words text-xs capitalize text-slate-500">{key.replaceAll(/([A-Z])/g,' $1')}</p><p className="mt-2 text-2xl font-bold tabular-nums">{String(value)}</p></div>)}</section>}
+        <div className="grid min-w-0 gap-4 lg:grid-cols-2">{panel('Recent incidents','Tenant-scoped operational records.',list(incidents.slice(0,5),['referenceNumber','status','priority']))}{panel(membership.role==='tenant_employee'?'Your outstanding assignments':'Outstanding checklists','Assignment and completion status.',list(checklists.filter(row=>row.status==='Incomplete'&&(membership.role!=='tenant_employee'||row.assignedToUid===membership.uid)).slice(0,5),['assignedToUid','priority','updatedAt']))}</div>
       </div>}
       {tab==='incidents'&&<div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
         {panel('Incident register','Search and review incidents within this PMC.',<><input className={inputClass} placeholder="Search incident records" value={search} onChange={e=>setSearch(e.target.value)}/>{filteredIncidents.length?filteredIncidents.map(row=><div key={String(row.incidentId)} className="border-b border-slate-100 py-3"><div className="flex flex-wrap items-center justify-between gap-2"><strong className="text-sm">{String(row.referenceNumber??row.title??'Incident')}</strong><span className="text-xs text-slate-500">{String(row.incidentType??'')}</span></div><p className="my-1 text-xs text-slate-600">{String(row.summary??'')} · {String(row.locationLabel??'')}</p>{canOperate&&<div className="flex flex-wrap gap-2"><select aria-label="Incident status" className="rounded border border-slate-300 p-1 text-xs" value={String(row.status??'')} onChange={e=>updateIncident(String(row.incidentId),{status:e.target.value})}>{['Logged - Pending Officer Review','Under Investigation / Human Review','Documented & Filed'].map(x=><option key={x}>{x}</option>)}</select><select aria-label="Incident priority" className="rounded border border-slate-300 p-1 text-xs" value={String(row.priority??'Routine')} onChange={e=>updateIncident(String(row.incidentId),{priority:e.target.value})}>{['Routine','Moderate','High Attention'].map(x=><option key={x}>{x}</option>)}</select></div>}</div>):<p className="py-5 text-sm text-slate-500">No incidents found.</p>}</>)}
