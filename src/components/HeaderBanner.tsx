@@ -242,7 +242,7 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
               <strong className="text-slate-300 font-semibold">Human Review Mandate:</strong> This system does not automatically declare personnel fit or cleared for duty. Status reflects administrative document validity requiring supervisor verification.
             </span>
           </div>
-          <span className="hidden lg:inline text-slate-500 font-mono shrink-0">
+          <span className="hidden lg:inline text-slate-300 font-mono shrink-0">
             SEC-ADMIN-v1.0.4-MVP
           </span>
         </div>
