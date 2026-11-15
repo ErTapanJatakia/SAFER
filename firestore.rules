@@ -213,7 +213,17 @@ service cloud.firestore {
     function validPersonnelEmployeeBinding(orgId) {
       return !('employeeUid' in request.resource.data)
         || (request.resource.data.employeeUid is string
-          && request.resource.data.employeeUid.matches('^[A-Za-z0-9_-]{1,128}    function validPersonnelUpdate(orgId, recordId) {
+          && request.resource.data.employeeUid.size() >= 1
+          && request.resource.data.employeeUid.size() <= 128
+          && request.resource.data.employeeUid.matches('[A-Za-z0-9_-]{1,128}')
+          && exists(employeeMembershipPath(orgId, request.resource.data.employeeUid))
+          && get(employeeMembershipPath(orgId, request.resource.data.employeeUid)).data.uid == request.resource.data.employeeUid
+          && get(employeeMembershipPath(orgId, request.resource.data.employeeUid)).data.orgId == orgId
+          && get(employeeMembershipPath(orgId, request.resource.data.employeeUid)).data.role == 'tenant_employee'
+          && get(employeeMembershipPath(orgId, request.resource.data.employeeUid)).data.status == 'active'
+          && get(employeeMembershipPath(orgId, request.resource.data.employeeUid)).data.schemaVersion == 1);
+    }
+    function validPersonnelUpdate(orgId, recordId) {
       return validPersonnelData(orgId, recordId)
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.createdByUid == resource.data.createdByUid
