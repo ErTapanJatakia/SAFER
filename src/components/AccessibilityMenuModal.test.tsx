@@ -7,6 +7,7 @@ import { AccessibilityMenuModal } from './AccessibilityMenuModal';
 let dom: JSDOM;
 let root: Root;
 let host: HTMLDivElement;
+const onUpdateSettings = vi.fn();
 
 const settings = {
   textSize: '100' as const,
@@ -18,6 +19,9 @@ const settings = {
   lineSpacing: 'normal' as const,
   letterSpacing: 'normal' as const,
   dyslexicFont: false,
+  spokenAnnouncements: false,
+  speechRate: 'normal' as const,
+  speechVolume: 'high' as const,
 };
 
 function ModalHarness() {
@@ -30,7 +34,7 @@ function ModalHarness() {
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
         settings={settings}
-        onUpdateSettings={vi.fn()}
+        onUpdateSettings={onUpdateSettings}
         onResetSettings={vi.fn()}
       />
     </>
@@ -46,6 +50,7 @@ beforeEach(() => {
     HTMLElement: dom.window.HTMLElement,
     IS_REACT_ACT_ENVIRONMENT: true,
   });
+  onUpdateSettings.mockClear();
   host = document.createElement('div');
   document.body.appendChild(host);
   root = createRoot(host);
@@ -54,6 +59,7 @@ beforeEach(() => {
 
 afterEach(async () => {
   await act(async () => root.unmount());
+  delete (globalThis as any).SpeechSynthesisUtterance;
   dom.window.close();
 });
 
@@ -99,5 +105,28 @@ describe('AccessibilityMenuModal focus management', () => {
       bubbles: true,
     })));
     expect(document.activeElement).toBe(last);
+  });
+});
+
+
+describe('AccessibilityMenuModal spoken audio controls', () => {
+  it('keeps spoken announcements unavailable when the browser has no speech engine', () => {
+    act(() => host.querySelector('button')!.click());
+    expect(host.textContent).toContain('Speech synthesis is not available in this browser');
+    const toggle = Array.from(host.querySelectorAll('button')).find((button) => button.textContent?.includes('Spoken Announcements Off'));
+    expect(toggle?.hasAttribute('disabled')).toBe(true);
+  });
+
+  it('exposes opt-in controls and adjustable speech rate and volume when supported', () => {
+    class FakeUtterance { constructor(public text: string) {} }
+    Object.assign(globalThis, { SpeechSynthesisUtterance: FakeUtterance });
+    Object.defineProperty(dom.window, 'speechSynthesis', {
+      configurable: true,
+      value: { cancel: vi.fn(), speak: vi.fn() },
+    });
+    act(() => host.querySelector('button')!.click());
+    const toggle = Array.from(host.querySelectorAll('button')).find((button) => button.textContent?.includes('Spoken Announcements Off'))!;
+    act(() => toggle.click());
+    expect(onUpdateSettings).toHaveBeenCalledWith({ spokenAnnouncements: true });
   });
 });
