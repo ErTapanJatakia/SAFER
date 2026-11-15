@@ -49,15 +49,15 @@ describe('AuthGate membership session handling',()=>{
   expect(host.textContent).toContain('Verify. Defend. Stay Secure.');
   const password=host.querySelector('input[autocomplete="current-password"]') as HTMLInputElement;
   expect(password.type).toBe('password');
-  const showPassword=button('Show password');
+  const showPassword=host.querySelector('button[aria-label="Show password"]') as HTMLButtonElement;
   expect(showPassword).toBeTruthy();
   showPassword.click();await flush();
   expect(password.type).toBe('text');
-  expect(button('Hide password').getAttribute('aria-pressed')).toBe('true');
+  expect(host.querySelector('button[aria-label="Hide password"]')?.getAttribute('aria-pressed')).toBe('true');
   button('Create Account').click();await flush();
   const confirm=host.querySelectorAll('input[autocomplete="new-password"]')[1] as HTMLInputElement;
   expect(confirm.type).toBe('password');
-  button('Show confirm password').click();await flush();
+  (host.querySelector('button[aria-label="Show confirm password"]') as HTMLButtonElement).click();await flush();
   expect(confirm.type).toBe('text');
  });
  it('keeps the browser context menu enabled after entering Demo Guest',async()=>{
