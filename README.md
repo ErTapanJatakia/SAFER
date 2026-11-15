@@ -1,6 +1,6 @@
 # SAFER
 ### Security Administration, Field Readiness, Evidence & Reporting
-**Tagline:** Prepared. Accountable. Secure.  
+**Tagline:** Verify. Defend. Stay Secure.  
 **Product Descriptor:** AI-Assisted Security Operations Platform
 
 An administrative readiness, qualification audit, incident documentation, and defensive cybersecurity management prototype engineered for protective security operations and personnel readiness oversight.
