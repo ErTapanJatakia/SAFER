@@ -104,7 +104,18 @@ function isRecord(value) {
   return prototype === Object.prototype || prototype === null;
 }
 
-function validTimestamp(value) {\n  if (value instanceof Date) return Number.isFinite(value.getTime());\n  if (!value || typeof value !== 'object') return false;\n  if (typeof value.toDate === 'function') return value.toDate() instanceof Date && Number.isFinite(value.toDate().getTime());\n  if (typeof value.toMillis === 'function') return Number.isFinite(value.toMillis());\n  return false;\n}\n\nfunction denied(reason) {
+function validTimestamp(value) {
+  if (value instanceof Date) return Number.isFinite(value.getTime());
+  if (!value || typeof value !== 'object') return false;
+  if (typeof value.toDate === 'function') {
+    const date = value.toDate();
+    return date instanceof Date && Number.isFinite(date.getTime());
+  }
+  if (typeof value.toMillis === 'function') return Number.isFinite(value.toMillis());
+  return false;
+}
+
+function denied(reason) {
   return Object.freeze({ allowed: false, reason, auditRequired: false });
 }
 
@@ -140,9 +151,9 @@ export function authorizeTenantAction({
     || membership.uid !== actorUid || membership.orgId !== requestedOrgId
     || membership.schemaVersion !== 1 || membership.status !== 'active'
     || !TENANT_ROLES.includes(membership.role)
-    || typeof membership.createdByUid !== 'string'
-    || typeof membership.updatedByUid !== 'string'
-    || membership.createdAt == null || membership.updatedAt == null) {
+    || !UID_PATTERN.test(membership.createdByUid ?? '')
+    || !UID_PATTERN.test(membership.updatedByUid ?? '')
+    || !validTimestamp(membership.createdAt) || !validTimestamp(membership.updatedAt)) {
     return denied('active_tenant_membership_required');
   }
 
