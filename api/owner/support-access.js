@@ -62,13 +62,13 @@ export default async function handler(request, response) {
     return response.status(200).json(result);
   } catch (error) {
     const code = error instanceof Error ? error.message : '';
-    if (code.startsWith('invalid_') || code.includes('required')) {
-      return response.status(400).json({ error: code });
-    }
     if (code === 'active_platform_owner_required') return response.status(403).json({ error: code });
     if (code === 'support_session_not_found') return response.status(404).json({ error: code });
     if (code.includes('support_session') || code.includes('support_access_scope') || code.includes('active_support_organisation')) {
       return response.status(409).json({ error: code });
+    }
+    if (code.startsWith('invalid_') || code.includes('required')) {
+      return response.status(400).json({ error: code });
     }
     return response.status(503).json({ error: 'support_access_unavailable' });
   }
