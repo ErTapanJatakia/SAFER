@@ -3,7 +3,7 @@ import {
   manageTenantMember,
   TenantMembershipError,
 } from '../../src/server/tenant-membership-admin.mjs';
-import { resolveTenantAuthorization } from '../../src/server/tenant-authorization.mjs';
+import { resolveTenantAuthorization, TenantAuthorizationError } from '../../src/server/tenant-authorization.mjs';
 
 function bearerToken(request) {
   const header = request.headers?.authorization;
@@ -16,6 +16,7 @@ function responseError(error) {
   const code = error?.code;
   const clientErrors = new Map([
     ['invalid_request', 400],
+    ['invalid_authorization_request', 400],
     ['invalid_invitation_request', 400],
     ['unauthenticated', 401],
     ['active_tenant_membership_required', 403],
@@ -87,8 +88,9 @@ export default async function handler(request, response) {
         database: platformDb,
       });
       const snapshot = await platformDb.collection(`organisations/${orgId}/members`)
-        .orderBy('createdAt', 'desc').limit(100).get();
-      const members = snapshot.docs.map((document) => {
+        .orderBy('createdAt', 'desc').limit(101).get();
+      const hasMore = snapshot.docs.length > 100;
+      const members = snapshot.docs.slice(0, 100).map((document) => {
         const value = document.data();
         return {
           uid: value.uid,
@@ -98,7 +100,7 @@ export default async function handler(request, response) {
           updatedAt: value.updatedAt?.toDate?.()?.toISOString?.() ?? null,
         };
       });
-      return response.status(200).json({ orgId: authorization.orgId, members });
+      return response.status(200).json({ orgId: authorization.orgId, members, hasMore });
     }
     if (request.method === 'POST') {
       const result = await inviteTenantMember({
@@ -122,7 +124,7 @@ export default async function handler(request, response) {
     });
     return response.status(200).json(result);
   } catch (error) {
-    if (error instanceof TenantMembershipError) {
+    if (error instanceof TenantMembershipError || error instanceof TenantAuthorizationError) {
       return response.status(responseError(error)).json({ error: error.code });
     }
     return response.status(503).json({ error: 'tenant_membership_service_unavailable' });
