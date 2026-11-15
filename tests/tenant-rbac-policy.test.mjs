@@ -6,6 +6,7 @@ import {
   authorizePlatformOwnerAction,
   authorizeTenantAction,
   canAssignTenantRole,
+  canManageTenantRole,
 } from '../src/server/tenant-rbac.mjs';
 
 const organisation = { orgId: 'pmc-alpha', status: 'active' };
@@ -36,7 +37,7 @@ test('the tenant role catalogue contains only the approved tenant hierarchy', ()
 
 test('Super Admin receives the complete tenant permission set but no platform authority', () => {
   assert.equal(authorize('tenant_super_admin', 'organisation:update').allowed, true);
-  assert.equal(authorize('tenant_super_admin', 'members:invite').allowed, true);
+  assert.equal(authorize('tenant_super_admin', 'members:invite', { targetRole: 'tenant_admin' }).allowed, true);
   assert.equal(authorize('tenant_super_admin', 'audit:read').allowed, true);
   assert.equal(authorize('tenant_super_admin', 'platform:organisations:list').allowed, false);
 });
@@ -94,7 +95,22 @@ test('role delegation follows the tenant hierarchy and never grants platform rol
   assert.equal(canAssignTenantRole('tenant_admin', 'tenant_super_admin'), false);
   assert.equal(canAssignTenantRole('tenant_manager', 'tenant_employee'), false);
   assert.equal(canAssignTenantRole('tenant_super_admin', 'platform_owner'), false);
+  assert.equal(canManageTenantRole('tenant_super_admin', 'tenant_admin'), true);
+  assert.equal(canManageTenantRole('tenant_super_admin', 'tenant_super_admin'), false);
+  assert.equal(canManageTenantRole('tenant_admin', 'tenant_manager'), true);
+  assert.equal(canManageTenantRole('tenant_admin', 'tenant_admin'), false);
   assert.equal(canAssignTenantRole('owner', 'tenant_admin'), false);
+  assert.equal(authorize('tenant_admin', 'members:invite', { targetRole: 'tenant_admin' }).reason, 'role_delegation_denied');
+  assert.equal(authorize('tenant_admin', 'members:invite', { targetRole: 'tenant_manager' }).allowed, true);
+  assert.equal(authorize('tenant_admin', 'members:suspend', {
+    targetUid: 'user-2', targetCurrentRole: 'tenant_admin',
+  }).reason, 'target_membership_not_manageable');
+  assert.equal(authorize('tenant_admin', 'members:suspend', {
+    targetUid: 'user-2', targetCurrentRole: 'tenant_manager',
+  }).allowed, true);
+  assert.equal(authorize('tenant_admin', 'members:role:assign', {
+    targetUid: 'user-2', targetCurrentRole: 'tenant_manager', targetRole: 'tenant_admin',
+  }).reason, 'role_delegation_denied');
 });
 
 test('Platform Owner access requires the authoritative active platform principal', () => {
