@@ -42,11 +42,19 @@ export async function authorizePlatformOwner({
   }
 
   let user;
+  try {
+    user = await readAuthUser(identity.uid);
+  } catch (error) {
+    if (error?.code === 'auth/user-not-found') {
+      return { ok: false, status: 403, code: 'platform_identity_ineligible' };
+    }
+    return { ok: false, status: 503, code: 'platform_authority_unavailable' };
+  }
+
   let principal;
   let settings;
   try {
-    [user, principal, settings] = await Promise.all([
-      readAuthUser(identity.uid),
+    [principal, settings] = await Promise.all([
       readPlatformAdministrator(identity.uid),
       readPlatformSettings(),
     ]);
