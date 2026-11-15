@@ -1,6 +1,17 @@
 /**
- * Date utility helpers supporting DD-MM-YYYY input, display, and validation.
+ * Date helpers keep stored values canonical while applying browser-local display
+ * preferences at presentation time.
  */
+import {DEFAULT_ACCOUNT_SETTINGS, normalizeAccountSettings, ACCOUNT_SETTINGS_STORAGE_KEY} from './accountSettings.ts';
+
+export function getRegionalPreferences() {
+  try {
+    const raw = window.localStorage.getItem(ACCOUNT_SETTINGS_STORAGE_KEY);
+    return normalizeAccountSettings(raw ? JSON.parse(raw) : null).preferences;
+  } catch {
+    return DEFAULT_ACCOUNT_SETTINGS.preferences;
+  }
+}
 
 /**
  * Returns the current local calendar date as YYYY-MM-DD.
@@ -81,7 +92,14 @@ export function toYYYYMMDD(dateStr: string | null | undefined): string {
  */
 export function formatDisplayDate(dateStr: string | null | undefined, fallback = 'N/A'): string {
   if (!dateStr) return fallback;
-  return toDDMMYYYY(dateStr);
+  const iso = toYYYYMMDD(dateStr);
+  const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return toDDMMYYYY(dateStr);
+  const [, year, month, day] = match;
+  const format = getRegionalPreferences().dateFormat;
+  if (format === 'YYYY-MM-DD') return `${year}-${month}-${day}`;
+  if (format === 'DD/MM/YYYY') return `${day}/${month}/${year}`;
+  return `${day}-${month}-${year}`;
 }
 
 /**
@@ -92,4 +110,30 @@ export function isStartBeforeOrEqualEnd(startDate: string, endDate: string): boo
   const sIso = toYYYYMMDD(startDate);
   const eIso = toYYYYMMDD(endDate);
   return sIso <= eIso;
+}
+
+
+/** Format a time value in the user's selected timezone and clock convention. */
+export function formatDisplayTime(value: string | Date | null | undefined, fallback = 'N/A'): string {
+  if (!value) return fallback;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return fallback;
+  const preferences = getRegionalPreferences();
+  try {
+    return new Intl.DateTimeFormat(preferences.locale, {
+      timeZone: preferences.timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: preferences.timeFormat === '12h',
+    }).format(date);
+  } catch {
+    return fallback;
+  }
+}
+
+/** Format a number using the selected regional grouping and decimal conventions. */
+export function formatDisplayNumber(value: number, maximumFractionDigits = 2): string {
+  if (!Number.isFinite(value)) return '—';
+  const preferences = getRegionalPreferences();
+  return new Intl.NumberFormat(preferences.numberFormat, {maximumFractionDigits}).format(value);
 }
