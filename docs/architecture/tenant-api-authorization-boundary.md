@@ -29,3 +29,12 @@ Map `TenantAuthorizationError.status` and `.code` to a minimal API response. Do 
 This helper and its focused tests are an authorization foundation, not a release of operational tenant access. The API tree now includes tenant membership directory, invitation creation/acceptance, role assignment, and suspension endpoints. These routes use the trusted server authorization boundary or revalidate actor/target/organisation state inside a Firestore transaction. No tenant personnel, incident, evidence, checklist, report, or export data APIs are yet wired into this boundary. The application data boundary still does not select a tenant repository, and published Firestore rules remain deny-all. Those restrictions must remain until each resource has a defined owner/assignee schema, query constraints, route-level authorization, and positive/negative emulator coverage.
 
 Do not infer that a feature is available because the policy catalogue lists its action. A route and data-store rule must both enforce it. Membership administration is the first implemented tenant API slice; its UI and invitation notification transport are not yet implemented.
+
+## Additional operational API slices (implementation batch)
+The development branch now includes server-side API foundations for:
+- Personnel operational directory metadata (`GET/POST/PATCH /api/tenant/personnel`), deliberately excluding sensitive personal and health information.
+- Evidence metadata registration and listing (`GET/POST /api/tenant/evidence`), explicitly metadata-only and not a file upload or chain-of-custody solution.
+- Assigned checklists (`GET/POST/PATCH /api/tenant/checklists`), with server-verified active employee assignment and employee status-only updates for their own assigned items.
+- Aggregate operational reports (`GET/POST /api/tenant/reports`), returning counts only; export is permission-gated and audited.
+
+These are API/service foundations, not completed UI integrations. Each remains subject to the same unexecuted validation and release gates. Tenant direct Firestore access, real evidence storage, employee personnel self-service, and production tenant repository selection remain disabled.
