@@ -87,6 +87,7 @@ export async function acceptSuperAdminInvitation({
       || invitation.schemaVersion !== 1
     ) fail('invitation_identity_mismatch');
 
+    if (organisation.orgId !== orgId) fail('invalid_invitation');
     if (!['provisioning', 'active'].includes(organisation.status)) fail('organisation_unavailable');
 
     if (invitation.status === 'accepted') {
@@ -111,7 +112,8 @@ export async function acceptSuperAdminInvitation({
       organisation.status !== 'provisioning'
       || organisation.lifecycleStage !== 'super_admin_invitation_pending'
     ) fail('organisation_not_ready');
-    if (timestampMillis(invitation.expiresAt) <= now) fail('invitation_expired');
+    const expiresAt = timestampMillis(invitation.expiresAt);
+    if (!Number.isFinite(expiresAt) || expiresAt <= now) fail('invitation_expired');
     if (membershipSnapshot.exists) fail('membership_conflict');
     if (typeof invitation.invitedByUid !== 'string' || !invitation.invitedByUid) fail('invalid_invitation');
 
