@@ -11,7 +11,7 @@ import {
 
 const organisation = { orgId: 'pmc-alpha', status: 'active' };
 const membership = (role = 'tenant_super_admin', overrides = {}) => ({
-  uid: 'user-1', orgId: 'pmc-alpha', role, status: 'active', ...overrides,
+  uid: 'user-1', orgId: 'pmc-alpha', role, status: 'active', schemaVersion: 1, ...overrides,
 });
 const authorize = (role, action, overrides = {}) => authorizeTenantAction({
   actorUid: 'user-1',
