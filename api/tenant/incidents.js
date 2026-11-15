@@ -37,9 +37,20 @@ export default async function handler(req, res) {
     if (!decoded?.uid) return res.status(401).json({ error:'unauthenticated' });
     const orgId = req.method === 'GET' ? req.query?.orgId : req.body?.orgId;
     if (req.method === 'GET') {
-      const authorization = await resolveTenantAuthorization({
-        token, orgId, action: 'incidents:read', auth: platformAuth, database: platformDb,
+      const identity = await resolveTenantAuthorization({
+        token, orgId, action: 'organisation:read', auth: platformAuth, database: platformDb,
       });
+      // Employee access is authorized only against the authenticated UID and
+      // the query itself is constrained to records reported by that UID.
+      const authorization = identity.role === 'tenant_employee'
+        ? await resolveTenantAuthorization({
+            token, orgId, action: 'incidents:read:own',
+            resourceOwnerUid: identity.uid, auth: platformAuth, database: platformDb,
+          })
+        : await resolveTenantAuthorization({
+            token, orgId, action: 'incidents:read',
+            auth: platformAuth, database: platformDb,
+          });
       const result = await listTenantIncidents({
         orgId, actorUid: authorization.uid, role: authorization.role, database: platformDb,
       });
