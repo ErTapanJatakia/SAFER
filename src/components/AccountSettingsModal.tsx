@@ -164,6 +164,17 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
                   <p className="text-xs text-slate-700">Session-specific settings are available while signed in or using Demo Guest.</p>
                 )}
               </section>
+              <section aria-labelledby="notification-preferences-title" className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+                <div>
+                  <h3 id="notification-preferences-title" className="font-semibold text-slate-900">In-app notification preferences</h3>
+                  <p className="mt-1 text-xs text-slate-600">Control routine success confirmations shown as temporary visual toasts. Errors, cross-tab conflict and security/session warnings remain visible. Screen-reader announcements are always retained. SAFER does not currently provide push, email, SMS, background delivery or a persistent audit-alert feed.</p>
+                </div>
+                <label className="flex items-start gap-3 text-sm text-slate-800">
+                  <input type="checkbox" className="mt-0.5 h-4 w-4" checked={settings.preferences.showSuccessToasts}
+                    onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, showSuccessToasts: event.target.checked } }))} />
+                  <span><span className="font-semibold">Show routine success confirmations</span><span className="block text-xs text-slate-600">Examples: saved changes, completed exports and applied display settings.</span></span>
+                </label>
+              </section>
               <section aria-labelledby="display-density-title" className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
                 <div>
                   <h3 id="display-density-title" className="font-semibold text-slate-900">Display density</h3>
