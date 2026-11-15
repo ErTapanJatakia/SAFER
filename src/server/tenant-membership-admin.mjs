@@ -38,9 +38,23 @@ function assertTenantLocator(orgId) {
 }
 
 function assertMembership(membership, uid, orgId) {
-  if (!membership || membership.uid !== uid || membership.orgId !== orgId
+  const requiredFields = [
+    'uid', 'orgId', 'role', 'status', 'createdAt', 'createdByUid',
+    'updatedAt', 'updatedByUid', 'schemaVersion',
+  ].sort();
+  const fields = membership && typeof membership === 'object' && !Array.isArray(membership)
+    ? Object.keys(membership).sort()
+    : [];
+  if (fields.length !== requiredFields.length
+    || fields.some((field, index) => field !== requiredFields[index])
+    || membership.uid !== uid || membership.orgId !== orgId
     || membership.status !== 'active' || membership.schemaVersion !== 1
-    || !TENANT_ROLES.includes(membership.role)) fail('active_tenant_membership_required');
+    || !TENANT_ROLES.includes(membership.role)
+    || typeof membership.createdByUid !== 'string'
+    || typeof membership.updatedByUid !== 'string'
+    || membership.createdAt == null || membership.updatedAt == null) {
+    fail('active_tenant_membership_required');
+  }
 }
 
 function assertOrganisation(organisation, orgId) {
