@@ -65,6 +65,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   return (
     <div className="space-y-6 pb-12">
+      <h1 className="text-xl font-semibold text-slate-900">Operational Dashboard</h1>
       {/* Top Banner Notice: Scope & Safety with SAFER Wordmark */}
       <div className="bg-white border border-slate-200 border-l-4 border-l-emerald-600 shadow-xs p-5 rounded-r-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
         <SaferWordmark variant="hero" className="min-w-0 flex-1" />
@@ -287,7 +288,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <span>
               <strong>Note:</strong> Items in this queue require supervisor signature before administrative sign-off is completed.
             </span>
-            <span className="text-slate-400 font-mono">Prototype System Environment</span>
+            <span className="text-slate-600 font-mono">Prototype System Environment</span>
           </div>
         </div>
 
