@@ -158,7 +158,7 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
               <p className="text-[11px] text-slate-500">
                 Sets the browser native form-control scheme; the SAFER theme palette remains unchanged.
               </p>
-              <div className="grid grid-cols-3 gap-1.5 pt-1">
+              <div className="grid grid-cols-3 gap-1.5 pt-1" role="group" aria-label="Browser control color scheme">
                 {(['auto', 'light', 'dark'] as const).map((mode) => (
                   <button
                     key={mode}
@@ -169,6 +169,7 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
                         ? 'bg-blue-900 text-white border-blue-900'
                         : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
                     }`}
+                    aria-pressed={settings.colorMode === mode}
                   >
                     {mode}
                   </button>
@@ -214,7 +215,7 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
               <p className="text-[11px] text-slate-500">
                 Adjust vertical spacing between lines of operational text.
               </p>
-              <div className="grid grid-cols-3 gap-1.5 pt-1">
+              <div className="grid grid-cols-3 gap-1.5 pt-1" role="group" aria-label="Line spacing">
                 {(['normal', 'relaxed', 'loose'] as const).map((spacing) => (
                   <button
                     key={spacing}
@@ -225,6 +226,7 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
                         ? 'bg-blue-900 text-white border-blue-900'
                         : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
                     }`}
+                    aria-pressed={settings.lineSpacing === spacing}
                   >
                     {spacing}
                   </button>
@@ -243,7 +245,7 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
               <p className="text-[11px] text-slate-500">
                 Widens letter and word intervals for screen readability.
               </p>
-              <div className="flex flex-wrap gap-2 pt-1">
+              <div className="flex flex-wrap gap-2 pt-1" role="group" aria-label="Text and letter spacing">
                 <button
                   type="button"
                   onClick={() => onUpdateSettings({ letterSpacing: 'normal' })}
@@ -252,6 +254,7 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
                       ? 'bg-blue-900 text-white border-blue-900'
                       : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
                   }`}
+                  aria-pressed={settings.letterSpacing === 'normal'}
                 >
                   Standard Spacing
                 </button>
@@ -263,6 +266,7 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
                       ? 'bg-blue-900 text-white border-blue-900'
                       : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
                   }`}
+                  aria-pressed={settings.letterSpacing === 'wide'}
                 >
                   Wide Spacing
                 </button>
@@ -326,7 +330,7 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="font-semibold text-xs text-slate-900">Speech rate</label>
-                  <div className="grid grid-cols-3 gap-1.5">
+                  <div className="grid grid-cols-3 gap-1.5" role="group" aria-label="Speech rate">
                     {(['slow', 'normal', 'fast'] as const).map((rate) => (
                       <button key={rate} type="button" onClick={() => onUpdateSettings({ speechRate: rate })}
                         aria-pressed={settings.speechRate === rate}
@@ -336,7 +340,7 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
                 </div>
                 <div className="space-y-1.5">
                   <label className="font-semibold text-xs text-slate-900">Speech volume</label>
-                  <div className="grid grid-cols-3 gap-1.5">
+                  <div className="grid grid-cols-3 gap-1.5" role="group" aria-label="Speech volume">
                     {(['low', 'medium', 'high'] as const).map((volume) => (
                       <button key={volume} type="button" onClick={() => onUpdateSettings({ speechVolume: volume })}
                         aria-pressed={settings.speechVolume === volume}
