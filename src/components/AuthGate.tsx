@@ -336,10 +336,10 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
   if (user || demoGuest) {
     return (
       <SessionInactivityGuard sessionKey={user?.uid ?? 'demo-guest'} onExpire={leaveAccount}>
-        <header aria-label="Account session" className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-2 border-b border-slate-700 bg-slate-950 px-4 py-2 text-xs text-slate-100">
+        <div role="group" aria-label="Account session" className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-2 border-b border-slate-700 bg-slate-950 px-4 py-2 text-xs text-slate-100">
           <span>{user ? `Signed in: ${user.email || 'verified account'}` : 'Demo Guest session'}</span>
           <button type="button" onClick={leaveAccount} className="rounded border border-slate-600 px-3 py-1.5 hover:bg-slate-800">Sign out</button>
-        </header>
+        </div>
         {error && <p role="alert" className="border-b border-red-800 bg-red-950/60 px-4 py-2 text-xs text-red-200">{error}</p>}
         {!!user && (
           <>
@@ -410,7 +410,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
         <header className="border-b border-slate-800 bg-slate-950 p-7 text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-blue-700 bg-blue-950 text-xl font-black text-blue-200">S</div>
           <h1 className="text-2xl font-bold tracking-wider">SAFER</h1>
-          <p className="mt-1 text-xs text-slate-400">Security Administration, Field Readiness, Evidence &amp; Reporting</p>
+          <p className="mt-1 text-xs text-slate-300">Security Administration, Field Readiness, Evidence &amp; Reporting</p>
           <p className="mt-3 text-xs text-emerald-300">Check access. Protect information.</p>
         </header>
         <div className="space-y-5 p-6">
