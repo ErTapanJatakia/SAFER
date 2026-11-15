@@ -160,7 +160,7 @@ export const TenantOperationsWorkspace:React.FC<Props>=({user,membership,onLeave
     const value=await request('/api/tenant/reports','POST',{orgId:membership.orgId});
     const rows=Object.entries((value.counts??{}) as Row).map(([metric,count])=>({Metric:metric,Count:String(count)}));
     if(format==='csv'){
-      const csv=['Metric,Count',...rows.map(row=>`${row.Metric},${row.Count}`)].join('\\n');
+      const csv=['Metric,Count',...rows.map(row=>`${row.Metric},${row.Count}`)].join('\n');
       const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
       const url=URL.createObjectURL(blob);const anchor=document.createElement('a');anchor.href=url;anchor.download='safer-tenant-aggregate-report.csv';anchor.click();URL.revokeObjectURL(url);
     }else if(format==='xlsx'){
