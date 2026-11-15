@@ -369,7 +369,9 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
         {!!user && (
           <>
           <AccountSecurityPanel user={user} onUserUpdated={setUser} />
-          <section aria-labelledby="organisation-access-heading" className="border-b border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-100">
+          <OwnerControlCentre user={user} onOwnerStatusChange={setOwnerStatus} />
+          {ownerStatus === 'checking' && <p className="mx-auto max-w-7xl px-4 py-4 text-xs text-slate-400" role="status">Checking platform and tenant access…</p>}
+          {ownerStatus === 'not-owner' && <section aria-labelledby="organisation-access-heading" className="border-b border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-100">
             <div className="mx-auto flex max-w-7xl flex-col gap-2">
               <div>
                 <h2 id="organisation-access-heading" className="font-semibold">{translate('membership')}</h2>
@@ -397,7 +399,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
               {membershipError && <p role="alert" className="text-xs text-red-300">{membershipError}</p>}
               {membership && <p role="status" className="text-xs text-emerald-300">Verified active membership · Role: {membership.role} · Organisation: {membership.orgId}</p>}
             </div>
-          </section>
+          </section>}
           </>
         )}
         {demoGuest && !user ? (
@@ -407,7 +409,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
             </div>
             <DemoGuestWorkspaceProvider accessState={enterDemoGuest(1)}>{children}</DemoGuestWorkspaceProvider>
           </>
-        ) : (
+        ) : ownerStatus === 'owner' || ownerStatus === 'checking' || ownerStatus === 'unavailable' ? null : (
           <main className="min-h-[60vh] bg-slate-950 px-4 py-10 text-slate-100">
             <section className="mx-auto max-w-3xl rounded-xl border border-amber-700 bg-slate-900 p-6">
               <h1 className="text-lg font-semibold">Account verified — workspace not yet released</h1>
