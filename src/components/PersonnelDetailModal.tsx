@@ -185,7 +185,7 @@ export const PersonnelDetailModal: React.FC<PersonnelDetailModalProps> = ({
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
                 <span className="text-[10px] uppercase text-slate-500 font-semibold block">
-                  Birth Date (DD-MM-YYYY)
+                  Birth Date
                 </span>
                 <span className="font-semibold text-slate-900 text-xs font-mono">
                   {person.birthDate ? formatDisplayDate(person.birthDate) : 'Not documented'}
