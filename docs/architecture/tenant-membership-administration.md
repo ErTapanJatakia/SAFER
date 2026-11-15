@@ -6,7 +6,7 @@
 |---|---|---|
 | `GET /api/tenant/members?orgId=...` | List up to 100 tenant memberships; returns `hasMore` when another page exists | `members:read` — Super Admin, Admin, Auditor |
 | `POST /api/tenant/members` | Create an invitation for an existing verified Firebase user | `members:invite` plus role delegation ceiling |
-| `PATCH /api/tenant/members` | Suspend a member or change their tenant role | `members:suspend` or `members:role:assign`; target is re-read in the transaction |
+| `PATCH /api/tenant/members` | Suspend a member, change their tenant role, or revoke a pending invitation | `members:suspend`, `members:role:assign`, or `members:invite`; actor, target and organisation are re-read in the transaction |
 | `POST /api/tenant/invitations/accept-member` | Accept an ordinary PMC invitation | Exact Firebase UID, verified email, active PMC, pending unexpired invitation |
 
 ## Invitation lifecycle
@@ -15,8 +15,9 @@
 2. The service resolves an existing Firebase Auth user and requires an enabled account with a verified email that matches the submitted address.
 3. The server creates a 256-bit opaque invitation ID, a seven-day expiry, and a pending invitation in the PMC's invitation collection.
 4. The invitation and tenant audit event are written in one Firestore transaction after the actor's membership, organisation status, and role-delegation permission are revalidated.
-5. The trusted administrator shares the returned invitation ID through an approved channel. This implementation does not send email or disclose invitation IDs to unauthorised users.
-6. The invitee signs in and accepts. The endpoint checks the Firebase ID token with revocation enabled, verifies the account and email again, then atomically creates the active membership, accepts the invitation, and writes a tenant audit event.
+5. A pending invitation can be revoked by a Super Admin or an Admin only when the invitation's role is within that actor's delegation ceiling. Revocation and its audit event are atomic; accepted or already-revoked invitations cannot be revoked again.
+6. The trusted administrator shares the returned invitation ID through an approved channel. This implementation does not send email or disclose invitation IDs to unauthorised users.
+7. The invitee signs in and accepts. The endpoint checks the Firebase ID token with revocation enabled, verifies the account and email again, then atomically creates the active membership, accepts the invitation, and writes a tenant audit event.
 
 Super Admin invitations remain separate and use the Owner-controlled organisation provisioning lifecycle. Tenant roles cannot invite or promote another Super Admin.
 
