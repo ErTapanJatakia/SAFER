@@ -17,13 +17,18 @@ test('Owner Control Centre routes registry and provisioning mutations through Ow
   assert.match(ownerUi, /\/api\/owner\/organisations-registry/);
   assert.match(ownerUi, /\/api\/owner\/organisations/);
   assert.match(ownerUi, /\/api\/owner\/support-access/);
+  assert.match(ownerUi, /\/api\/owner\/tenant-data/);
+  assert.match(ownerUi, /X-Support-Session/);
   assert.match(ownerUi, /cache: 'no-store'/);
   assert.match(ownerUi, /Authorization:.*Bearer/);
 });
 
 test('Owner UI does not expose tenant data browsing or direct Firestore access', () => {
   assert.doesNotMatch(ownerUi, /firebase\/firestore|from ['"]firebase-admin/);
-  assert.match(ownerUi, /No cross-tenant data operation is exposed/);
+  assert.match(ownerUi, /aggregate counts/);
+  assert.match(ownerUi, /Read aggregate summary/);
+  assert.match(ownerUi, /Prepare aggregate export/);
+  assert.doesNotMatch(ownerUi, /platform:tenant-data:write/);
   assert.match(ownerUi, /purpose/);
   assert.match(ownerUi, /changeReference/);
 });
