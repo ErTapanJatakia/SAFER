@@ -7,7 +7,7 @@ export interface BreachTimelineEvent { id:string; breachRef:string; kind:'discov
 export interface PrivacyEvidenceItem { id:string; title:string; evidenceType:'policy-reference'|'assessment-reference'|'test-reference'|'meeting-note'|'other'; reference:string; linkedRecordType:'request'|'consent'|'retention'|'breach'|'control'; linkedRecordId:string; ownerRole:string; createdAt:string; verification:'unverified-reference-only'; limitations:string; }
 export interface DpdpExtendedWorkspace { schemaVersion:1; workspaceMode:'synthetic-demo'; requestEvents:RequestEvent[]; consentPreferences:ConsentPreference[]; retentionTasks:RetentionReviewTask[]; breachTimeline:BreachTimelineEvent[]; evidenceItems:PrivacyEvidenceItem[]; }
 export const EMPTY_DpdpExtendedWorkspace:DpdpExtendedWorkspace={schemaVersion:1,workspaceMode:'synthetic-demo',requestEvents:[],consentPreferences:[],retentionTasks:[],breachTimeline:[],evidenceItems:[]};
-const iso=(v:string)=>/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$/.test(v)&&Number.isFinite(Date.parse(v));
+const iso=(v:string)=>/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(v)&&Number.isFinite(Date.parse(v));
 const text=(v:unknown,n=500):v is string=>typeof v==='string'&&v.trim().length>0&&v.length<=n;
 const id=(v:unknown):v is string=>typeof v==='string'&&/^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$/.test(v);
 export function validateDpdpExtendedWorkspace(v:unknown):v is DpdpExtendedWorkspace {
