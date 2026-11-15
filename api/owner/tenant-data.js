@@ -54,6 +54,17 @@ export default async function handler(request, response) {
       const status = error.code === 'invalid_request' ? 400 : 503;
       return response.status(status).json({ error: error.code });
     }
+    const code = error instanceof Error ? error.message : '';
+    const supportStatus = new Map([
+      ['active_platform_owner_required', 403],
+      ['support_session_not_found', 404],
+      ['support_session_owner_mismatch', 403],
+      ['support_session_expired_or_revoked', 409],
+      ['support_access_scope_mismatch', 403],
+      ['active_support_organisation_required', 409],
+      ['invalid_support_access_request', 400],
+    ]).get(code);
+    if (supportStatus) return response.status(supportStatus).json({ error: code });
     return response.status(503).json({ error: 'platform_tenant_data_unavailable' });
   }
 }
