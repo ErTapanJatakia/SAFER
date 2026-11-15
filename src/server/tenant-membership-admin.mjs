@@ -107,7 +107,7 @@ export async function inviteTenantMember({
   const invitationExpiresAt = new Date(now + 7 * 24 * 60 * 60 * 1000);
   const invitationRef = database.doc(`organisations/${orgId}/invitations/${invitationId}`);
   const memberRef = database.doc(`organisations/${orgId}/members/${invitedUser.uid}`);
-  const auditRef = database.collection('platformAuditEvents').doc();
+  const auditRef = database.doc(`organisations/${orgId}/auditEvents/${randomBytes(16).toString('hex')}`);
   const timestamp = serverTimestamp();
 
   await database.runTransaction(async (transaction) => {
@@ -157,7 +157,7 @@ export async function manageTenantMember({
   const actorRef = database.doc(`organisations/${orgId}/members/${actorUid}`);
   const targetRef = database.doc(`organisations/${orgId}/members/${targetUid}`);
   const orgRef = database.doc(`organisations/${orgId}`);
-  const auditRef = database.collection('platformAuditEvents').doc();
+  const auditRef = database.doc(`organisations/${orgId}/auditEvents/${randomBytes(16).toString('hex')}`);
   const timestamp = serverTimestamp();
 
   return database.runTransaction(async (transaction) => {
