@@ -12,15 +12,40 @@ const WCAG_TAGS = [
 
 async function expectNoAxeViolations(page, surface) {
   const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
-  const summary = results.violations.map((violation) => ({
+  const summary = await Promise.all(results.violations.map(async (violation) => ({
     id: violation.id,
     impact: violation.impact,
     help: violation.help,
-    nodes: violation.nodes.map((node) => ({
-      target: node.target,
-      summary: node.failureSummary,
+    nodes: await Promise.all(violation.nodes.map(async (node) => {
+      const target = node.target?.[0];
+      let landmarkAncestry = [];
+      if (target) {
+        const locator = page.locator(target).first();
+        if (await locator.count()) {
+          landmarkAncestry = await locator.evaluate((element) => {
+            const ancestry = [];
+            let current = element;
+            while (current && ancestry.length < 8) {
+              ancestry.push({
+                tag: current.tagName.toLowerCase(),
+                id: current.id || undefined,
+                className: typeof current.className === 'string' ? current.className : undefined,
+                role: current.getAttribute('role') || undefined,
+                ariaLabel: current.getAttribute('aria-label') || undefined,
+              });
+              current = current.parentElement;
+            }
+            return ancestry;
+          });
+        }
+      }
+      return {
+        target: node.target,
+        summary: node.failureSummary,
+        landmarkAncestry,
+      };
     })),
-  }));
+  })));
   expect(summary, `axe-core accessibility violations on ${surface}: ${JSON.stringify(summary, null, 2)}`).toEqual([]);
 }
 
