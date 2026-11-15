@@ -238,7 +238,9 @@ service cloud.firestore {
         && request.resource.data.createdByUid == resource.data.createdByUid
         && request.resource.data.recordId == resource.data.recordId
         && request.resource.data.orgId == resource.data.orgId
-        && request.resource.data.employeeUid == resource.data.employeeUid;
+        && ((!('employeeUid' in resource.data) && !('employeeUid' in request.resource.data))
+          || (('employeeUid' in resource.data) && ('employeeUid' in request.resource.data)
+            && request.resource.data.employeeUid == resource.data.employeeUid));
     }
 
     function validIncidentData(orgId, incidentId) {
