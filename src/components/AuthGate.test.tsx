@@ -35,6 +35,18 @@ beforeEach(async()=>{
 afterEach(async()=>{await act(async()=>root.unmount());dom.window.close();vi.clearAllMocks();});
 
 describe('AuthGate membership session handling',()=>{
+ it('suppresses mouse right-click context menus on the signed-out login and sign-up screen',async()=>{
+  const event=new dom.window.MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2});
+  expect(host.dispatchEvent(event)).toBe(false);
+  expect(event.defaultPrevented).toBe(true);
+ });
+ it('keeps the browser context menu enabled after entering Demo Guest',async()=>{
+  button('Continue as Demo Guest').click();await flush();
+  const event=new dom.window.MouseEvent('contextmenu',{bubbles:true,cancelable:true,button:2});
+  expect(host.dispatchEvent(event)).toBe(true);
+  expect(event.defaultPrevented).toBe(false);
+ });
+
  it('does not resolve membership for Demo Guest',async()=>{button('Continue as Demo Guest').click();await flush();expect(host.textContent).toContain('Demo Guest session');expect(host.querySelector('input[placeholder="Enter organisation ID"]')).toBeNull();expect(resolveTenantMembership).not.toHaveBeenCalled();});
  it('keeps the operational app shell unmounted for authenticated sessions',async()=>{auth(makeUser('user-a'));await flush();expect(host.textContent).toContain('Account verified — workspace not yet released');expect(host.textContent).not.toContain('App shell');expect(host.textContent).not.toContain('Demo Guest session');});
  it('does not touch operational browser storage while signed out or authenticated',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');expect(read).not.toHaveBeenCalled();auth(makeUser('user-a'));await flush();expect(read).not.toHaveBeenCalled();expect(host.textContent).not.toContain('Operational app shell');});
