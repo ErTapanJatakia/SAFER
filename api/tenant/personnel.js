@@ -36,10 +36,20 @@ export default async function handler(req,res) {
     if(!decoded?.uid) return res.status(401).json({error:'unauthenticated'});
     const orgId=req.method==='GET'?req.query?.orgId:req.body?.orgId;
     if(req.method==='GET') {
-      const authorization=await resolveTenantAuthorization({
-        token,orgId,action:'personnel:read',auth:platformAuth,database:platformDb,
+      const identity=await resolveTenantAuthorization({
+        token,orgId,action:'organisation:read',auth:platformAuth,database:platformDb,
       });
-      return res.status(200).json(await listTenantPersonnel({orgId:authorization.orgId,database:platformDb}));
+      const authorization=identity.role==='tenant_employee'
+        ? await resolveTenantAuthorization({
+            token,orgId,action:'personnel:read:own',resourceOwnerUid:identity.uid,
+            auth:platformAuth,database:platformDb,
+          })
+        : await resolveTenantAuthorization({
+            token,orgId,action:'personnel:read',auth:platformAuth,database:platformDb,
+          });
+      return res.status(200).json(await listTenantPersonnel({
+        orgId:authorization.orgId,actorUid:authorization.uid,role:authorization.role,database:platformDb,
+      }));
     }
     if(req.method==='POST') {
       const authorization=await resolveTenantAuthorization({
