@@ -1,6 +1,6 @@
 # RBAC-01 — Canonical tenant permission engine
 
-**Status:** Canonical role engine, versioned membership resolver, and membership-read Rules are aligned in the draft branch; full operational permission parity and tenant API integration remain incomplete.  
+**Status:** Canonical role engine, trusted server authorization boundary, versioned membership resolver, and role-scoped candidate Firestore Rules are implemented in the draft branch; operational tenant API integration and unmodelled resource scopes remain incomplete.  
 **Parent:** `feature/iam-01-platform-owner-backend` (IAM-01 must land first).  
 **Cost:** Uses the existing Vercel Node.js / Firebase Admin SDK architecture; no new service or paid dependency.
 
@@ -44,16 +44,16 @@ The separate platform policy evaluator accepts only an active `platform_owner` p
 
 ## Current integration boundary
 
-This milestone adds the canonical policy engine and regression tests only. It does **not** yet:
+This milestone includes the canonical policy engine, trusted server authorization boundary, and candidate rules for existing Firestore resources. It does **not** yet:
 - expose tenant-management or organisation-registry APIs;
 - issue or consume invitations;
 - write or mutate tenant memberships;
-- change Firestore Rules;
+- publish candidate Firestore Rules to production;
 - enable cross-tenant Owner data access;
-- enable the full role/action matrix for Manager, Employee and Auditor;
+- release an operational tenant workspace;
 - release an operational tenant workspace.
 
-The resolver and candidate membership-read rule now accept only the canonical five-role version-1 schema; legacy role values are rejected. Candidate direct Firestore operational grants remain limited to Super Admin and Admin. Manager, Employee and Auditor remain denied until record-level/query-level constraints are implemented. Invitation acceptance, membership activation, full role-to-operation parity, and tenant API integration remain next milestones. Production rules remain separately published deny-all.
+The resolver and candidate Rules accept only the exact canonical five-role version-1 membership schema. Candidate Rules now grant Manager and Auditor only their documented read scopes, Employee only own-reported incident reads plus incident creation, and retain stricter denial for Employee personnel and unmodelled checklist/report resources. The trusted server boundary is ready for use by tenant API handlers, but no tenant operational API routes currently exist. Production rules remain separately published deny-all.
 
 ## Regression coverage
 
