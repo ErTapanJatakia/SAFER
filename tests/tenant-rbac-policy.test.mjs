@@ -21,6 +21,7 @@ const authorize = (role, action, overrides = {}) => authorizeTenantAction({
   action,
   resourceOwnerUid: overrides.resourceOwnerUid,
   assignedToUid: overrides.assignedToUid,
+  targetUid: overrides.targetUid,
   targetCurrentRole: overrides.targetCurrentRole,
   targetRole: overrides.targetRole,
 });
