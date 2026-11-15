@@ -292,6 +292,29 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
             </div>
           </div>
 
+          {/* Dynamic Screen-Reader Announcements */}
+          <div className="space-y-1.5 border-t border-slate-200 pt-4">
+            <label className="font-bold text-xs text-slate-900 flex items-center space-x-2">
+              <BookOpen className="w-4 h-4 text-blue-900" />
+              <span>Screen-Reader Status Announcements</span>
+            </label>
+            <p className="text-[11px] text-slate-500">
+              Announces important SAFER actions and status changes through a polite live region. This does not replace a screen reader or full assistive-technology testing.
+            </p>
+            <button
+              type="button"
+              onClick={() => onUpdateSettings({ screenReaderAnnouncements: !settings.screenReaderAnnouncements })}
+              className={`px-3 py-1.5 rounded-md font-semibold text-xs border transition ${
+                settings.screenReaderAnnouncements
+                  ? 'bg-teal-100 border-teal-600 text-teal-900'
+                  : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+              }`}
+              aria-pressed={settings.screenReaderAnnouncements}
+            >
+              {settings.screenReaderAnnouncements ? 'Announcements Enabled' : 'Announcements Disabled'}
+            </button>
+          </div>
+
           {/* 5. Reduced Motion & Enhanced Keyboard Focus */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
