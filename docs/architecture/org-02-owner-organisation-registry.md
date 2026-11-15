@@ -8,13 +8,13 @@
 
 ### List organisations
 
-`GET /api/owner/organisations`
+`GET /api/owner/organisations-registry`
 
 Requires a Firebase ID token in the Authorization Bearer header. The endpoint verifies revocation and checks both the active `platformAdministrators/{uid}` record and the singleton `platform/settings` Owner pointer. It returns at most 100 organisation summaries, ordered by creation time. It does not return tenant personnel, incidents, documents or other operational records.
 
 ### Change lifecycle status
 
-`PATCH /api/owner/organisations`
+`PATCH /api/owner/organisations-registry`
 
 Example body:
 
