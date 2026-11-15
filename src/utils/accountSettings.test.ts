@@ -16,7 +16,7 @@ describe('account settings normalization', () => {
   it('preserves supported values and normalizes unknown preference values', () => {
     expect(normalizeAccountSettings({
       profile: { displayName: 'Operator', callSign: 'ALPHA', bio: 'Bio' },
-      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', numberFormat: 'en-US' },
+      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', numberFormat: 'en-US', locale: 'en' },
     })).toEqual({
       version: 1,
       profile: { displayName: 'Operator', callSign: 'ALPHA', bio: 'Bio' },
