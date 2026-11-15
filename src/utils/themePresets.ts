@@ -523,4 +523,5 @@ export const DEFAULT_ACCESSIBILITY_SETTINGS = {
   lineSpacing: 'normal' as const,
   letterSpacing: 'normal' as const,
   dyslexicFont: false,
+  screenReaderAnnouncements: true,
 };
