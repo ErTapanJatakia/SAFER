@@ -130,7 +130,7 @@ export function generatePreDeploymentSummaryText(
       lines.push(`  ${index + 1}. [${item.priority.toUpperCase()} PRIORITY] ${item.task}`);
       lines.push(`     Category: ${item.category}`);
       lines.push(`     Status:   ${item.status.toUpperCase()}`);
-      lines.push(`     Target:   ${formatDisplayDate(item.targetDeadline) || 'Not specified'}`);
+      lines.push(`     Target:   ${item.targetDeadline ? formatDisplayDate(item.targetDeadline) : 'Not specified'}`);
       if (item.assignedRoleOrPerson) {
         lines.push(`     Assigned: ${item.assignedRoleOrPerson}`);
       }
@@ -156,7 +156,7 @@ export function generatePreDeploymentSummaryText(
         item.status === 'Complete' ? '[COMPLETED]' : item.status === 'Incomplete' ? '[OUTSTANDING]' : '[N/A]';
       lines.push(`     - ${statusIcon} ${item.task}`);
       if (item.reviewedBy) {
-        lines.push(`       Verified by: ${item.reviewedBy} on ${formatDisplayDate(item.reviewDate) || evaluationDate}`);
+        lines.push(`       Verified by: ${item.reviewedBy} on ${item.reviewDate ? formatDisplayDate(item.reviewDate) : evaluationDate}`);
       }
     });
     lines.push('');
