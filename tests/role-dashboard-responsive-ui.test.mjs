@@ -6,6 +6,14 @@ const workspace = await readFile(
   new URL('../src/components/TenantOperationsWorkspace.tsx', import.meta.url),
   'utf8',
 );
+const invitation = await readFile(
+  new URL('../src/components/SuperAdminInvitationAcceptance.tsx', import.meta.url),
+  'utf8',
+);
+const authGate = await readFile(
+  new URL('../src/components/AuthGate.tsx', import.meta.url),
+  'utf8',
+);
 
 test('tenant workspace provides a distinct dashboard summary for every canonical tenant role', () => {
   for (const role of [
@@ -36,4 +44,11 @@ test('tenant dashboard layout reflows across breakpoints and permits long labels
 test('auditor dashboard is described as read-only with exports unavailable', () => {
   assert.ok(workspace.includes("tenant_auditor: {title:'Auditor dashboard',description:'Read-only reporting and audit access."));
   assert.ok(workspace.includes('Mutating controls and report exports remain unavailable.'));
+});
+
+test('PMC onboarding includes a verified Super Admin invitation acceptance screen', () => {
+  assert.ok(invitation.includes('/api/tenant/invitations/accept'));
+  assert.ok(invitation.includes('invitationId'));
+  assert.ok(invitation.includes('activationRequired'));
+  assert.ok(authGate.includes('<SuperAdminInvitationAcceptance user={user} />'));
 });
