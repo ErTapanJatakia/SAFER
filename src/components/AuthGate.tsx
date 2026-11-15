@@ -1,4 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
+import {Eye, EyeOff} from 'lucide-react';
 import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
@@ -42,6 +43,8 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -314,7 +317,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       <>
         <div className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-2 border-b border-slate-700 bg-slate-950 px-4 py-2 text-xs text-slate-100">
           <span>{user ? `Signed in: ${user.email || 'verified account'}` : 'Demo Guest session'}</span>
-          <button type="button" onClick={leaveAccount} className="rounded border border-slate-600 px-3 py-1.5 hover:bg-slate-800">Sign out</button>
+          <button type="button" onClick={leaveAccount} className="rounded border border-slate-600 px-3 py-1.5 hover:bg-slate-800">Log Out</button>
         </div>
         {error && <p role="alert" className="border-b border-red-800 bg-red-950/60 px-4 py-2 text-xs text-red-200">{error}</p>}
         {!!user && (
@@ -385,7 +388,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
           <img src="/safer-emblem.svg" alt="SAFER shield and owl emblem" className="mx-auto mb-3 h-12 w-12 object-contain" width="48" height="48" />
           <h1 className="text-2xl font-bold tracking-wider">SAFER</h1>
           <p className="mt-1 text-xs text-slate-400">Security Administration, Field Readiness, Evidence &amp; Reporting</p>
-          <p className="mt-3 text-xs text-emerald-300">Check access. Protect information.</p>
+          <p className="mt-3 text-xs text-emerald-300">Verify. Defend. Stay Secure.</p>
         </header>
         <div className="space-y-5 p-6">
           {!isFirebaseConfigured && (
@@ -396,7 +399,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
           <div className="grid grid-cols-3 gap-1 rounded-lg bg-slate-800 p-1">
             {(['signin', 'register', 'reset'] as const).map((nextMode) => (
               <button key={nextMode} type="button" onClick={() => {setMode(nextMode); clearFeedback();}} className={`rounded-md px-2 py-2 text-xs font-semibold ${mode === nextMode ? 'bg-slate-600 text-white' : 'text-slate-400 hover:text-white'}`}>
-                {nextMode === 'signin' ? 'Sign in' : nextMode === 'register' ? 'Create account' : 'Reset password'}
+                {nextMode === 'signin' ? 'Log In' : nextMode === 'register' ? 'Create Account' : 'Reset Password'}
               </button>
             ))}
           </div>
@@ -414,15 +417,25 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
               </label>
               {mode !== 'reset' && (
                 <label className="block text-xs font-semibold text-slate-300">Password
-                  <input type="password" required autoComplete={mode === 'register' ? 'new-password' : 'current-password'} value={password} onChange={(event) => setPassword(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-400" />
+                  <span className="relative mt-1 block">
+                    <input type={passwordVisible ? 'text' : 'password'} required autoComplete={mode === 'register' ? 'new-password' : 'current-password'} value={password} onChange={(event) => setPassword(event.target.value)} className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2.5 pr-11 text-sm text-white outline-none focus:border-blue-400" />
+                    <button type="button" onClick={() => setPasswordVisible((visible) => !visible)} aria-label={passwordVisible ? 'Hide password' : 'Show password'} aria-pressed={passwordVisible} className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400">
+                      {passwordVisible ? <EyeOff aria-hidden="true" className="h-4 w-4" /> : <Eye aria-hidden="true" className="h-4 w-4" />}
+                    </button>
+                  </span>
                 </label>
               )}
               {mode === 'register' && (
                 <label className="block text-xs font-semibold text-slate-300">Confirm password
-                  <input type="password" required autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-400" />
+                  <span className="relative mt-1 block">
+                    <input type={confirmPasswordVisible ? 'text' : 'password'} required autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2.5 pr-11 text-sm text-white outline-none focus:border-blue-400" />
+                    <button type="button" onClick={() => setConfirmPasswordVisible((visible) => !visible)} aria-label={confirmPasswordVisible ? 'Hide confirm password' : 'Show confirm password'} aria-pressed={confirmPasswordVisible} className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400">
+                      {confirmPasswordVisible ? <EyeOff aria-hidden="true" className="h-4 w-4" /> : <Eye aria-hidden="true" className="h-4 w-4" />}
+                    </button>
+                  </span>
                 </label>
               )}
-              <button type="submit" disabled={busy || !isFirebaseConfigured || authObserverFailed} className="w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-bold text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Please wait…' : mode === 'register' ? 'Create account' : mode === 'reset' ? 'Send reset instructions' : 'Sign in'}</button>
+              <button type="submit" disabled={busy || !isFirebaseConfigured || authObserverFailed} className="w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-bold text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Please wait…' : mode === 'register' ? 'Create Account' : mode === 'reset' ? 'Send reset instructions' : 'Log In'}</button>
             </form>
           )}
           {mode === 'signin' && isFirebaseConfigured && (
