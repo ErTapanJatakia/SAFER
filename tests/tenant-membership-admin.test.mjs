@@ -120,3 +120,37 @@ test('suspended or non-active tenant context cannot administer memberships', asy
     serverTimestamp: () => new Date(),
   }), (error) => error.code === 'active_organisation_required');
 });
+
+
+test('Super Admin can revoke a pending lower-role invitation and the action is audited', async () => {
+  const f = fixture();
+  const invitationId = 'I'.repeat(43);
+  const path = `organisations/${f.orgId}/invitations/${invitationId}`;
+  f.records.set(path, {
+    invitationId, orgId: f.orgId, uid: f.targetUid, email: 'target@example.com',
+    role: 'tenant_manager', status: 'pending', invitedByUid: f.actorUid, schemaVersion: 1,
+  });
+  const { revokeTenantInvitation } = await import('../src/server/tenant-membership-admin.mjs');
+  const result = await revokeTenantInvitation({
+    orgId: f.orgId, actorUid: f.actorUid, invitationId,
+    database: f.database, serverTimestamp: () => new Date(),
+  });
+  assert.equal(result.status, 'revoked');
+  assert.equal(f.records.get(path).revokedByUid, f.actorUid);
+  assert.equal(f.audit.at(-1).action, 'tenant.member.invitation_revoked');
+});
+
+test('Admin cannot revoke an invitation for a role above its delegation ceiling', async () => {
+  const f = fixture({ actorRole: 'tenant_admin' });
+  const invitationId = 'J'.repeat(43);
+  const path = `organisations/${f.orgId}/invitations/${invitationId}`;
+  f.records.set(path, {
+    invitationId, orgId: f.orgId, uid: f.targetUid, email: 'target@example.com',
+    role: 'tenant_admin', status: 'pending', invitedByUid: 'another-admin', schemaVersion: 1,
+  });
+  const { revokeTenantInvitation } = await import('../src/server/tenant-membership-admin.mjs');
+  await assert.rejects(revokeTenantInvitation({
+    orgId: f.orgId, actorUid: f.actorUid, invitationId,
+    database: f.database, serverTimestamp: () => new Date(),
+  }), (error) => error.code === 'role_delegation_denied');
+});
