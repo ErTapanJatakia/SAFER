@@ -115,7 +115,14 @@ export function isStartBeforeOrEqualEnd(startDate: string, endDate: string): boo
 /** Format a time value in the user's selected timezone and clock convention. */
 export function formatDisplayTime(value: string | Date | null | undefined, fallback = 'N/A'): string {
   if (!value) return fallback;
-  const date = value instanceof Date ? value : new Date(value);
+  const localMatch = typeof value === 'string'
+    ? value.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})$/)
+    : null;
+  const date = value instanceof Date
+    ? value
+    : localMatch
+      ? new Date(Number(localMatch[1]), Number(localMatch[2]) - 1, Number(localMatch[3]), Number(localMatch[4]), Number(localMatch[5]))
+      : new Date(value);
   if (Number.isNaN(date.getTime())) return fallback;
   const preferences = getRegionalPreferences();
   try {
