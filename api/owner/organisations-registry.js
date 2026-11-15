@@ -1,43 +1,13 @@
+import { authorizePlatformOwner } from '../../src/server/platform-owner-auth.mjs';
 import {
   changeOrganisationStatus,
   listPlatformOrganisations,
 } from '../../src/server/organisation-registry.mjs';
 
-function bearerToken(request) {
-  const header = request.headers.authorization;
-  if (typeof header !== 'string' || !header.startsWith('Bearer ')) return null;
-  const token = header.slice(7).trim();
-  return token && !/\s/.test(token) ? token : null;
-}
-
-async function requirePlatformOwner(token) {
-  const [{ platformAuth, platformDb }, { FieldValue }] = await Promise.all([
-    import('../../src/server/firebase-admin.js'),
-    import('firebase-admin/firestore'),
-  ]);
-  const decoded = await platformAuth.verifyIdToken(token, true);
-  const [administratorSnapshot, settingsSnapshot] = await Promise.all([
-    platformDb.doc(`platformAdministrators/${decoded.uid}`).get(),
-    platformDb.doc('platform/settings').get(),
-  ]);
-  const administrator = administratorSnapshot.exists ? administratorSnapshot.data() : null;
-  const settings = settingsSnapshot.exists ? settingsSnapshot.data() : null;
-
-  if (
-    !administrator
-    || administrator.uid !== decoded.uid
-    || administrator.role !== 'platform_owner'
-    || administrator.status !== 'active'
-    || settings?.platformOwnerUid !== decoded.uid
-    || settings?.ownerBootstrapStatus !== 'claimed'
-  ) return null;
-
-  return { uid: decoded.uid, database: platformDb, serverTimestamp: () => FieldValue.serverTimestamp() };
-}
-
 export default async function handler(request, response) {
   response.setHeader('Cache-Control', 'no-store, max-age=0');
   response.setHeader('Pragma', 'no-cache');
+  response.setHeader('Vary', 'Authorization');
   response.setHeader('X-Content-Type-Options', 'nosniff');
 
   if (!['GET', 'PATCH'].includes(request.method)) {
@@ -45,24 +15,37 @@ export default async function handler(request, response) {
     return response.status(405).json({ error: 'method_not_allowed' });
   }
 
-  const token = bearerToken(request);
-  if (!token) return response.status(401).json({ error: 'unauthenticated' });
-
   try {
-    const owner = await requirePlatformOwner(token);
-    if (!owner) return response.status(403).json({ error: 'platform_owner_required' });
+    const [{ platformAuth, platformDb }, { FieldValue }] = await Promise.all([
+      import('../../src/server/firebase-admin.js'),
+      import('firebase-admin/firestore'),
+    ]);
+    const authorization = await authorizePlatformOwner({
+      authorizationHeader: request.headers?.authorization,
+      verifyIdToken: (token, checkRevoked) => platformAuth.verifyIdToken(token, checkRevoked),
+      readAuthUser: (uid) => platformAuth.getUser(uid),
+      readPlatformAdministrator: async (uid) => {
+        const snapshot = await platformDb.doc(`platformAdministrators/${uid}`).get();
+        return snapshot.exists ? snapshot.data() : null;
+      },
+      readPlatformSettings: async () => {
+        const snapshot = await platformDb.doc('platform/settings').get();
+        return snapshot.exists ? snapshot.data() : null;
+      },
+    });
+    if (!authorization.ok) return response.status(authorization.status).json({ error: authorization.code });
 
     if (request.method === 'GET') {
-      const organisations = await listPlatformOrganisations({ database: owner.database });
+      const organisations = await listPlatformOrganisations({ database: platformDb });
       return response.status(200).json({ organisations });
     }
 
     const result = await changeOrganisationStatus({
-      database: owner.database,
+      database: platformDb,
       orgId: request.body?.orgId,
       nextStatus: request.body?.status,
-      actorUid: owner.uid,
-      serverTimestamp: owner.serverTimestamp,
+      actorUid: authorization.uid,
+      serverTimestamp: () => FieldValue.serverTimestamp(),
     });
     return response.status(200).json(result);
   } catch (error) {
