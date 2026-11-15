@@ -86,7 +86,6 @@ const PLATFORM_ACTIONS = new Set([
 
 const PURPOSE_REQUIRED_PLATFORM_ACTIONS = new Set([
   'platform:tenant-data:read',
-  'platform:tenant-data:write',
   'platform:tenant-data:export',
 ]);
 
