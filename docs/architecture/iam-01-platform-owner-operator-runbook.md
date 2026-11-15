@@ -122,3 +122,19 @@ After separate approval and configuration:
 - inspect logs for absence of tokens, credential values, and sensitive identity data.
 
 No production Owner credential is provisioned by this PR. No production rules are published, no tenant data is accessed, and no Owner Control Centre is released by this PR.
+
+
+## 7. Purpose-bound Platform Owner support access
+
+The backend now provides a just-in-time support-session lifecycle. It is deliberately separate from ordinary Owner authentication and organisation administration.
+
+- Only the currently authenticated, enabled, email-verified Platform Owner with an active platform administrator record and matching claimed bootstrap pointer may create or revoke a session.
+- A session is bound to exactly one active PMC, one Owner UID, and an explicit subset of `platform:tenant-data:read`, `platform:tenant-data:write`, and `platform:tenant-data:export`.
+- The purpose must be 20–500 characters and a change/ticket reference is mandatory.
+- The default lifetime is 15 minutes; allowed lifetime is 5–30 minutes. Expired and revoked sessions fail closed.
+- Activation, revocation, and each authorized support action append a platform audit event in the same Firestore transaction as the session state check/change.
+- The session identifier is 256-bit random, is bound to the authenticated Owner UID, and must not be written to logs or shared in URLs.
+- `POST /api/owner/support-access` creates a session; `DELETE /api/owner/support-access` revokes one. Both require a fresh Firebase ID token.
+- `authorizePlatformSupportAccess()` is the mandatory server helper for future cross-tenant data endpoints. It must be called before the data operation, with the requested PMC and exact action.
+
+**Important release boundary:** this milestone creates and governs support sessions; it does not itself expose tenant-record browsing or mutation endpoints. No cross-tenant data endpoint may be added without consuming this helper and auditing the operation. The Owner's organisation registry remains a platform metadata workflow and does not use a tenant-data support session.
