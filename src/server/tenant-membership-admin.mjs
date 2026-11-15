@@ -137,7 +137,7 @@ export async function inviteTenantMember({
     });
     transaction.create(auditRef, {
       action: 'tenant.member.invitation_created',
-      actorUid, targetOrgId: orgId, targetUid: invitedUser.uid,
+      actorUid, orgId, targetOrgId: orgId, targetUid: invitedUser.uid,
       details: { role, invitationId, email: normalizedEmail },
       occurredAt: timestamp,
     });
@@ -204,7 +204,7 @@ export async function manageTenantMember({
     }
     transaction.create(auditRef, {
       action: action === 'members:suspend' ? 'tenant.member.suspended' : 'tenant.member.role_changed',
-      actorUid, targetOrgId: orgId, targetUid,
+      actorUid, orgId, targetOrgId: orgId, targetUid,
       details: {
         previousRole: target.role,
         newRole: action === 'members:role:assign' ? targetRole : target.role,
