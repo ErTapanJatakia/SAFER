@@ -99,7 +99,7 @@ export async function createTenantPersonnel({orgId,actorUid,input,database,serve
   const timestamp=serverTimestamp();
   const record={
     recordId,orgId,
-    ...(input?.employeeUid!==undefined?{employeeUid:boundedString(input.employeeUid,128,true)}:{}),
+    ...(input?.employeeUid!==undefined?{employeeUid:UID.test(input.employeeUid)?input.employeeUid:fail('invalid_personnel_data')}:{ }),
     employeeRef:boundedString(input?.employeeRef,64,true),
     displayLabel:input?.displayLabel?boundedString(input.displayLabel,80):'',
     operationalRoles:boundedList(input?.operationalRoles??[],10,60),
