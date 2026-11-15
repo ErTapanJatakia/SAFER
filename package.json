@@ -70,6 +70,7 @@
     "test:session-inactivity": "vitest run src/lib/sessionInactivity.test.ts",
     "test:locale": "vitest run src/i18n/locale.test.ts",
     "test:regional-formatting": "vitest run src/utils/dateUtils.regional.test.ts",
+    "test:account-settings": "vitest run src/utils/accountSettings.test.ts",
     "test:platform-owner": "node --test tests/platform-owner-authorization.test.mjs tests/platform-owner-bootstrap.test.mjs tests/platform-owner-server-boundary.test.mjs tests/tenant-rbac-policy.test.mjs",
     "provision:platform-owner": "node scripts/platform-owner.mjs",
     "test:organisation-invitation-acceptance": "node --test tests/organisation-invitation-acceptance.test.mjs",
