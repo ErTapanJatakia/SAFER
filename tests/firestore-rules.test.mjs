@@ -72,10 +72,11 @@ function dbFor(uid) {
   return testEnv.authenticatedContext(uid).firestore();
 }
 
-function validPersonnel(uid, orgId = "org-a", recordId = "person-a") {
+function validPersonnel(uid, orgId = "org-a", recordId = "person-a", employeeUid) {
   return {
     recordId,
     orgId,
+    ...(employeeUid ? { employeeUid } : {}),
     employeeRef: "SYN-001",
     displayLabel: "Synthetic Operator",
     operationalRoles: ["Security Officer"],
@@ -187,6 +188,10 @@ test("Manager, Employee and Auditor receive only their approved candidate-rule s
     const db = context.firestore();
     await setDoc(doc(db, "organisations/org-a/personnel/person-a"),
       { ...validPersonnel("owner-a", "org-a", "person-a"), createdAt: Timestamp.now(), updatedAt: Timestamp.now() });
+    await setDoc(doc(db, "organisations/org-a/personnel/employee-person"),
+      { ...validPersonnel("owner-a", "org-a", "employee-person", "tenant_employee-a"), createdAt: Timestamp.now(), updatedAt: Timestamp.now() });
+    await setDoc(doc(db, "organisations/org-a/personnel/other-employee-person"),
+      { ...validPersonnel("owner-a", "org-a", "other-employee-person", "another-employee"), createdAt: Timestamp.now(), updatedAt: Timestamp.now() });
     await setDoc(doc(db, "organisations/org-a/incidents/incident-employee"),
       { ...validIncident("tenant_employee-a", "org-a", "incident-employee"), dateReported: Timestamp.now(), createdAt: Timestamp.now(), updatedAt: Timestamp.now() });
     await setDoc(doc(db, "organisations/org-a/incidents/incident-other"),
@@ -217,6 +222,13 @@ test("Manager, Employee and Auditor receive only their approved candidate-rule s
   const employee = dbFor("tenant_employee-a");
   await assertSucceeds(getDoc(doc(employee, "organisations/org-a")));
   await assertFails(getDoc(doc(employee, "organisations/org-a/personnel/person-a")));
+  await assertSucceeds(getDoc(doc(employee, "organisations/org-a/personnel/employee-person")));
+  await assertFails(getDoc(doc(employee, "organisations/org-a/personnel/other-employee-person")));
+  await assertSucceeds(getDocs(query(
+    collection(employee, "organisations/org-a/personnel"),
+    where("employeeUid", "==", "tenant_employee-a"),
+  )));
+  await assertFails(getDocs(collection(employee, "organisations/org-a/personnel")));
   await assertSucceeds(getDoc(doc(employee, "organisations/org-a/incidents/incident-employee")));
   await assertFails(getDoc(doc(employee, "organisations/org-a/incidents/incident-other")));
   await assertFails(getDoc(doc(employee, "organisations/org-a/evidence/evidence-a")));
@@ -572,4 +584,26 @@ test("tenant users cannot use collection-group or unmodelled paths to bypass ten
   await assertFails(getDoc(doc(db, "platformSupportSessions/session-id")));
   await assertFails(getDoc(doc(db, "platformAuditEvents/event-id")));
   await assertFails(getDoc(doc(db, "organisations/org-isolation-c/unknownCollection/record-id")));
+});
+
+
+test("personnel employee binding can be created only for an active employee in the same PMC", async () => {
+  await seedTenant({ orgId: "org-employee-binding", uid: "binding-admin" });
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), "organisations/org-employee-binding/members/linked-employee"),
+      membershipRecord("linked-employee", "org-employee-binding", "tenant_employee"));
+  });
+  const db = dbFor("binding-admin");
+  await assertSucceeds(setDoc(
+    doc(db, "organisations/org-employee-binding/personnel/linked-record"),
+    validPersonnel("binding-admin", "org-employee-binding", "linked-record", "linked-employee"),
+  ));
+  await assertFails(setDoc(
+    doc(db, "organisations/org-employee-binding/personnel/unlinked-record"),
+    validPersonnel("binding-admin", "org-employee-binding", "unlinked-record", "not-a-member"),
+  ));
+  await assertFails(updateDoc(
+    doc(db, "organisations/org-employee-binding/personnel/linked-record"),
+    { employeeUid: "not-a-member", updatedAt: serverTimestamp(), updatedByUid: "binding-admin" },
+  ));
 });
