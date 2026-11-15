@@ -131,10 +131,16 @@ export const TenantOperationsWorkspace:React.FC<Props>=({user,membership,onLeave
   const selectEvidence=async(file:File|null)=>{
     setEvidenceFile(file);
     if(!file){setEvidenceForm({incidentId:'',title:'',fileName:'',mediaType:'application/pdf',byteSize:0,sha256Claimed:''});return;}
-    const ext=file.name.toLowerCase().split('.').pop();const mediaType=file.type&&['application/pdf','image/jpeg','image/png','text/plain'].includes(file.type)?file.type:ext==='pdf'?'application/pdf':['jpg','jpeg'].includes(ext??'')?'image/jpeg':ext==='png'?'image/png':ext==='txt'?'text/plain':'application/octet-stream';
-    const digest=await crypto.subtle.digest('SHA-256',await file.arrayBuffer());
-    const hash=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
-    setEvidenceForm(current=>({...current,fileName:file.name,byteSize:file.size,mediaType,sha256Claimed:hash,title:current.title||file.name}));
+    const ext=file.name.toLowerCase().split('.').pop();
+    const mediaType=file.type&&['application/pdf','image/jpeg','image/png','text/plain'].includes(file.type)?file.type:ext==='pdf'?'application/pdf':['jpg','jpeg'].includes(ext??'')?'image/jpeg':ext==='png'?'image/png':ext==='txt'?'text/plain':'application/octet-stream';
+    if(file.size>20*1024*1024||!['application/pdf','image/jpeg','image/png','text/plain'].includes(mediaType)){
+      setEvidenceFile(null);setError('unsupported_evidence_file_or_size');return;
+    }
+    try{
+      const digest=await crypto.subtle.digest('SHA-256',await file.arrayBuffer());
+      const hash=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
+      setEvidenceForm(current=>({...current,fileName:file.name,byteSize:file.size,mediaType,sha256Claimed:hash,title:current.title||file.name}));
+    }catch{setEvidenceFile(null);setError('local_sha256_unavailable');}
   };
   const registerEvidence=()=>run(async()=>{
     if(!evidenceFile)throw new Error('select_a_local_file_first');
