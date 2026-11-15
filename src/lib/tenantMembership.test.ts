@@ -2,11 +2,12 @@ import { readFileSync } from 'node:fs';
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { assertFails, initializeTestEnvironment, type RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { doc, getDoc, setDoc, type Firestore } from 'firebase/firestore';
+import { doc, getDoc, setDoc, Timestamp, type Firestore } from 'firebase/firestore';
 import {
   parseTenantMembership,
   resolveTenantMembership,
   TenantMembershipError,
+  TENANT_ROLES,
 } from './tenantMembership.ts';
 
 const projectId = 'demo-safer';
@@ -21,26 +22,37 @@ after(async () => {
   await testEnv?.cleanup();
 });
 
+function canonicalMembership(uid: string, orgId: string, role: string = 'tenant_super_admin') {
+  const now = Timestamp.fromDate(new Date('2026-01-01T00:00:00.000Z'));
+  return {
+    uid, orgId, role, status: 'active',
+    createdAt: now, createdByUid: 'trusted-platform-owner',
+    updatedAt: now, updatedByUid: 'trusted-platform-owner',
+    schemaVersion: 1,
+  };
+}
+
 async function seedMembership(orgId: string, uid: string, fields: Record<string, unknown> = {}) {
   await testEnv.withSecurityRulesDisabled(async (context) => {
     const database = context.firestore();
     await setDoc(doc(database, 'organisations', orgId), {
       orgId, displayName: 'Synthetic Resolver Test', status: 'active', schemaVersion: 1,
     });
-    await setDoc(doc(database, 'organisations', orgId, 'members', uid), {
-      uid, orgId, role: 'owner', status: 'active', ...fields,
-    });
+    await setDoc(
+      doc(database, 'organisations', orgId, 'members', uid),
+      { ...canonicalMembership(uid, orgId), ...fields },
+    );
   });
 }
 
-test('resolves only the caller exact active membership for every supported role', async () => {
-  for (const role of ['owner', 'admin', 'manager', 'viewer'] as const) {
+test('resolves only the caller exact active membership for all five canonical tenant roles', async () => {
+  for (const role of TENANT_ROLES) {
     const uid = 'resolver-' + role;
     const orgId = 'resolver-org-' + role;
     await seedMembership(orgId, uid, { role });
     const database = testEnv.authenticatedContext(uid).firestore() as unknown as Firestore;
     const result = await resolveTenantMembership(database, { uid }, orgId);
-    assert.deepEqual(result, { uid, orgId, role, status: 'active' });
+    assert.deepEqual(result, { uid, orgId, role, status: 'active', schemaVersion: 1 });
     assert.equal(Object.isFrozen(result), true);
   }
 });
@@ -69,12 +81,15 @@ test('fails closed when membership is absent or denied by Firestore Rules', asyn
   );
 });
 
-test('Rules deny malformed membership documents before resolver parsing', async () => {
+test('Firestore Rules reject legacy, malformed, inactive and non-canonical membership documents', async () => {
   const fixtures = [
     { orgId: 'resolver-inactive', uid: 'resolver-inactive', fields: { status: 'suspended' } },
-    { orgId: 'resolver-invalid-role', uid: 'resolver-invalid-role', fields: { role: 'platform-admin' } },
+    { orgId: 'resolver-invalid-role', uid: 'resolver-invalid-role', fields: { role: 'platform_owner' } },
+    { orgId: 'resolver-legacy-owner', uid: 'resolver-legacy-owner', fields: { role: 'owner' } },
+    { orgId: 'resolver-legacy-viewer', uid: 'resolver-legacy-viewer', fields: { role: 'viewer' } },
     { orgId: 'resolver-extra-field', uid: 'resolver-extra-field', fields: { internalNote: 'not permitted' } },
     { orgId: 'resolver-mismatched-org', uid: 'resolver-mismatched-org', fields: { orgId: 'different-org' } },
+    { orgId: 'resolver-invalid-version', uid: 'resolver-invalid-version', fields: { schemaVersion: 2 } },
   ];
 
   for (const fixture of fixtures) {
@@ -86,25 +101,28 @@ test('Rules deny malformed membership documents before resolver parsing', async 
   }
 });
 
-test('pure parser rejects malformed, mismatched, inactive, and non-minimal membership data', () => {
+test('pure parser rejects malformed, mismatched, inactive, legacy and non-minimal membership data', () => {
   const uid = 'parser-user';
   const orgId = 'parser-org';
-  const valid = { uid, orgId, role: 'owner', status: 'active' };
+  const valid = canonicalMembership(uid, orgId);
 
   assert.deepEqual(parseTenantMembership(valid, uid, orgId), {
-    uid, orgId, role: 'owner', status: 'active',
+    uid, orgId, role: 'tenant_super_admin', status: 'active', schemaVersion: 1,
   });
   assert.equal(Object.isFrozen(parseTenantMembership(valid, uid, orgId)), true);
 
   const invalidRecords: unknown[] = [
-    null,
-    [],
+    null, [],
     { ...valid, uid: 'other-user' },
     { ...valid, orgId: 'other-org' },
     { ...valid, status: 'suspended' },
-    { ...valid, role: 'platform-admin' },
+    { ...valid, role: 'platform_owner' },
+    { ...valid, role: 'owner' },
+    { ...valid, role: 'viewer' },
     { ...valid, extraField: 'not permitted' },
-    { uid, orgId, role: 'owner' },
+    { ...valid, schemaVersion: 2 },
+    { ...valid, createdAt: 'not-a-timestamp' },
+    { uid, orgId, role: 'tenant_super_admin', status: 'active' },
   ];
 
   for (const record of invalidRecords) {
