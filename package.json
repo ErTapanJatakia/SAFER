@@ -18,7 +18,7 @@
     "test:filter-control-accessibility": "vitest run src/components/FilterControlAccessibility.test.tsx",
     "test:cyber-hygiene-tabs": "vitest run src/components/CyberHygieneTabs.test.tsx",
     "test:data-boundary": "tsx --test src/lib/dataBoundary.test.ts",
-    "test:session-lifecycle": "tsx --test src/lib/sessionLifecycle.test.ts",
+    "test:session-lifecycle": "tsx --test src/lib/sessionLifecycle.test.ts && npm run test:session-hygiene",
     "test:session-invalidation": "vitest run src/lib/sessionInvalidation.test.ts",
     "test:demo-repository": "tsx --test src/lib/demoRepository.test.ts",
     "test:demo-workspace": "tsx --test src/lib/demoWorkspace.test.ts",
@@ -65,7 +65,8 @@
     "test:browser-cross-tab": "playwright test --config=playwright.config.mjs",
     "test:budget-policy": "vitest run src/utils/budgetPolicy.test.ts",
     "test:account-security": "vitest run src/components/AccountSecurityPanel.test.tsx",
-    "test:privacy-demo": "tsx --test src/utils/privacyRepository.test.ts src/utils/privacyExport.test.ts"
+    "test:privacy-demo": "tsx --test src/utils/privacyRepository.test.ts src/utils/privacyExport.test.ts",
+    "test:session-hygiene": "tsx --test src/lib/sessionHygiene.test.ts src/lib/authErrors.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
