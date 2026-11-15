@@ -111,3 +111,15 @@ test('revokes active sessions and blocks subsequent use',async()=>{
     action:'platform:tenant-data:read',database:db,serverTimestamp:input.serverTimestamp,now:input.now+1000,
   }),/support_session_expired_or_revoked/);
 });
+
+
+test('rejects malformed expiry metadata rather than treating it as an unlimited session',async()=>{
+  const {db,documents}=fakeDb();
+  const session=await createPlatformSupportSession({...input,database:db});
+  documents.get(`platformSupportSessions/${session.sessionId}`).expiresAt='not-a-timestamp';
+  await assert.rejects(authorizePlatformSupportAccess({
+    actorUid:'owner-1',principal,sessionId:session.sessionId,orgId,
+    action:'platform:tenant-data:read',database:db,
+    serverTimestamp:input.serverTimestamp,now:input.now+1000,
+  }),/support_session_expired_or_revoked/);
+});
