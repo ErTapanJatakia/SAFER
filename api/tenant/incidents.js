@@ -57,8 +57,11 @@ export default async function handler(req, res) {
       return res.status(200).json(result);
     }
     if (req.method === 'POST') {
+      const authorization = await resolveTenantAuthorization({
+        token, orgId, action: 'incidents:create', auth: platformAuth, database: platformDb,
+      });
       const result = await createTenantIncident({
-        orgId, actorUid: decoded.uid, input: req.body, database: platformDb,
+        orgId, actorUid: authorization.uid, input: req.body, database: platformDb,
         serverTimestamp: () => FieldValue.serverTimestamp(),
       });
       return res.status(201).json(result);
