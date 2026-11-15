@@ -9,6 +9,7 @@ import {
 } from '../utils/incidentDraftGenerator.ts';
 import { copyToClipboard } from '../utils/clipboard.ts';
 import { getCurrentLocalDateTime } from '../utils/dateUtils.ts';
+import { formatAccountDateTime, readAccountPreferences } from '../utils/accountFormatting.ts';
 import {
   FileText,
   Plus,
@@ -39,6 +40,7 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
   onAddIncident,
   onUpdateStatus,
 }) => {
+  const accountPreferences = readAccountPreferences();
   // Modal states
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
@@ -79,7 +81,7 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
 
   const handleQuickCopyDraft = async (inc: IncidentReport) => {
     const draft = inc.structuredDraft || generateStructuredIncidentDraft(
-      `Date/Time: ${inc.dateReported}\nLocation: ${inc.location}\nReporter: ${inc.reportedBy}\nNotes: ${inc.summary}`,
+      `Date/Time: ${formatAccountDateTime(inc.dateReported, accountPreferences)}\nLocation: ${inc.location}\nReporter: ${inc.reportedBy}\nNotes: ${inc.summary}`,
       inc.referenceNumber
     );
     const text = formatStructuredDraftAsText(draft);
@@ -136,9 +138,9 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
         <div className="min-w-0">
           <div className="flex items-start flex-wrap gap-2 min-w-0">
             <FileText className="w-5 h-5 text-blue-900" />
-            <h2 className="text-lg font-bold text-slate-900 min-w-0 break-words">
+            <h1 className="text-lg font-bold text-slate-900 min-w-0 break-words">
               Administrative & Operational Incident Reports
-            </h2>
+            </h1>
           </div>
           <p className="text-xs text-slate-600 mt-1 max-w-2xl break-words">
             Input field observations to generate a 10-point structured incident draft.
@@ -268,7 +270,7 @@ export const IncidentReportsView: React.FC<IncidentReportsViewProps> = ({
               </div>
 
               <div className="min-w-0">
-                <h3 className="text-sm font-bold text-slate-900 break-words">{inc.title}</h3>
+                <h2 className="text-sm font-bold text-slate-900 break-words">{inc.title}</h2>
                 <p className="text-xs text-slate-700 mt-1 leading-relaxed break-words">{inc.summary}</p>
               </div>
 

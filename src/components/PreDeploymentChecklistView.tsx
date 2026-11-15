@@ -14,6 +14,7 @@ import { DEFAULT_FICTIONAL_SCENARIO } from '../data/mockData.ts';
 import { PreDeploymentSummaryModal } from './PreDeploymentSummaryModal.tsx';
 import { copyToClipboard } from '../utils/clipboard.ts';
 import { getCurrentISODate } from '../utils/dateUtils.ts';
+import { formatAccountDate, readAccountPreferences } from '../utils/accountFormatting.ts';
 import {
   ClipboardList,
   CheckCircle2,
@@ -52,6 +53,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
   onAddTask,
   onResetScenario,
 }) => {
+  const accountPreferences = readAccountPreferences();
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -162,9 +164,9 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
         <div>
           <div className="flex items-center space-x-2">
             <ClipboardList className="w-5 h-5 text-blue-900" />
-            <h2 className="text-lg font-bold text-slate-900">
+            <h1 className="text-lg font-bold text-slate-900">
               Pre-Deployment Checklist
-            </h2>
+            </h1>
             <span className="text-[11px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-900 font-semibold border border-blue-200">
               8 Readiness Domains
             </span>
@@ -195,7 +197,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
               </>
             ) : (
               <>
-                <Copy className="w-4 h-4 text-slate-500" />
+                <Copy className="w-4 h-4 text-slate-600" />
                 <span>Copy Report</span>
               </>
             )}
@@ -219,9 +221,9 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
         <div className="flex items-start space-x-3">
           <AlertTriangle className="w-5 h-5 text-amber-700 mt-0.5 shrink-0" />
           <div className="space-y-1">
-            <h3 className="font-bold text-amber-900 text-xs uppercase tracking-wide">
+            <h2 className="font-bold text-amber-900 text-xs uppercase tracking-wide">
               Mandatory Governance & Safety Boundary
-            </h3>
+            </h2>
             <p className="text-slate-700 leading-relaxed">
               <strong>The application must never state that a person or deployment is approved solely because checklist items are complete.</strong> Checklist items verify administrative documentation and safety readiness. All deployment authorizations require independent affirmative human supervisory review. Tactical routes, target profiles, combat plans, and weapons instructions are strictly excluded.
             </p>
@@ -265,19 +267,19 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
           <div className="mt-3 text-xs space-y-2 pt-2 border-t border-slate-100 text-slate-700">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-50 p-3 rounded-md">
               <div>
-                <span className="text-slate-500 font-semibold block text-[10px] uppercase">Mission Focus</span>
+                <span className="text-slate-600 font-semibold block text-[10px] uppercase">Mission Focus</span>
                 <span className="font-semibold text-slate-900">{scenario.title}</span>
               </div>
               <div>
-                <span className="text-slate-500 font-semibold block text-[10px] uppercase">Demonstration Venue</span>
+                <span className="text-slate-600 font-semibold block text-[10px] uppercase">Demonstration Venue</span>
                 <span className="text-slate-900">{scenario.fictionalVenue}</span>
               </div>
               <div>
-                <span className="text-slate-500 font-semibold block text-[10px] uppercase">Jurisdiction</span>
+                <span className="text-slate-600 font-semibold block text-[10px] uppercase">Jurisdiction</span>
                 <span className="text-slate-900">{scenario.fictionalJurisdiction}</span>
               </div>
               <div>
-                <span className="text-slate-500 font-semibold block text-[10px] uppercase">Lead Supervisor</span>
+                <span className="text-slate-600 font-semibold block text-[10px] uppercase">Lead Supervisor</span>
                 <span className="font-semibold text-slate-900">{scenario.leadSupervisor}</span>
               </div>
             </div>
@@ -300,18 +302,18 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Items */}
         <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-xs">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
             Total Checklist Items
           </span>
           <div className="mt-2 text-2xl font-bold text-slate-900">
             {metrics.totalCount}
           </div>
-          <span className="text-[11px] text-slate-500">Across 8 mandatory domains</span>
+          <span className="text-[11px] text-slate-600">Across 8 mandatory domains</span>
         </div>
 
         {/* Completed */}
         <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-xs">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
             Verified Complete
           </span>
           <div className="mt-2 text-2xl font-bold text-teal-700">
@@ -323,7 +325,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
               style={{ width: `${metrics.completionRate}%` }}
             />
           </div>
-          <span className="text-[10px] text-slate-500 mt-1 block">
+          <span className="text-[10px] text-slate-600 mt-1 block">
             {metrics.completionRate}% completion rate (excluding N/A)
           </span>
         </div>
@@ -348,13 +350,13 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
 
         {/* Not Applicable */}
         <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-xs">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+          <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
             Not Applicable (N/A)
           </span>
           <div className="mt-2 text-2xl font-bold text-slate-600">
             {metrics.notApplicableCount}
           </div>
-          <span className="text-[11px] text-slate-500">Jurisdiction & venue exclusions</span>
+          <span className="text-[11px] text-slate-600">Jurisdiction & venue exclusions</span>
         </div>
       </div>
 
@@ -364,9 +366,9 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 text-amber-900">
               <AlertCircle className="w-5 h-5 text-amber-700" />
-              <h3 className="text-sm font-bold uppercase tracking-wide">
+              <h2 className="text-sm font-bold uppercase tracking-wide">
                 Prominently Outstanding Items ({metrics.outstandingItems.length})
-              </h3>
+              </h2>
             </div>
             <button
               onClick={() => setSelectedStatusFilter('OUTSTANDING')}
@@ -398,10 +400,10 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                     {item.priority} Priority
                   </span>
                 </div>
-                <div className="text-[11px] text-slate-500">
+                <div className="text-[11px] text-slate-600">
                   <span className="font-semibold text-slate-700">{item.category}</span>
                   {item.targetDeadline && (
-                    <span> &bull; Due: {item.targetDeadline}</span>
+                    <span> &bull; Due: {formatAccountDate(item.targetDeadline, accountPreferences)}</span>
                   )}
                 </div>
                 <p className="text-slate-600 break-words">{item.description}</p>
@@ -413,7 +415,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
 
                 {/* Quick Status Buttons */}
                 <div className="flex flex-wrap items-start justify-between gap-2 pt-1 border-t border-slate-100">
-                  <span className="text-[11px] text-slate-400 font-mono">Status: Incomplete</span>
+                  <span className="text-[11px] text-slate-600 font-mono">Status: Incomplete</span>
                   <div className="flex flex-wrap items-center gap-1">
                     <button
                       onClick={() => onUpdateStatus(item.id, 'Complete')}
@@ -440,7 +442,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           {/* Search Bar */}
           <div className="relative w-full sm:w-80">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            <Search className="w-4 h-4 text-slate-600 absolute left-3 top-2.5" />
             <input
               type="text"
               aria-label="Search checklist tasks, notes, and assigned staff" placeholder="Search checklist tasks, notes, or assigned staff..."
@@ -452,7 +454,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
 
           {/* Status Filter Buttons */}
           <div className="flex flex-wrap items-center gap-1 w-full sm:w-auto pb-1 sm:pb-0">
-            <span className="text-xs text-slate-500 font-semibold mr-1 shrink-0 flex items-center">
+            <span className="text-xs text-slate-600 font-semibold mr-1 shrink-0 flex items-center">
               <Filter className="w-3.5 h-3.5 mr-1" />
               Status:
             </span>
@@ -481,7 +483,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
 
         {/* Category Filter Pills (All 8 Categories) */}
         <div className="pt-2 border-t border-slate-100">
-          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+          <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block mb-1.5">
             Filter by Checklist Category (8 Domains):
           </span>
           <div className="flex flex-wrap items-center gap-1.5">
@@ -534,8 +536,8 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
         {filteredItems.length === 0 ? (
           <div className="bg-white border border-slate-200 rounded-lg p-10 text-center space-y-2">
             <ClipboardList className="w-10 h-10 text-slate-300 mx-auto" />
-            <h4 className="text-sm font-bold text-slate-800">No Checklist Items Match Filter</h4>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            <h3 className="text-sm font-bold text-slate-800">No Checklist Items Match Filter</h3>
+            <p className="text-xs text-slate-600 max-w-sm mx-auto">
               Try adjusting your search criteria, category selection, or status filters.
             </p>
             <button
@@ -563,7 +565,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                     ? 'border-amber-300/80 hover:border-amber-400'
                     : isComplete
                     ? 'border-slate-200 bg-white hover:border-slate-300'
-                    : 'border-slate-200 bg-slate-50/60 opacity-80'
+                    : 'border-slate-200 bg-slate-50/60'
                 }`}
               >
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
@@ -586,7 +588,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                       )}
                       {isNA && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-300">
-                          <HelpCircle className="w-3 h-3 mr-1 text-slate-400" />
+                          <HelpCircle className="w-3 h-3 mr-1 text-slate-600" />
                           Not Applicable
                         </span>
                       )}
@@ -611,13 +613,13 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                     </div>
 
                     {/* Task Title */}
-                    <h3
+                    <h2
                       className={`font-bold text-sm leading-snug break-words ${
-                        isComplete ? 'text-slate-800' : isIncomplete ? 'text-slate-900' : 'text-slate-500'
+                        isComplete ? 'text-slate-800' : isIncomplete ? 'text-slate-900' : 'text-slate-600'
                       }`}
                     >
                       {item.task}
-                    </h3>
+                    </h2>
 
                     {/* Task Description */}
                     <p className="text-xs text-slate-600 leading-relaxed break-words">
@@ -635,11 +637,11 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                     )}
 
                     {/* Footer metadata */}
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-500 pt-1">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-600 pt-1">
                       {item.targetDeadline && (
                         <span className="flex items-center">
-                          <Calendar className="w-3.5 h-3.5 mr-1 text-slate-400" />
-                          Target Deadline: {item.targetDeadline}
+                          <Calendar className="w-3.5 h-3.5 mr-1 text-slate-600" />
+                          Target Deadline: {formatAccountDate(item.targetDeadline, accountPreferences)}
                         </span>
                       )}
                       {item.assignedRoleOrPerson && (
@@ -650,7 +652,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                       {item.reviewedBy ? (
                         <span className="text-teal-700 font-semibold flex items-start min-w-0 break-words">
                           <UserCheck className="w-3.5 h-3.5 mr-1" />
-                          Supervisory Sign-Off: {item.reviewedBy} ({item.reviewDate || getCurrentISODate()})
+                          Supervisory Sign-Off: {item.reviewedBy} ({formatAccountDate(item.reviewDate || getCurrentISODate(), accountPreferences)})
                         </span>
                       ) : item.requiresHumanReview ? (
                         <span className="text-amber-800 font-semibold flex items-start min-w-0 break-words">
@@ -665,7 +667,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                   <div className="flex flex-col items-stretch sm:items-end justify-between gap-3 min-w-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
                     {/* Status Pill Switcher */}
                     <div className="space-y-1 text-left sm:text-right min-w-0">
-                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">
+                      <span className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider block">
                         Mark Status:
                       </span>
                       <div className="inline-flex flex-wrap rounded-md shadow-2xs border border-slate-300 overflow-hidden bg-white max-w-full">
@@ -729,9 +731,9 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 border border-slate-200 space-y-4">
             <div className="flex items-center space-x-2 text-blue-900">
               <UserCheck className="w-5 h-5 text-blue-900" />
-              <h3 className="font-bold text-base text-slate-900">
+              <h2 className="font-bold text-base text-slate-900">
                 Supervisor Human Sign-Off
-              </h3>
+              </h2>
             </div>
             <p className="text-xs text-slate-600 leading-relaxed">
               Record that a designated human supervisor has reviewed the documentation, verification records, or mitigations for this item.
@@ -776,11 +778,11 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center space-x-2">
                 <ClipboardList className="w-5 h-5 text-blue-900" />
-                <h3 className="font-bold text-base text-slate-900">Add Pre-Deployment Task</h3>
+                <h2 className="font-bold text-base text-slate-900">Add Pre-Deployment Task</h2>
               </div>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-600 hover:text-slate-600"
               >
                 ✕
               </button>

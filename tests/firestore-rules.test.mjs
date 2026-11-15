@@ -204,6 +204,46 @@ test("suspended organisation denies otherwise active owner", async () => {
 });
 
 
+test("tenant authorization rejects membership trust anchors with unexpected fields", async () => {
+  const orgId = "org-extra-membership-field";
+  const uid = "owner-extra-membership-field";
+  await seedTenant({ orgId, uid });
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await updateDoc(doc(context.firestore(), "organisations", orgId, "members", uid), {
+      unexpectedPrivilegeMetadata: "synthetic-secret",
+    });
+  });
+
+  const db = dbFor(uid);
+  await assertFails(getDoc(doc(db, "organisations", orgId)));
+  await assertFails(setDoc(
+    doc(db, "organisations", orgId, "personnel", "blocked-personnel"),
+    validPersonnel(uid, orgId, "blocked-personnel"),
+  ));
+});
+
+test("tenant authorization rejects organisation documents with unexpected or malformed metadata", async () => {
+  const fixtures = [
+    { orgId: "org-extra-metadata", uid: "owner-extra-metadata", patch: { internalSecret: "synthetic-secret" } },
+    { orgId: "org-invalid-schema", uid: "owner-invalid-schema", patch: { schemaVersion: 2 } },
+    { orgId: "org-invalid-display-name", uid: "owner-invalid-display-name", patch: { displayName: 42 } },
+  ];
+
+  for (const fixture of fixtures) {
+    await seedTenant({ orgId: fixture.orgId, uid: fixture.uid });
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), "organisations", fixture.orgId), fixture.patch);
+    });
+
+    const db = dbFor(fixture.uid);
+    await assertFails(getDoc(doc(db, "organisations", fixture.orgId)));
+    await assertFails(setDoc(
+      doc(db, "organisations", fixture.orgId, "personnel", "blocked-personnel"),
+      validPersonnel(fixture.uid, fixture.orgId, "blocked-personnel"),
+    ));
+  }
+});
+
 test("bootstrap trust anchor rejects mismatched UID, tenant, role, and missing organisation", async () => {
   const fixtures = [
     { orgId: "bootstrap-wrong-uid", uid: "wrong-uid-user", member: {
@@ -360,6 +400,7 @@ test("membership, restricted records, audit events, and unapproved organisation 
   await assertFails(setDoc(doc(db, "organisations/org-a", "members", "attacker"), {
     uid: "attacker", orgId: "org-a", role: "owner", status: "active",
   }));
+  await assertFails(getDoc(doc(db, "organisations/org-a", "auditEvents", "event-a")));
   await assertFails(getDoc(doc(db, "organisations/org-a", "personnelPrivate", "person-a")));
   await assertFails(setDoc(doc(db, "organisations/org-a", "incidentRestricted", "incident-a"), {}));
   await assertFails(setDoc(doc(db, "organisations/org-a", "auditEvents", "event-a"), {}));
@@ -368,14 +409,68 @@ test("membership, restricted records, audit events, and unapproved organisation 
   }));
 });
 
-test("tenant list queries must constrain the organisation field", async () => {
+test("cross-tenant membership, organisation, operational, and audit access are denied", async () => {
+  await seedTenant({ orgId: "tenant-isolation-a", uid: "tenant-owner-a" });
+  await seedTenant({ orgId: "tenant-isolation-b", uid: "tenant-owner-b" });
+
+  const attacker = dbFor("tenant-owner-a");
+  await assertFails(getDoc(doc(attacker, "organisations/tenant-isolation-b")));
+  await assertFails(getDoc(doc(attacker, "organisations/tenant-isolation-b/members/tenant-owner-b")));
+  await assertFails(getDoc(doc(attacker, "organisations/tenant-isolation-b/personnel/person-b")));
+  await assertFails(getDoc(doc(attacker, "organisations/tenant-isolation-b/incidents/incident-b")));
+  await assertFails(setDoc(doc(attacker, "organisations/tenant-isolation-b/personnel/cross-tenant-write"),
+    validPersonnel("tenant-owner-a", "tenant-isolation-b", "cross-tenant-write")));
+  await assertFails(setDoc(doc(attacker, "organisations/tenant-isolation-b/incidents/cross-tenant-incident"),
+    validIncident("tenant-owner-a", "tenant-isolation-b", "cross-tenant-incident")));
+  await assertFails(getDoc(doc(attacker, "organisations/tenant-isolation-b/auditEvents/event-b")));
+  await assertFails(setDoc(doc(attacker, "organisations/tenant-isolation-b/auditEvents/event-b"), {
+    eventId: "event-b", orgId: "tenant-isolation-b", actorUid: "tenant-owner-a",
+    eventType: "membership.role_changed",
+  }));
+});
+
+test("membership mutation attempts fail for every role, including cross-user and cross-tenant targets", async () => {
+  for (const role of ["owner", "admin", "manager", "viewer"]) {
+    const uid = "mutation-" + role;
+    const orgId = "mutation-org-" + role;
+    await seedTenant({ orgId, uid, role });
+    await seedTenant({ orgId: orgId + "-other", uid: "other-member" });
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "organisations/" + orgId + "/members/other-member"), {
+        uid: "other-member", orgId, role: "viewer", status: "active",
+      });
+    });
+    const db = dbFor(uid);
+
+    await assertFails(setDoc(doc(db, "organisations/" + orgId + "/members/new-member"), {
+      uid: "new-member", orgId, role: "viewer", status: "active",
+    }));
+    await assertFails(updateDoc(doc(db, "organisations/" + orgId + "/members/" + uid), { role: "owner" }));
+    await assertFails(updateDoc(doc(db, "organisations/" + orgId + "/members/other-member"), { role: "admin" }));
+    await assertFails(deleteDoc(doc(db, "organisations/" + orgId + "/members/" + uid)));
+    await assertFails(setDoc(doc(db, "organisations/" + orgId + "-other/members/attacker"), {
+      uid: "attacker", orgId: orgId + "-other", role: "owner", status: "active",
+    }));
+  }
+});
+test("tenant operational collection listing remains disabled until a schema-safe index is approved", async () => {
   await seedTenant();
   const db = dbFor("owner-a");
-  await assertSucceeds(getDocs(query(
+  // Firestore cannot prove arbitrary keys().hasOnly() predicates from a query.
+  // Do not weaken per-document read validation to make a collection query pass.
+  await assertFails(getDocs(query(
     collection(db, "organisations/org-a/personnel"),
     where("orgId", "==", "org-a"),
   )));
   await assertFails(getDocs(collection(db, "organisations/org-a/personnel")));
+  await assertFails(getDocs(query(
+    collection(db, "organisations/org-a/incidents"),
+    where("orgId", "==", "org-a"),
+  )));
+  await assertFails(getDocs(query(
+    collection(db, "organisations/org-a/evidence"),
+    where("orgId", "==", "org-a"),
+  )));
 });
 
 test("evidence metadata is read-only and deletes remain disabled", async () => {
@@ -386,12 +481,42 @@ test("evidence metadata is read-only and deletes remain disabled", async () => {
     });
   });
   const db = dbFor("owner-a");
-  await assertSucceeds(getDoc(doc(db, "organisations/org-a", "evidence", "evidence-a")));
+  const evidence = doc(db, "organisations/org-a", "evidence", "evidence-a");
+  await assertSucceeds(getDoc(evidence));
   await assertFails(setDoc(doc(db, "organisations/org-a", "evidence", "evidence-b"), {
     evidenceId: "evidence-b", orgId: "org-a",
   }));
+  await assertFails(updateDoc(evidence, {reviewStatus: "approved"}));
+  await assertFails(deleteDoc(evidence));
 });
 
+
+test("tenant reads reject stored personnel, incident, and evidence documents with unapproved fields", async () => {
+  const orgId = "org-read-schema";
+  const uid = "owner-read-schema";
+  await seedTenant({ orgId, uid });
+
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(
+      doc(db, "organisations", orgId, "personnel", "person-extra-field"),
+      { ...validPersonnel(uid, orgId, "person-extra-field"), medicalDetails: "synthetic-private-value" },
+    );
+    await setDoc(
+      doc(db, "organisations", orgId, "incidents", "incident-extra-field"),
+      { ...validIncident(uid, orgId, "incident-extra-field"), restrictedWitnessNotes: "synthetic-private-value" },
+    );
+    await setDoc(
+      doc(db, "organisations", orgId, "evidence", "evidence-extra-field"),
+      { evidenceId: "evidence-extra-field", orgId, rawEvidenceUrl: "https://example.invalid/private" },
+    );
+  });
+
+  const db = dbFor(uid);
+  await assertFails(getDoc(doc(db, "organisations", orgId, "personnel", "person-extra-field")));
+  await assertFails(getDoc(doc(db, "organisations", orgId, "incidents", "incident-extra-field")));
+  await assertFails(getDoc(doc(db, "organisations", orgId, "evidence", "evidence-extra-field")));
+});
 
 test("personnel updates reject extra keys, immutable identity/provenance changes, invalid values, and spoofed timestamps", async () => {
   await seedTenant({ orgId: "org-personnel-update", uid: "owner-personnel-update" });

@@ -55,6 +55,24 @@ describe('authenticated account security lifecycle',()=>{
   // A display-name edit does not change credentials or session authority.
   expect(sessionInvalidation.publishSessionInvalidation).not.toHaveBeenCalled();
  });
+ it('clears credential inputs and feedback when the authenticated UID changes',async()=>{
+  change(input('Current password'),'OldAccountPass!123');
+  change(input('New password'),'NewAccountPass!456');
+  change(input('Confirm new password'),'NewAccountPass!456');
+  change(input('New email address'),'next@example.test');
+  change(input('Current password','Change email address'),'OldAccountPass!123');
+  user=makeUser(['password']);
+  user.uid='user-b';
+  user.email='user-b@example.test';
+  await act(async()=>root.render(<AccountSecurityPanel user={user}/>));
+  expect(input('Current password')?.value).toBe('');
+  expect(input('New password')?.value).toBe('');
+  expect(input('Confirm new password')?.value).toBe('');
+  expect(input('New email address')?.value).toBe('');
+  expect(input('Current password','Change email address')?.value).toBe('');
+  expect(host.querySelector('[role="alert"]')).toBeNull();
+  expect(host.querySelector('[role="status"]')).toBeNull();
+ });
  it('rejects weak passwords without attempting re-authentication',async()=>{
   change(input('Current password'),'CurrentPass!123');change(input('New password'),'short');change(input('Confirm new password'),'short');
   submit('Change password');await flush();
@@ -71,6 +89,49 @@ describe('authenticated account security lifecycle',()=>{
   expect(reauthenticateWithCredential).toHaveBeenCalledTimes(1);
   expect(updatePassword).toHaveBeenCalledWith(user,'NewSecurePass!456');
   expect(host.textContent).toContain('Password updated.');
+ });
+ it('does not complete a password change after its account identity is replaced',async()=>{
+  let finishReauthentication!:()=>void;
+  vi.mocked(reauthenticateWithCredential).mockReturnValueOnce(new Promise<Awaited<ReturnType<typeof reauthenticateWithCredential>>>(resolve=>{finishReauthentication=()=>resolve({} as Awaited<ReturnType<typeof reauthenticateWithCredential>>);}));
+  change(input('Current password'),'CurrentPass!123');
+  change(input('New password'),'NewSecurePass!456');
+  change(input('Confirm new password'),'NewSecurePass!456');
+  submit('Change password');
+  await flush();
+  expect(reauthenticateWithCredential).toHaveBeenCalledTimes(1);
+
+  const previousUser=user;
+  user=makeUser(['password']);
+  user.uid='user-b';
+  user.email='user-b@example.test';
+  await act(async()=>root.render(<AccountSecurityPanel user={user}/>));
+  await act(async()=>finishReauthentication());
+  await flush();
+
+  expect(updatePassword).not.toHaveBeenCalled();
+  expect(sessionInvalidation.publishSessionInvalidation).not.toHaveBeenCalled();
+  expect(host.textContent).not.toContain('Password updated.');
+  expect(previousUser.uid).toBe('user-a');
+ });
+ it('broadcasts a completed password mutation even if its panel was replaced mid-request',async()=>{
+  let finishPasswordUpdate!:()=>void;
+  vi.mocked(updatePassword).mockReturnValueOnce(new Promise<void>(resolve=>{finishPasswordUpdate=resolve;}));
+  change(input('Current password'),'CurrentPass!123');
+  change(input('New password'),'NewSecurePass!456');
+  change(input('Confirm new password'),'NewSecurePass!456');
+  submit('Change password');
+  await flush();
+  expect(updatePassword).toHaveBeenCalledTimes(1);
+
+  user=makeUser(['password']);
+  user.uid='user-b';
+  user.email='user-b@example.test';
+  await act(async()=>root.render(<AccountSecurityPanel user={user}/>));
+  await act(async()=>finishPasswordUpdate());
+  await flush();
+
+  expect(sessionInvalidation.publishSessionInvalidation).toHaveBeenCalledTimes(1);
+  expect(host.textContent).not.toContain('Password updated.');
  });
  it('does not change the password if re-authentication fails',async()=>{
   vi.mocked(reauthenticateWithCredential).mockRejectedValueOnce({code:'auth/wrong-password'});

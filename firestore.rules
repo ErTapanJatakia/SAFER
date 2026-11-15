@@ -14,14 +14,36 @@ service cloud.firestore {
       return /databases/$(database)/documents/organisations/$(orgId);
     }
 
-    function activeTenantRole(orgId) {
-      return signedIn()
-        && exists(membershipPath(orgId))
+    function validActiveMembership(orgId) {
+      return exists(membershipPath(orgId))
+        && get(membershipPath(orgId)).data.keys().hasOnly(['uid', 'orgId', 'role', 'status'])
+        && get(membershipPath(orgId)).data.keys().hasAll(['uid', 'orgId', 'role', 'status'])
         && get(membershipPath(orgId)).data.uid == request.auth.uid
         && get(membershipPath(orgId)).data.orgId == orgId
         && get(membershipPath(orgId)).data.status == 'active'
+        && get(membershipPath(orgId)).data.role in ['owner', 'admin', 'manager', 'viewer'];
+    }
+
+    function validActiveOrganisation(orgId) {
+      return exists(organisationPath(orgId))
+        && get(organisationPath(orgId)).data.keys().hasOnly([
+          'orgId', 'displayName', 'status', 'schemaVersion'
+        ])
+        && get(organisationPath(orgId)).data.keys().hasAll([
+          'orgId', 'displayName', 'status', 'schemaVersion'
+        ])
         && get(organisationPath(orgId)).data.orgId == orgId
-        && get(organisationPath(orgId)).data.status == 'active';
+        && get(organisationPath(orgId)).data.displayName is string
+        && get(organisationPath(orgId)).data.displayName.size() >= 1
+        && get(organisationPath(orgId)).data.displayName.size() <= 120
+        && get(organisationPath(orgId)).data.status == 'active'
+        && get(organisationPath(orgId)).data.schemaVersion == 1;
+    }
+
+    function activeTenantRole(orgId) {
+      return signedIn()
+        && validActiveMembership(orgId)
+        && validActiveOrganisation(orgId);
     }
 
     function ownerOrAdmin(orgId) {
@@ -214,8 +236,7 @@ service cloud.firestore {
 
     match /organisations/{orgId} {
       allow get: if ownerOrAdmin(orgId)
-        && resource.data.orgId == orgId
-        && resource.data.status == 'active';
+        && validActiveOrganisation(orgId);
       allow list, create, update, delete: if false;
 
       match /members/{uid} {
@@ -229,15 +250,52 @@ service cloud.firestore {
           && resource.data.orgId == orgId
           && resource.data.status == 'active'
           && resource.data.role in ['owner', 'admin', 'manager', 'viewer']
-          && exists(organisationPath(orgId))
-          && get(organisationPath(orgId)).data.orgId == orgId
-          && get(organisationPath(orgId)).data.status == 'active';
+          && validActiveOrganisation(orgId);
         allow list, create, update, delete: if false;
       }
 
       match /personnel/{recordId} {
-        allow get, list: if ownerOrAdmin(orgId)
-          && resource.data.orgId == orgId;
+        // Read paths validate the stored document too; write-time validation
+        // alone cannot protect against legacy or manually seeded extra fields.
+        allow get: if ownerOrAdmin(orgId)
+          && resource.data.keys().hasOnly([
+            'recordId', 'orgId', 'employeeRef', 'displayLabel',
+            'operationalRoles', 'specialisations', 'assignmentSector',
+            'readinessStatus', 'requiresHumanReview',
+            'createdAt', 'createdByUid', 'updatedAt', 'updatedByUid'
+          ])
+          && resource.data.keys().hasAll([
+            'recordId', 'orgId', 'employeeRef', 'operationalRoles',
+            'specialisations', 'assignmentSector', 'readinessStatus',
+            'requiresHumanReview', 'createdAt', 'createdByUid',
+            'updatedAt', 'updatedByUid'
+          ])
+          && resource.data.recordId == recordId
+          && resource.data.orgId == orgId
+          && resource.data.employeeRef is string
+          && resource.data.employeeRef.size() >= 1
+          && resource.data.employeeRef.size() <= 64
+          && (!('displayLabel' in resource.data)
+            || (resource.data.displayLabel is string
+              && resource.data.displayLabel.size() <= 80))
+          && validOperationalRoleList(resource.data.operationalRoles)
+          && validSpecialisationList(resource.data.specialisations)
+          && resource.data.assignmentSector in [
+            'Sector Alpha (Metropolitan)', 'Sector Bravo (Transit)',
+            'Sector Charlie (Static Facility)', 'Sector Delta (Reserve)'
+          ]
+          && resource.data.readinessStatus in [
+            'DOCS_CURRENT_AWAITING_REVIEW', 'REQUIRES_HUMAN_REVIEW',
+            'FLAGGED_EXPIRED_CERTS', 'UNVERIFIED_CREDENTIALS',
+            'PENDING_INTAKE_DOCS'
+          ]
+          && resource.data.requiresHumanReview is bool
+          && resource.data.createdAt is timestamp
+          && resource.data.createdByUid is string
+          && resource.data.updatedAt is timestamp
+          && resource.data.updatedByUid is string;
+        // Collection listing stays disabled until a separately reviewed, schema-safe index model exists.
+        allow list: if false;
         allow create: if ownerOrAdmin(orgId)
           && validPersonnelCreate(orgId, recordId);
         allow update: if ownerOrAdmin(orgId)
@@ -246,8 +304,51 @@ service cloud.firestore {
       }
 
       match /incidents/{incidentId} {
-        allow get, list: if ownerOrAdmin(orgId)
-          && resource.data.orgId == orgId;
+        allow get: if ownerOrAdmin(orgId)
+          && resource.data.keys().hasOnly([
+            'incidentId', 'orgId', 'referenceNumber', 'incidentType',
+            'dateReported', 'title', 'status', 'priority', 'summary',
+            'reportedByUid', 'locationLabel',
+            'createdAt', 'createdByUid', 'updatedAt', 'updatedByUid'
+          ])
+          && resource.data.keys().hasAll([
+            'incidentId', 'orgId', 'referenceNumber', 'incidentType',
+            'dateReported', 'title', 'status', 'priority', 'summary',
+            'reportedByUid', 'createdAt', 'createdByUid',
+            'updatedAt', 'updatedByUid'
+          ])
+          && resource.data.incidentId == incidentId
+          && resource.data.orgId == orgId
+          && resource.data.referenceNumber is string
+          && resource.data.referenceNumber.size() >= 1
+          && resource.data.referenceNumber.size() <= 64
+          && resource.data.incidentType in [
+            'Equipment Malfunction', 'Access Control Anomaly',
+            'Communications Drop', 'Logistics Delay',
+            'Medical First-Aid Event', 'Administrative Discrepancy'
+          ]
+          && resource.data.dateReported is timestamp
+          && resource.data.title is string
+          && resource.data.title.size() >= 1
+          && resource.data.title.size() <= 160
+          && resource.data.status in [
+            'Logged - Pending Officer Review',
+            'Under Investigation / Human Review',
+            'Documented & Filed'
+          ]
+          && resource.data.priority in ['Routine', 'Moderate', 'High Attention']
+          && resource.data.summary is string
+          && resource.data.summary.size() <= 2000
+          && (!('locationLabel' in resource.data)
+            || (resource.data.locationLabel is string
+              && resource.data.locationLabel.size() <= 120))
+          && resource.data.reportedByUid is string
+          && resource.data.createdAt is timestamp
+          && resource.data.createdByUid is string
+          && resource.data.updatedAt is timestamp
+          && resource.data.updatedByUid is string;
+        // Collection listing stays disabled until a separately reviewed, schema-safe index model exists.
+        allow list: if false;
         allow create: if ownerOrAdmin(orgId)
           && validIncidentCreate(orgId, incidentId);
         allow update: if ownerOrAdmin(orgId)
@@ -256,8 +357,55 @@ service cloud.firestore {
       }
 
       match /evidence/{evidenceId} {
-        allow get, list: if ownerOrAdmin(orgId)
-          && resource.data.orgId == orgId;
+        // Evidence is read-only and limited to an explicit metadata envelope.
+        // Raw evidence, URLs, storage paths and unknown fields are never exposed.
+        allow get: if ownerOrAdmin(orgId)
+          && resource.data.keys().hasOnly([
+            'evidenceId', 'orgId', 'incidentRef', 'evidenceType',
+            'description', 'referenceCode', 'recordedAt', 'recordedByUid',
+            'integrityAlgorithm', 'integrityDigest',
+            'createdAt', 'createdByUid', 'updatedAt', 'updatedByUid'
+          ])
+          && resource.data.keys().hasAll(['evidenceId', 'orgId'])
+          && resource.data.evidenceId == evidenceId
+          && resource.data.orgId == orgId
+          && (!('incidentRef' in resource.data)
+            || (resource.data.incidentRef is string
+              && resource.data.incidentRef.size() <= 128))
+          && (!('evidenceType' in resource.data)
+            || (resource.data.evidenceType is string
+              && resource.data.evidenceType.size() >= 1
+              && resource.data.evidenceType.size() <= 40))
+          && (!('description' in resource.data)
+            || (resource.data.description is string
+              && resource.data.description.size() <= 500))
+          && (!('referenceCode' in resource.data)
+            || (resource.data.referenceCode is string
+              && resource.data.referenceCode.size() <= 80))
+          && (!('recordedAt' in resource.data)
+            || resource.data.recordedAt is timestamp)
+          && (!('recordedByUid' in resource.data)
+            || (resource.data.recordedByUid is string
+              && resource.data.recordedByUid.matches('^[A-Za-z0-9_-]{1,128}$')))
+          && (('integrityAlgorithm' in resource.data)
+            == ('integrityDigest' in resource.data))
+          && (!('integrityAlgorithm' in resource.data)
+            || resource.data.integrityAlgorithm == 'SHA-256')
+          && (!('integrityDigest' in resource.data)
+            || (resource.data.integrityDigest is string
+              && resource.data.integrityDigest.matches('^[a-fA-F0-9]{64}$')))
+          && (!('createdAt' in resource.data)
+            || resource.data.createdAt is timestamp)
+          && (!('createdByUid' in resource.data)
+            || (resource.data.createdByUid is string
+              && resource.data.createdByUid.matches('^[A-Za-z0-9_-]{1,128}$')))
+          && (!('updatedAt' in resource.data)
+            || resource.data.updatedAt is timestamp)
+          && (!('updatedByUid' in resource.data)
+            || (resource.data.updatedByUid is string
+              && resource.data.updatedByUid.matches('^[A-Za-z0-9_-]{1,128}$')));
+        // Evidence collection listing stays disabled; direct metadata gets remain schema-validated.
+        allow list: if false;
         allow create, update, delete: if false;
       }
 

@@ -84,7 +84,7 @@ export const SearchableMultiSelect: React.FC<SearchableMultiSelectProps> = ({
   };
 
   return (
-    <div ref={containerRef} className="space-y-1.5 relative">
+    <div ref={containerRef} role="region" aria-labelledby={labelId} className="space-y-1.5 relative">
       <div className="flex items-center justify-between">
         <span id={labelId} className="block text-xs font-semibold text-slate-800">
           {label} {required && <span className="text-rose-600" aria-hidden="true">*</span>}

@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import {
   createAccountSettingsExport,
   DEFAULT_ACCOUNT_SETTINGS,
   normalizeAccountSettings,
+  readAccountProfile,
+  shouldShowVisualToast,
   validateAccountProfile,
 } from './accountSettings.ts';
 
@@ -16,12 +20,61 @@ describe('account settings normalization', () => {
   it('preserves supported values and normalizes unknown preference values', () => {
     expect(normalizeAccountSettings({
       profile: { displayName: 'Operator', callSign: 'ALPHA', bio: 'Bio' },
-      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', numberFormat: 'en-US' },
+      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', locale: 'en-IN', numberFormat: 'en-US', defaultExportFormat: 'xlsx', defaultRedactionLevel: 'strict' },
     })).toEqual({
       version: 1,
       profile: { displayName: 'Operator', callSign: 'ALPHA', bio: 'Bio' },
-      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', numberFormat: 'en-US' },
+      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', locale: 'en-IN', numberFormat: 'en-US', defaultExportFormat: 'xlsx', defaultRedactionLevel: 'strict', displayDensity: 'comfortable', showSuccessToasts: true },
     });
+  });
+
+
+  it('accepts valid IANA timezones and canonical locale identifiers while preserving legacy defaults', () => {
+    const normalized = normalizeAccountSettings({ preferences: { timezone: 'Europe/Paris', locale: 'fr-fr', numberFormat: 'de-DE' } });
+    expect(normalized.preferences.timezone).toBe('Europe/Paris');
+    expect(normalized.preferences.locale).toBe('fr-FR');
+    expect(normalized.preferences.numberFormat).toBe('de-DE');
+    const invalid = normalizeAccountSettings({ preferences: { timezone: 'Not/A_Timezone', locale: 'not a locale', numberFormat: 'bad locale' } });
+    expect(invalid.preferences.timezone).toBe(DEFAULT_ACCOUNT_SETTINGS.preferences.timezone);
+    expect(invalid.preferences.locale).toBe(DEFAULT_ACCOUNT_SETTINGS.preferences.locale);
+    expect(invalid.preferences.numberFormat).toBe(DEFAULT_ACCOUNT_SETTINGS.preferences.numberFormat);
+  });
+
+
+  it('applies compact spacing to workspace views and operational dialogs without changing control sizing or text', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/index.css'), 'utf8');
+    expect(css).toContain(':is(#main-content, [role="dialog"])');
+    expect(css).toContain('[class~="p-6"] { padding: 1rem; }');
+    expect(css).toContain('[class~="gap-4"] { gap: 0.75rem; }');
+    expect(css).toContain('[class~="space-y-4"] > :not([hidden]) ~ :not([hidden]) { margin-block-start: 0.75rem; }');
+    expect(css).not.toMatch(/data-display-density="compact"[^}]*font-size/i);
+    expect(css).not.toMatch(/data-display-density="compact"[^}]*min-height/i);
+  });
+
+  it('defaults display density to Comfortable and accepts Compact', () => {
+    expect(normalizeAccountSettings(null).preferences.displayDensity).toBe('comfortable');
+    expect(normalizeAccountSettings({ preferences: { displayDensity: 'compact' } }).preferences.displayDensity).toBe('compact');
+  });
+
+  it('fails closed to Comfortable for unsupported display density values', () => {
+    expect(normalizeAccountSettings({ preferences: { displayDensity: 'ultra-dense' } }).preferences.displayDensity).toBe('comfortable');
+  });
+
+  it('defaults routine success toasts on and preserves an explicit opt-out', () => {
+    expect(normalizeAccountSettings(null).preferences.showSuccessToasts).toBe(true);
+    expect(normalizeAccountSettings({ preferences: { showSuccessToasts: false } }).preferences.showSuccessToasts).toBe(false);
+  });
+
+  it('fails safely to enabled for malformed success-toast preference values', () => {
+    expect(normalizeAccountSettings({ preferences: { showSuccessToasts: 'disabled' } }).preferences.showSuccessToasts).toBe(true);
+  });
+
+  it('normalizes unsupported export preferences to the safe existing defaults', () => {
+    const normalized = normalizeAccountSettings({
+      preferences: { defaultExportFormat: 'exe', defaultRedactionLevel: 'minimal' },
+    });
+    expect(normalized.preferences.defaultExportFormat).toBe('txt');
+    expect(normalized.preferences.defaultRedactionLevel).toBe('standard');
   });
 
   it('bounds imported profile strings', () => {
@@ -31,6 +84,20 @@ describe('account settings normalization', () => {
     expect(normalized.profile.displayName).toHaveLength(80);
     expect(normalized.profile.callSign).toHaveLength(32);
     expect(normalized.profile.bio).toHaveLength(280);
+  });
+});
+
+
+describe('in-app notification preference boundary', () => {
+  it('suppresses only routine success visuals when explicitly disabled', () => {
+    const disabled = { preferences: { showSuccessToasts: false } };
+    expect(shouldShowVisualToast('success', disabled)).toBe(false);
+    expect(shouldShowVisualToast('status', disabled)).toBe(true);
+  });
+
+  it('keeps routine success visuals enabled when stored settings are malformed', () => {
+    expect(shouldShowVisualToast('success', '{invalid-json')).toBe(true);
+    expect(shouldShowVisualToast('success', null)).toBe(true);
   });
 });
 
@@ -60,5 +127,29 @@ describe('personal settings export', () => {
   it('does not include a user identifier or authentication token', () => {
     const serialized = JSON.stringify(createAccountSettingsExport(DEFAULT_ACCOUNT_SETTINGS));
     expect(serialized).not.toMatch(/uid|token|password/i);
+  });
+});
+
+
+describe('browser-local profile display reader', () => {
+  const storage = (value: string | null) => ({
+    getItem: () => value,
+  });
+
+  it('returns only the normalized profile from valid local preferences', () => {
+    expect(readAccountProfile(storage(JSON.stringify({
+      profile: { displayName: '  Operator  ', callSign: 'ALPHA', bio: 'Private bio' },
+    })))).toEqual({
+      displayName: '  Operator  ',
+      callSign: 'ALPHA',
+      bio: 'Private bio',
+    });
+  });
+
+  it('returns an empty profile when storage is absent, malformed or unavailable', () => {
+    expect(readAccountProfile(storage(null))).toEqual(DEFAULT_ACCOUNT_SETTINGS.profile);
+    expect(readAccountProfile(storage('{invalid-json'))).toEqual(DEFAULT_ACCOUNT_SETTINGS.profile);
+    expect(readAccountProfile({ getItem: () => { throw new Error('storage unavailable'); } }))
+      .toEqual(DEFAULT_ACCOUNT_SETTINGS.profile);
   });
 });

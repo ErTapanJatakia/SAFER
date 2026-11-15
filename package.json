@@ -8,7 +8,6 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit",
     "test:firestore-rules": "firebase emulators:exec --only firestore --project demo-safer \"node --test tests/firestore-rules.test.mjs\"",
     "test:tenant-membership": "firebase emulators:exec --only firestore --project demo-safer \"tsx --test src/lib/tenantMembership.test.ts\"",
     "test:auth-membership-ui": "vitest run src/components/AuthGate.test.tsx",
@@ -20,6 +19,7 @@
     "test:data-boundary": "tsx --test src/lib/dataBoundary.test.ts",
     "test:session-lifecycle": "tsx --test src/lib/sessionLifecycle.test.ts",
     "test:session-invalidation": "vitest run src/lib/sessionInvalidation.test.ts",
+    "test:session-inactivity": "vitest run src/components/SessionInactivityGuard.test.tsx",
     "test:demo-repository": "tsx --test src/lib/demoRepository.test.ts",
     "test:demo-workspace": "tsx --test src/lib/demoWorkspace.test.ts",
     "test:dashboard-ui": "vitest run src/components/DashboardView.test.tsx",
@@ -63,9 +63,19 @@
     "test:demo-ui-persistence": "node --test tests/demo-ui-persistence.test.mjs",
     "test:demo-conflict-export": "tsx --test src/lib/demoConflictExport.test.ts",
     "test:browser-cross-tab": "playwright test --config=playwright.config.mjs",
+    "test:accessibility-axe": "playwright test --config=playwright.config.mjs tests/browser/accessibility-axe.spec.mjs",
     "test:budget-policy": "vitest run src/utils/budgetPolicy.test.ts",
     "test:account-security": "vitest run src/components/AccountSecurityPanel.test.tsx",
-    "test:privacy-demo": "tsx --test src/utils/privacyRepository.test.ts src/utils/privacyExport.test.ts"
+    "test:account-formatting": "vitest run src/utils/accountFormatting.test.ts",
+    "test:privacy-demo": "tsx --test src/utils/privacyRepository.test.ts src/utils/privacyExport.test.ts && node --test tests/privacy-console-synthetic-boundary.test.mjs",
+    "test:organisation-domain": "tsx --test src/types/organisation.test.ts",
+    "test:organisation-workspace": "vitest run src/components/OrganisationWorkspacePanel.test.tsx",
+    "test:organisation-profile": "vitest run src/lib/organisationProfile.test.ts src/components/OrganisationProfilePanel.test.tsx",
+    "test:membership-lifecycle": "tsx --test src/lib/membershipLifecycle.test.ts",
+    "test:organisation-audit-contract": "tsx --test src/types/organisationAudit.test.ts",
+    "test:account-settings": "vitest run src/utils/accountSettings.test.ts",
+    "test:dpdp-governance": "tsx --test src/utils/dpdpGovernance.test.ts src/utils/dpdpGovernanceRepository.test.ts src/utils/dpdpCasework.test.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
@@ -85,6 +95,7 @@
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
     "@firebase/rules-unit-testing": "^6.0.0",
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",

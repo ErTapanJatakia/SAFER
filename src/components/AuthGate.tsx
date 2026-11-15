@@ -13,10 +13,13 @@ import {
 import {auth, db, isFirebaseConfigured} from '../lib/firebase.ts';
 import {resolveTenantMembership, type TenantMembership} from '../lib/tenantMembership.ts';
 import {createSessionLifecycle} from '../lib/sessionLifecycle.ts';
+import {isCurrentUserActiveMember} from '../types/organisation.ts';
 import {publishSessionInvalidation, subscribeToSessionInvalidation} from '../lib/sessionInvalidation.ts';
 import {enterDemoGuest} from '../lib/dataBoundary.ts';
 import {DemoGuestWorkspaceProvider} from './DemoGuestWorkspaceProvider.tsx';
 import {AccountSecurityPanel} from './AccountSecurityPanel.tsx';
+import {OrganisationWorkspacePanel} from './OrganisationWorkspacePanel.tsx';
+import {SessionInactivityGuard} from './SessionInactivityGuard.tsx';
 
 type AuthMode = 'signin' | 'register' | 'reset' | 'verify';
 
@@ -73,7 +76,9 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       return;
     }
     setAuthObserverFailed(false);
-    return onAuthStateChanged(firebaseAuth, (nextUser) => {
+    let observerActive = true;
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (nextUser) => {
+      if (!observerActive) return;
       const nextUid = nextUser?.uid ?? null;
       const previousUid = lastAuthUidRef.current;
       if ((previousUid === undefined && nextUid !== null)
@@ -105,6 +110,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       }
       setLoading(false);
     }, () => {
+      if (!observerActive) return;
       // An observer failure makes the account state uncertain. Revoke every
       // local workspace capability and invalidate work in this and peer tabs.
       sessionLifecycleRef.current.endSession();
@@ -120,6 +126,12 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       setAuthObserverFailed(true);
       setError('Unable to verify the current account session. Please retry account verification.');
     });
+    return () => {
+      // Ignore callbacks already queued by an observer being replaced during
+      // recovery; unsubscribe alone does not guard against a late callback.
+      observerActive = false;
+      unsubscribe();
+    };
   }, [authObserverRetry]);
 
   const retryAuthObserver = () => {
@@ -248,7 +260,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
     setMessage('Sign in with your email and password to request another verification message.');
   };
 
-  const handleResolveMembership = async (event: React.FormEvent) => {
+  const handleResolveMembership = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!user || !db) {
       setMembership(null);
@@ -256,12 +268,17 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       return;
     }
     const requestedUid = user.uid;
-    const requestedOrganisationId = organisationId.trim();
+    // Read the submitted locator from the form itself, then synchronise the
+    // lifecycle gate at the trust boundary. This avoids relying on two
+    // separately-updated copies of the same input during rapid session changes.
+    const submittedLocator = event.currentTarget.elements.namedItem('organisationId') as HTMLInputElement | null;
+    const requestedOrganisationId = (submittedLocator?.value ?? organisationId).trim();
+    sessionLifecycleRef.current.selectOrganisation(requestedOrganisationId);
     const requestToken = sessionLifecycleRef.current.beginRequest();
     if (!requestToken || requestToken.uid !== requestedUid || requestToken.orgId !== requestedOrganisationId) {
       setMembership(null);
       setMembershipBusy(false);
-      setMembershipError('Membership could not be verified. Check the organisation ID or contact its authorised administrator.');
+      setMembershipError('No active membership could be verified. The organisation ID may be incorrect, the membership or organisation may be suspended, access may have been revoked, or the service may be unavailable. Check the ID and retry, or contact an authorised administrator.');
       return;
     }
     setMembershipBusy(true);
@@ -270,8 +287,15 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
     try {
       const resolved = await resolveTenantMembership(db, {uid: requestedUid}, requestedOrganisationId);
       if (sessionLifecycleRef.current.isCurrent(requestToken)) {
-        // Keep the verified result in memory only; never persist roles or tenant authority.
-        setMembership(resolved);
+        // Re-check response provenance at the UI boundary as well as in the
+        // resolver. A mismatched adapter/result must never publish tenant UI.
+        if (!isCurrentUserActiveMember(resolved, requestToken.uid, requestToken.orgId)) {
+          setMembership(null);
+          setMembershipError('No active membership could be verified. The organisation ID may be incorrect, the membership or organisation may be suspended, access may have been revoked, or the service may be unavailable. Check the ID and retry, or contact an authorised administrator.');
+        } else {
+          // Keep the verified result in memory only; never persist roles or tenant authority.
+          setMembership(resolved);
+        }
       }
     } catch {
       if (sessionLifecycleRef.current.isCurrent(requestToken)) {
@@ -311,26 +335,34 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
 
   if (user || demoGuest) {
     return (
-      <>
-        <div className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-2 border-b border-slate-700 bg-slate-950 px-4 py-2 text-xs text-slate-100">
+      <SessionInactivityGuard sessionKey={user?.uid ?? 'demo-guest'} onExpire={leaveAccount}>
+        <div role="region" aria-label="Account session" className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-2 border-b border-slate-700 bg-slate-950 px-4 py-2 text-xs text-slate-100">
           <span>{user ? `Signed in: ${user.email || 'verified account'}` : 'Demo Guest session'}</span>
           <button type="button" onClick={leaveAccount} className="rounded border border-slate-600 px-3 py-1.5 hover:bg-slate-800">Sign out</button>
         </div>
         {error && <p role="alert" className="border-b border-red-800 bg-red-950/60 px-4 py-2 text-xs text-red-200">{error}</p>}
         {!!user && (
           <>
-          <AccountSecurityPanel user={user} onUserUpdated={setUser} />
+          <AccountSecurityPanel key={user.uid} user={user} onUserUpdated={setUser} />
           <section aria-labelledby="organisation-access-heading" className="border-b border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-100">
             <div className="mx-auto flex max-w-7xl flex-col gap-2">
               <div>
                 <h2 id="organisation-access-heading" className="font-semibold">Organisation membership</h2>
                 <p className="text-xs text-slate-300">Enter the organisation ID supplied through your authorised onboarding process. SAFER checks only your exact membership record.</p>
               </div>
-              <form onSubmit={handleResolveMembership} className="flex flex-col gap-2 sm:flex-row sm:items-end">
+              <form onSubmit={handleResolveMembership} aria-busy={membershipBusy} className="flex flex-col gap-2 sm:flex-row sm:items-end">
                 <label className="flex-1 text-xs font-medium text-slate-300">Organisation ID
                   <input
+                    name="organisationId"
                     value={organisationId}
-                    onChange={(event) => {sessionLifecycleRef.current.selectOrganisation(event.target.value); setMembershipBusy(false); setOrganisationId(event.target.value); setMembership(null); setMembershipError('');}}
+                    onInput={(event) => {
+                      const nextOrganisationId = event.currentTarget.value;
+                      sessionLifecycleRef.current.selectOrganisation(nextOrganisationId);
+                      setMembershipBusy(false);
+                      setOrganisationId(nextOrganisationId);
+                      setMembership(null);
+                      setMembershipError('');
+                    }}
                     autoComplete="off"
                     spellCheck={false}
                     maxLength={128}
@@ -344,18 +376,19 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
                   {membershipBusy ? 'Checking…' : 'Verify membership'}
                 </button>
               </form>
+              {membershipBusy && <p role="status" aria-live="polite" className="text-xs text-blue-200">Checking the exact membership record…</p>}
               <p id="organisation-id-help" className="text-[11px] text-slate-400">The ID is a locator, not a password or access token. Membership status is held in memory only.</p>
               {membershipError && <p role="alert" className="text-xs text-red-300">{membershipError}</p>}
-              {membership && <p role="status" className="text-xs text-emerald-300">Verified active membership · Role: {membership.role} · Organisation: {membership.orgId}</p>}
+              {membership && <OrganisationWorkspacePanel database={db} membership={membership} />}
             </div>
           </section>
           </>
         )}
         {demoGuest && !user ? (
           <>
-            <div className="border-b border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-950">
+            <aside aria-label="Demo workspace notice" className="border-b border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-950">
               <strong>Demo workspace:</strong> This session uses browser-local demonstration data only. Use synthetic records; do not enter real personal, personnel, incident or operational information.
-            </div>
+            </aside>
             <DemoGuestWorkspaceProvider accessState={enterDemoGuest(1)}>{children}</DemoGuestWorkspaceProvider>
           </>
         ) : (
@@ -363,11 +396,11 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
             <section className="mx-auto max-w-3xl rounded-xl border border-amber-700 bg-slate-900 p-6">
               <h1 className="text-lg font-semibold">Account verified — workspace not yet released</h1>
               <p className="mt-2 text-sm text-slate-300">Your account session is active, but SAFER tenant operational access has not been released. The operational workspace is intentionally unavailable in authenticated sessions.</p>
-              <p className="mt-3 text-xs text-amber-200">No personnel, incident, checklist or other operational browser data is loaded or written in this session. Membership verification alone does not grant access. Production Firestore rules remain deny-all.</p>
+              <p className="mt-3 text-xs text-amber-200">No personnel, incident, checklist or other operational browser data is loaded or written by this authenticated UI session. Membership verification does not release an operational screen. Current Firestore Rules independently permit only the explicitly modelled owner/admin operations; those Rules remain authoritative and are not bypassed by this UI.</p>
             </section>
           </main>
         )}
-      </>
+      </SessionInactivityGuard>
     );
   }
 
@@ -377,7 +410,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
         <header className="border-b border-slate-800 bg-slate-950 p-7 text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-blue-700 bg-blue-950 text-xl font-black text-blue-200">S</div>
           <h1 className="text-2xl font-bold tracking-wider">SAFER</h1>
-          <p className="mt-1 text-xs text-slate-400">Security Administration, Field Readiness, Evidence &amp; Reporting</p>
+          <p className="mt-1 text-xs text-slate-300">Security Administration, Field Readiness, Evidence &amp; Reporting</p>
           <p className="mt-3 text-xs text-emerald-300">Check access. Protect information.</p>
         </header>
         <div className="space-y-5 p-6">
@@ -430,7 +463,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
           {message && <p role="status" className="rounded-lg border border-emerald-800 bg-emerald-950/50 p-3 text-xs text-emerald-200">{message}</p>}
           <div className="border-t border-slate-800 pt-4">
             <button type="button" onClick={() => {setDemoGuest(true); clearFeedback();}} className="w-full rounded-lg border border-slate-600 bg-slate-800 px-4 py-3 text-sm font-semibold hover:bg-slate-700">Continue as Demo Guest</button>
-            <p className="mt-2 text-center text-[10px] text-slate-500">Demo mode uses synthetic browser-local data. Do not enter real personal or operational information.</p>
+            <p className="mt-2 text-center text-[10px] text-slate-300">Demo mode uses synthetic browser-local data. Do not enter real personal or operational information.</p>
           </div>
         </div>
       </section>

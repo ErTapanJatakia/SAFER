@@ -25,16 +25,9 @@ Confirm the project ID and region carefully before finalising.
 
 ## Initial security posture
 
-The repository's `firestore.rules` intentionally denies all client reads and
-writes. This is a fail-closed starting point, not the final application policy.
-It prevents accidental exposure while SAFER's authoritative UID and
-organisation membership model is being designed and tested.
+The repository's `firestore.rules` contains a conservative, emulator-tested tenant-scoped **candidate policy**. It is not a deny-all ruleset, and it is not necessarily the policy currently published in Firebase Console. The separate release-readiness audit records that production Console rules remain deny-all.
 
-After creating the database, open **Firestore Database → Rules** and publish
-the exact contents of the repository's `firestore.rules`. Do not use the
-console's permissive test-mode rules. Until tenant-scoped rules and emulator
-tests are delivered, the application must not store operational records in
-Firestore.
+Do **not** publish the repository candidate merely because its emulator suite passes or a pull request is merged. Production Rules publication is a separate security release requiring explicit owner approval, a final candidate diff review, current emulator evidence, bootstrap readiness, and application data-boundary verification. Until that separate release is approved and completed, treat production Firestore access as deny-all. Do not use permissive test-mode rules.
 
 ## Data safety boundary
 

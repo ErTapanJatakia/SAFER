@@ -54,6 +54,8 @@ import { AccountSettingsModal } from './components/AccountSettingsModal.tsx';
 import { PrivacyConsoleModal } from './components/PrivacyConsoleModal.tsx';
 import { PersonnelExportModal } from './components/PersonnelExportModal.tsx';
 import { LiveAnnouncer } from './components/LiveAnnouncer.tsx';
+import { ACCOUNT_SETTINGS_STORAGE_KEY, shouldShowVisualToast } from './utils/accountSettings.ts';
+import { speakAccessibilityAnnouncement } from './utils/speech.ts';
 import {
   evaluatePersonnelReadiness,
   computeOperationalMetrics,
@@ -179,7 +181,15 @@ export default function App() {
   const [accessibilitySettings, setAccessibilitySettings] = useState<AccessibilitySettings>(() => {
     try {
       const saved = localStorage.getItem('prot_ops_a11y_v2');
-      return saved ? JSON.parse(saved) : DEFAULT_ACCESSIBILITY_SETTINGS;
+      if (!saved) return DEFAULT_ACCESSIBILITY_SETTINGS;
+      const parsed = JSON.parse(saved) as Partial<AccessibilitySettings>;
+      return {
+        ...DEFAULT_ACCESSIBILITY_SETTINGS,
+        ...parsed,
+        spokenAnnouncements: parsed.spokenAnnouncements === true,
+        speechRate: ['slow', 'normal', 'fast'].includes(String(parsed.speechRate)) ? parsed.speechRate! : DEFAULT_ACCESSIBILITY_SETTINGS.speechRate,
+        speechVolume: ['low', 'medium', 'high'].includes(String(parsed.speechVolume)) ? parsed.speechVolume! : DEFAULT_ACCESSIBILITY_SETTINGS.speechVolume,
+      };
     } catch {
       return DEFAULT_ACCESSIBILITY_SETTINGS;
     }
@@ -203,6 +213,9 @@ export default function App() {
   const [summaryTargetPerson, setSummaryTargetPerson] = useState<PersonnelRecord | null>(null);
   const [exportPerson, setExportPerson] = useState<PersonnelRecord | null | undefined>(undefined);
 
+  // Re-render preference consumers when another same-origin tab changes local account settings.
+  const [accountSettingsRevision, setAccountSettingsRevision] = useState(0);
+
   // Feedback & Screen Reader Announcements
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [liveAnnouncement, setLiveAnnouncement] = useState<string | null>(null);
@@ -211,11 +224,26 @@ export default function App() {
   const announce = (msg: string) => {
     setLiveAnnouncement(msg);
     setTimeout(() => setLiveAnnouncement(null), 3000);
+    // Spoken output is opt-in and uses the browser/OS speech engine when available.
+    speakAccessibilityAnnouncement(msg, accessibilitySettings);
   };
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
+  const showToast = (msg: string, kind: 'status' | 'success' = 'status') => {
+    // Notification preferences only control non-critical visual success feedback.
+    // Live-region announcements and all status/error/security warnings remain active.
     announce(msg);
+    let showSuccess = true;
+    if (kind === 'success') {
+      try {
+        const raw = localStorage.getItem(ACCOUNT_SETTINGS_STORAGE_KEY);
+        showSuccess = shouldShowVisualToast(kind, raw ? JSON.parse(raw) : null);
+      } catch {
+        // Storage or parsing failures fail open for user feedback.
+        showSuccess = true;
+      }
+    }
+    if (kind === 'success' && !showSuccess) return;
+    setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
 
@@ -264,7 +292,7 @@ export default function App() {
       await persist(next);
       current.current = next;
       publish(next);
-      if (successMessage) showToast(successMessage);
+      if (successMessage) showToast(successMessage, 'success');
     });
     queue.current = operation.catch(() => undefined);
     try {
@@ -317,6 +345,45 @@ export default function App() {
       localStorage.setItem('prot_ops_a11y_v2', JSON.stringify(accessibilitySettings));
     } catch {}
   }, [accessibilitySettings]);
+
+  useEffect(() => {
+    if (!accessibilitySettings.spokenAnnouncements && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  }, [accessibilitySettings.spokenAnnouncements]);
+
+  // Browser-local account preferences are shared by same-origin tabs. React's
+  // storage event fires only in other documents, so same-tab saves continue to
+  // use the existing onSaved feedback render path.
+  useEffect(() => {
+    const handleAccountSettingsStorage = (event: StorageEvent) => {
+      if (event.storageArea !== window.localStorage) return;
+      if (event.key !== ACCOUNT_SETTINGS_STORAGE_KEY && event.key !== null) return;
+      setAccountSettingsRevision((revision) => revision + 1);
+    };
+    const handleAccountSettingsUpdated = () => setAccountSettingsRevision((revision) => revision + 1);
+    window.addEventListener('storage', handleAccountSettingsStorage);
+    window.addEventListener('safer:account-settings-updated', handleAccountSettingsUpdated);
+    return () => {
+      window.removeEventListener('storage', handleAccountSettingsStorage);
+      window.removeEventListener('safer:account-settings-updated', handleAccountSettingsUpdated);
+    };
+  }, []);
+
+  // Display density is a presentation-only preference; it never changes data or permissions.
+  useEffect(() => {
+    let density: 'comfortable' | 'compact' = 'comfortable';
+    try {
+      const raw = localStorage.getItem(ACCOUNT_SETTINGS_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { preferences?: { displayDensity?: unknown } };
+        if (parsed.preferences?.displayDensity === 'compact') density = 'compact';
+      }
+    } catch {
+      // Fail back to the comfortable layout if local preferences are unavailable or malformed.
+    }
+    document.documentElement.setAttribute('data-display-density', density);
+  }, [accountSettingsRevision]);
 
   // Apply Accessibility attributes to <html> root
   useEffect(() => {
@@ -548,7 +615,7 @@ export default function App() {
     link.click();
     link.remove();
     window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-    showToast('Downloaded this tab’s last confirmed Demo Guest records.');
+    showToast('Downloaded this tab’s last confirmed Demo Guest records.', 'success');
   };
 
   const handleResetDemoData = async () => {
@@ -576,7 +643,7 @@ export default function App() {
     setIncidentList([...INITIAL_INCIDENTS]);
     setCyberItems([...INITIAL_CYBER_ITEMS]);
     setChecklistItems([...INITIAL_CHECKLIST]);
-    showToast('Reset all demonstration data to baseline prototype state.');
+    showToast('Reset all demonstration data to baseline prototype state.', 'success');
   };
 
   // Theme Handlers
@@ -584,23 +651,23 @@ export default function App() {
     setCurrentThemeId(themeId);
     setIsCustomThemeActive(false);
     const theme = THEME_PRESETS.find((p) => p.id === themeId);
-    showToast(`Theme applied: ${theme?.name || themeId}`);
+    showToast(`Theme applied: ${theme?.name || themeId}`, 'success');
   };
 
   const handleActivateCustomTheme = () => {
     setIsCustomThemeActive(true);
-    showToast('Custom theme palette activated.');
+    showToast('Custom theme palette activated.', 'success');
   };
 
   const handleResetLogos = () => {
     setTopLogo(DEFAULT_TOP_LOGO);
     setBottomLogo(DEFAULT_BOTTOM_LOGO);
-    showToast('Restored default organisation branding layout.');
+    showToast('Restored default organisation branding layout.', 'success');
   };
 
   const handleResetAccessibility = () => {
     setAccessibilitySettings(DEFAULT_ACCESSIBILITY_SETTINGS);
-    showToast('Accessibility settings reset to default.');
+    showToast('Accessibility settings reset to default.', 'success');
   };
 
   const showBottomLogoLeft =
@@ -782,6 +849,16 @@ export default function App() {
             )}
           </div>
         </div>
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div
+          aria-hidden="true"
+          className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-lg shadow-lg border border-slate-700 flex items-center space-x-2 text-xs animate-in fade-in slide-in-from-bottom-2 duration-200"
+        >
+          <Check className="w-4 h-4 text-teal-400 shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
       </footer>
 
       {/* Accessible Demonstration Notice Modal */}
@@ -817,7 +894,7 @@ export default function App() {
       <AccountSettingsModal
         isOpen={isAccountSettingsOpen}
         onClose={() => setIsAccountSettingsOpen(false)}
-        onSaved={showToast}
+        onSaved={(message) => showToast(message, 'success')}
       />
 
       {/* Synthetic-only Privacy Operations Console */}
@@ -923,16 +1000,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div
-          aria-hidden="true"
-          className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-lg shadow-lg border border-slate-700 flex items-center space-x-2 text-xs animate-in fade-in slide-in-from-bottom-2 duration-200"
-        >
-          <Check className="w-4 h-4 text-teal-400 shrink-0" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
+
     </div>
   );
 }

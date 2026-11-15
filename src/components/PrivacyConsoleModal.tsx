@@ -9,8 +9,10 @@ import {
 } from '../types/privacy.ts';
 import { createPrivacyDemoRepository } from '../utils/privacyRepository.ts';
 import { createPrivacyDemoExport } from '../utils/privacyExport.ts';
+import { formatAccountDateTime, formatAccountNumber, readAccountPreferences } from '../utils/accountFormatting.ts';
+import { PrivacyGovernancePanel } from './PrivacyGovernancePanel.tsx';
 
-type Tab = 'overview' | 'processing' | 'notices' | 'requests' | 'grievances' | 'consent' | 'retention';
+type Tab = 'overview' | 'processing' | 'notices' | 'requests' | 'grievances' | 'consent' | 'retention' | 'governance';
 
 const tabs: Array<{ id: Tab; label: string }> = [
   { id: 'overview', label: 'Overview' },
@@ -20,6 +22,7 @@ const tabs: Array<{ id: Tab; label: string }> = [
   { id: 'grievances', label: 'Grievances' },
   { id: 'consent', label: 'Consent events' },
   { id: 'retention', label: 'Retention reviews' },
+  { id: 'governance', label: 'DPDP governance' },
 ];
 
 const inputClass = 'w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-400';
@@ -31,12 +34,14 @@ function newId(prefix: string): string {
 }
 
 export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+  const accountPreferences = readAccountPreferences();
   const dialogRef = useRef<HTMLElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [workspace, setWorkspace] = useState<PrivacyDemoWorkspace>(EMPTY_PRIVACY_DEMO_WORKSPACE);
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [error, setError] = useState<string | null>(null);
   const [storageReady, setStorageReady] = useState(false);
+  const [demoAcknowledged, setDemoAcknowledged] = useState(false);
   const [activityPurpose, setActivityPurpose] = useState('');
   const [activityCategories, setActivityCategories] = useState('');
   const [activityRecipients, setActivityRecipients] = useState('');
@@ -64,6 +69,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
 
   useEffect(() => {
     if (!isOpen) return;
+    setDemoAcknowledged(false);
     if (!repository) {
       setStorageReady(false);
       setError('Browser storage is unavailable. The privacy console is read-only until storage access is restored.');
@@ -117,8 +123,8 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
   if (!isOpen) return null;
 
   const persist = (next: PrivacyDemoWorkspace): boolean => {
-    if (!repository || !storageReady) {
-      setError('The privacy workspace has not passed its storage and integrity checks. No changes were saved.');
+    if (!repository || !storageReady || !demoAcknowledged) {
+      setError('Acknowledge the synthetic-data boundary and pass storage checks before making changes. No changes were saved.');
       return false;
     }
     try {
@@ -214,8 +220,8 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
   };
 
   const exportWorkspace = () => {
-    if (!repository || !storageReady) {
-      setError('The privacy workspace has not passed its storage and integrity checks. No export was created.');
+    if (!repository || !storageReady || !demoAcknowledged) {
+      setError('Acknowledge the synthetic-data boundary and pass storage checks before exporting. No export was created.');
       return;
     }
     try {
@@ -228,7 +234,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
       document.body.appendChild(link);
       link.click();
       link.remove();
-      URL.revokeObjectURL(objectUrl);
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
       setWorkspace(latestWorkspace);
       setError(null);
     } catch (cause) {
@@ -279,6 +285,12 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
             <p><strong>Demonstration workspace only.</strong> All records are synthetic and stored in this browser. Entries are not statutory submissions, legally operative notices or proof of valid consent. Do not enter real personal or sensitive information.</p>
           </div>
         </div>
+        <div className="border-b border-slate-700 bg-slate-900 px-5 py-3 text-xs text-slate-200">
+          <label className="flex items-start gap-2">
+            <input type="checkbox" className="mt-0.5 accent-teal-500" checked={demoAcknowledged} onChange={(event) => setDemoAcknowledged(event.target.checked)} />
+            <span><strong>I will use synthetic examples only.</strong> I will not enter real personal, confidential or sensitive information. This acknowledgement is a workflow safeguard, not a PII detector or guarantee that entered text is synthetic.</span>
+          </label>
+        </div>
 
         <nav aria-label="Privacy console sections" className="flex gap-1 overflow-x-auto border-b border-slate-700 bg-slate-950/60 px-4 py-2">
           {tabs.map((tab) => <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)}
@@ -294,12 +306,21 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
           {activeTab === 'overview' && <>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {counts.map((item) => <div key={item.label} className="rounded-xl border border-slate-700 bg-slate-950/70 p-4">
-                <p className="text-xs text-slate-400">{item.label}</p><p className="mt-2 text-2xl font-bold tabular-nums">{item.count}</p>
+                <p className="text-xs text-slate-400">{item.label}</p><p className="mt-2 text-2xl font-bold tabular-nums">{formatAccountNumber(item.count, accountPreferences)}</p>
               </div>)}
             </div>
             <div className="rounded-xl border border-slate-700 bg-slate-950/50 p-4">
               <h3 className="flex items-center gap-2 text-sm font-semibold"><ClipboardList className="h-4 w-4 text-teal-400" /> Operating boundary</h3>
               <p className="mt-2 text-sm text-slate-300">This console is a local administrative prototype. It does not calculate statutory deadlines, decide legal bases, contact a regulator or data subject, or execute deletion against operational records.</p>
+            </div>
+            <div role="note" aria-labelledby="privacy-legal-boundary-heading" className="rounded-xl border border-amber-700/70 bg-amber-950/40 p-4">
+              <h3 id="privacy-legal-boundary-heading" className="text-sm font-semibold text-amber-100">Legal and compliance boundary</h3>
+              <p className="mt-2 text-sm leading-relaxed text-amber-100/90">
+                SAFER provides workflow aids for privacy administration. It does not provide legal advice, determine whether a processing activity has a valid legal basis, certify compliance with the Digital Personal Data Protection Act, 2023 or its Rules, or guarantee that a statutory obligation has been met. Have notices, purposes, retention decisions and response procedures reviewed by qualified counsel and the responsible organisation before real-world use.
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-amber-200/80">
+                No organisation identity, Data Protection Officer contact, statutory deadline, legal basis or retention period is pre-populated as a verified fact in this demonstration workspace.
+              </p>
             </div>
           </>}
 
@@ -316,7 +337,7 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
                 </select>
               </label>
               <p className="text-xs text-amber-200">This is an internal tracking label only. It does not establish a lawful basis, necessity, proportionality or legal compliance.</p>
-              <button className={primaryButtonClass} type="submit" disabled={!storageReady}>Save synthetic activity</button>
+              <button className={primaryButtonClass} type="submit" disabled={!storageReady || !demoAcknowledged}>Save synthetic activity</button>
             </form>
             {workspace.processingActivities.map((activity) => <article key={activity.id} className="rounded-xl border border-slate-700 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2"><strong className="text-sm">{activity.purpose}</strong><span className="text-xs text-amber-300">{activity.legalAssessment === 'not-assessed' ? 'Not assessed' : 'Marked reviewed'}</span></div>
@@ -332,12 +353,12 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
               <h3 className="text-sm font-semibold">Create a notice draft</h3>
               <input className={inputClass} value={noticeTitle} onChange={(e) => setNoticeTitle(e.target.value)} placeholder="Draft title" aria-label="Notice draft title" maxLength={120} required />
               <textarea className={inputClass} value={noticeContent} onChange={(e) => setNoticeContent(e.target.value)} placeholder="Draft text — verify all organisation-specific statements before use" aria-label="Notice draft content" rows={4} maxLength={8000} required />
-              <button className={primaryButtonClass} type="submit" disabled={!storageReady}>Save draft</button>
+              <button className={primaryButtonClass} type="submit" disabled={!storageReady || !demoAcknowledged}>Save draft</button>
             </form>
             {workspace.noticeDrafts.map((notice) => <article key={notice.id} className="rounded-xl border border-slate-700 p-4">
               <div className="flex flex-wrap justify-between gap-2"><h4 className="font-semibold">{notice.title}</h4><span className="text-xs text-amber-300">Draft only</span></div>
               <p className="mt-2 whitespace-pre-wrap text-sm text-slate-300">{notice.content}</p>
-              <p className="mt-2 text-[11px] text-slate-500">Updated {new Date(notice.updatedAt).toLocaleString()}</p>
+              <p className="mt-2 text-[11px] text-slate-500">Updated {formatAccountDateTime(notice.updatedAt, accountPreferences)}</p>
             </article>)}
             {workspace.noticeDrafts.length === 0 && <p className="text-sm text-slate-400">No notice drafts have been created.</p>}
           </section>}
@@ -349,14 +370,14 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
                 <option value="access">Access</option><option value="correction">Correction</option><option value="erasure">Erasure</option><option value="other">Other</option>
               </select>
               <textarea className={inputClass} value={requestDescription} onChange={(e) => setRequestDescription(e.target.value)} placeholder="Synthetic request description" aria-label="Request description" rows={3} maxLength={3000} required />
-              <button className={primaryButtonClass} type="submit">Add demo request</button>
+              <button className={primaryButtonClass} type="submit" disabled={!storageReady || !demoAcknowledged}>Add demo request</button>
             </form>
             {workspace.rightsRequests.map((record) => <article key={record.id} className="rounded-xl border border-slate-700 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2"><strong className="text-sm capitalize">{record.requestKind} request</strong>
-                <select className="rounded border border-slate-600 bg-slate-950 px-2 py-1 text-xs" value={record.status} onChange={(e) => updateRequestStatus(record.id, e.target.value as PrivacyRightsRequest['status'])} disabled={!storageReady} aria-label={`Status for ${record.id}`}>
+                <select className="rounded border border-slate-600 bg-slate-950 px-2 py-1 text-xs" value={record.status} onChange={(e) => updateRequestStatus(record.id, e.target.value as PrivacyRightsRequest['status'])} disabled={!storageReady || !demoAcknowledged} aria-label={`Status for ${record.id}`}>
                   <option value="submitted">Submitted (demo)</option><option value="under_review">Under review</option><option value="completed">Completed</option><option value="rejected">Rejected</option>
                 </select>
-              </div><p className="mt-2 text-sm text-slate-300">{record.description}</p><p className="mt-2 text-[11px] text-slate-500">{new Date(record.submittedAt).toLocaleString()}</p>
+              </div><p className="mt-2 text-sm text-slate-300">{record.description}</p><p className="mt-2 text-[11px] text-slate-500">{formatAccountDateTime(record.submittedAt, accountPreferences)}</p>
             </article>)}
             {workspace.rightsRequests.length === 0 && <p className="text-sm text-slate-400">No synthetic requests recorded.</p>}
           </section>}
@@ -366,14 +387,14 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
               <h3 className="text-sm font-semibold">Add a synthetic grievance example</h3>
               <input className={inputClass} value={grievanceCategory} onChange={(e) => setGrievanceCategory(e.target.value)} placeholder="Category" aria-label="Grievance category" maxLength={100} required />
               <textarea className={inputClass} value={grievanceDescription} onChange={(e) => setGrievanceDescription(e.target.value)} placeholder="Synthetic grievance description" aria-label="Grievance description" rows={3} maxLength={3000} required />
-              <button className={primaryButtonClass} type="submit">Add demo grievance</button>
+              <button className={primaryButtonClass} type="submit" disabled={!storageReady || !demoAcknowledged}>Add demo grievance</button>
             </form>
             {workspace.grievances.map((record) => <article key={record.id} className="rounded-xl border border-slate-700 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2"><strong className="text-sm">{record.category}</strong>
-                <select className="rounded border border-slate-600 bg-slate-950 px-2 py-1 text-xs" value={record.status} onChange={(e) => updateGrievanceStatus(record.id, e.target.value as PrivacyGrievance['status'])} disabled={!storageReady} aria-label={`Status for ${record.id}`}>
+                <select className="rounded border border-slate-600 bg-slate-950 px-2 py-1 text-xs" value={record.status} onChange={(e) => updateGrievanceStatus(record.id, e.target.value as PrivacyGrievance['status'])} disabled={!storageReady || !demoAcknowledged} aria-label={`Status for ${record.id}`}>
                   <option value="open">Open</option><option value="investigating">Investigating</option><option value="resolved">Resolved</option><option value="closed">Closed</option>
                 </select>
-              </div><p className="mt-2 text-sm text-slate-300">{record.description}</p><p className="mt-2 text-[11px] text-slate-500">{new Date(record.submittedAt).toLocaleString()}</p>
+              </div><p className="mt-2 text-sm text-slate-300">{record.description}</p><p className="mt-2 text-[11px] text-slate-500">{formatAccountDateTime(record.submittedAt, accountPreferences)}</p>
             </article>)}
             {workspace.grievances.length === 0 && <p className="text-sm text-slate-400">No synthetic grievances recorded.</p>}
           </section>}
@@ -383,11 +404,11 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
               <h3 className="text-sm font-semibold">Record a synthetic consent event</h3>
               <input className={inputClass} value={consentSubject} onChange={(e) => setConsentSubject(e.target.value)} placeholder="Synthetic subject reference" aria-label="Synthetic subject reference" maxLength={120} required />
               <input className={inputClass} value={consentPurpose} onChange={(e) => setConsentPurpose(e.target.value)} placeholder="Purpose reference" aria-label="Purpose reference" maxLength={120} required />
-              <button className={primaryButtonClass} type="submit">Record demo event</button>
+              <button className={primaryButtonClass} type="submit" disabled={!storageReady || !demoAcknowledged}>Record demo event</button>
             </form>
             <p className="rounded-lg border border-amber-800 bg-amber-950/40 p-3 text-xs text-amber-100">This ledger records a demonstration event only. It does not establish that consent is required, valid, informed or freely given for any real processing activity.</p>
             {workspace.consentEvents.map((event) => <article key={event.id} className="rounded-xl border border-slate-700 p-4 text-sm">
-              <strong>{event.subjectRef}</strong><p className="mt-1 text-slate-300">Purpose: {event.purposeRef}</p><p className="mt-1 text-xs text-slate-500">{event.event} · {new Date(event.recordedAt).toLocaleString()}</p>
+              <strong>{event.subjectRef}</strong><p className="mt-1 text-slate-300">Purpose: {event.purposeRef}</p><p className="mt-1 text-xs text-slate-500">{event.event} · {formatAccountDateTime(event.recordedAt, accountPreferences)}</p>
             </article>)}
             {workspace.consentEvents.length === 0 && <p className="text-sm text-slate-400">No synthetic consent events recorded.</p>}
           </section>}
@@ -397,20 +418,21 @@ export const PrivacyConsoleModal: React.FC<{ isOpen: boolean; onClose: () => voi
               <h3 className="text-sm font-semibold">Record a manual retention review</h3>
               <input className={inputClass} value={retentionCategory} onChange={(e) => setRetentionCategory(e.target.value)} placeholder="Synthetic data category" aria-label="Retention data category" maxLength={120} required />
               <textarea className={inputClass} value={retentionNote} onChange={(e) => setRetentionNote(e.target.value)} placeholder="Review note and decision rationale" aria-label="Retention review note" rows={3} maxLength={3000} required />
-              <button className={primaryButtonClass} type="submit">Save review</button>
+              <button className={primaryButtonClass} type="submit" disabled={!storageReady || !demoAcknowledged}>Save review</button>
             </form>
             <p className="rounded-lg border border-amber-800 bg-amber-950/40 p-3 text-xs text-amber-100">Reviews are notes only. No timer, legal retention period or deletion action is performed. Operational records remain untouched.</p>
             {workspace.retentionReviews.map((review) => <article key={review.id} className="rounded-xl border border-slate-700 p-4">
-              <strong className="text-sm">{review.dataCategory}</strong><p className="mt-2 text-sm text-slate-300">{review.reviewNote}</p><p className="mt-2 text-[11px] text-slate-500">Reviewed {review.reviewedAt ? new Date(review.reviewedAt).toLocaleString() : '—'}</p>
+              <strong className="text-sm">{review.dataCategory}</strong><p className="mt-2 text-sm text-slate-300">{review.reviewNote}</p><p className="mt-2 text-[11px] text-slate-500">Reviewed {review.reviewedAt ? formatAccountDateTime(review.reviewedAt, accountPreferences) : '—'}</p>
             </article>)}
             {workspace.retentionReviews.length === 0 && <p className="text-sm text-slate-400">No retention reviews recorded.</p>}
           </section>}
+          {activeTab === 'governance' && <PrivacyGovernancePanel />}
         </div>
 
         <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-700 bg-slate-950 px-5 py-3">
           <span className="text-[11px] text-slate-500">Synthetic Demo Guest data · Browser-local storage</span>
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={exportWorkspace} className={buttonClass} disabled={!storageReady}><Download className="mr-1 inline h-3.5 w-3.5" />Export JSON</button>
+            <button type="button" onClick={exportWorkspace} className={buttonClass} disabled={!storageReady || !demoAcknowledged}><Download className="mr-1 inline h-3.5 w-3.5" />Export JSON</button>
             <button type="button" onClick={onClose} className={buttonClass}>Close</button>
           </div>
         </footer>

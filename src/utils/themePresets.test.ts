@@ -55,4 +55,43 @@ test('Default settings are sane and safe', () => {
   assert.equal(DEFAULT_BOTTOM_LOGO.position, 'bottom-left');
   assert.equal(DEFAULT_ACCESSIBILITY_SETTINGS.textSize, '100');
   assert.equal(DEFAULT_ACCESSIBILITY_SETTINGS.contrast, 'normal');
+  assert.equal(DEFAULT_ACCESSIBILITY_SETTINGS.spokenAnnouncements, false);
+  assert.equal(DEFAULT_ACCESSIBILITY_SETTINGS.speechRate, 'normal');
+  assert.equal(DEFAULT_ACCESSIBILITY_SETTINGS.speechVolume, 'high');
+});
+
+test('spoken announcement helper is opt-in and applies selected rate and volume', async () => {
+  const { speakAccessibilityAnnouncement } = await import('./speech.ts');
+  const spoken: Array<{ text: string; rate: number; volume: number }> = [];
+  let cancelled = 0;
+  class FakeUtterance {
+    rate = 1;
+    volume = 1;
+    constructor(public text: string) {}
+  }
+  const runtime = {
+    speechSynthesis: {
+      cancel: () => { cancelled += 1; },
+      speak: (utterance: FakeUtterance) => spoken.push(utterance),
+    },
+    SpeechSynthesisUtterance: FakeUtterance,
+  } as unknown as import('./speech.ts').SpeechRuntime;
+  assert.equal(speakAccessibilityAnnouncement('Not spoken', {
+    spokenAnnouncements: false, speechRate: 'normal', speechVolume: 'high',
+  }, runtime), false);
+  assert.equal(spoken.length, 0);
+  assert.equal(speakAccessibilityAnnouncement('Ready', {
+    spokenAnnouncements: true, speechRate: 'slow', speechVolume: 'low',
+  }, runtime), true);
+  assert.equal(cancelled, 1);
+  assert.equal(spoken[0].text, 'Ready');
+  assert.equal(spoken[0].rate, 0.85);
+  assert.equal(spoken[0].volume, 0.4);
+});
+
+test('spoken announcement helper safely handles unavailable speech engines', async () => {
+  const { speakAccessibilityAnnouncement } = await import('./speech.ts');
+  assert.equal(speakAccessibilityAnnouncement('Ready', {
+    spokenAnnouncements: true, speechRate: 'normal', speechVolume: 'high',
+  }, undefined), false);
 });

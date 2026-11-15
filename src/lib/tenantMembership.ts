@@ -34,40 +34,66 @@ const MEMBERSHIP_KEYS = ['uid', 'orgId', 'role', 'status'] as const;
 
 /**
  * Pure schema and provenance validation, independent of Firestore access.
- * Rules may reject malformed documents before this function can receive them.
+ * Treat the runtime adapter value as untrusted: inspect only plain data
+ * objects, never invoke accessors, and fail closed on proxy inspection errors.
  */
 export function parseTenantMembership(
   data: unknown,
   authenticatedUid: string,
   expectedOrgId: string,
 ): TenantMembership {
-  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+  try {
+    if (
+      data === null ||
+      typeof data !== 'object' ||
+      Array.isArray(data) ||
+      (Object.getPrototypeOf(data) !== Object.prototype &&
+        Object.getPrototypeOf(data) !== null) ||
+      typeof authenticatedUid !== 'string' ||
+      authenticatedUid.length === 0 ||
+      typeof expectedOrgId !== 'string' ||
+      !/^[A-Za-z0-9_-]{1,128}$/.test(expectedOrgId)
+    ) {
+      throw new TenantMembershipError('invalid-membership');
+    }
+
+    const keys = Reflect.ownKeys(data);
+    if (
+      keys.length !== MEMBERSHIP_KEYS.length ||
+      keys.some((key) => typeof key !== 'string' || !MEMBERSHIP_KEYS.includes(key as typeof MEMBERSHIP_KEYS[number]))
+    ) {
+      throw new TenantMembershipError('invalid-membership');
+    }
+
+    const descriptors = Object.getOwnPropertyDescriptors(data);
+    if (MEMBERSHIP_KEYS.some((key) => {
+      const descriptor = descriptors[key];
+      return !descriptor || !('value' in descriptor) || descriptor.enumerable !== true;
+    })) {
+      throw new TenantMembershipError('invalid-membership');
+    }
+
+    const record = data as Record<string, unknown>;
+    if (
+      record.uid !== authenticatedUid ||
+      record.orgId !== expectedOrgId ||
+      record.status !== 'active' ||
+      typeof record.role !== 'string' ||
+      !SUPPORTED_ROLES.has(record.role as TenantRole)
+    ) {
+      throw new TenantMembershipError('invalid-membership');
+    }
+
+    return Object.freeze({
+      uid: authenticatedUid,
+      orgId: expectedOrgId,
+      role: record.role as TenantRole,
+      status: 'active' as const,
+    });
+  } catch {
+    // Keep one stable, generic error for malformed values and proxy traps.
     throw new TenantMembershipError('invalid-membership');
   }
-
-  const record = data as Record<string, unknown>;
-  const keys = Object.keys(record).sort();
-  const expectedKeys = [...MEMBERSHIP_KEYS].sort();
-  const hasExactKeys = keys.length === expectedKeys.length
-    && keys.every((key, index) => key === expectedKeys[index]);
-
-  if (
-    !hasExactKeys
-    || record.uid !== authenticatedUid
-    || record.orgId !== expectedOrgId
-    || record.status !== 'active'
-    || typeof record.role !== 'string'
-    || !SUPPORTED_ROLES.has(record.role as TenantRole)
-  ) {
-    throw new TenantMembershipError('invalid-membership');
-  }
-
-  return Object.freeze({
-    uid: authenticatedUid,
-    orgId: expectedOrgId,
-    role: record.role as TenantRole,
-    status: 'active' as const,
-  });
 }
 
 /**

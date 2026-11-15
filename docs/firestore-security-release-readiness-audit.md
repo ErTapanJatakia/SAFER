@@ -79,3 +79,41 @@ No exploitable bypass was confirmed in this static review of the current candida
 ## Explicit non-actions
 
 This audit does not modify `firestore.rules`, publish Firebase rules, create an organisation, provision an owner, enable operational Firestore reads/writes, migrate browser data, add paid services, or change Firebase billing. Production remains deny-all.
+
+
+## Follow-up review — 2026-11-15
+
+The original F-03 and F-04 findings have received implementation follow-up:
+
+- **F-03 update-path negative coverage:** the candidate emulator suite now explicitly attempts unexpected fields, record/tenant ID changes, creator/reporter changes, invalid enums/types, and spoofed timestamps through partial updates for both personnel and incidents. The tests are present in `tests/firestore-rules.test.mjs`. Their latest execution is pending the current candidate-head CI run.
+- **F-04 stale resolver documentation:** `docs/firestore-membership-resolver.md` now describes the implemented exact-document resolver, AuthGate integration, session-only membership state, and continued operational-data boundary.
+
+### F-05 — Tenant trust-anchor schema checks were not consistently applied to all authorization paths
+
+**Severity:** Medium  
+**Evidence:** The earlier `activeTenantRole` helper checked membership UID, organisation ID, status and organisation status, but did not require exact membership/organisation key sets and the full current organisation schema before granting organisation/operational access. The self-membership read and profile adapter had stricter shape checks, but authorization decisions should apply the same trust-anchor schema consistently.
+
+**Remediation in candidate branch:** `firestore.rules` now centralises exact active-membership validation (only `uid`, `orgId`, `role`, `status`) and exact active-organisation validation (only `orgId`, `displayName`, `status`, `schemaVersion`, bounded non-empty display name, schema version 1). These checks are applied to tenant authorization and organisation reads. New emulator tests reject unexpected membership fields, unexpected organisation fields, unsupported schema versions, and malformed display names before metadata or operational access is granted.
+
+**Status:** Implemented in the candidate branch; latest CI evidence is pending. Do not mark this finding closed until the exact latest head passes the mandatory emulator and validation checks.
+
+### Current release posture
+
+F-01 (browser-local operational data is not tenant/account isolated) and F-02 (candidate Rules are not production Console Rules) remain critical release blockers. Production Console rules remain deny-all. The candidate branch does not authorise publication, tenant provisioning, real operational data, localStorage migration, or deployment. The PR remains draft and unmerged.
+
+
+### F-06 — Tenant read paths did not enforce stored-record field allowlists
+
+**Severity:** Medium  
+**Evidence:** Personnel and incident write paths validated the proposed document, but their read paths checked tenant ID only. Evidence reads also checked tenant ID only. A malformed, legacy, or manually seeded document with additional fields could therefore be returned to an otherwise authorised owner/admin.
+
+**Remediation in candidate branch:** Personnel and incident reads now enforce exact allowed/required key sets, path/document identity, bounded fields, allowed enums, and expected primitive/timestamp types. Evidence reads now enforce an explicit metadata-only key allowlist, bounded optional metadata, and paired SHA-256 algorithm/digest fields; unapproved fields such as raw evidence URLs are denied. No evidence writes or operational data migration were enabled.
+
+**Status:** Implemented in the candidate branch. New emulator regressions seed extra fields into personnel, incident, and evidence documents and assert that reads fail. Latest CI evidence is pending; do not close this finding until the exact latest head passes.
+
+
+### F-01 containment clarification — 2026-11-15
+
+The current AuthGate/Demo Guest boundary now prevents authenticated sessions from mounting the operational application: authenticated users see only the membership-verification/read-only organisation context, and the operational children are mounted only inside the explicitly authorised Demo Guest provider. `App.tsx` obtains its operational repository through the provider hook; `DemoGuestWorkspaceProvider` fails closed when browser storage cannot be safely probed. This is an important containment control and prevents authenticated users from inheriting the global Demo Guest repository.
+
+F-01 nevertheless remains a release blocker for real operational data. Demo Guest records remain browser-profile-local and are not tenant/account-isolated, and there is no approved tenant operational repository or data migration. The current release boundary is therefore synthetic Demo Guest data only; authenticated tenant operational access remains unavailable. Do not onboard real data or treat the candidate Firestore Rules as a data migration solution.

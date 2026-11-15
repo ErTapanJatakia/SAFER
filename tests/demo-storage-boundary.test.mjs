@@ -19,5 +19,5 @@ test('Reset Records drains pending writes and coordinates cross-tab deletion', (
   assert.match(app, /await demoRepository\.reset\(\)/);
   assert.match(app, /await demoRepository\.reset\(\);[\s\S]*?setPersonnelList\(\[\.\.\.INITIAL_PERSONNEL\]\)/);
   assert.match(app, /Some records may remain/);
-  assert.match(app, /showToast\('Reset all demonstration data to baseline prototype state\.'\)/);
+  assert.match(app, /showToast\('Reset all demonstration data to baseline prototype state\.',\s*'success'\)/);
 });

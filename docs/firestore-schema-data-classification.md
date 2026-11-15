@@ -61,25 +61,23 @@ Exclude email, phone, organisation role, membership status, personal data import
 
 ### 3.2 Organisation: `/organisations/{orgId}`
 
-Proposed minimal fields:
+Current candidate Rules/profile-reader schema (exact keys only):
 - `orgId`: exact path ID.
-- `displayName`: required, maximum 120 characters.
-- `status`: operator-managed enum `active | suspended`.
-- `schemaVersion`: integer, initially 1.
-- `createdAt`, `createdByUid`, `updatedAt`, `updatedByUid`: controlled metadata.
+- `displayName`: required non-empty string, maximum 120 characters.
+- `status`: operator-managed enum; only `active` grants current access.
+- `schemaVersion`: integer, exactly `1`.
 
-No fictional DPO, address, legal entity, jurisdiction, compliance status, subscription, billing, or security assurance defaults. Do not imply a tenant has legal or regulatory status that has not been verified. Organisation creation and status changes are operator-only/deferred.
+The candidate Rules reject missing or additional fields, mismatched IDs, invalid display names, and unsupported schema versions before authorising membership or tenant operations. Do not add `createdAt`, `createdByUid`, `updatedAt`, or `updatedByUid` unless a separately reviewed schema/rules change introduces them. No fictional DPO, address, legal entity, jurisdiction, compliance status, subscription, billing, or security assurance defaults. Organisation creation and status changes remain operator-only/deferred.
 
 ### 3.3 Membership: `/organisations/{orgId}/members/{uid}`
 
-Required fields:
+Required fields (exact allowlist):
 - `uid`: exact path UID.
 - `orgId`: exact path organisation ID.
 - `role`: `owner | admin | manager | viewer`.
 - `status`: `active | suspended | revoked`.
-- `createdAt`, `createdByUid`, `updatedAt`, `updatedByUid`.
 
-No email-based identity matching, invitation secrets, arbitrary capabilities, custom claims, or client-set timestamps. All membership writes remain denied to application clients. Only the controlled bootstrap/operator process described in the lifecycle policy may seed membership while the trusted provisioning model is unresolved.
+Only an active membership can be resolved by its own authenticated UID; suspended/revoked records fail closed. The rules validate exact keys, UID/path binding, organisation binding, role vocabulary, and active status on every tenant authorization decision. No email-based identity matching, invitation secrets, arbitrary capabilities, custom claims, timestamps, or extra fields are accepted. All membership writes remain denied to application clients. Only the controlled bootstrap/operator process described in the lifecycle policy may seed membership while the trusted provisioning model is unresolved.
 
 ### 3.4 Personnel operational summary: `/organisations/{orgId}/personnel/{recordId}`
 
@@ -127,17 +125,13 @@ Contains any raw notes, factual chronology, people and roles involved, witness i
 
 ### 3.8 Evidence metadata: `/organisations/{orgId}/evidence/{evidenceId}`
 
-Potential fields, only after a separate evidence-handling review:
-- `evidenceId`, `orgId`, `incidentRef`.
-- `evidenceType`: allowlisted enum.
-- `description`: maximum 500 characters; no sensitive narrative.
-- `referenceCode`: opaque reference, maximum 80 characters.
-- `recordedAt`: Firestore timestamp.
-- `recordedByUid`: authenticated UID.
-- `integrityAlgorithm` and `integrityDigest`: optional validated metadata only, never a substitute for chain-of-custody controls.
-- `createdAt`, `createdByUid`, `updatedAt`, `updatedByUid`.
+Candidate read-only metadata allowlist in the current Rules (not an evidence-ingestion workflow):
+- Required: `evidenceId` (exact document ID) and `orgId` (exact tenant path ID).
+- Optional: `incidentRef` (maximum 128 characters), `evidenceType` (1–40 characters; controlled vocabulary still requires separate approval), `description` (maximum 500 characters; no sensitive narrative), and `referenceCode` (maximum 80 characters).
+- Optional provenance metadata: `recordedAt`, `recordedByUid`, `createdAt`, `createdByUid`, `updatedAt`, `updatedByUid`, each type-checked when present.
+- Optional integrity metadata must be supplied as a pair: `integrityAlgorithm: "SHA-256"` and a 64-character hexadecimal `integrityDigest`. This is format validation only, never a substitute for chain-of-custody controls.
 
-No binary files, download URLs, storage paths, secrets, raw evidence, or attachment bytes. Firebase Storage is out of scope. Evidence metadata remains restricted; manager/viewer access is disabled in v1.
+The candidate Rules allow owner/admin reads only for this exact metadata key set and reject unknown fields. All evidence writes remain denied. No binary files, download URLs, storage paths, secrets, raw evidence, or attachment bytes. Firebase Storage is out of scope. Evidence metadata remains restricted; manager/viewer access is disabled in v1. The evidence schema and controlled `evidenceType` vocabulary still require a separate evidence-handling review before any trusted writer or operational use is introduced.
 
 ### 3.9 Audit events: `/organisations/{orgId}/auditEvents/{eventId}`
 
@@ -145,13 +139,13 @@ Reserved for future trusted audit architecture. No browser client create/update/
 
 ## 4. Role/capability resolution for schema v1
 
-To remove ambiguity in the earlier proposed matrix, adopt the following conservative implementation target for a future rules PR:
+The following table describes the current checked-in candidate Rules policy (not production Console configuration):
 
 | Resource | Owner | Admin | Manager | Viewer |
 |---|---|---|---|---|
 | Own user preferences | Read/update allowlist | Same | Same | Same |
 | Organisation metadata | Read | Read | No access | No access |
-| Membership | No client writes; no client reads in v1 | No client writes; no client reads in v1 | No access | No access |
+| Own membership document | Self-only get when exact schema and active trust anchors validate; no list or writes | Same | Same | Same |
 | Personnel operational summary | Read/create/update; no delete | Read/create/update; no delete | No access | No access |
 | Restricted personnel detail | No access in v1 | No access in v1 | No access | No access |
 | Incident summary | Read/create/update; no delete | Read/create/update; no delete | No access in v1 | No access in v1 |
@@ -238,3 +232,10 @@ This specification does not:
 - claim authoritative client-side audit logging.
 
 The production rules published in Firebase Console must remain deny-all until a separate implementation PR passes positive and negative emulator tests and a security review. If the current project cannot safely support a required operation within the approved zero-cost architecture, defer that operation.
+
+
+## 8. Candidate rules validation update — 2026-11-15
+
+The checked-in candidate Rules now validate exact membership and organisation metadata schemas as part of every tenant authorization decision. Membership documents must contain only `uid`, `orgId`, `role`, and `status`; organisation documents must contain only `orgId`, `displayName`, `status`, and `schemaVersion`, with bounded display name and schema version 1. The emulator suite includes negative cases for unexpected membership fields, unexpected organisation fields, unsupported schema versions, and malformed display names.
+
+The candidate Rules remain separate from production Console configuration. Production publication, live provisioning, and operational-data onboarding remain separately gated and are not authorised by emulator success.

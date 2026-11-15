@@ -4,10 +4,21 @@ test('real SAFER UI exposes conflict recovery, downloads last-confirmed snapshot
   const context = await browser.newContext({ acceptDownloads: true });
   const workspaceTab = await context.newPage();
   const competingTab = await context.newPage();
+  const startupDiagnostics = [];
+  workspaceTab.on('pageerror', (error) => startupDiagnostics.push(`pageerror: ${error.message}`));
+  workspaceTab.on('console', (message) => {
+    if (message.type() === 'error') startupDiagnostics.push(`console: ${message.text()}`);
+  });
+  workspaceTab.on('requestfailed', (request) => startupDiagnostics.push(`request failed: ${request.url()} — ${request.failure()?.errorText ?? 'unknown'}`));
 
   try {
     await workspaceTab.goto('/tests/browser/fixtures/demo-conflict-app.html');
-    await expect(workspaceTab.getByText('SAFER', { exact: false }).first()).toBeVisible();
+    try {
+      await expect(workspaceTab.getByText('SAFER', { exact: false }).first()).toBeVisible();
+    } catch (error) {
+      const body = await workspaceTab.locator('body').innerText().catch(() => '<body unavailable>');
+      throw new Error(`SAFER workspace failed to render. Body: ${body}. Startup diagnostics: ${startupDiagnostics.join(' | ') || 'none captured'}. Original failure: ${String(error)}`);
+    }
 
     await competingTab.goto('/tests/browser/fixtures/demo-conflict-app.html');
     await expect(competingTab.getByText('SAFER', { exact: false }).first()).toBeVisible();

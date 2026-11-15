@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Download, RotateCcw, Save, UserRound, X } from 'lucide-react';
 import { useModalFocus } from '../hooks/useModalFocus.ts';
+import { MAX_SESSION_TIMEOUT_MINUTES, MIN_SESSION_TIMEOUT_MINUTES, useOptionalSessionTimeoutPreference } from './SessionInactivityGuard.tsx';
 import {
   ACCOUNT_SETTINGS_STORAGE_KEY,
   createAccountSettingsExport,
@@ -27,6 +28,7 @@ function readStoredSettings(): AccountSettings {
 
 export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOpen, onClose, onSaved }) => {
   const modalRef = useModalFocus<HTMLDivElement>(isOpen, onClose);
+  const sessionTimeout = useOptionalSessionTimeoutPreference();
   const [settings, setSettings] = useState<AccountSettings>(readStoredSettings);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'preferences' | 'data'>('profile');
@@ -45,6 +47,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
     }
     try {
       window.localStorage.setItem(ACCOUNT_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+      window.dispatchEvent(new CustomEvent('safer:account-settings-updated'));
       setError(null);
       onSaved('Account preferences saved on this browser.');
     } catch {
@@ -63,7 +66,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      URL.revokeObjectURL(url);
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
       onSaved('Personal preferences export prepared.');
     } catch {
       setError('Unable to create the preferences export.');
@@ -131,7 +134,61 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
 
           {activeTab === 'preferences' && (
             <div className="space-y-4">
-              <div><h3 className="font-semibold text-slate-900">Regional preferences</h3><p className="text-xs text-slate-600 mt-1">These values are stored for future formatting integration; they do not yet change every date or number displayed in SAFER.</p></div>
+              <section aria-labelledby="session-timeout-preference-title" className="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-3">
+                <div>
+                  <h3 id="session-timeout-preference-title" className="font-semibold text-slate-900">Session security</h3>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-700">Choose how long SAFER can remain inactive before automatically signing out this session. The default is 10 minutes. Your selection is saved immediately for this signed-in account or Demo Guest session on this browser.</p>
+                </div>
+                {sessionTimeout ? (
+                  <label className="block max-w-xs space-y-1 text-xs font-semibold text-slate-700">
+                    Inactivity timeout (minutes)
+                    <input
+                      aria-label="Account inactivity timeout in minutes"
+                      className={inputClass}
+                      type="number"
+                      inputMode="numeric"
+                      min={MIN_SESSION_TIMEOUT_MINUTES}
+                      max={MAX_SESSION_TIMEOUT_MINUTES}
+                      step={1}
+                      value={sessionTimeout.timeoutMinutes}
+                      onChange={(event) => {
+                        const next = Number(event.target.value);
+                        if (Number.isInteger(next) && next >= MIN_SESSION_TIMEOUT_MINUTES && next <= MAX_SESSION_TIMEOUT_MINUTES) {
+                          sessionTimeout.setTimeoutMinutes(next);
+                        }
+                      }}
+                    />
+                    <span className="block font-normal text-slate-600">Allowed range: {MIN_SESSION_TIMEOUT_MINUTES}–{MAX_SESSION_TIMEOUT_MINUTES} minutes. Applies to this session and other tabs for the same account on this browser.</span>
+                  </label>
+                ) : (
+                  <p className="text-xs text-slate-700">Session-specific settings are available while signed in or using Demo Guest.</p>
+                )}
+              </section>
+              <section aria-labelledby="notification-preferences-title" className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+                <div>
+                  <h3 id="notification-preferences-title" className="font-semibold text-slate-900">In-app notification preferences</h3>
+                  <p className="mt-1 text-xs text-slate-600">Control routine success confirmations shown as temporary visual toasts. Errors, cross-tab conflict and security/session warnings remain visible. Screen-reader announcements are always retained. SAFER does not currently provide push, email, SMS, background delivery or a persistent audit-alert feed.</p>
+                </div>
+                <label className="flex items-start gap-3 text-sm text-slate-800">
+                  <input type="checkbox" className="mt-0.5 h-4 w-4" checked={settings.preferences.showSuccessToasts}
+                    onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, showSuccessToasts: event.target.checked } }))} />
+                  <span><span className="font-semibold">Show routine success confirmations</span><span className="block text-xs text-slate-600">Examples: saved changes, completed exports and applied display settings.</span></span>
+                </label>
+              </section>
+              <section aria-labelledby="display-density-title" className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+                <div>
+                  <h3 id="display-density-title" className="font-semibold text-slate-900">Display density</h3>
+                  <p className="mt-1 text-xs text-slate-600">Choose the spacing used across dashboard cards, operational views, tables and forms. This setting does not reduce text size or touch-target dimensions and remains independent of theme and accessibility preferences.</p>
+                </div>
+                <label className="block max-w-xs space-y-1 text-xs font-semibold text-slate-700">Workspace spacing
+                  <select aria-label="Display density" className={inputClass} value={settings.preferences.displayDensity}
+                    onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, displayDensity: event.target.value as AccountSettings['preferences']['displayDensity'] } }))}>
+                    <option value="comfortable">Comfortable — more breathing room</option>
+                    <option value="compact">Compact — denser information layout</option>
+                  </select>
+                </label>
+              </section>
+              <div><h3 className="font-semibold text-slate-900">Regional preferences</h3><p className="text-xs text-slate-600 mt-1">Regional preferences now control visible dates in personnel details, readiness cards, deployment checklists and incident lists; timestamps and counts in the Privacy Console and DPDP governance workspace; and numeric counts in the dashboard and personnel export preview. Stored records, calculations and formal evidence exports retain their existing formats.</p></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label className={labelClass}>Date format
                   <select className={inputClass} value={settings.preferences.dateFormat} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, dateFormat: event.target.value as AccountSettings['preferences']['dateFormat'] } }))}>
@@ -143,16 +200,34 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
                     <option value="24h">24-hour</option><option value="12h">12-hour</option>
                   </select>
                 </label>
-                <label className={labelClass}>Timezone
-                  <select className={inputClass} value={settings.preferences.timezone} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, timezone: event.target.value as AccountSettings['preferences']['timezone'] } }))}>
-                    <option value="Asia/Kolkata">Asia/Kolkata (IST)</option><option value="UTC">UTC</option>
+                <label className={labelClass}>Timezone (IANA)
+                  <select className={inputClass} value={settings.preferences.timezone} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, timezone: event.target.value } }))}>
+                    {[['Asia/Kolkata', 'India (IST)'], ['UTC', 'UTC'], ['Asia/Dubai', 'Dubai'], ['Asia/Singapore', 'Singapore'], ['Asia/Tokyo', 'Tokyo'], ['Asia/Shanghai', 'Shanghai'], ['Asia/Jakarta', 'Jakarta'], ['Asia/Bangkok', 'Bangkok'], ['Asia/Kathmandu', 'Kathmandu'], ['Europe/London', 'London'], ['Europe/Paris', 'Paris'], ['Europe/Berlin', 'Berlin'], ['Europe/Moscow', 'Moscow'], ['America/New_York', 'New York'], ['America/Chicago', 'Chicago'], ['America/Denver', 'Denver'], ['America/Los_Angeles', 'Los Angeles'], ['America/Toronto', 'Toronto'], ['Australia/Sydney', 'Sydney'], ['Pacific/Auckland', 'Auckland']].map(([value, label]) => <option key={value} value={value}>{label} ({value})</option>)}
+                    {!['Asia/Kolkata', 'UTC', 'Asia/Dubai', 'Asia/Singapore', 'Asia/Tokyo', 'Asia/Shanghai', 'Asia/Jakarta', 'Asia/Bangkok', 'Asia/Kathmandu', 'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Moscow', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles', 'America/Toronto', 'Australia/Sydney', 'Pacific/Auckland'].includes(settings.preferences.timezone) && <option value={settings.preferences.timezone}>{settings.preferences.timezone}</option>}
                   </select>
                 </label>
-                <label className={labelClass}>Number format
-                  <select className={inputClass} value={settings.preferences.numberFormat} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, numberFormat: event.target.value as AccountSettings['preferences']['numberFormat'] } }))}>
-                    <option value="en-IN">India (1,23,456.78)</option><option value="en-US">International (123,456.78)</option>
+                <label className={labelClass}>Display locale
+                  <select className={inputClass} value={settings.preferences.locale} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, locale: event.target.value } }))}>
+                    {['en-IN', 'en-US', 'en-GB', 'hi-IN', 'fr-FR', 'de-DE', 'es-ES', 'pt-BR', 'ar-SA', 'ja-JP', 'zh-CN'].map((locale) => <option key={locale} value={locale}>{locale}</option>)}
                   </select>
                 </label>
+                <label className={labelClass}>Number format locale
+                  <select className={inputClass} value={settings.preferences.numberFormat} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, numberFormat: event.target.value } }))}>
+                    {['en-IN', 'en-US', 'en-GB', 'hi-IN', 'fr-FR', 'de-DE', 'es-ES', 'pt-BR', 'ar-SA', 'ja-JP', 'zh-CN'].map((locale) => <option key={locale} value={locale}>{locale}</option>)}
+                    {!['en-IN', 'en-US', 'en-GB', 'hi-IN', 'fr-FR', 'de-DE', 'es-ES', 'pt-BR', 'ar-SA', 'ja-JP', 'zh-CN'].includes(settings.preferences.numberFormat) && <option value={settings.preferences.numberFormat}>{settings.preferences.numberFormat}</option>}
+                  </select>
+                </label>
+                <label className={labelClass}>Default personnel export format
+                  <select className={inputClass} value={settings.preferences.defaultExportFormat} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, defaultExportFormat: event.target.value as AccountSettings['preferences']['defaultExportFormat'] } }))}>
+                    <option value="txt">Plain text (.TXT)</option><option value="csv">CSV (.CSV)</option><option value="xlsx">Excel (.XLSX)</option><option value="pdf">PDF (.PDF)</option><option value="docx">Word (.DOCX)</option>
+                  </select>
+                </label>
+                <label className={labelClass}>Default personnel export redaction
+                  <select className={inputClass} value={settings.preferences.defaultRedactionLevel} onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, defaultRedactionLevel: event.target.value as AccountSettings['preferences']['defaultRedactionLevel'] } }))}>
+                    <option value="standard">Standard — redact sensitive fields</option><option value="strict">Strict — redact every exportable field</option>
+                  </select>
+                </label>
+                <p className="sm:col-span-2 text-xs text-slate-600">Strict redaction is the most protective option. Standard retains the existing sensitive-field defaults. You can review and change individual field selections before every export.</p>
               </div>
               <p className="text-xs text-slate-500">Theme and accessibility remain managed by their existing dedicated controls, avoiding duplicate settings stores.</p>
             </div>

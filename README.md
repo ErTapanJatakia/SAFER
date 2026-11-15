@@ -208,6 +208,7 @@ npm run test:demo-repository
 npm run test:demo-workspace
 npm run test:session-lifecycle
 npm run test:session-invalidation
+npm run test:session-inactivity
 npm audit --omit=dev --audit-level=high
 ```
 

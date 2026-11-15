@@ -114,3 +114,44 @@ test('pure parser rejects malformed, mismatched, inactive, and non-minimal membe
     );
   }
 });
+
+
+test('pure parser rejects accessors, exotic objects, symbols and proxy inspection failures without executing getters', () => {
+  const uid = 'parser-user';
+  const orgId = 'parser-org';
+  let getterExecuted = false;
+  const accessor = Object.defineProperties({}, {
+    uid: { enumerable: true, get() { getterExecuted = true; return uid; } },
+    orgId: { enumerable: true, value: orgId },
+    role: { enumerable: true, value: 'owner' },
+    status: { enumerable: true, value: 'active' },
+  });
+  const valid = { uid, orgId, role: 'owner', status: 'active' };
+  const exotic = Object.assign(Object.create({ inherited: true }), valid);
+  const symbolField = {...valid, [Symbol('unexpected')]: 'extra'};
+  const hostileProxy = new Proxy(valid, {
+    ownKeys() { throw new Error('inspection trap'); },
+  });
+
+  for (const malformed of [accessor, exotic, symbolField, hostileProxy]) {
+    assert.throws(
+      () => parseTenantMembership(malformed, uid, orgId),
+      (error: unknown) => error instanceof TenantMembershipError && error.code === 'invalid-membership',
+    );
+  }
+  assert.equal(getterExecuted, false);
+});
+
+test('pure parser rejects invalid identity and organisation context', () => {
+  const valid = { uid: 'parser-user', orgId: 'parser-org', role: 'owner', status: 'active' };
+  for (const [uid, orgId] of [
+    ['', 'parser-org'],
+    ['parser-user', ''],
+    ['parser-user', '../other-org'],
+  ] as const) {
+    assert.throws(
+      () => parseTenantMembership(valid, uid, orgId),
+      (error: unknown) => error instanceof TenantMembershipError && error.code === 'invalid-membership',
+    );
+  }
+});
