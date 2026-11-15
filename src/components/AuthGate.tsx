@@ -372,7 +372,14 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 flex items-center justify-center">
+    <main
+      className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 flex items-center justify-center"
+      onContextMenu={(event) => {
+        // Suppress only the mouse right-click menu on the signed-out auth screen.
+        // Authenticated and Demo Guest workspaces retain their normal browser menu.
+        if (event.button === 2) event.preventDefault();
+      }}
+    >
       <section className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
         <header className="border-b border-slate-800 bg-slate-950 p-7 text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-blue-700 bg-blue-950 text-xl font-black text-blue-200">S</div>
