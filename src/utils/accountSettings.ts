@@ -22,6 +22,7 @@ export interface AccountPreferences {
   defaultExportFormat: AccountExportFormat;
   defaultRedactionLevel: AccountRedactionLevel;
   displayDensity: AccountDisplayDensity;
+  showSuccessToasts: boolean;
 }
 
 export interface AccountSettings {
@@ -42,6 +43,7 @@ export const DEFAULT_ACCOUNT_SETTINGS: AccountSettings = {
     defaultExportFormat: 'txt',
     defaultRedactionLevel: 'standard',
     displayDensity: 'comfortable',
+    showSuccessToasts: true,
   },
 };
 
@@ -82,6 +84,7 @@ export function normalizeAccountSettings(raw: unknown): AccountSettings {
         ? preferences.defaultExportFormat as AccountExportFormat : DEFAULT_ACCOUNT_SETTINGS.preferences.defaultExportFormat,
       defaultRedactionLevel: preferences.defaultRedactionLevel === 'strict' ? 'strict' : 'standard',
       displayDensity: preferences.displayDensity === 'compact' ? 'compact' : 'comfortable',
+      showSuccessToasts: typeof preferences.showSuccessToasts === 'boolean' ? preferences.showSuccessToasts : true,
     },
   };
 }
