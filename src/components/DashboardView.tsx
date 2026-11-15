@@ -192,9 +192,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="px-4 sm:px-5 py-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center space-x-2 min-w-0">
               <UserCheck className="w-4 h-4 text-slate-700" />
-              <h3 className="font-bold text-sm text-slate-900 min-w-0 break-words">
+              <h2 className="font-bold text-sm text-slate-900 min-w-0 break-words">
                 Personnel Items Requiring Human Review ({displayNumber(urgentPersonnel.length)})
-              </h3>
+              </h2>
             </div>
             <button
               onClick={() => onNavigate('personnel')}
