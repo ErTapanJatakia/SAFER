@@ -1,15 +1,10 @@
+import { authorizePlatformOwner } from '../../src/server/platform-owner-auth.mjs';
 import { createOrganisationWithSuperAdminInvitation } from '../../src/server/organisation-provisioning.mjs';
-
-function bearerToken(request) {
-  const header = request.headers.authorization;
-  if (typeof header !== 'string' || !header.startsWith('Bearer ')) return null;
-  const token = header.slice(7).trim();
-  return token || null;
-}
 
 export default async function handler(request, response) {
   response.setHeader('Cache-Control', 'no-store, max-age=0');
   response.setHeader('Pragma', 'no-cache');
+  response.setHeader('Vary', 'Authorization');
   response.setHeader('X-Content-Type-Options', 'nosniff');
 
   if (request.method !== 'POST') {
@@ -17,38 +12,30 @@ export default async function handler(request, response) {
     return response.status(405).json({ error: 'method_not_allowed' });
   }
 
-  const token = bearerToken(request);
-  if (!token) return response.status(401).json({ error: 'unauthenticated' });
-
   try {
     const [{ platformAuth, platformDb }, { FieldValue }] = await Promise.all([
       import('../../src/server/firebase-admin.js'),
       import('firebase-admin/firestore'),
     ]);
-    const decoded = await platformAuth.verifyIdToken(token, true);
-    const [administratorSnapshot, settingsSnapshot] = await Promise.all([
-      platformDb.doc(`platformAdministrators/${decoded.uid}`).get(),
-      platformDb.doc('platform/settings').get(),
-    ]);
-    const administrator = administratorSnapshot.exists ? administratorSnapshot.data() : null;
-    const settings = settingsSnapshot.exists ? settingsSnapshot.data() : null;
-
-    if (
-      !administrator
-      || administrator.uid !== decoded.uid
-      || administrator.role !== 'platform_owner'
-      || administrator.status !== 'active'
-      || !settings
-      || settings.platformOwnerUid !== decoded.uid
-      || settings.ownerBootstrapStatus !== 'claimed'
-    ) {
-      return response.status(403).json({ error: 'platform_owner_required' });
-    }
+    const authorization = await authorizePlatformOwner({
+      authorizationHeader: request.headers?.authorization,
+      verifyIdToken: (token, checkRevoked) => platformAuth.verifyIdToken(token, checkRevoked),
+      readAuthUser: (uid) => platformAuth.getUser(uid),
+      readPlatformAdministrator: async (uid) => {
+        const snapshot = await platformDb.doc(`platformAdministrators/${uid}`).get();
+        return snapshot.exists ? snapshot.data() : null;
+      },
+      readPlatformSettings: async () => {
+        const snapshot = await platformDb.doc('platform/settings').get();
+        return snapshot.exists ? snapshot.data() : null;
+      },
+    });
+    if (!authorization.ok) return response.status(authorization.status).json({ error: authorization.code });
 
     const result = await createOrganisationWithSuperAdminInvitation({
       displayName: request.body?.displayName,
       superAdminEmail: request.body?.superAdminEmail,
-      actorUid: decoded.uid,
+      actorUid: authorization.uid,
       database: platformDb,
       authAdmin: platformAuth,
       serverTimestamp: () => FieldValue.serverTimestamp(),

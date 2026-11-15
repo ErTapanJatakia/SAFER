@@ -13,8 +13,13 @@ export default async function handler(request, response) {
     const { platformAuth, platformDb } = await import('../../src/server/firebase-admin.js');
     const ownerStatusHandler = createOwnerStatusHandler({
       verifyIdToken: (token, checkRevoked) => platformAuth.verifyIdToken(token, checkRevoked),
+      readAuthUser: (uid) => platformAuth.getUser(uid),
       readPlatformAdministrator: async (uid) => {
         const snapshot = await platformDb.doc(`platformAdministrators/${uid}`).get();
+        return snapshot.exists ? snapshot.data() : null;
+      },
+      readPlatformSettings: async () => {
+        const snapshot = await platformDb.doc('platform/settings').get();
         return snapshot.exists ? snapshot.data() : null;
       },
     });

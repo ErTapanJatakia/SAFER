@@ -23,7 +23,7 @@
 | Suspend/manage lower roles | Yes | Yes, lower roles only | No | No | No |
 | Personnel records | Full tenant scope | Full tenant scope | Read | Own only | Read-only |
 | Incidents | Full tenant scope | Full tenant scope | Read/create/update | Create/read own | Read-only |
-| Evidence | Read | Read | Read | No | Read-only |
+| Evidence metadata | Read/register | Read/register | Read/register | No | Read-only |
 | Checklists | Read/update | Read/update | Read/update | Assigned only | Read-only |
 | Audit events | Read | Read | No | No | Read |
 | Reports | Read/export | Read/export | Read | No | Read only; no export |
@@ -40,20 +40,22 @@ This is the initial conservative permission catalogue. Record ownership and assi
 
 ## Platform Owner access
 
-The separate platform policy evaluator accepts only an active `platform_owner` principal whose UID matches the verified actor UID. Cross-tenant operational data reads, writes and exports require a meaningful purpose string and return an audit-required decision. The consuming route must append the corresponding platform audit event before or atomically with the sensitive operation; the policy result alone is not an audit record.
+The separate platform policy evaluator accepts only an active `platform_owner` principal whose UID matches the verified actor UID. Cross-tenant operational data reads, writes and exports require a purpose-bound, time-limited support session, scoped to one active PMC and an explicit action set. Session activation, revocation and each authorized action are appended to the platform audit trail. Future data endpoints must call `authorizePlatformSupportAccess()` before touching tenant records; the session lifecycle alone does not expose those records.
 
 ## Current integration boundary
 
-This milestone includes the canonical policy engine, trusted server authorization boundary, and candidate rules for existing Firestore resources. It does **not** yet:
-- expose tenant-management or organisation-registry APIs;
-- issue or consume invitations;
-- write or mutate tenant memberships;
-- publish candidate Firestore Rules to production;
-- enable cross-tenant Owner data access;
-- release an operational tenant workspace;
-- release an operational tenant workspace.
+This milestone includes the canonical policy engine, trusted server authorization boundary, versioned membership validation, candidate Firestore Rules, and server API integration. The development chain now includes APIs for tenant membership administration and invitations, incidents, personnel, evidence metadata, checklists, tenant audit and aggregate reports, as well as Owner organisation provisioning and registry operations.
 
-The resolver and candidate Rules accept only the exact canonical five-role version-1 membership schema. Candidate Rules now grant Manager and Auditor only their documented read scopes, Employee only own-reported incident reads plus incident creation, and retain stricter denial for Employee personnel and unmodelled checklist/report resources. The trusted server boundary is ready for use by tenant API handlers, but no tenant operational API routes currently exist. Production rules remain separately published deny-all.
+It does **not** yet:
+- publish the candidate Firestore Rules to production;
+- release an authenticated operational tenant workspace UI;
+- release a full Owner Control Centre UI;
+- expose cross-tenant tenant-record browsing or mutation endpoints;
+- complete Firestore emulator and production security validation.
+
+The AuthGate intentionally keeps the authenticated operational workspace unavailable until the candidate rules and API-backed UI are reviewed and released. Demo Guest remains isolated and is not an authenticated tenant workspace.
+
+The resolver and candidate Rules accept only the exact canonical five-role version-1 membership schema. Candidate Rules grant Manager and Auditor only their documented read scopes, Employee only own-reported incident reads plus incident creation, and retain stricter denial for Employee personnel and unmodelled checklist/report resources. The trusted server boundary is integrated with the tenant API handlers; each API re-checks the relevant permission at the server boundary. Production rules remain separately published deny-all.
 
 ## Regression coverage
 

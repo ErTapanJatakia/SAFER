@@ -10,7 +10,7 @@ function fixture({ role = 'tenant_employee', status = 'active', orgStatus = 'act
   const records = {
     'organisations/pmc-alpha/members/user-1': {
       uid: 'user-1', orgId: 'pmc-alpha', role, status,
-      createdAt: {}, createdByUid: 'owner-1', updatedAt: {}, updatedByUid: 'owner-1',
+      createdAt: new Date(0), createdByUid: 'owner-1', updatedAt: new Date(0), updatedByUid: 'owner-1',
       schemaVersion: 1,
     },
     'organisations/pmc-alpha': { orgId: 'pmc-alpha', status: orgStatus },
@@ -115,6 +115,38 @@ test('rejects malformed tenant locators before database access', async () => {
       token: 'valid-token', orgId: '../other', action: 'organisation:read', ...current,
     }),
     (error) => error.code === 'invalid_authorization_request',
+  );
+  assert.equal(current.reads.length, 0);
+});
+
+
+test('tenant authorization fails closed when the authoritative membership store is unavailable', async () => {
+  const { resolveTenantAuthorization, TenantAuthorizationError } = await import('../src/server/tenant-authorization.mjs');
+  await assert.rejects(
+    resolveTenantAuthorization({
+      token: 'valid-token', orgId: 'pmc-alpha', action: 'personnel:read',
+      auth: {
+        verifyIdToken: async () => ({ uid: 'user-1' }),
+        getUser: async (uid) => ({ uid, disabled: false }),
+      },
+      database: { doc: () => ({ get: async () => { throw new Error('private datastore detail'); } }) },
+    }),
+    (error) => error instanceof TenantAuthorizationError
+      && error.code === 'tenant_authority_unavailable'
+      && error.status === 503,
+  );
+});
+
+
+test('rejects malformed Firebase UIDs before constructing tenant document paths', async () => {
+  const current = fixture();
+  current.auth.verifyIdToken = async () => ({ uid: '../attacker' });
+  await assert.rejects(
+    resolveTenantAuthorization({
+      token: 'valid-token', orgId: 'pmc-alpha', action: 'organisation:read',
+      auth: current.auth, database: current.database,
+    }),
+    (error) => error.code === 'unauthenticated' && error.status === 401,
   );
   assert.equal(current.reads.length, 0);
 });

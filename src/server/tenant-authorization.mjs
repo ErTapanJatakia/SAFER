@@ -46,7 +46,7 @@ export async function resolveTenantAuthorization({
   } catch {
     throw new TenantAuthorizationError('unauthenticated', 401);
   }
-  if (!decoded || typeof decoded.uid !== 'string' || !decoded.uid) {
+  if (!decoded || !/^[A-Za-z0-9_-]{1,128}$/.test(decoded.uid ?? '')) {
     throw new TenantAuthorizationError('unauthenticated', 401);
   }
 
@@ -61,10 +61,16 @@ export async function resolveTenantAuthorization({
     throw new TenantAuthorizationError('account_unavailable', 403);
   }
 
-  const [membershipSnapshot, organisationSnapshot] = await Promise.all([
-    database.doc(`organisations/${orgId}/members/${decoded.uid}`).get(),
-    database.doc(`organisations/${orgId}`).get(),
-  ]);
+  let membershipSnapshot;
+  let organisationSnapshot;
+  try {
+    [membershipSnapshot, organisationSnapshot] = await Promise.all([
+      database.doc(`organisations/${orgId}/members/${decoded.uid}`).get(),
+      database.doc(`organisations/${orgId}`).get(),
+    ]);
+  } catch {
+    throw new TenantAuthorizationError('tenant_authority_unavailable', 503);
+  }
 
   if (!membershipSnapshot?.exists || !organisationSnapshot?.exists) {
     throw new TenantAuthorizationError('tenant_membership_required', 403);

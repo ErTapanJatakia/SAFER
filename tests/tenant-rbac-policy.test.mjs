@@ -75,7 +75,7 @@ test('Auditor is read-only and cannot export or mutate operational records', () 
   assert.equal(authorize('tenant_auditor', 'reports:export').allowed, false);
 });
 
-test('tenant authorization fails closed for forged identity, wrong tenant, and inactive records', () => {
+test('tenant authorization fails closed for forged identity, wrong tenant, malformed provenance and inactive records', () => {
   assert.equal(authorize('tenant_super_admin', 'personnel:read', {
     membership: { uid: 'attacker', orgId: 'pmc-alpha', role: 'tenant_super_admin', status: 'active' },
   }).allowed, false);
@@ -89,6 +89,12 @@ test('tenant authorization fails closed for forged identity, wrong tenant, and i
   assert.equal(authorize('owner', 'personnel:read').allowed, false);
   assert.equal(authorize('tenant_super_admin', 'personnel:read', {
     membership: { ...membership('tenant_super_admin'), schemaVersion: 2 },
+  }).allowed, false);
+  assert.equal(authorize('tenant_super_admin', 'personnel:read', {
+    membership: { ...membership('tenant_super_admin'), createdAt: 'yesterday' },
+  }).allowed, false);
+  assert.equal(authorize('tenant_super_admin', 'personnel:read', {
+    membership: { ...membership('tenant_super_admin'), updatedByUid: 'bad uid' },
   }).allowed, false);
   assert.equal(authorize('tenant_super_admin', 'personnel:read', {
     membership: { ...membership('tenant_super_admin'), platformOverride: true },

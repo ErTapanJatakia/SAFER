@@ -5,6 +5,7 @@ const INVALID_TOKEN_CODES = new Set([
   'auth/id-token-revoked',
   'auth/invalid-user-token',
 ]);
+const UID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
 
 export function extractBearerToken(header) {
   if (typeof header !== 'string') return null;
@@ -12,11 +13,16 @@ export function extractBearerToken(header) {
   return match?.[1] ?? null;
 }
 
-/** Identity is verified before the authoritative platform principal is read. */
+/**
+ * A Platform Owner is valid only when Firebase identity, account state,
+ * platform principal, and the one-time bootstrap pointer all agree.
+ */
 export async function authorizePlatformOwner({
   authorizationHeader,
   verifyIdToken,
+  readAuthUser,
   readPlatformAdministrator,
+  readPlatformSettings,
 }) {
   const token = extractBearerToken(authorizationHeader);
   if (!token) return { ok: false, status: 401, code: 'unauthenticated' };
@@ -31,20 +37,33 @@ export async function authorizePlatformOwner({
     return { ok: false, status: 503, code: 'identity_verification_unavailable' };
   }
 
-  if (
-    !identity
-    || typeof identity.uid !== 'string'
-    || identity.uid.length < 1
-    || identity.uid.length > 128
-  ) {
+  if (!identity || !UID_PATTERN.test(identity.uid ?? '')) {
     return { ok: false, status: 401, code: 'invalid_identity_token' };
   }
 
-  let principal;
+  let user;
   try {
-    principal = await readPlatformAdministrator(identity.uid);
+    user = await readAuthUser(identity.uid);
+  } catch (error) {
+    if (error?.code === 'auth/user-not-found') {
+      return { ok: false, status: 403, code: 'platform_identity_ineligible' };
+    }
+    return { ok: false, status: 503, code: 'platform_authority_unavailable' };
+  }
+
+  let principal;
+  let settings;
+  try {
+    [principal, settings] = await Promise.all([
+      readPlatformAdministrator(identity.uid),
+      readPlatformSettings(),
+    ]);
   } catch {
     return { ok: false, status: 503, code: 'platform_authority_unavailable' };
+  }
+
+  if (!user || user.uid !== identity.uid || user.disabled === true || user.emailVerified !== true) {
+    return { ok: false, status: 403, code: 'platform_identity_ineligible' };
   }
 
   if (
@@ -52,9 +71,12 @@ export async function authorizePlatformOwner({
     || principal.uid !== identity.uid
     || principal.role !== 'platform_owner'
     || principal.status !== 'active'
+    || !settings
+    || settings.platformOwnerUid !== identity.uid
+    || settings.ownerBootstrapStatus !== 'claimed'
   ) {
     return { ok: false, status: 403, code: 'platform_access_denied' };
   }
 
-  return { ok: true, uid: identity.uid, role: 'platform_owner' };
+  return { ok: true, uid: identity.uid, role: 'platform_owner', principal };
 }
