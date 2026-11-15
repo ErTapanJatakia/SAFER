@@ -3,6 +3,7 @@ import {
   manageTenantMember,
   TenantMembershipError,
 } from '../../src/server/tenant-membership-admin.mjs';
+import { resolveTenantAuthorization } from '../../src/server/tenant-authorization.mjs';
 
 function bearerToken(request) {
   const header = request.headers?.authorization;
@@ -38,8 +39,8 @@ export default async function handler(request, response) {
   response.setHeader('Pragma', 'no-cache');
   response.setHeader('X-Content-Type-Options', 'nosniff');
 
-  if (!['POST', 'PATCH'].includes(request.method)) {
-    response.setHeader('Allow', 'POST, PATCH');
+  if (!['GET', 'POST', 'PATCH'].includes(request.method)) {
+    response.setHeader('Allow', 'GET, POST, PATCH');
     return response.status(405).json({ error: 'method_not_allowed' });
   }
 
@@ -70,12 +71,35 @@ export default async function handler(request, response) {
       return response.status(403).json({ error: 'account_unavailable' });
     }
 
+    const orgId = request.method === 'GET' ? request.query?.orgId : request.body?.orgId;
     const common = {
-      orgId: request.body?.orgId,
+      orgId,
       actorUid: decoded.uid,
       database: platformDb,
       serverTimestamp: () => FieldValue.serverTimestamp(),
     };
+    if (request.method === 'GET') {
+      const authorization = await resolveTenantAuthorization({
+        token,
+        orgId,
+        action: 'members:read',
+        auth: platformAuth,
+        database: platformDb,
+      });
+      const snapshot = await platformDb.collection(`organisations/${orgId}/members`)
+        .orderBy('createdAt', 'desc').limit(100).get();
+      const members = snapshot.docs.map((document) => {
+        const value = document.data();
+        return {
+          uid: value.uid,
+          role: value.role,
+          status: value.status,
+          createdAt: value.createdAt?.toDate?.()?.toISOString?.() ?? null,
+          updatedAt: value.updatedAt?.toDate?.()?.toISOString?.() ?? null,
+        };
+      });
+      return response.status(200).json({ orgId: authorization.orgId, members });
+    }
     if (request.method === 'POST') {
       const result = await inviteTenantMember({
         ...common,
