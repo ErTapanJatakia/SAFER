@@ -62,6 +62,7 @@ test('creates one-owner one-tenant purpose-bound session with expiry and audit e
 test('refuses broad, invalid, duplicate or excessive support grants',async()=>{
   const {db}=fakeDb();
   await assert.rejects(createPlatformSupportSession({...input,database:db,actions:['platform:security:manage']}),/invalid_support_actions/);
+  await assert.rejects(createPlatformSupportSession({...input,database:db,actions:['platform:tenant-data:write']}),/invalid_support_actions/);
   await assert.rejects(createPlatformSupportSession({...input,database:db,actions:['platform:tenant-data:read','platform:tenant-data:read']}),/invalid_support_actions/);
   await assert.rejects(createPlatformSupportSession({...input,database:db,durationMinutes:31}),/invalid_support_duration/);
   await assert.rejects(createPlatformSupportSession({...input,database:db,purpose:'help'}),/support purpose/);
