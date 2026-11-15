@@ -36,12 +36,14 @@ test('Cloudflare Pages CSP preserves the restrictive application policy', () => 
   assert.deepEqual(directives.get('default-src'), ["'self'"]);
   assert.deepEqual(directives.get('base-uri'), ["'self'"]);
   assert.deepEqual(directives.get('object-src'), ["'none'"]);
-  assert.deepEqual(directives.get('script-src'), ["'self'"]);
+  assert.deepEqual(directives.get('script-src'), ["'self'", 'https://apis.google.com']);
   assert.deepEqual(directives.get('script-src-attr'), ["'none'"]);
   assert.deepEqual(directives.get('frame-ancestors'), ["'none'"]);
   assert.ok(directives.get('connect-src')?.includes('https://identitytoolkit.googleapis.com'));
   assert.ok(directives.get('connect-src')?.includes('https://firestore.googleapis.com'));
+  assert.ok(directives.get('connect-src')?.includes('https://accounts.google.com'));
   assert.ok(directives.get('frame-src')?.includes('https://accounts.google.com'));
+  assert.ok(directives.get('frame-src')?.includes('https://safer-2026.firebaseapp.com'));
   assert.ok(!csp.includes('unsafe-eval'), 'production CSP must not permit eval');
 });
 

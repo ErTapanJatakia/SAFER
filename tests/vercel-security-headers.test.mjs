@@ -26,7 +26,7 @@ test('CSP has restrictive baseline and clickjacking protection', () => {
   assert.deepEqual(directives.get('default-src'), ["'self'"]);
   assert.deepEqual(directives.get('base-uri'), ["'self'"]);
   assert.deepEqual(directives.get('object-src'), ["'none'"]);
-  assert.deepEqual(directives.get('script-src'), ["'self'"]);
+  assert.deepEqual(directives.get('script-src'), ["'self'", 'https://apis.google.com']);
   assert.deepEqual(directives.get('script-src-attr'), ["'none'"]);
   assert.deepEqual(directives.get('frame-ancestors'), ["'none'"]);
   assert.ok(directives.has('upgrade-insecure-requests'));
@@ -44,6 +44,7 @@ test('CSP permits only the external origins required by the current app', () => 
   assert.ok(directives.get('connect-src')?.includes('https://identitytoolkit.googleapis.com'));
   assert.ok(directives.get('connect-src')?.includes('https://securetoken.googleapis.com'));
   assert.ok(directives.get('connect-src')?.includes('https://firestore.googleapis.com'));
+  assert.ok(directives.get('connect-src')?.includes('https://accounts.google.com'));
   assert.ok(directives.get('connect-src')?.includes('https://safer-2026.firebaseapp.com'));
   assert.ok(directives.get('frame-src')?.includes('https://accounts.google.com'));
   assert.ok(directives.get('frame-src')?.includes('https://safer-2026.firebaseapp.com'));
