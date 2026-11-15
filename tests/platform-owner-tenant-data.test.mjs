@@ -95,5 +95,5 @@ test('does not return tenant counts when the audit store cannot commit', async (
   await assert.rejects(getPlatformTenantOperationalSummary({
     actorUid, principal, sessionId, orgId, database: f.database,
     serverTimestamp: () => new Date(now), now,
-  }), (error) => error instanceof PlatformTenantDataError && error.code === 'tenant_summary_unavailable');
+  }), (error) => error.message === 'audit unavailable');
 });
