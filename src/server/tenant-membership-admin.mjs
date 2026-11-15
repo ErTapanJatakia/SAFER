@@ -225,3 +225,49 @@ export async function manageTenantMember({
 export function isTenantInvitationExpired(invitation, now = Date.now()) {
   return timestampMillis(invitation?.expiresAt) <= now;
 }
+
+
+/** Revoke a pending invitation without changing any existing membership. */
+export async function revokeTenantInvitation({
+  orgId, actorUid, invitationId, database, serverTimestamp,
+}) {
+  assertTenantLocator(orgId);
+  if (!/^[A-Za-z0-9_-]{40,50}$/.test(invitationId ?? '')
+    || !/^[A-Za-z0-9_-]{1,128}$/.test(actorUid ?? '')) fail('invalid_invitation_request');
+  if (!database?.runTransaction || !database?.doc || typeof serverTimestamp !== 'function') {
+    fail('service_unavailable');
+  }
+  const actorRef = database.doc(`organisations/${orgId}/members/${actorUid}`);
+  const orgRef = database.doc(`organisations/${orgId}`);
+  const invitationRef = database.doc(`organisations/${orgId}/invitations/${invitationId}`);
+  const auditRef = database.doc(`organisations/${orgId}/auditEvents/${randomBytes(16).toString('hex')}`);
+  const timestamp = serverTimestamp();
+
+  return database.runTransaction(async (transaction) => {
+    const [actorSnapshot, orgSnapshot, invitationSnapshot] = await Promise.all([
+      transaction.get(actorRef), transaction.get(orgRef), transaction.get(invitationRef),
+    ]);
+    if (!actorSnapshot.exists || !orgSnapshot.exists || !invitationSnapshot.exists) fail('invitation_not_found');
+    const actor = actorSnapshot.data();
+    const organisation = orgSnapshot.data();
+    const invitation = invitationSnapshot.data();
+    if (invitation.invitationId !== invitationId || invitation.orgId !== orgId
+      || !TENANT_ROLES.includes(invitation.role) || invitation.role === 'tenant_super_admin'
+      || invitation.schemaVersion !== 1) fail('invalid_invitation_request');
+    const decision = authorizeTenantAction({
+      actorUid, membership: actor, organisation, requestedOrgId: orgId,
+      action: 'members:invite', targetRole: invitation.role,
+    });
+    if (!decision.allowed) fail(decision.reason);
+    if (invitation.status !== 'pending') fail('invitation_not_pending');
+    transaction.update(invitationRef, {
+      status: 'revoked', revokedAt: timestamp, revokedByUid: actorUid, updatedAt: timestamp,
+    });
+    transaction.create(auditRef, {
+      action: 'tenant.member.invitation_revoked', actorUid, orgId,
+      targetOrgId: orgId, targetUid: invitation.uid,
+      details: { invitationId, role: invitation.role }, occurredAt: timestamp,
+    });
+    return { orgId, invitationId, status: 'revoked' };
+  });
+}
