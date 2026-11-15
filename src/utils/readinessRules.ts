@@ -1,5 +1,5 @@
 import type { QualificationItem, PersonnelRecord, AdministrativeReadinessStatus, VerificationStatus } from '../types/index.ts';
-import { toYYYYMMDD, toDDMMYYYY, getCurrentISODate } from './dateUtils.ts';
+import { toYYYYMMDD, formatDisplayDate, getCurrentISODate } from './dateUtils.ts';
 
 /**
  * Calculates days difference between target date and base date.
@@ -256,7 +256,7 @@ export function generatePlainEnglishPersonnelSummary(
   lines.push(`Operational Role(s): ${rolesText}`);
   lines.push(`Specialisation(s): ${specText}`);
   lines.push(`Sector Assignment: ${person.assignmentSector}`);
-  lines.push(`Evaluation Reference Date: ${toDDMMYYYY(referenceDateStr)}`);
+  lines.push(`Evaluation Reference Date: ${formatDisplayDate(referenceDateStr)}`);
   lines.push(`================================================================`);
   lines.push(``);
   lines.push(`1. ADMINISTRATIVE STANDING:`);
@@ -273,7 +273,7 @@ export function generatePlainEnglishPersonnelSummary(
       const evalCert = evaluateCertification(cert, referenceDateStr);
       let expiryText = 'Non-expiring / Lifetime qualification';
       if (cert.expiryDate) {
-        const expFormatted = toDDMMYYYY(cert.expiryDate);
+        const expFormatted = formatDisplayDate(cert.expiryDate);
         if (evalCert.status === 'EXPIRED') {
           expiryText = `EXPIRED on ${expFormatted} (${Math.abs(evalCert.daysRemaining || 0)} days past due)`;
         } else if (evalCert.status === 'EXPIRING_SOON') {
@@ -283,7 +283,7 @@ export function generatePlainEnglishPersonnelSummary(
         }
       }
       lines.push(`   * ${cert.name}`);
-      lines.push(`     Completed: ${toDDMMYYYY(cert.completionDate)} | ${expiryText}`);
+      lines.push(`     Completed: ${formatDisplayDate(cert.completionDate)} | ${expiryText}`);
       lines.push(`     Issuer: ${cert.issuer} | Verification: ${cert.verificationStatus} (Ref: ${cert.verificationId})`);
     }
   }

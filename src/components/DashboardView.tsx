@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import type { NavigationSection } from './Navbar.tsx';
 import { SaferWordmark } from './SaferWordmark.tsx';
+import {formatDisplayNumber} from '../utils/dateUtils.ts';
 
 interface DashboardViewProps {
   personnelList: PersonnelRecord[];
@@ -94,12 +95,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
           <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-            <div className="text-2xl font-bold text-slate-900">{metrics.totalPersonnel}</div>
-            <span className="text-xs text-slate-500 font-medium">{representedSectorCount} Sectors Represented</span>
+            <div className="text-2xl font-bold text-slate-900">{formatDisplayNumber(metrics.totalPersonnel, 0)}</div>
+            <span className="text-xs text-slate-500 font-medium">{formatDisplayNumber(representedSectorCount, 0)} Sectors Represented</span>
           </div>
           <div className="mt-2 text-sm text-slate-600 border-t border-slate-100 pt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
             <span>Current Documentation:</span>
-            <span className="font-semibold text-teal-700">{metrics.docsCurrentCount} on file</span>
+            <span className="font-semibold text-teal-700">{formatDisplayNumber(metrics.docsCurrentCount, 0)} on file</span>
           </div>
         </div>
 
@@ -114,14 +115,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
-            <div className="text-2xl font-bold text-amber-900">{metrics.requiringHumanReviewCount}</div>
+            <div className="text-2xl font-bold text-amber-900">{formatDisplayNumber(metrics.requiringHumanReviewCount, 0)}</div>
             <span className="text-xs font-semibold text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded">
               Action Queue
             </span>
           </div>
           <div className="mt-2 text-xs text-slate-600 border-t border-slate-100 pt-2 flex items-center justify-between">
             <span>Expiring within 45 days:</span>
-            <span className="font-semibold text-amber-800">{metrics.expiringSoonCertsCount} certs</span>
+            <span className="font-semibold text-amber-800">{formatDisplayNumber(metrics.expiringSoonCertsCount, 0)} certs</span>
           </div>
         </div>
 
@@ -136,7 +137,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
           <div className="mt-3 flex items-baseline justify-between">
-            <div className="text-2xl font-bold text-rose-900">{metrics.expiredCertsCount}</div>
+            <div className="text-2xl font-bold text-rose-900">{formatDisplayNumber(metrics.expiredCertsCount, 0)}</div>
             <span className="text-xs font-semibold text-rose-700 bg-rose-100/70 px-2 py-0.5 rounded">
               High Priority
             </span>
@@ -159,10 +160,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
           <div className="mt-3 flex items-baseline justify-between">
             <div className="text-2xl font-bold text-slate-900">
-              {metrics.overallTaskCompletionRate}%
+              {formatDisplayNumber(metrics.overallTaskCompletionRate, 0)}%
             </div>
             <span className="text-xs text-slate-500 font-medium">
-              {metrics.totalTasksCompleted} / {metrics.totalTasksCompleted + metrics.totalTasksOutstanding} Completed
+              {formatDisplayNumber(metrics.totalTasksCompleted, 0)} / {formatDisplayNumber(metrics.totalTasksCompleted + metrics.totalTasksOutstanding, 0)} Completed
             </span>
           </div>
           <div
@@ -189,7 +190,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="flex items-center space-x-2 min-w-0">
               <UserCheck className="w-4 h-4 text-slate-700" />
               <h3 className="font-bold text-sm text-slate-900 min-w-0 break-words">
-                Personnel Items Requiring Human Review ({urgentPersonnel.length})
+                Personnel Items Requiring Human Review ({formatDisplayNumber(urgentPersonnel.length, 0)})
               </h3>
             </div>
             <button
@@ -300,7 +301,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </h4>
                 {outstandingChecklistCount > 0 && (
                   <span className="text-xs px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-bold border border-amber-300">
-                    {outstandingChecklistCount} Due
+                    {formatDisplayNumber(outstandingChecklistCount, 0)} Due
                   </span>
                 )}
               </div>
@@ -315,7 +316,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="flex justify-between text-xs text-slate-600 mb-1">
                 <span>Verification Progress</span>
                 <span className="font-semibold text-slate-900">
-                  {completedChecklistCount} of {totalChecklistCount} verified
+                  {formatDisplayNumber(completedChecklistCount, 0)} of {formatDisplayNumber(totalChecklistCount, 0)} verified
                 </span>
               </div>
               <div

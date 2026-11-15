@@ -167,3 +167,23 @@ html[data-contrast="high"] [class*="border-"] {
 .skip-link:focus {
   top: 1rem;
 }
+
+
+/* Bidirectional language support for Arabic and Urdu interfaces. */
+html[dir="rtl"] body { direction: rtl; }
+html[dir="rtl"] .text-left { text-align: right; }
+html[dir="rtl"] .text-right { text-align: left; }
+html[dir="rtl"] input,
+html[dir="rtl"] textarea,
+html[dir="rtl"] select { text-align: right; }
+html[dir="rtl"] .skip-link { left: auto; right: 1rem; }
+
+
+/* User-selectable workstation density; compact mode preserves readable targets. */
+html[data-density="compact"] .space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem; }
+html[data-density="compact"] .space-y-5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.875rem; }
+html[data-density="compact"] .gap-6 { gap: 1rem; }
+html[data-density="compact"] .gap-4 { gap: 0.75rem; }
+html[data-density="compact"] .p-5 { padding: 1rem; }
+html[data-density="compact"] .px-5 { padding-left: 1rem; padding-right: 1rem; }
+html[data-density="compact"] .py-5 { padding-top: 1rem; padding-bottom: 1rem; }

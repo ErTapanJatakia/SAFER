@@ -14,10 +14,15 @@ import {
 import {auth, db, isFirebaseConfigured} from '../lib/firebase.ts';
 import {resolveTenantMembership, type TenantMembership} from '../lib/tenantMembership.ts';
 import {createSessionLifecycle} from '../lib/sessionLifecycle.ts';
+import {getAuthErrorMessage} from '../lib/authErrors.ts';
+import {beginAuthFlow, cleanupStaleAuthFlowMarker, endAuthFlow} from '../lib/sessionHygiene.ts';
 import {publishSessionInvalidation, subscribeToSessionInvalidation} from '../lib/sessionInvalidation.ts';
 import {enterDemoGuest} from '../lib/dataBoundary.ts';
 import {DemoGuestWorkspaceProvider} from './DemoGuestWorkspaceProvider.tsx';
 import {AccountSecurityPanel} from './AccountSecurityPanel.tsx';
+import {LOCALE_OPTIONS, applyLocaleDocumentSettings, getLocale, setLocale, translate, type SupportedLocale} from '../i18n/locale.ts';
+import {getAccountPreferences} from '../utils/accountSettings.ts';
+import {startSessionInactivityMonitor} from '../lib/sessionInactivity.ts';
 
 type AuthMode = 'signin' | 'register' | 'reset' | 'verify';
 
@@ -40,6 +45,8 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
   const [authObserverRetry, setAuthObserverRetry] = useState(0);
   const [demoGuest, setDemoGuest] = useState(false);
   const [mode, setMode] = useState<AuthMode>('signin');
+  const [locale, setLocaleState] = useState<SupportedLocale>(getLocale);
+  const [preferencesRevision, setPreferencesRevision] = useState(0);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -55,6 +62,53 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
   const [membershipError, setMembershipError] = useState('');
   const sessionLifecycleRef = useRef(createSessionLifecycle());
   const lastAuthUidRef = useRef<string | null | undefined>(undefined);
+
+  useEffect(() => { applyLocaleDocumentSettings(); }, []);
+
+  const handleLocaleChange = (nextLocale: SupportedLocale) => {
+    setLocaleState(nextLocale);
+    setLocale(nextLocale);
+  };
+
+  useEffect(() => {
+    const refreshPreferences = () => setPreferencesRevision((revision) => revision + 1);
+    window.addEventListener('safer:preferences-changed', refreshPreferences);
+    return () => window.removeEventListener('safer:preferences-changed', refreshPreferences);
+  }, []);
+
+  useEffect(() => {
+    if (!user && !demoGuest) return;
+    const timeoutMinutes = getAccountPreferences().inactivityTimeoutMinutes;
+    const expireSession = () => {
+      publishSessionInvalidation();
+      sessionLifecycleRef.current.beginSignOut();
+      setMembership(null);
+      setOrganisationId('');
+      setMembershipBusy(false);
+      setMembershipError('');
+      setDemoGuest(false);
+      setError('');
+      setMessage(`Session ended after ${timeoutMinutes} minutes of inactivity. Sign in again to continue.`);
+      if (user && auth) {
+        void signOut(auth).catch(() => {
+          if (auth.currentUser?.uid === user.uid) {
+            sessionLifecycleRef.current.startAuthenticated(user.uid);
+          }
+          setError('Automatic sign-out could not be completed. Your Firebase account remains active; please sign out manually.');
+          setPreferencesRevision((revision) => revision + 1);
+        });
+      } else {
+        sessionLifecycleRef.current.endSession();
+      }
+    };
+    return startSessionInactivityMonitor(window, timeoutMinutes * 60 * 1000, expireSession);
+  }, [user, demoGuest, preferencesRevision]);
+
+  useEffect(() => {
+    // Remove only SAFER's short-lived OAuth diagnostic marker; preserve Firebase
+    // persistence, cookies, preferences and all unrelated browser storage.
+    cleanupStaleAuthFlowMarker();
+  }, []);
 
   useEffect(() => subscribeToSessionInvalidation(() => {
     // A different tab crossed an account/session boundary. Revoke the local
@@ -142,22 +196,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
     try {
       await action();
     } catch (err) {
-      const code = typeof err === 'object' && err && 'code' in err
-        ? String((err as {code?: unknown}).code || '')
-        : '';
-      if (code.includes('invalid-credential') || code.includes('wrong-password') || code.includes('user-not-found')) {
-        setError('Unable to sign in with those details. Check your email and password.');
-      } else if (code.includes('too-many-requests')) {
-        setError('Too many attempts. Please wait before trying again.');
-      } else if (code.includes('network-request-failed')) {
-        setError('Network connection failed. Check your connection and retry.');
-      } else if (code.includes('email-already-in-use')) {
-        setError('This account could not be created. Try signing in or use password reset.');
-      } else if (code.includes('popup-closed-by-user')) {
-        setError('Google sign-in was closed before completion.');
-      } else {
-        setError('The account request could not be completed. Check the Firebase configuration and try again.');
-      }
+      setError(getAuthErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -225,11 +264,18 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
     const firebaseAuth = auth;
     if (!firebaseAuth) return;
     void run(async () => {
-      const provider = new GoogleAuthProvider();
-      const credential = await signInWithPopup(firebaseAuth, provider);
-      if (!credential.user.emailVerified) {
-        await signOut(firebaseAuth);
-        throw new Error('Google account email is not verified.');
+      // Per-tab diagnostic marker only; never stores credentials or identity.
+      // If sessionStorage is unavailable, Google sign-in still proceeds.
+      beginAuthFlow();
+      try {
+        const provider = new GoogleAuthProvider();
+        const credential = await signInWithPopup(firebaseAuth, provider);
+        if (!credential.user.emailVerified) {
+          await signOut(firebaseAuth);
+          throw new Error('Google account email is not verified.');
+        }
+      } finally {
+        endAuthFlow();
       }
     });
   };
@@ -309,7 +355,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100" role="status">Checking SAFER account session…</div>;
+    return <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100" role="status">{translate('checkingSession')}</div>;
   }
 
   if (user || demoGuest) {
@@ -317,7 +363,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       <>
         <div className="sticky top-0 z-50 flex flex-wrap items-center justify-between gap-2 border-b border-slate-700 bg-slate-950 px-4 py-2 text-xs text-slate-100">
           <span>{user ? `Signed in: ${user.email || 'verified account'}` : 'Demo Guest session'}</span>
-          <button type="button" onClick={leaveAccount} className="rounded border border-slate-600 px-3 py-1.5 hover:bg-slate-800">Log Out</button>
+          <button type="button" onClick={leaveAccount} className="rounded border border-slate-600 px-3 py-1.5 hover:bg-slate-800">{translate('logout')}</button>
         </div>
         {error && <p role="alert" className="border-b border-red-800 bg-red-950/60 px-4 py-2 text-xs text-red-200">{error}</p>}
         {!!user && (
@@ -326,7 +372,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
           <section aria-labelledby="organisation-access-heading" className="border-b border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-100">
             <div className="mx-auto flex max-w-7xl flex-col gap-2">
               <div>
-                <h2 id="organisation-access-heading" className="font-semibold">Organisation membership</h2>
+                <h2 id="organisation-access-heading" className="font-semibold">{translate('membership')}</h2>
                 <p className="text-xs text-slate-300">Enter the organisation ID supplied through your authorised onboarding process. SAFER checks only your exact membership record.</p>
               </div>
               <form onSubmit={handleResolveMembership} className="flex flex-col gap-2 sm:flex-row sm:items-end">
@@ -344,7 +390,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
                   />
                 </label>
                 <button type="submit" disabled={membershipBusy || !organisationId.trim() || !db} className="rounded-lg bg-blue-700 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50">
-                  {membershipBusy ? 'Checking…' : 'Verify membership'}
+                  {membershipBusy ? 'Checking…' : translate('verifyMembership')}
                 </button>
               </form>
               <p id="organisation-id-help" className="text-[11px] text-slate-400">The ID is a locator, not a password or access token. Membership status is held in memory only.</p>
@@ -396,27 +442,33 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
               Firebase is not configured for this deployment. Configure the VITE_FIREBASE_* variables to enable account sign-in. Demo Guest remains available.
             </div>
           )}
+          <label className="block text-xs font-semibold text-slate-300">
+            {translate('language')}
+            <select value={locale} onChange={(event) => handleLocaleChange(event.target.value as SupportedLocale)} className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white">
+              {LOCALE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.nativeName} — {option.label}</option>)}
+            </select>
+          </label>
           <div className="grid grid-cols-3 gap-1 rounded-lg bg-slate-800 p-1">
             {(['signin', 'register', 'reset'] as const).map((nextMode) => (
               <button key={nextMode} type="button" onClick={() => {setMode(nextMode); clearFeedback();}} className={`rounded-md px-2 py-2 text-xs font-semibold ${mode === nextMode ? 'bg-slate-600 text-white' : 'text-slate-400 hover:text-white'}`}>
-                {nextMode === 'signin' ? 'Log In' : nextMode === 'register' ? 'Create Account' : 'Reset Password'}
+                {nextMode === 'signin' ? translate('login') : nextMode === 'register' ? translate('createAccount') : translate('resetPassword')}
               </button>
             ))}
           </div>
           {mode === 'verify' ? (
             <div className="space-y-3" role="status">
-              <h2 className="font-semibold">Verify your email</h2>
+              <h2 className="font-semibold">{translate('verifyEmail')}</h2>
               <p className="text-sm text-slate-300">A verification link was requested for {verificationEmail || email}. Follow the link, then return here and sign in again.</p>
               <button type="button" onClick={handleRefreshVerification} className="w-full rounded-lg border border-slate-600 px-4 py-2.5 text-sm hover:bg-slate-800">I have verified — return to sign in</button>
               <button type="button" onClick={handleResendVerification} className="w-full text-xs text-blue-300 underline">Return to sign in to request another verification email</button>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-3">
-              <label className="block text-xs font-semibold text-slate-300">Email address
+              <label className="block text-xs font-semibold text-slate-300">{translate('email')}
                 <input type="email" required autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2.5 text-sm text-white outline-none focus:border-blue-400" />
               </label>
               {mode !== 'reset' && (
-                <label className="block text-xs font-semibold text-slate-300">Password
+                <label className="block text-xs font-semibold text-slate-300">{translate('password')}
                   <span className="relative mt-1 block">
                     <input type={passwordVisible ? 'text' : 'password'} required autoComplete={mode === 'register' ? 'new-password' : 'current-password'} value={password} onChange={(event) => setPassword(event.target.value)} className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2.5 pr-11 text-sm text-white outline-none focus:border-blue-400" />
                     <button type="button" onClick={() => setPasswordVisible((visible) => !visible)} aria-label={passwordVisible ? 'Hide password' : 'Show password'} aria-pressed={passwordVisible} className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400">
@@ -426,7 +478,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
                 </label>
               )}
               {mode === 'register' && (
-                <label className="block text-xs font-semibold text-slate-300">Confirm password
+                <label className="block text-xs font-semibold text-slate-300">{translate('confirmPassword')}
                   <span className="relative mt-1 block">
                     <input type={confirmPasswordVisible ? 'text' : 'password'} required autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} className="w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2.5 pr-11 text-sm text-white outline-none focus:border-blue-400" />
                     <button type="button" onClick={() => setConfirmPasswordVisible((visible) => !visible)} aria-label={confirmPasswordVisible ? 'Hide confirm password' : 'Show confirm password'} aria-pressed={confirmPasswordVisible} className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400">
@@ -435,11 +487,11 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
                   </span>
                 </label>
               )}
-              <button type="submit" disabled={busy || !isFirebaseConfigured || authObserverFailed} className="w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-bold text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Please wait…' : mode === 'register' ? 'Create Account' : mode === 'reset' ? 'Send reset instructions' : 'Log In'}</button>
+              <button type="submit" disabled={busy || !isFirebaseConfigured || authObserverFailed} className="w-full rounded-lg bg-blue-700 px-4 py-3 text-sm font-bold text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50">{busy ? translate('pleaseWait') : mode === 'register' ? translate('createAccount') : mode === 'reset' ? translate('sendResetInstructions') : translate('login')}</button>
             </form>
           )}
           {mode === 'signin' && isFirebaseConfigured && (
-            <button type="button" disabled={busy || authObserverFailed} onClick={handleGoogle} className="w-full rounded-lg border border-slate-600 px-4 py-2.5 text-sm font-semibold hover:bg-slate-800 disabled:opacity-50">Continue with Google</button>
+            <button type="button" disabled={busy || authObserverFailed} onClick={handleGoogle} className="w-full rounded-lg border border-slate-600 px-4 py-2.5 text-sm font-semibold hover:bg-slate-800 disabled:opacity-50">{translate('continueGoogle')}</button>
           )}
           {error && <p role="alert" className="rounded-lg border border-red-800 bg-red-950/50 p-3 text-xs text-red-200">{error}</p>}
           {authObserverFailed && (
@@ -449,7 +501,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
           )}
           {message && <p role="status" className="rounded-lg border border-emerald-800 bg-emerald-950/50 p-3 text-xs text-emerald-200">{message}</p>}
           <div className="border-t border-slate-800 pt-4">
-            <button type="button" onClick={() => {setDemoGuest(true); clearFeedback();}} className="w-full rounded-lg border border-slate-600 bg-slate-800 px-4 py-3 text-sm font-semibold hover:bg-slate-700">Continue as Demo Guest</button>
+            <button type="button" onClick={() => {setDemoGuest(true); clearFeedback();}} className="w-full rounded-lg border border-slate-600 bg-slate-800 px-4 py-3 text-sm font-semibold hover:bg-slate-700">{translate('continueDemo')}</button>
             <p className="mt-2 text-center text-[10px] text-slate-500">Demo mode uses synthetic browser-local data. Do not enter real personal or operational information.</p>
           </div>
         </div>

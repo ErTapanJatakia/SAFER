@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useModalFocus } from '../hooks/useModalFocus.ts';
-import { getCurrentISODate } from '../utils/dateUtils.ts';
+import { getCurrentISODate, formatDisplayDate } from '../utils/dateUtils.ts';
 import type { PreDeploymentChecklistItem, FictionalDemonstrationScenario } from '../types/index.ts';
 import {
   computePreDeploymentMetrics,
@@ -286,7 +286,7 @@ export const PreDeploymentSummaryModal: React.FC<PreDeploymentSummaryModalProps>
                             <span> &bull; Assigned: {item.assignedRoleOrPerson}</span>
                           )}
                           {item.targetDeadline && (
-                            <span> &bull; Target: {item.targetDeadline}</span>
+                            <span> &bull; Target: {formatDisplayDate(item.targetDeadline)}</span>
                           )}
                         </div>
                         <p className="text-slate-600 leading-relaxed break-words">{item.description}</p>

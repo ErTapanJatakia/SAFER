@@ -1,5 +1,5 @@
 import type { PersonnelRecord, WorkExperienceEntry, QualificationItem } from '../types/index.ts';
-import { toDDMMYYYY } from './dateUtils.ts';
+import { formatDisplayDate } from './dateUtils.ts';
 import {
   sanitizeSpreadsheetFormula,
   sanitizeCsvCell,
@@ -128,10 +128,10 @@ export function getPersonnelExportableFields(person: PersonnelRecord): Exportabl
   // Personal & Health
   fields.push({
     key: 'birthDate',
-    label: 'Birth Date (DD-MM-YYYY)',
+    label: 'Birth Date (selected date format)',
     category: 'Personal & Health',
     isSensitive: true,
-    sampleValue: toDDMMYYYY(person.birthDate) || '(Not provided)',
+    sampleValue: formatDisplayDate(person.birthDate) || '(Not provided)',
   });
   fields.push({
     key: 'maritalStatus',
@@ -270,19 +270,19 @@ export function getPersonnelExportableFields(person: PersonnelRecord): Exportabl
     });
     fields.push({
       key: `workExperience[${idx}].startDate`,
-      label: `Employer #${idx + 1} Start Date (DD-MM-YYYY)`,
+      label: `Employer #${idx + 1} Start Date (selected date format)`,
       category: 'Work Experience',
       parentGroup: pGroup,
       isSensitive: false,
-      sampleValue: toDDMMYYYY(we.startDate),
+      sampleValue: formatDisplayDate(we.startDate),
     });
     fields.push({
       key: `workExperience[${idx}].endDate`,
-      label: `Employer #${idx + 1} End Date (DD-MM-YYYY)`,
+      label: `Employer #${idx + 1} End Date (selected date format)`,
       category: 'Work Experience',
       parentGroup: pGroup,
       isSensitive: false,
-      sampleValue: we.currentlyWorkingHere ? 'Currently working here' : toDDMMYYYY(we.endDate),
+      sampleValue: we.currentlyWorkingHere ? 'Currently working here' : formatDisplayDate(we.endDate),
     });
     fields.push({
       key: `workExperience[${idx}].workDescription`,
@@ -320,7 +320,7 @@ export function getPersonnelExportableFields(person: PersonnelRecord): Exportabl
       category: 'Qualifications & Certifications',
       parentGroup: pGroup,
       isSensitive: false,
-      sampleValue: toDDMMYYYY(cert.completionDate),
+      sampleValue: formatDisplayDate(cert.completionDate),
     });
     fields.push({
       key: `certifications[${idx}].expiryDate`,
@@ -328,7 +328,7 @@ export function getPersonnelExportableFields(person: PersonnelRecord): Exportabl
       category: 'Qualifications & Certifications',
       parentGroup: pGroup,
       isSensitive: false,
-      sampleValue: cert.expiryDate ? toDDMMYYYY(cert.expiryDate) : 'Non-expiring / Lifetime',
+      sampleValue: cert.expiryDate ? formatDisplayDate(cert.expiryDate) : 'Non-expiring / Lifetime',
     });
     fields.push({
       key: `certifications[${idx}].issuer`,
@@ -390,7 +390,7 @@ export function getPersonnelExportableFields(person: PersonnelRecord): Exportabl
     label: 'Last Supervisor Review Date',
     category: 'Administrative & Operational',
     isSensitive: false,
-    sampleValue: person.lastSupervisorReviewDate ? toDDMMYYYY(person.lastSupervisorReviewDate) : '(Pending)',
+    sampleValue: person.lastSupervisorReviewDate ? formatDisplayDate(person.lastSupervisorReviewDate) : '(Pending)',
   });
   fields.push({
     key: 'reviewedBy',
@@ -418,7 +418,7 @@ export function getRosterExportableFields(): ExportableField[] {
     { key: 'assignmentSector', label: 'Assignment Sector', category: 'Identification', isSensitive: false },
     { key: 'contactEmail', label: 'Contact Email', category: 'Contact Details', isSensitive: true },
     { key: 'personalEmail', label: 'Personal Email Address', category: 'Contact Details', isSensitive: true },
-    { key: 'birthDate', label: 'Birth Date (DD-MM-YYYY)', category: 'Personal & Health', isSensitive: true },
+    { key: 'birthDate', label: 'Birth Date (selected date format)', category: 'Personal & Health', isSensitive: true },
     { key: 'maritalStatus', label: 'Marital Status', category: 'Personal & Health', isSensitive: true },
     { key: 'bloodGroup', label: 'Blood Group & Details', category: 'Personal & Health', isSensitive: true },
     { key: 'healthParticulars', label: 'Health Particulars', category: 'Personal & Health', isSensitive: true },
@@ -653,7 +653,7 @@ export function generateTxtExport(
     lines.push('[2. CONTACT & PERSONAL PARTICULARS]');
     lines.push(`  Official Contact Email          : ${person.contactEmail}`);
     lines.push(`  Personal Email Address          : ${person.personalEmail || '(Not provided)'}`);
-    lines.push(`  Birth Date (DD-MM-YYYY)         : ${person.birthDate ? (person.birthDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(person.birthDate)) : '(Not provided)'}`);
+    lines.push(`  Birth Date (selected date format)         : ${person.birthDate ? (person.birthDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(person.birthDate)) : '(Not provided)'}`);
     lines.push(`  Marital Status                  : ${person.maritalStatus || '(Not provided)'}`);
     lines.push(`  Blood Group                     : ${person.bloodGroup || '(Not tested / provided)'}`);
     if (person.bloodGroupDetails) {
@@ -693,8 +693,8 @@ export function generateTxtExport(
         lines.push(`     Employer Name                : ${we.employerName}`);
         lines.push(`     Employer Address             : ${we.employerAddress}`);
         lines.push(`     Contact Numbers              : ${we.employerContactNumbers}`);
-        lines.push(`     Start Date (DD-MM-YYYY)      : ${we.startDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(we.startDate)}`);
-        lines.push(`     End Date (DD-MM-YYYY)        : ${we.currentlyWorkingHere ? 'Currently working here' : (we.endDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(we.endDate))}`);
+        lines.push(`     Start Date (selected date format)      : ${we.startDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(we.startDate)}`);
+        lines.push(`     End Date (selected date format)        : ${we.currentlyWorkingHere ? 'Currently working here' : (we.endDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(we.endDate))}`);
         lines.push(`     Work Description             : ${we.workDescription}`);
         lines.push(`     Skills in Use                : ${we.skillsInUse}`);
         lines.push('');
@@ -709,8 +709,8 @@ export function generateTxtExport(
       person.certifications.forEach((cert, cIdx) => {
         lines.push(`  >> QUALIFICATION #${cIdx + 1}`);
         lines.push(`     Certification Name           : ${cert.name}`);
-        lines.push(`     Completion Date (DD-MM-YYYY) : ${cert.completionDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(cert.completionDate)}`);
-        lines.push(`     Expiry Date (DD-MM-YYYY)     : ${cert.expiryDate ? (cert.expiryDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(cert.expiryDate)) : 'Non-expiring / Lifetime'}`);
+        lines.push(`     Completion Date (selected date format) : ${cert.completionDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(cert.completionDate)}`);
+        lines.push(`     Expiry Date (selected date format)     : ${cert.expiryDate ? (cert.expiryDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(cert.expiryDate)) : 'Non-expiring / Lifetime'}`);
         lines.push(`     Accrediting Issuer           : ${cert.issuer}`);
         lines.push(`     Verification ID / Ref        : ${cert.verificationId}`);
         lines.push(`     Verification Status          : ${cert.verificationStatus}`);
@@ -726,7 +726,7 @@ export function generateTxtExport(
     lines.push(`  Outstanding Requirements        : ${person.outstandingRequirements?.length ? person.outstandingRequirements.join('; ') : 'All administrative intake requirements completed.'}`);
     lines.push(`  Administrative Notes            : ${person.administrativeNotes || 'None.'}`);
     lines.push(`  General Operational Notes       : ${person.notes || 'None.'}`);
-    lines.push(`  Last Supervisor Audit Date      : ${person.lastSupervisorReviewDate ? (person.lastSupervisorReviewDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(person.lastSupervisorReviewDate)) : 'Pending audit review'}`);
+    lines.push(`  Last Supervisor Audit Date      : ${person.lastSupervisorReviewDate ? (person.lastSupervisorReviewDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(person.lastSupervisorReviewDate)) : 'Pending audit review'}`);
     lines.push(`  Auditing Supervisor             : ${person.reviewedBy || 'Unassigned'}`);
     lines.push(`  Tracked Intake Tasks            : ${person.tasksCompleted} completed / ${person.tasksOutstanding} outstanding`);
     lines.push('');
@@ -773,7 +773,7 @@ export function generateCsvExport(
     rows.push(['Contact Details', 'Official Contact Email', person.contactEmail]);
     rows.push(['Contact Details', 'Personal Email Address', person.personalEmail || '']);
 
-    rows.push(['Personal & Health', 'Birth Date', person.birthDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(person.birthDate)]);
+    rows.push(['Personal & Health', 'Birth Date', person.birthDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(person.birthDate)]);
     rows.push(['Personal & Health', 'Marital Status', person.maritalStatus || '']);
     rows.push(['Personal & Health', 'Blood Group', person.bloodGroup || '']);
     rows.push(['Personal & Health', 'Rare Blood Group Details', person.bloodGroupDetails || '']);
@@ -797,8 +797,8 @@ export function generateCsvExport(
       rows.push(['Work Experience', `${p} Name`, we.employerName]);
       rows.push(['Work Experience', `${p} Address`, we.employerAddress]);
       rows.push(['Work Experience', `${p} Contact Numbers`, we.employerContactNumbers]);
-      rows.push(['Work Experience', `${p} Start Date`, we.startDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(we.startDate)]);
-      rows.push(['Work Experience', `${p} End Date`, we.currentlyWorkingHere ? 'Currently working here' : (we.endDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(we.endDate))]);
+      rows.push(['Work Experience', `${p} Start Date`, we.startDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(we.startDate)]);
+      rows.push(['Work Experience', `${p} End Date`, we.currentlyWorkingHere ? 'Currently working here' : (we.endDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(we.endDate))]);
       rows.push(['Work Experience', `${p} Description`, we.workDescription]);
       rows.push(['Work Experience', `${p} Skills in Use`, we.skillsInUse]);
     });
@@ -807,8 +807,8 @@ export function generateCsvExport(
     (person.certifications || []).forEach((c, i) => {
       const p = `Qualification #${i + 1}`;
       rows.push(['Qualifications', `${p} Name`, c.name]);
-      rows.push(['Qualifications', `${p} Completion Date`, c.completionDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(c.completionDate)]);
-      rows.push(['Qualifications', `${p} Expiry Date`, c.expiryDate ? (c.expiryDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(c.expiryDate)) : 'Lifetime']);
+      rows.push(['Qualifications', `${p} Completion Date`, c.completionDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(c.completionDate)]);
+      rows.push(['Qualifications', `${p} Expiry Date`, c.expiryDate ? (c.expiryDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(c.expiryDate)) : 'Lifetime']);
       rows.push(['Qualifications', `${p} Issuer`, c.issuer]);
       rows.push(['Qualifications', `${p} Verification ID`, c.verificationId]);
       rows.push(['Qualifications', `${p} Verification Status`, c.verificationStatus]);
@@ -818,7 +818,7 @@ export function generateCsvExport(
     rows.push(['Administrative & Audit', 'Outstanding Requirements', (person.outstandingRequirements || []).join('; ')]);
     rows.push(['Administrative & Audit', 'Administrative Notes', person.administrativeNotes || '']);
     rows.push(['Administrative & Audit', 'General Notes', person.notes || '']);
-    rows.push(['Administrative & Audit', 'Last Supervisor Audit Date', person.lastSupervisorReviewDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(person.lastSupervisorReviewDate)]);
+    rows.push(['Administrative & Audit', 'Last Supervisor Audit Date', person.lastSupervisorReviewDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(person.lastSupervisorReviewDate)]);
     rows.push(['Administrative & Audit', 'Auditing Supervisor', person.reviewedBy || '']);
     rows.push(['Administrative & Audit', 'Notice', EXPORT_LEGAL_DISCLAIMER]);
 
@@ -880,7 +880,7 @@ export function generateCsvExport(
       p.assignmentSector,
       p.contactEmail,
       p.personalEmail || '',
-      p.birthDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(p.birthDate),
+      p.birthDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(p.birthDate),
       p.maritalStatus || '',
       p.bloodGroup || '',
       p.healthParticulars || '',
@@ -893,7 +893,7 @@ export function generateCsvExport(
       p.verificationStatus,
       (p.outstandingRequirements || []).join('; '),
       p.administrativeNotes || '',
-      p.lastSupervisorReviewDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(p.lastSupervisorReviewDate),
+      p.lastSupervisorReviewDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(p.lastSupervisorReviewDate),
       p.reviewedBy || '',
     ];
   });
@@ -943,7 +943,7 @@ export function generateXlsxExport(
       ['CONTACT & PERSONAL DETAILS', 'VALUE'],
       ['Official Contact Email', person.contactEmail],
       ['Personal Email Address', person.personalEmail || ''],
-      ['Birth Date (DD-MM-YYYY)', person.birthDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(person.birthDate)],
+      ['Birth Date (selected date format)', person.birthDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(person.birthDate)],
       ['Marital Status', person.maritalStatus || ''],
       ['Blood Group', person.bloodGroup || ''],
       ['Rare Blood Group Details', person.bloodGroupDetails || ''],
@@ -975,8 +975,8 @@ export function generateXlsxExport(
         we.employerName,
         we.employerAddress,
         we.employerContactNumbers,
-        we.startDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(we.startDate),
-        we.currentlyWorkingHere ? 'Currently working here' : (we.endDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(we.endDate)),
+        we.startDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(we.startDate),
+        we.currentlyWorkingHere ? 'Currently working here' : (we.endDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(we.endDate)),
         we.currentlyWorkingHere ? 'Yes' : 'No',
         we.workDescription,
         we.skillsInUse,
@@ -988,12 +988,12 @@ export function generateXlsxExport(
 
     // Sheet 3: Qualifications
     const qualData = [
-      ['Index', 'Qualification Name', 'Completion Date (DD-MM-YYYY)', 'Expiry Date (DD-MM-YYYY)', 'Issuer', 'Verification ID', 'Verification Status'],
+      ['Index', 'Qualification Name', 'Completion Date (selected date format)', 'Expiry Date (selected date format)', 'Issuer', 'Verification ID', 'Verification Status'],
       ...(person.certifications || []).map((c, idx) => [
         idx + 1,
         c.name,
-        c.completionDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(c.completionDate),
-        c.expiryDate ? (c.expiryDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(c.expiryDate)) : 'Lifetime',
+        c.completionDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(c.completionDate),
+        c.expiryDate ? (c.expiryDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(c.expiryDate)) : 'Lifetime',
         c.issuer,
         c.verificationId,
         c.verificationStatus,
@@ -1010,7 +1010,7 @@ export function generateXlsxExport(
       ['Outstanding Requirements', (person.outstandingRequirements || []).join('\n')],
       ['Administrative Notes', person.administrativeNotes || ''],
       ['General Notes', person.notes || ''],
-      ['Last Supervisor Audit Date', person.lastSupervisorReviewDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(person.lastSupervisorReviewDate)],
+      ['Last Supervisor Audit Date', person.lastSupervisorReviewDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(person.lastSupervisorReviewDate)],
       ['Auditing Supervisor', person.reviewedBy || ''],
       ['Tracked Intake Tasks', `${person.tasksCompleted} completed / ${person.tasksOutstanding} outstanding`],
     ];
@@ -1031,7 +1031,7 @@ export function generateXlsxExport(
         p.assignmentSector,
         p.contactEmail,
         p.personalEmail || '',
-        p.birthDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(p.birthDate),
+        p.birthDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(p.birthDate),
         p.maritalStatus || '',
         p.bloodGroup || '',
         p.healthParticulars || '',
@@ -1042,15 +1042,15 @@ export function generateXlsxExport(
     XLSX.utils.book_append_sheet(wb, wsRoster, 'Personnel Roster');
 
     // All Qualifications
-    const allQualRows = [['PMC Employee ID', 'Name', 'Qualification', 'Completion Date (DD-MM-YYYY)', 'Expiry Date (DD-MM-YYYY)', 'Issuer', 'Status']];
+    const allQualRows = [['PMC Employee ID', 'Name', 'Qualification', 'Completion Date (selected date format)', 'Expiry Date (selected date format)', 'Issuer', 'Status']];
     records.forEach((p) => {
       (p.certifications || []).forEach((c) => {
         allQualRows.push([
           p.pmcEmployeeId || p.demoId || '',
           p.displayName || p.fullName,
           c.name,
-          c.completionDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(c.completionDate),
-          c.expiryDate ? (c.expiryDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(c.expiryDate)) : 'Lifetime',
+          c.completionDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(c.completionDate),
+          c.expiryDate ? (c.expiryDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(c.expiryDate)) : 'Lifetime',
           c.issuer,
           c.verificationStatus,
         ]);
@@ -1069,8 +1069,8 @@ export function generateXlsxExport(
           we.employerName,
           we.employerAddress,
           we.employerContactNumbers,
-          we.startDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(we.startDate),
-          we.currentlyWorkingHere ? 'Currently working here' : (we.endDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(we.endDate)),
+          we.startDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(we.startDate),
+          we.currentlyWorkingHere ? 'Currently working here' : (we.endDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(we.endDate)),
           we.workDescription,
         ]);
       });
@@ -1156,7 +1156,7 @@ export function generatePdfExport(
       body: [
         ['Full Name', person.fullName, 'Contact Email', person.contactEmail],
         ['Display Name', person.displayName, 'Personal Email', person.personalEmail || '(None)'],
-        ['Call Sign', person.callSign || person.callsign || 'Unassigned', 'Birth Date', person.birthDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(person.birthDate) || '(None)'],
+        ['Call Sign', person.callSign || person.callsign || 'Unassigned', 'Birth Date', person.birthDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(person.birthDate) || '(None)'],
         ['PMC Employee ID', person.pmcEmployeeId || person.demoId || '', 'Marital Status', person.maritalStatus || '(None)'],
         ['Badge ID', person.badgeId, 'Blood Group', person.bloodGroup || '(None)'],
         ['Role(s)', (person.roles || [person.role]).join('; '), 'Rare Blood Details', person.bloodGroupDetails || '(None)'],
@@ -1207,7 +1207,7 @@ export function generatePdfExport(
       we.employerName,
       we.employerAddress,
       we.employerContactNumbers,
-      `${we.startDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(we.startDate)} to ${we.currentlyWorkingHere ? 'Present (Active)' : (we.endDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(we.endDate))}`,
+      `${we.startDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(we.startDate)} to ${we.currentlyWorkingHere ? 'Present (Active)' : (we.endDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(we.endDate))}`,
       `${we.workDescription}\nSkills: ${we.skillsInUse}`,
     ]);
 
@@ -1216,7 +1216,7 @@ export function generatePdfExport(
         startY: currentY,
         margin: { left: margin, right: margin },
         theme: 'grid',
-        head: [['#', 'Employer Name', 'Employer Address', 'Contact Numbers', 'Tenure (DD-MM-YYYY)', 'Description & Skills']],
+        head: [['#', 'Employer Name', 'Employer Address', 'Contact Numbers', 'Tenure (selected date format)', 'Description & Skills']],
         body: weRows,
         headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
         bodyStyles: { fontSize: 7.5 },
@@ -1236,8 +1236,8 @@ export function generatePdfExport(
     const certRows = (person.certifications || []).map((c, idx) => [
       `#${idx + 1}`,
       c.name,
-      c.completionDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(c.completionDate),
-      c.expiryDate ? (c.expiryDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(c.expiryDate)) : 'Lifetime / Non-expiring',
+      c.completionDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(c.completionDate),
+      c.expiryDate ? (c.expiryDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(c.expiryDate)) : 'Lifetime / Non-expiring',
       c.issuer,
       c.verificationId,
       c.verificationStatus,
@@ -1248,7 +1248,7 @@ export function generatePdfExport(
         startY: currentY,
         margin: { left: margin, right: margin },
         theme: 'grid',
-        head: [['#', 'Qualification Name', 'Completion (DD-MM-YYYY)', 'Expiry Date (DD-MM-YYYY)', 'Issuer', 'Verification ID', 'Status']],
+        head: [['#', 'Qualification Name', 'Completion (selected date format)', 'Expiry Date (selected date format)', 'Issuer', 'Verification ID', 'Status']],
         body: certRows,
         headStyles: { fillColor: [30, 58, 138], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 7.5 },
         bodyStyles: { fontSize: 7 },
@@ -1275,7 +1275,7 @@ export function generatePdfExport(
         ['Outstanding Requirements', (person.outstandingRequirements || []).join('; ') || 'None outstanding.'],
         ['Administrative Notes', person.administrativeNotes || 'None on file.'],
         ['General Notes', person.notes || 'None on file.'],
-        ['Last Supervisor Review Date', person.lastSupervisorReviewDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(person.lastSupervisorReviewDate) || 'Pending'],
+        ['Last Supervisor Review Date', person.lastSupervisorReviewDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(person.lastSupervisorReviewDate) || 'Pending'],
         ['Auditing Supervisor', person.reviewedBy || 'Unassigned'],
       ],
       headStyles: { fillColor: [51, 65, 85], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
@@ -1410,7 +1410,7 @@ export async function generateDocxExport(
         rows: [
           makeTableRow('PMC Employee ID', person.pmcEmployeeId || person.demoId || '', 'Contact Email', person.contactEmail),
           makeTableRow('Badge ID', person.badgeId, 'Personal Email', person.personalEmail || '(None)'),
-          makeTableRow('Full Legal Name', person.fullName, 'Birth Date', person.birthDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(person.birthDate) || '(None)'),
+          makeTableRow('Full Legal Name', person.fullName, 'Birth Date', person.birthDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(person.birthDate) || '(None)'),
           makeTableRow('Display Name', person.displayName, 'Marital Status', person.maritalStatus || '(None)'),
           makeTableRow('Call Sign', person.callSign || person.callsign || 'Unassigned', 'Blood Group', person.bloodGroup || '(None)'),
           makeTableRow('Operational Role(s)', (person.roles || [person.role]).join('; '), 'Rare Blood Details', person.bloodGroupDetails || '(None)'),
@@ -1498,7 +1498,7 @@ export async function generateDocxExport(
             children: [
               new TextRun({ text: `Employer #${wIdx + 1}: ${we.employerName} `, bold: true, size: 20, color: '1E3A8A' }),
               new TextRun({
-                text: `(${we.startDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(we.startDate)} to ${we.currentlyWorkingHere ? 'Present' : (we.endDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(we.endDate))})`,
+                text: `(${we.startDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(we.startDate)} to ${we.currentlyWorkingHere ? 'Present' : (we.endDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(we.endDate))})`,
                 italics: true,
                 size: 18,
               }),
@@ -1574,8 +1574,8 @@ export async function generateDocxExport(
                 new TableRow({
                   children: [
                     new TableCell({ children: [new Paragraph({ text: c.name })] }),
-                    new TableCell({ children: [new Paragraph({ text: c.completionDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(c.completionDate) })] }),
-                    new TableCell({ children: [new Paragraph({ text: c.expiryDate ? (c.expiryDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(c.expiryDate)) : 'Lifetime' })] }),
+                    new TableCell({ children: [new Paragraph({ text: c.completionDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(c.completionDate) })] }),
+                    new TableCell({ children: [new Paragraph({ text: c.expiryDate ? (c.expiryDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(c.expiryDate)) : 'Lifetime' })] }),
                     new TableCell({ children: [new Paragraph({ text: `${c.issuer} (${c.verificationId})` })] }),
                     new TableCell({ children: [new Paragraph({ text: c.verificationStatus })] }),
                   ],
@@ -1601,7 +1601,7 @@ export async function generateDocxExport(
           new TextRun({ text: 'Roster Verification: ', bold: true, size: 18 }),
           new TextRun({ text: `${person.verificationStatus}   |   `, size: 18 }),
           new TextRun({ text: 'Last Supervisor Review Date: ', bold: true, size: 18 }),
-          new TextRun({ text: `${person.lastSupervisorReviewDate === '[REDACTED]' ? '[REDACTED]' : toDDMMYYYY(person.lastSupervisorReviewDate) || 'Pending'}   |   `, size: 18 }),
+          new TextRun({ text: `${person.lastSupervisorReviewDate === '[REDACTED]' ? '[REDACTED]' : formatDisplayDate(person.lastSupervisorReviewDate) || 'Pending'}   |   `, size: 18 }),
           new TextRun({ text: 'Auditor: ', bold: true, size: 18 }),
           new TextRun({ text: person.reviewedBy || 'Unassigned', size: 18 }),
         ],

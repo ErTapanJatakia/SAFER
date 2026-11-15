@@ -59,12 +59,46 @@ import {
   computeOperationalMetrics,
 } from './utils/readinessRules.ts';
 import { RotateCcw, Shield, Check, FileText, AlertTriangle, Eye, Palette, Building2 } from 'lucide-react';
+import {getAccountPreferences} from './utils/accountSettings.ts';
+
+function playNotificationTone(): void {
+  try {
+    const AudioContextConstructor = window.AudioContext;
+    if (!AudioContextConstructor) return;
+    const context = new AudioContextConstructor();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    void context.resume().catch(() => { void context.close(); });
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(880, context.currentTime);
+    gain.gain.setValueAtTime(0.025, context.currentTime);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.09);
+    oscillator.onended = () => { void context.close(); };
+  } catch {
+    // Audio is optional and browser autoplay policies may reject it.
+  }
+}
 
 export default function App() {
   // Repository capability is injected only by the explicit Demo Guest boundary.
   // App cannot construct or select a browser-local operational repository itself.
   const demoRepository = useDemoWorkspaceRepository();
   const initialDemoSnapshot = useMemo(() => demoRepository.loadSnapshot(), [demoRepository]);
+
+  // Refresh translated labels and formatted values after account preference changes.
+  const [, setPreferencesRevision] = useState(0);
+  useEffect(() => {
+    const refreshPreferences = () => {
+      document.documentElement.dataset.density = getAccountPreferences().displayDensity;
+      setPreferencesRevision((revision) => revision + 1);
+    };
+    refreshPreferences();
+    window.addEventListener('safer:preferences-changed', refreshPreferences);
+    return () => window.removeEventListener('safer:preferences-changed', refreshPreferences);
+  }, []);
 
   // Navigation State
   const [activeSection, setActiveSection] = useState<NavigationSection>('dashboard');
@@ -179,7 +213,7 @@ export default function App() {
   const [accessibilitySettings, setAccessibilitySettings] = useState<AccessibilitySettings>(() => {
     try {
       const saved = localStorage.getItem('prot_ops_a11y_v2');
-      return saved ? JSON.parse(saved) : DEFAULT_ACCESSIBILITY_SETTINGS;
+      return saved ? { ...DEFAULT_ACCESSIBILITY_SETTINGS, ...JSON.parse(saved) } : DEFAULT_ACCESSIBILITY_SETTINGS;
     } catch {
       return DEFAULT_ACCESSIBILITY_SETTINGS;
     }
@@ -214,8 +248,11 @@ export default function App() {
   };
 
   const showToast = (msg: string) => {
-    setToastMessage(msg);
+    const preferences = getAccountPreferences();
     announce(msg);
+    if (!preferences.notificationsEnabled) return;
+    setToastMessage(msg);
+    if (preferences.soundEnabled) playNotificationTone();
     setTimeout(() => setToastMessage(null), 3500);
   };
 
@@ -622,7 +659,7 @@ export default function App() {
       </a>
 
       {/* Screen Reader Live Notification Announcer */}
-      <LiveAnnouncer announcement={liveAnnouncement} />
+      <LiveAnnouncer announcement={liveAnnouncement} enabled={accessibilitySettings.screenReaderAnnouncements} />
 
       {/* Top Header Banner & Safety Principles */}
       <HeaderBanner
