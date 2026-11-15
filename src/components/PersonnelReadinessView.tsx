@@ -5,7 +5,7 @@ import {
   evaluateCertification,
   type RecordIndicatorStatus,
 } from '../utils/readinessRules.ts';
-import { toDDMMYYYY } from '../utils/dateUtils.ts';
+import { formatDisplayDate } from '../utils/dateUtils.ts';
 import {
   Users,
   Search,
