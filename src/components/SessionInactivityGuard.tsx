@@ -159,9 +159,9 @@ export const SessionInactivityGuard: React.FC<SessionInactivityGuardProps> = ({
 
   return (
     <SessionTimeoutContext.Provider value={contextValue}>
-      <div className="relative z-40 flex flex-wrap items-center justify-end gap-2 border-b border-slate-800 bg-slate-900 px-4 py-1.5 text-[11px] text-slate-300">
+      <section role="region" aria-label="Session inactivity status" className="relative z-40 flex flex-wrap items-center justify-end gap-2 border-b border-slate-800 bg-slate-900 px-4 py-1.5 text-[11px] text-slate-300">
         <span>Automatic sign-out · {minutes} min remaining</span>
-      </div>
+      </section>
       {warning && (
         <div role="alertdialog" aria-modal="true" aria-labelledby="session-timeout-title" aria-describedby="session-timeout-description"
           className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 p-4">
