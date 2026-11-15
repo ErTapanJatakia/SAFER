@@ -21,7 +21,10 @@ export default async function handler(request, response) {
   if (!token) return response.status(401).json({ error: 'unauthenticated' });
 
   try {
-    const { platformAuth, platformDb } = await import('../../src/server/firebase-admin.js');
+    const [{ platformAuth, platformDb }, { FieldValue }] = await Promise.all([
+      import('../../src/server/firebase-admin.js'),
+      import('firebase-admin/firestore'),
+    ]);
     const decoded = await platformAuth.verifyIdToken(token, true);
     const [administratorSnapshot, settingsSnapshot] = await Promise.all([
       platformDb.doc(`platformAdministrators/${decoded.uid}`).get(),
@@ -48,7 +51,7 @@ export default async function handler(request, response) {
       actorUid: decoded.uid,
       database: platformDb,
       authAdmin: platformAuth,
-      serverTimestamp: () => (await import('firebase-admin/firestore')).FieldValue.serverTimestamp(),
+      serverTimestamp: () => FieldValue.serverTimestamp(),
     });
     return response.status(201).json(result);
   } catch (error) {
