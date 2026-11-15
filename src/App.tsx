@@ -54,7 +54,7 @@ import { AccountSettingsModal } from './components/AccountSettingsModal.tsx';
 import { PrivacyConsoleModal } from './components/PrivacyConsoleModal.tsx';
 import { PersonnelExportModal } from './components/PersonnelExportModal.tsx';
 import { LiveAnnouncer } from './components/LiveAnnouncer.tsx';
-import { ACCOUNT_SETTINGS_STORAGE_KEY, normalizeAccountSettings } from './utils/accountSettings.ts';
+import { ACCOUNT_SETTINGS_STORAGE_KEY, shouldShowVisualToast } from './utils/accountSettings.ts';
 import { speakAccessibilityAnnouncement } from './utils/speech.ts';
 import {
   evaluatePersonnelReadiness,
@@ -236,8 +236,9 @@ export default function App() {
     if (kind === 'success') {
       try {
         const raw = localStorage.getItem(ACCOUNT_SETTINGS_STORAGE_KEY);
-        showSuccess = raw ? normalizeAccountSettings(JSON.parse(raw)).preferences.showSuccessToasts : true;
+        showSuccess = shouldShowVisualToast(kind, raw ? JSON.parse(raw) : null);
       } catch {
+        // Storage or parsing failures fail open for user feedback.
         showSuccess = true;
       }
     }
