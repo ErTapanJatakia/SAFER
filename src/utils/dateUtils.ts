@@ -80,10 +80,9 @@ export function toYYYYMMDD(dateStr: string | null | undefined): string {
     const [, day, month, year] = dmyMatch;
     return `${year}-${month}-${day}`;
   }
-  // If already YYYY-MM-DD
-  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-    return trimmed;
-  }
+  // Accept canonical ISO dates and ISO datetime values without shifting timezone.
+  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})(?:$|T)/);
+  if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
   return trimmed;
 }
 
