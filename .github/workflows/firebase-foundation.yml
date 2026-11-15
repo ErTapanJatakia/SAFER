@@ -23,6 +23,7 @@ on:
     branches:
       - main
       - "fix/*"
+      - "feature/*"
     paths:
       - "package.json"
       - "package-lock.json"
@@ -82,6 +83,9 @@ jobs:
 
       - name: Cloudflare Pages browser security header policy tests
         run: node --test tests/cloudflare-security-headers.test.mjs
+
+      - name: Platform Owner authorization and bootstrap tests
+        run: npm run test:platform-owner
 
       - name: Firestore Security Rules Emulator tests
         run: npm run test:firestore-rules
@@ -258,7 +262,7 @@ jobs:
         run: npm run test:security-assessment
 
       - name: Dependency security audit
-        run: npm audit --omit=dev --audit-level=high
+        run: bun audit --prod --audit-level=high
 
       - name: Type-check
         run: npm run lint
@@ -267,7 +271,7 @@ jobs:
         run: npm run build
 
       - name: Commit regenerated lockfiles
-        if: github.event_name == 'push'
+        if: success()
         run: |
           if ! git diff --quiet -- package-lock.json bun.lock; then
             git config user.name "github-actions[bot]"

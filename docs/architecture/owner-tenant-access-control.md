@@ -94,13 +94,12 @@ A user who belongs to no active organisation sees an onboarding/pending state, n
 
 ## 6. Identity, claims and authoritative data model
 
-Suggested Firestore structure (names are logical design; migration requires a separately reviewed schema plan):
+Suggested Firestore structure (all paths below are valid Firestore document paths; migration requires a separately reviewed schema plan):
 
 ```text
-platform/
-  settings
-  administrators/{uid}
-  auditEvents/{eventId}
+platform/settings
+platformAdministrators/{uid}
+platformAuditEvents/{eventId}
 organisations/{orgId}
   profile
   members/{uid}

@@ -42,5 +42,6 @@
       "*": false,
       "main": true
     }
-  }
+  },
+  "installCommand": "bun install --frozen-lockfile"
 }
