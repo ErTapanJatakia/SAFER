@@ -18,6 +18,7 @@ const settings = {
   lineSpacing: 'normal' as const,
   letterSpacing: 'normal' as const,
   dyslexicFont: false,
+  screenReaderAnnouncements: true,
 };
 
 function ModalHarness() {
