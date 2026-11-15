@@ -19,5 +19,5 @@ describe('regional display preferences',()=>{
   writePreferences({locale:'en',timezone:'UTC',timeFormat:'24h'}); expect(formatDisplayTime('2026-11-15T13:05:00.000Z')).toContain('13');
   writePreferences({timezone:'Asia/Kolkata',timeFormat:'12h'}); expect(formatDisplayTime('2026-11-15T13:05:00.000Z')).toContain('06:35');
  });
- it('returns fallbacks for invalid values',()=>{expect(formatDisplayTime('not-a-date','Unknown')).toBe('Unknown');expect(formatDisplayDate('', 'Unknown')).toBe('Unknown');});
+ it('formats local wall-clock timestamps and returns fallbacks for invalid values',()=>{writePreferences({timezone:'UTC',timeFormat:'24h'});expect(formatDisplayTime('2026-11-15 13:05')).toContain('13');expect(formatDisplayTime('not-a-date','Unknown')).toBe('Unknown');expect(formatDisplayDate('', 'Unknown')).toBe('Unknown');});
 });
