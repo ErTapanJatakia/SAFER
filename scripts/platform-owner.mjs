@@ -10,11 +10,18 @@ const PROJECT_ID = 'safer-2026';
 
 function parseArguments(argv) {
   const [command, ...items] = argv;
-  const values = Object.fromEntries(items.map((item) => {
+  const allowed = new Set(['uid', 'change-ref', 'operator-ref', 'reason']);
+  const values = {};
+  for (const item of items) {
     const match = /^--([a-z-]+)=(.*)$/.exec(item);
-    if (!match) throw new Error(`Invalid argument: ${item}`);
-    return [match[1], match[2]];
-  }));
+    if (!match || !allowed.has(match[1]) || Object.hasOwn(values, match[1])) {
+      throw new Error(`Invalid or duplicate argument: ${item.split('=')[0]}`);
+    }
+    values[match[1]] = match[2];
+  }
+  for (const key of allowed) {
+    if (!values[key]) throw new Error(`Missing required argument: --${key}`);
+  }
   return { command, values };
 }
 
