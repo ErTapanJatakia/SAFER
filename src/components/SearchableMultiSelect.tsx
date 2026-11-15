@@ -162,7 +162,8 @@ export const SearchableMultiSelect: React.FC<SearchableMultiSelectProps> = ({
       {isOpen && (
         <div
           id={panelId}
-          role="group"
+          role="region"
+          aria-label={`${label} options`}
           aria-labelledby={labelId}
           onKeyDown={closeFromKeyboard}
           className="absolute z-40 left-0 right-0 mt-1 bg-white border border-slate-300 rounded-lg shadow-xl overflow-hidden flex flex-col max-h-72 animate-in fade-in zoom-in-95 duration-100"
