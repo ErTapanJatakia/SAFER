@@ -275,7 +275,7 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
                   {[5, 10, 15, 20, 25, 30].map((minutes) => <option key={minutes} value={minutes}>{minutes} minutes</option>)}
                 </select>
               </label>
-              <button type="submit" disabled={busy || !supportOrgId || !supportActions.length} className="rounded-lg border border-amber-700 px-4 py-2.5 text-xs font-bold text-amber-200 hover:bg-amber-950/40 disabled:opacity-50">Activate support session</button>
+              <button type="submit" disabled={busy || !supportOrgId || !supportActions.length || !!activeSession} className="rounded-lg border border-amber-700 px-4 py-2.5 text-xs font-bold text-amber-200 hover:bg-amber-950/40 disabled:opacity-50">Activate support session</button>
             </form>
             {activeSession && <div className="mt-4 rounded-lg border border-amber-700 bg-amber-950/30 p-3">
               <p className="text-xs font-semibold text-amber-200">Active session — copy the identifier now</p>
