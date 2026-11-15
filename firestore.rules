@@ -41,9 +41,75 @@ service cloud.firestore {
         && get(organisationPath(orgId)).data.status == 'active';
     }
 
-    function tenantSuperAdminOrAdmin(orgId) {
+    function tenantRoleIn(orgId, roles) {
       return activeTenantRole(orgId)
-        && get(membershipPath(orgId)).data.role in ['tenant_super_admin', 'tenant_admin'];
+        && get(membershipPath(orgId)).data.role in roles;
+    }
+
+    function tenantSuperAdminOrAdmin(orgId) {
+      return tenantRoleIn(orgId, ['tenant_super_admin', 'tenant_admin']);
+    }
+
+    function tenantMemberReader(orgId) {
+      return tenantRoleIn(orgId, ['tenant_super_admin', 'tenant_admin', 'tenant_auditor']);
+    }
+
+    function tenantPersonnelReader(orgId) {
+      return tenantRoleIn(orgId, [
+        'tenant_super_admin', 'tenant_admin', 'tenant_manager', 'tenant_auditor'
+      ]);
+    }
+
+    function tenantOperationalWriter(orgId) {
+      return tenantRoleIn(orgId, ['tenant_super_admin', 'tenant_admin', 'tenant_manager']);
+    }
+
+    function tenantIncidentReader(orgId) {
+      return tenantRoleIn(orgId, [
+        'tenant_super_admin', 'tenant_admin', 'tenant_manager', 'tenant_auditor'
+      ]) || (tenantRoleIn(orgId, ['tenant_employee'])
+        && resource.data.reportedByUid == request.auth.uid);
+    }
+
+    function tenantIncidentCreator(orgId) {
+      return tenantRoleIn(orgId, [
+        'tenant_super_admin', 'tenant_admin', 'tenant_manager', 'tenant_employee'
+      ]);
+    }
+
+    function tenantIncidentUpdater(orgId) {
+      return tenantOperationalWriter(orgId);
+    }
+
+    function tenantEvidenceReader(orgId) {
+      return tenantPersonnelReader(orgId);
+    }
+
+    function tenantAuditReader(orgId) {
+      return tenantRoleIn(orgId, ['tenant_super_admin', 'tenant_admin', 'tenant_auditor']);
+    }
+
+    function validCanonicalMemberDocument(data, uid, orgId) {
+      return data.keys().hasOnly([
+          'uid', 'orgId', 'role', 'status', 'createdAt', 'createdByUid',
+          'updatedAt', 'updatedByUid', 'schemaVersion'
+        ])
+        && data.keys().hasAll([
+          'uid', 'orgId', 'role', 'status', 'createdAt', 'createdByUid',
+          'updatedAt', 'updatedByUid', 'schemaVersion'
+        ])
+        && data.uid == uid
+        && data.orgId == orgId
+        && data.role in [
+          'tenant_super_admin', 'tenant_admin', 'tenant_manager',
+          'tenant_employee', 'tenant_auditor'
+        ]
+        && data.status == 'active'
+        && data.createdAt is timestamp
+        && data.createdByUid is string
+        && data.updatedAt is timestamp
+        && data.updatedByUid is string
+        && data.schemaVersion == 1;
     }
 
     function validProfile(uid) {
@@ -230,7 +296,7 @@ service cloud.firestore {
     }
 
     match /organisations/{orgId} {
-      allow get: if tenantSuperAdminOrAdmin(orgId)
+      allow get: if activeTenantRole(orgId)
         && resource.data.orgId == orgId
         && resource.data.status == 'active';
       allow list, create, update, delete: if false;
@@ -238,36 +304,19 @@ service cloud.firestore {
       match /members/{uid} {
         // A signed-in user may get only their own minimal membership record.
         // This is a locator-bound read, not tenant discovery or role management.
-        allow get: if signedIn()
-          && request.auth.uid == uid
-          && resource.data.keys().hasOnly([
-            'uid', 'orgId', 'role', 'status', 'createdAt', 'createdByUid',
-            'updatedAt', 'updatedByUid', 'schemaVersion'
-          ])
-          && resource.data.keys().hasAll([
-            'uid', 'orgId', 'role', 'status', 'createdAt', 'createdByUid',
-            'updatedAt', 'updatedByUid', 'schemaVersion'
-          ])
-          && resource.data.uid == uid
-          && resource.data.orgId == orgId
-          && resource.data.status == 'active'
-          && resource.data.role in [
-            'tenant_super_admin', 'tenant_admin', 'tenant_manager',
-            'tenant_employee', 'tenant_auditor'
-          ]
-          && resource.data.createdAt is timestamp
-          && resource.data.createdByUid is string
-          && resource.data.updatedAt is timestamp
-          && resource.data.updatedByUid is string
-          && resource.data.schemaVersion == 1
+        allow get: if (signedIn() && request.auth.uid == uid
+          && validCanonicalMemberDocument(resource.data, uid, orgId)
           && exists(organisationPath(orgId))
           && get(organisationPath(orgId)).data.orgId == orgId
-          && get(organisationPath(orgId)).data.status == 'active';
-        allow list, create, update, delete: if false;
+          && get(organisationPath(orgId)).data.status == 'active')
+          || (tenantMemberReader(orgId)
+            && validCanonicalMemberDocument(resource.data, uid, orgId));
+        allow list: if tenantMemberReader(orgId);
+        allow create, update, delete: if false;
       }
 
       match /personnel/{recordId} {
-        allow get, list: if tenantSuperAdminOrAdmin(orgId)
+        allow get, list: if tenantPersonnelReader(orgId)
           && resource.data.orgId == orgId;
         allow create: if tenantSuperAdminOrAdmin(orgId)
           && validPersonnelCreate(orgId, recordId);
@@ -277,17 +326,17 @@ service cloud.firestore {
       }
 
       match /incidents/{incidentId} {
-        allow get, list: if tenantSuperAdminOrAdmin(orgId)
+        allow get, list: if tenantIncidentReader(orgId)
           && resource.data.orgId == orgId;
-        allow create: if tenantSuperAdminOrAdmin(orgId)
+        allow create: if tenantIncidentCreator(orgId)
           && validIncidentCreate(orgId, incidentId);
-        allow update: if tenantSuperAdminOrAdmin(orgId)
+        allow update: if tenantIncidentUpdater(orgId)
           && validIncidentUpdate(orgId, incidentId);
         allow delete: if false;
       }
 
       match /evidence/{evidenceId} {
-        allow get, list: if tenantSuperAdminOrAdmin(orgId)
+        allow get, list: if tenantEvidenceReader(orgId)
           && resource.data.orgId == orgId;
         allow create, update, delete: if false;
       }
@@ -301,7 +350,9 @@ service cloud.firestore {
       }
 
       match /auditEvents/{eventId} {
-        allow read, write: if false;
+        allow get, list: if tenantAuditReader(orgId)
+          && resource.data.orgId == orgId;
+        allow create, update, delete: if false;
       }
     }
 
