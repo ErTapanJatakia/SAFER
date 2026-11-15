@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import {
   createAccountSettingsExport,
   DEFAULT_ACCOUNT_SETTINGS,
@@ -35,6 +36,17 @@ describe('account settings normalization', () => {
     expect(invalid.preferences.timezone).toBe(DEFAULT_ACCOUNT_SETTINGS.preferences.timezone);
     expect(invalid.preferences.locale).toBe(DEFAULT_ACCOUNT_SETTINGS.preferences.locale);
     expect(invalid.preferences.numberFormat).toBe(DEFAULT_ACCOUNT_SETTINGS.preferences.numberFormat);
+  });
+
+
+  it('applies compact spacing to workspace views and operational dialogs without changing control sizing or text', () => {
+    const css = readFileSync(new URL('../index.css', import.meta.url), 'utf8');
+    expect(css).toContain(':is(#main-content, [role="dialog"])');
+    expect(css).toContain('[class~="p-6"] { padding: 1rem; }');
+    expect(css).toContain('[class~="gap-4"] { gap: 0.75rem; }');
+    expect(css).toContain('[class~="space-y-4"] > :not([hidden]) ~ :not([hidden]) { margin-block-start: 0.75rem; }');
+    expect(css).not.toMatch(/data-display-density="compact"[^}]*font-size/i);
+    expect(css).not.toMatch(/data-display-density="compact"[^}]*min-height/i);
   });
 
   it('defaults display density to Comfortable and accepts Compact', () => {
