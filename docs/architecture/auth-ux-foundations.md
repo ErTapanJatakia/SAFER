@@ -31,6 +31,12 @@ Supported language options:
 
 Arabic and Urdu set the document direction to RTL. The current translation catalogue covers authentication, primary navigation, and account preference controls. The operational module labels, longer descriptions, validation messages, and generated report content still require full translation before claiming end-to-end localisation.
 
+Workstation behaviour preferences:
+- In-app toast notifications can be disabled without suppressing form/security errors or independently configured screen-reader announcements.
+- Optional notification audio uses a short locally generated Web Audio tone; no external audio asset or service is required and browser autoplay restrictions may suppress playback.
+- Display density supports comfortable and compact layouts.
+- Automatic sign-out after inactivity is configurable from 5 to 60 minutes in five-minute increments, with a 10-minute default. Activity resets the deadline for authenticated and Demo Guest sessions.
+
 Regional display preferences:
 - Date: DD-MM-YYYY, YYYY-MM-DD, or DD/MM/YYYY
 - Time: 12-hour or 24-hour
@@ -48,6 +54,6 @@ Canonical stored dates and operational calculations are not rewritten when displ
 
 ## Validation and release boundary
 
-- Regression tests were added for OAuth marker hygiene, safe Firebase error mapping, locale persistence/direction, regional formatting, and live-announcement control.
+- Regression tests were added for OAuth marker hygiene, safe Firebase error mapping, locale persistence/direction, regional formatting, workstation preference normalization, inactivity expiry/reset, and live-announcement control.
 - No tests, builds, or GitHub Actions workflows were run as part of this implementation because repository Actions are disabled by the owner.
 - This branch is not merged or deployed. Firebase provider enablement, authorised domains, and production environment configuration remain separate deployment prerequisites.
