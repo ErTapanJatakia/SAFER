@@ -6,9 +6,9 @@ import { LiveAnnouncer } from './LiveAnnouncer';
 let host: HTMLDivElement;
 let root: Root;
 
-const renderAnnouncement = (announcement: string | null) => {
+const renderAnnouncement = (announcement: string | null, enabled = true) => {
   act(() => {
-    root.render(<LiveAnnouncer announcement={announcement} />);
+    root.render(<LiveAnnouncer announcement={announcement} enabled={enabled} />);
   });
 };
 
@@ -40,6 +40,13 @@ describe('LiveAnnouncer accessibility', () => {
     renderAnnouncement('Incident report recorded.');
     expect(host.querySelector('[role="status"]')).toBe(region);
     expect(region?.textContent).toBe('Incident report recorded.');
+  });
+
+  it('can disable announcements without removing the persistent region', () => {
+    renderAnnouncement('Hidden announcement.', false);
+    const region = host.querySelector('[role="status"]');
+    expect(region?.getAttribute('aria-live')).toBe('off');
+    expect(region?.textContent).toBe('');
   });
 
   it('clears announcement content without removing the live region', () => {
