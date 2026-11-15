@@ -34,6 +34,7 @@ export const TENANT_ACTIONS = Object.freeze([
   'incidents:create',
   'incidents:update',
   'evidence:read',
+  'evidence:register',
   'checklists:read',
   'checklists:read:assigned',
   'checklists:update',
@@ -49,12 +50,12 @@ const ROLE_ACTIONS = Object.freeze({
   tenant_admin: new Set([
     'organisation:read', 'members:read', 'members:invite', 'members:suspend',
     'members:role:assign', 'personnel:read', 'personnel:create', 'personnel:update',
-    'incidents:read', 'incidents:create', 'incidents:update', 'evidence:read',
+    'incidents:read', 'incidents:create', 'incidents:update', 'evidence:read', 'evidence:register',
     'checklists:read', 'checklists:update', 'audit:read', 'reports:read', 'reports:export',
   ]),
   tenant_manager: new Set([
     'organisation:read', 'personnel:read', 'incidents:read', 'incidents:create',
-    'incidents:update', 'evidence:read', 'checklists:read', 'checklists:update',
+    'incidents:update', 'evidence:read', 'evidence:register', 'checklists:read', 'checklists:update',
     'reports:read',
   ]),
   tenant_employee: new Set([
