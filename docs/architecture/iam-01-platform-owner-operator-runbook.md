@@ -5,6 +5,7 @@
 **Firebase project:** `safer-2026`  
 **Vercel project:** `safer-pmc`  
 **Runtime:** Vercel Node.js Function (project currently configured for Node.js 24.x)  
+**Package manager:** Bun 1.4.4; Vercel install command is pinned to `bun install --frozen-lockfile`  
 **Billing target:** retain existing Vercel Hobby and Firebase Spark; do not enable billing. Vercel Hobby is restricted to personal, non-commercial use; PMC commercial/operational use must not be deployed there.
 
 ## 1. Security boundary implemented
