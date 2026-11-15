@@ -8,7 +8,6 @@
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit",
     "test:firestore-rules": "firebase emulators:exec --only firestore --project demo-safer \"node --test tests/firestore-rules.test.mjs\"",
     "test:tenant-membership": "firebase emulators:exec --only firestore --project demo-safer \"tsx --test src/lib/tenantMembership.test.ts\"",
     "test:auth-membership-ui": "vitest run src/components/AuthGate.test.tsx",
@@ -64,6 +63,7 @@
     "test:demo-ui-persistence": "node --test tests/demo-ui-persistence.test.mjs",
     "test:demo-conflict-export": "tsx --test src/lib/demoConflictExport.test.ts",
     "test:browser-cross-tab": "playwright test --config=playwright.config.mjs",
+    "test:accessibility-axe": "playwright test --config=playwright.config.mjs tests/browser/accessibility-axe.spec.mjs",
     "test:budget-policy": "vitest run src/utils/budgetPolicy.test.ts",
     "test:account-security": "vitest run src/components/AccountSecurityPanel.test.tsx",
     "test:account-formatting": "vitest run src/utils/accountFormatting.test.ts",
@@ -94,6 +94,7 @@
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
     "@firebase/rules-unit-testing": "^6.0.0",
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
