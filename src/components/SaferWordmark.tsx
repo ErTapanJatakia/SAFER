@@ -11,7 +11,7 @@ interface SaferWordmarkProps {
 /**
  * Modern security-oriented wordmark for SAFER:
  * Security Administration, Field Readiness, Evidence & Reporting
- * Tagline: Prepared. Accountable. Secure.
+ * Tagline: Verify. Defend. Stay Secure.
  * Product descriptor: AI-Assisted Security Operations Platform
  *
  * Designed with deep navy (#0f172a, #1e3a8a) and emerald (#059669, #10b981) accents,
@@ -107,11 +107,7 @@ export const SaferWordmark: React.FC<SaferWordmarkProps> = ({
             Security Administration, Field Readiness, Evidence &amp; Reporting
           </div>
           <div className="text-xs font-mono font-medium text-emerald-700 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 pt-0.5">
-            <span>Prepared.</span>
-            <span>&bull;</span>
-            <span>Accountable.</span>
-            <span>&bull;</span>
-            <span>Secure.</span>
+            <span>Verify. Defend. Stay Secure.</span>
           </div>
         </div>
       </div>
@@ -136,7 +132,7 @@ export const SaferWordmark: React.FC<SaferWordmarkProps> = ({
             Security Administration, Field Readiness, Evidence &amp; Reporting
           </div>
           <div className="text-xs text-emerald-400 font-mono font-medium">
-            Prepared. Accountable. Secure.
+            Verify. Defend. Stay Secure.
           </div>
         </div>
       </div>
@@ -175,11 +171,7 @@ export const SaferWordmark: React.FC<SaferWordmarkProps> = ({
 
         {showTagline && (
           <div className="text-[10px] sm:text-[11px] font-mono text-emerald-400 font-semibold tracking-wide flex items-center space-x-1.5 mt-0.5">
-            <span>Prepared.</span>
-            <span>&bull;</span>
-            <span>Accountable.</span>
-            <span>&bull;</span>
-            <span>Secure.</span>
+            <span>Verify. Defend. Stay Secure.</span>
           </div>
         )}
       </div>
