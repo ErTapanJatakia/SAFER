@@ -33,7 +33,7 @@ No raw personnel, incident, evidence, checklist or membership document content i
 
 ## Explicit limits
 
-- The `platform:tenant-data:write` scope has no consuming data endpoint yet. Do not treat the ability to create a write-scoped session as permission to perform an operation.
+- Cross-tenant write is deliberately not an allowed support-session scope until a named, schema-validated operation and consuming endpoint are designed and reviewed.
 - No generic Firestore path/document browser is provided.
 - No impersonation, raw-record export, cross-tenant query, or arbitrary mutation endpoint is provided.
 - A future write operation must be a named, schema-validated business operation with resource-level authorization and before/after audit metadata; do not add a generic Admin SDK write proxy.
