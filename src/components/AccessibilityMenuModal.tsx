@@ -17,7 +17,9 @@ import {
   BookOpen,
   Check,
   Shield,
+  Volume2,
 } from 'lucide-react';
+import { speakAccessibilityAnnouncement } from '../utils/speech.ts';
 
 interface AccessibilityMenuModalProps {
   isOpen: boolean;
@@ -35,6 +37,9 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
   onResetSettings,
 }) => {
   const modalRef = useModalFocus<HTMLDivElement>(isOpen, onClose);
+  const supportsSpeech = typeof window !== 'undefined'
+    && 'speechSynthesis' in window
+    && typeof SpeechSynthesisUtterance !== 'undefined';
 
   if (!isOpen) return null;
 
@@ -292,7 +297,58 @@ export const AccessibilityMenuModal: React.FC<AccessibilityMenuModalProps> = ({
             </div>
           </div>
 
-          {/* 5. Reduced Motion & Enhanced Keyboard Focus */}
+          {/* 5. Spoken Audio Assistance */}
+          <div className="space-y-3 border-b border-slate-200 pb-4">
+            <div className="flex items-start gap-2">
+              <Volume2 className="w-4 h-4 text-blue-900 mt-0.5 shrink-0" />
+              <div className="min-w-0">
+                <h3 className="font-bold text-sm text-slate-900">Spoken Interface Announcements</h3>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Optional text-to-speech for SAFER status announcements, using the speech engine provided by your browser or operating system. This is separate from screen-reader live-region support. Voice availability and speech processing depend on your device and browser; SAFER does not send audio to its own service.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" disabled={!supportsSpeech}
+                onClick={() => onUpdateSettings({ spokenAnnouncements: !settings.spokenAnnouncements })}
+                className={`px-3 py-2 rounded-md font-semibold text-xs border transition disabled:opacity-50 disabled:cursor-not-allowed ${settings.spokenAnnouncements ? 'bg-teal-100 border-teal-600 text-teal-900' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'}`}
+                aria-pressed={settings.spokenAnnouncements}>
+                {settings.spokenAnnouncements ? 'Spoken Announcements On' : 'Spoken Announcements Off'}
+              </button>
+              <button type="button" disabled={!supportsSpeech || !settings.spokenAnnouncements}
+                onClick={() => speakAccessibilityAnnouncement('This is a sample of SAFER spoken accessibility announcements.', settings)}
+                className="px-3 py-2 rounded-md border border-slate-300 bg-white text-slate-700 font-semibold text-xs hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                Test voice
+              </button>
+              {!supportsSpeech && <span className="text-[11px] text-amber-800">Speech synthesis is not available in this browser. Screen-reader announcements remain available.</span>}
+            </div>
+            {settings.spokenAnnouncements && supportsSpeech && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-xs text-slate-900">Speech rate</label>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {(['slow', 'normal', 'fast'] as const).map((rate) => (
+                      <button key={rate} type="button" onClick={() => onUpdateSettings({ speechRate: rate })}
+                        aria-pressed={settings.speechRate === rate}
+                        className={`py-2 rounded-md border text-xs font-semibold capitalize ${settings.speechRate === rate ? 'bg-blue-900 text-white border-blue-900' : 'bg-white border-slate-300 text-slate-700'}`}>{rate}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="font-semibold text-xs text-slate-900">Speech volume</label>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {(['low', 'medium', 'high'] as const).map((volume) => (
+                      <button key={volume} type="button" onClick={() => onUpdateSettings({ speechVolume: volume })}
+                        aria-pressed={settings.speechVolume === volume}
+                        className={`py-2 rounded-md border text-xs font-semibold capitalize ${settings.speechVolume === volume ? 'bg-blue-900 text-white border-blue-900' : 'bg-white border-slate-300 text-slate-700'}`}>{volume}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 6. Reduced Motion & Enhanced Keyboard Focus */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="font-bold text-xs text-slate-900 flex items-center space-x-2">
