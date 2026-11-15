@@ -12,12 +12,10 @@ type Organisation = {
 
 type SupportAction =
   | 'platform:tenant-data:read'
-  | 'platform:tenant-data:write'
   | 'platform:tenant-data:export';
 
 const SUPPORT_ACTIONS: {value: SupportAction; label: string}[] = [
   {value: 'platform:tenant-data:read', label: 'Read tenant data'},
-  {value: 'platform:tenant-data:write', label: 'Write tenant data'},
   {value: 'platform:tenant-data:export', label: 'Export tenant data'},
 ];
 
