@@ -8,7 +8,7 @@ const authGate = readFileSync(new URL('../src/components/AuthGate.tsx', import.m
 test('Owner Control Centre requires independent server-side Owner verification before rendering controls', () => {
   assert.match(ownerUi, /request\('\/api\/owner\/status'\)/);
   assert.match(ownerUi, /setOwnerState\('owner'\)/);
-  assert.match(ownerUi, /if \(ownerState !== 'owner'\)/);
+  assert.match(ownerUi, /ownerState === 'not-owner'/);
   assert.match(ownerUi, /onOwnerStatusChange\(ownerState\)/);
   assert.doesNotMatch(ownerUi, /platformRole|customClaims|localStorage|sessionStorage/);
 });
