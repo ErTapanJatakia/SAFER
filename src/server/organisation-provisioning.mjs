@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 
 const ORG_NAME_MAX = 120;
 const EMAIL_MAX = 254;
@@ -41,8 +41,10 @@ export async function createOrganisationWithSuperAdminInvitation({
   if (invitedUser.disabled) throw new Error('The nominated Super Admin account is disabled.');
 
   const orgId = `org_${randomUUID().replace(/-/g, '')}`;
+  const invitationId = randomBytes(32).toString('base64url');
+  const invitationExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const orgRef = database.doc(`organisations/${orgId}`);
-  const invitationRef = database.doc(`organisations/${orgId}/invitations/${invitedUser.uid}`);
+  const invitationRef = database.doc(`organisations/${orgId}/invitations/${invitationId}`);
   const auditRef = database.collection('platformAuditEvents').doc();
   const timestamp = serverTimestamp();
 
@@ -59,13 +61,16 @@ export async function createOrganisationWithSuperAdminInvitation({
       updatedAt: timestamp,
     });
     transaction.create(invitationRef, {
+      invitationId,
       uid: invitedUser.uid,
       email,
       orgId,
       role: 'tenant_super_admin',
       status: 'pending',
       invitedAt: timestamp,
+      expiresAt: invitationExpiresAt,
       invitedByUid: actor,
+      schemaVersion: 1,
     });
     transaction.create(auditRef, {
       action: 'organisation.created',
@@ -81,6 +86,6 @@ export async function createOrganisationWithSuperAdminInvitation({
     orgId,
     displayName: name,
     status: 'provisioning',
-    superAdminInvitation: { uid: invitedUser.uid, email, status: 'pending' },
+    superAdminInvitation: { invitationId, uid: invitedUser.uid, email, status: 'pending', expiresAt: invitationExpiresAt.toISOString() },
   };
 }
