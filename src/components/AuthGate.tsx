@@ -382,7 +382,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
     >
       <section className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl">
         <header className="border-b border-slate-800 bg-slate-950 p-7 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl border border-blue-700 bg-blue-950 text-xl font-black text-blue-200">S</div>
+          <img src="/safer-emblem.svg" alt="SAFER shield and owl emblem" className="mx-auto mb-3 h-12 w-12 object-contain" width="48" height="48" />
           <h1 className="text-2xl font-bold tracking-wider">SAFER</h1>
           <p className="mt-1 text-xs text-slate-400">Security Administration, Field Readiness, Evidence &amp; Reporting</p>
           <p className="mt-3 text-xs text-emerald-300">Check access. Protect information.</p>
