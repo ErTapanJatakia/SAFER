@@ -278,7 +278,7 @@ jobs:
         run: npm audit --omit=dev --audit-level=high
 
       - name: Type-check
-        run: npm run lint
+        run: npm run typecheck
 
       - name: Production build
         run: npm run build
