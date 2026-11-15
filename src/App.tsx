@@ -66,6 +66,14 @@ export default function App() {
   const demoRepository = useDemoWorkspaceRepository();
   const initialDemoSnapshot = useMemo(() => demoRepository.loadSnapshot(), [demoRepository]);
 
+  // Refresh translated labels and formatted values after account preference changes.
+  const [, setPreferencesRevision] = useState(0);
+  useEffect(() => {
+    const refreshPreferences = () => setPreferencesRevision((revision) => revision + 1);
+    window.addEventListener('safer:preferences-changed', refreshPreferences);
+    return () => window.removeEventListener('safer:preferences-changed', refreshPreferences);
+  }, []);
+
   // Navigation State
   const [activeSection, setActiveSection] = useState<NavigationSection>('dashboard');
 
