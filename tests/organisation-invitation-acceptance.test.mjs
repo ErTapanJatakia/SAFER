@@ -112,6 +112,7 @@ test('acceptance creates a pending-activation membership and atomically updates 
 
   assert.equal(state.store.get(`organisations/${orgId}/invitations/${invitationId}`).status, 'accepted');
   assert.equal(state.store.get(`organisations/${orgId}`).lifecycleStage, 'super_admin_invitation_accepted');
+  assert.equal(state.store.get(`organisations/${orgId}`).ownerUid, actorUid);
   const audit = [...state.store.entries()].find(([path]) => path.startsWith('platformAuditEvents/'))?.[1];
   assert.equal(audit.action, 'organisation.super_admin_invitation_accepted');
   assert.equal(audit.actorUid, actorUid);
