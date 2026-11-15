@@ -118,3 +118,21 @@ test('rejects malformed tenant locators before database access', async () => {
   );
   assert.equal(current.reads.length, 0);
 });
+
+
+test('tenant authorization fails closed when the authoritative membership store is unavailable', async () => {
+  const { resolveTenantAuthorization, TenantAuthorizationError } = await import('../src/server/tenant-authorization.mjs');
+  await assert.rejects(
+    resolveTenantAuthorization({
+      token: 'valid-token', orgId: 'pmc-alpha', action: 'personnel:read',
+      auth: {
+        verifyIdToken: async () => ({ uid: 'user-1' }),
+        getUser: async (uid) => ({ uid, disabled: false }),
+      },
+      database: { doc: () => ({ get: async () => { throw new Error('private datastore detail'); } }) },
+    }),
+    (error) => error instanceof TenantAuthorizationError
+      && error.code === 'tenant_authority_unavailable'
+      && error.status === 503,
+  );
+});
