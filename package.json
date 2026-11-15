@@ -69,12 +69,13 @@
     "test:platform-owner": "node --test tests/platform-owner-authorization.test.mjs tests/platform-owner-bootstrap.test.mjs tests/platform-owner-server-boundary.test.mjs tests/tenant-rbac-policy.test.mjs",
     "provision:platform-owner": "node scripts/platform-owner.mjs",
     "test:organisation-invitation-acceptance": "node --test tests/organisation-invitation-acceptance.test.mjs",
-    "test:tenant-authorization": "node --test tests/tenant-authorization.test.mjs tests/tenant-rbac-policy.test.mjs tests/tenant-membership-admin.test.mjs tests/tenant-member-invitation-acceptance.test.mjs tests/tenant-incidents.test.mjs tests/tenant-audit.test.mjs tests/tenant-personnel.test.mjs",
+    "test:tenant-authorization": "node --test tests/tenant-authorization.test.mjs tests/tenant-rbac-policy.test.mjs tests/tenant-membership-admin.test.mjs tests/tenant-member-invitation-acceptance.test.mjs tests/tenant-incidents.test.mjs tests/tenant-audit.test.mjs tests/tenant-personnel.test.mjs tests/tenant-evidence.test.mjs",
     "test:tenant-membership-admin": "node --test tests/tenant-membership-admin.test.mjs",
     "test:tenant-member-invitation-acceptance": "node --test tests/tenant-member-invitation-acceptance.test.mjs",
     "test:tenant-incidents": "node --test tests/tenant-incidents.test.mjs",
     "test:tenant-audit": "node --test tests/tenant-audit.test.mjs",
-    "test:tenant-personnel": "node --test tests/tenant-personnel.test.mjs"
+    "test:tenant-personnel": "node --test tests/tenant-personnel.test.mjs",
+    "test:tenant-evidence": "node --test tests/tenant-evidence.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
