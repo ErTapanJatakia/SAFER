@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { getPlatformTenantOperationalSummary, PlatformTenantDataError } from '../src/server/platform-owner-tenant-data.mjs';
+import { getPlatformTenantOperationalSummary } from '../src/server/platform-owner-tenant-data.mjs';
 
 const orgId = `org_${'c'.repeat(32)}`;
 const sessionId = 'a'.repeat(64);
