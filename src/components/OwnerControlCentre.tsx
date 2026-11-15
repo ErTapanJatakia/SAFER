@@ -150,6 +150,14 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
     });
   };
 
+  const activateOrganisation = (orgId: string) => {
+    void run(async () => {
+      await request('/api/owner/activate-organisation', 'POST', {orgId});
+      setMessage('PMC activated after verified Super Admin acceptance.');
+      await loadRegistry();
+    });
+  };
+
   const changeStatus = (orgId: string, status: 'active' | 'suspended' | 'closed') => {
     void run(async () => {
       await request('/api/owner/organisations-registry', 'PATCH', {orgId, status});
@@ -225,6 +233,7 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
                     <td className="py-3 pr-3"><span className="rounded-full border border-slate-600 px-2 py-1">{org.status}</span></td>
                     <td className="py-3 pr-3 text-slate-400">{org.lifecycleStage || '—'}</td>
                     <td className="py-3"><div className="flex flex-wrap gap-1">
+                      {org.status === 'provisioning' && org.lifecycleStage === 'super_admin_invitation_accepted' && <button type="button" disabled={busy} onClick={() => activateOrganisation(org.orgId)} className="rounded border border-emerald-700 px-2 py-1 text-emerald-200 disabled:opacity-50">Activate PMC</button>}
                       {org.status === 'active' && <button type="button" disabled={busy} onClick={() => changeStatus(org.orgId, 'suspended')} className="rounded border border-amber-700 px-2 py-1 text-amber-200 disabled:opacity-50">Suspend</button>}
                       {org.status === 'suspended' && <button type="button" disabled={busy} onClick={() => changeStatus(org.orgId, 'active')} className="rounded border border-emerald-700 px-2 py-1 text-emerald-200 disabled:opacity-50">Reactivate</button>}
                       {['active', 'suspended'].includes(org.status) && <button type="button" disabled={busy} onClick={() => changeStatus(org.orgId, 'closed')} className="rounded border border-red-800 px-2 py-1 text-red-200 disabled:opacity-50">Close</button>}
