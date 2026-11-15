@@ -55,7 +55,7 @@ describe('AuthGate membership session handling',()=>{
   expect(password.type).toBe('text');
   expect(button('Hide password').getAttribute('aria-pressed')).toBe('true');
   button('Create Account').click();await flush();
-  const confirm=host.querySelector('input[autocomplete="new-password"]') as HTMLInputElement;
+  const confirm=host.querySelectorAll('input[autocomplete="new-password"]')[1] as HTMLInputElement;
   expect(confirm.type).toBe('password');
   button('Show confirm password').click();await flush();
   expect(confirm.type).toBe('text');
