@@ -162,7 +162,8 @@ export async function authorizePlatformSupportAccess({
     if (!snapshot.exists) throw new Error('support_session_not_found');
     const session = snapshot.data();
     if (session.actorUid !== actorUid) throw new Error('support_session_owner_mismatch');
-    if (session.status !== 'active' || timestampMillis(session.expiresAt) <= now) {
+    const expiry = timestampMillis(session.expiresAt);
+    if (session.status !== 'active' || !Number.isFinite(expiry) || expiry <= now) {
       throw new Error('support_session_expired_or_revoked');
     }
     if (session.orgId !== orgId || !Array.isArray(session.actions) || !session.actions.includes(action)) {
