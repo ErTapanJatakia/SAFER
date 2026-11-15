@@ -4,6 +4,7 @@ export type AccountDateFormat = 'DD-MM-YYYY' | 'YYYY-MM-DD' | 'DD/MM/YYYY';
 export type AccountTimeFormat = '24h' | '12h';
 export type AccountTimezone = 'Asia/Kolkata' | 'UTC';
 export type AccountNumberFormat = 'en-IN' | 'en-US';
+export type AccountDisplayDensity = 'comfortable' | 'compact';
 
 export interface AccountProfile {
   displayName: string;
@@ -17,6 +18,10 @@ export interface AccountPreferences {
   timezone: AccountTimezone;
   numberFormat: AccountNumberFormat;
   locale: SupportedLocale;
+  notificationsEnabled: boolean;
+  soundEnabled: boolean;
+  displayDensity: AccountDisplayDensity;
+  inactivityTimeoutMinutes: number;
 }
 
 export interface AccountSettings {
@@ -34,6 +39,10 @@ export const DEFAULT_ACCOUNT_SETTINGS: AccountSettings = {
     timezone: 'Asia/Kolkata',
     numberFormat: 'en-IN',
     locale: 'en',
+    notificationsEnabled: true,
+    soundEnabled: false,
+    displayDensity: 'comfortable',
+    inactivityTimeoutMinutes: 10,
   },
 };
 
@@ -60,6 +69,12 @@ export function normalizeAccountSettings(raw: unknown): AccountSettings {
       timezone: preferences.timezone === 'UTC' ? 'UTC' : 'Asia/Kolkata',
       numberFormat: preferences.numberFormat === 'en-US' ? 'en-US' : 'en-IN',
       locale: isSupportedLocale(preferences.locale) ? preferences.locale : 'en',
+      notificationsEnabled: preferences.notificationsEnabled !== false,
+      soundEnabled: preferences.soundEnabled === true,
+      displayDensity: preferences.displayDensity === 'compact' ? 'compact' : 'comfortable',
+      inactivityTimeoutMinutes: typeof preferences.inactivityTimeoutMinutes === 'number' && Number.isFinite(preferences.inactivityTimeoutMinutes)
+        ? Math.min(60, Math.max(5, Math.round(preferences.inactivityTimeoutMinutes / 5) * 5))
+        : DEFAULT_ACCOUNT_SETTINGS.preferences.inactivityTimeoutMinutes,
     },
   };
 }
@@ -83,4 +98,15 @@ export function createAccountSettingsExport(settings: AccountSettings, exportedA
     },
     settings: normalizeAccountSettings(settings),
   };
+}
+
+
+/** Read validated browser-local preferences without trusting imported raw values. */
+export function getAccountPreferences(): AccountPreferences {
+  try {
+    const raw = window.localStorage.getItem(ACCOUNT_SETTINGS_STORAGE_KEY);
+    return normalizeAccountSettings(raw ? JSON.parse(raw) : null).preferences;
+  } catch {
+    return DEFAULT_ACCOUNT_SETTINGS.preferences;
+  }
 }
