@@ -55,6 +55,7 @@ import { PrivacyConsoleModal } from './components/PrivacyConsoleModal.tsx';
 import { PersonnelExportModal } from './components/PersonnelExportModal.tsx';
 import { LiveAnnouncer } from './components/LiveAnnouncer.tsx';
 import { ACCOUNT_SETTINGS_STORAGE_KEY, normalizeAccountSettings } from './utils/accountSettings.ts';
+import { speakAccessibilityAnnouncement } from './utils/speech.ts';
 import {
   evaluatePersonnelReadiness,
   computeOperationalMetrics,
@@ -180,7 +181,15 @@ export default function App() {
   const [accessibilitySettings, setAccessibilitySettings] = useState<AccessibilitySettings>(() => {
     try {
       const saved = localStorage.getItem('prot_ops_a11y_v2');
-      return saved ? JSON.parse(saved) : DEFAULT_ACCESSIBILITY_SETTINGS;
+      if (!saved) return DEFAULT_ACCESSIBILITY_SETTINGS;
+      const parsed = JSON.parse(saved) as Partial<AccessibilitySettings>;
+      return {
+        ...DEFAULT_ACCESSIBILITY_SETTINGS,
+        ...parsed,
+        spokenAnnouncements: parsed.spokenAnnouncements === true,
+        speechRate: ['slow', 'normal', 'fast'].includes(String(parsed.speechRate)) ? parsed.speechRate! : DEFAULT_ACCESSIBILITY_SETTINGS.speechRate,
+        speechVolume: ['low', 'medium', 'high'].includes(String(parsed.speechVolume)) ? parsed.speechVolume! : DEFAULT_ACCESSIBILITY_SETTINGS.speechVolume,
+      };
     } catch {
       return DEFAULT_ACCESSIBILITY_SETTINGS;
     }
@@ -215,6 +224,8 @@ export default function App() {
   const announce = (msg: string) => {
     setLiveAnnouncement(msg);
     setTimeout(() => setLiveAnnouncement(null), 3000);
+    // Spoken output is opt-in and uses the browser/OS speech engine when available.
+    speakAccessibilityAnnouncement(msg, accessibilitySettings);
   };
 
   const showToast = (msg: string, kind: 'status' | 'success' = 'status') => {
@@ -333,6 +344,12 @@ export default function App() {
       localStorage.setItem('prot_ops_a11y_v2', JSON.stringify(accessibilitySettings));
     } catch {}
   }, [accessibilitySettings]);
+
+  useEffect(() => {
+    if (!accessibilitySettings.spokenAnnouncements && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  }, [accessibilitySettings.spokenAnnouncements]);
 
   // Browser-local account preferences are shared by same-origin tabs. React's
   // storage event fires only in other documents, so same-tab saves continue to
