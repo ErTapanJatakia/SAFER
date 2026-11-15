@@ -1,4 +1,5 @@
 import React from 'react';
+import {translate} from '../i18n/locale.ts';
 import {
   LayoutDashboard,
   Users,
@@ -36,34 +37,34 @@ export const Navbar: React.FC<NavbarProps> = ({
   const navItems = [
     {
       id: 'dashboard' as NavigationSection,
-      label: '1. Dashboard',
+      label: `1. ${translate('dashboard')}`,
       icon: LayoutDashboard,
       badge: null,
     },
     {
       id: 'personnel' as NavigationSection,
-      label: '2. Personnel Readiness',
+      label: `2. ${translate('personnel')}`,
       icon: Users,
       badge: personnelReviewCount > 0 ? personnelReviewCount : null,
       badgeColor: 'bg-amber-100 text-amber-800 border-amber-300',
     },
     {
       id: 'incidents' as NavigationSection,
-      label: '3. Incident Reports',
+      label: `3. ${translate('incidents')}`,
       icon: FileText,
       badge: openIncidentsCount > 0 ? openIncidentsCount : null,
       badgeColor: 'bg-rose-100 text-rose-800 border-rose-300',
     },
     {
       id: 'cybersecurity' as NavigationSection,
-      label: '4. Cybersecurity Hygiene',
+      label: `4. ${translate('cybersecurity')}`,
       icon: ShieldCheck,
       badge: 'Defensive',
       badgeColor: 'bg-slate-100 text-slate-700 border-slate-300',
     },
     {
       id: 'checklist' as NavigationSection,
-      label: '5. Pre-Deployment Checklist',
+      label: `5. ${translate('checklist')}`,
       icon: ClipboardList,
       badge: outstandingChecklistCount > 0 ? `${outstandingChecklistCount} Due` : null,
       badgeColor: 'bg-amber-100 text-amber-800 border-amber-300',
@@ -111,7 +112,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Current Active Indicator for Small Viewports */}
           <div className="md:hidden flex items-center gap-2 text-white font-medium text-sm min-w-0 flex-1">
-            <span className="text-slate-400 text-xs">Section:</span>
+            <span className="text-slate-400 text-xs">{translate("section")}</span>
             <span className="font-semibold text-slate-100 min-w-0 break-words [overflow-wrap:anywhere]">
               {navItems.find((n) => n.id === activeSection)?.label}
             </span>
@@ -122,7 +123,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-md text-slate-300 hover:text-white hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              aria-label="Toggle navigation menu"
+              aria-label={translate("toggleNavigation")}
               aria-expanded={mobileMenuOpen}
               aria-controls={mobileMenuOpen ? 'safer-mobile-navigation' : undefined}
             >
