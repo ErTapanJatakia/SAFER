@@ -403,7 +403,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <ShieldAlert className="w-4 h-4 text-teal-400" />
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200">
                   Defensive Cyber Hygiene Guidance
                 </h3>
               </div>
