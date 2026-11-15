@@ -86,7 +86,7 @@ export async function createTenantIncident({ orgId, actorUid, input, database, s
     await authorize(tx, database, actorUid, orgId, 'incidents:create');
     tx.create(ref, record);
     tx.create(audit, {
-      action: 'tenant.incident.created', actorUid, targetOrgId: orgId,
+      action: 'tenant.incident.created', actorUid, orgId, targetOrgId: orgId,
       targetResourceId: incidentId, occurredAt: timestamp,
       details: { incidentType: record.incidentType, priority: record.priority },
     });
@@ -114,7 +114,7 @@ export async function updateTenantIncident({ orgId, actorUid, incidentId, patch,
     if (!snapshot.exists || snapshot.data().incidentId !== incidentId || snapshot.data().orgId !== orgId) fail('incident_not_found');
     tx.update(ref, { ...patch, updatedAt: timestamp, updatedByUid: actorUid });
     tx.create(audit, {
-      action: 'tenant.incident.updated', actorUid, targetOrgId: orgId,
+      action: 'tenant.incident.updated', actorUid, orgId, targetOrgId: orgId,
       targetResourceId: incidentId, occurredAt: timestamp,
       details: { changedFields: Object.keys(patch).sort() },
     });
