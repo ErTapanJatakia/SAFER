@@ -19,7 +19,7 @@ import {beginAuthFlow, cleanupStaleAuthFlowMarker, endAuthFlow} from '../lib/ses
 import {publishSessionInvalidation, subscribeToSessionInvalidation} from '../lib/sessionInvalidation.ts';
 import {enterDemoGuest} from '../lib/dataBoundary.ts';
 import {DemoGuestWorkspaceProvider} from './DemoGuestWorkspaceProvider.tsx';
-import {AccountSecurityPanel} from './AccountSecurityPanel.tsx';
+import {AccountSecurityPanel} from './AccountSecurityPanel.tsx';\nimport {OwnerControlCentre} from './OwnerControlCentre.tsx';
 import {LOCALE_OPTIONS, applyLocaleDocumentSettings, getLocale, setLocale, translate, type SupportedLocale} from '../i18n/locale.ts';
 import {getAccountPreferences} from '../utils/accountSettings.ts';
 import {startSessionInactivityMonitor} from '../lib/sessionInactivity.ts';
@@ -59,7 +59,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
   const [organisationId, setOrganisationId] = useState('');
   const [membership, setMembership] = useState<TenantMembership | null>(null);
   const [membershipBusy, setMembershipBusy] = useState(false);
-  const [membershipError, setMembershipError] = useState('');
+  const [membershipError, setMembershipError] = useState('');\n  const [ownerStatus, setOwnerStatus] = useState<'checking' | 'owner' | 'not-owner' | 'unavailable'>('checking');
   const sessionLifecycleRef = useRef(createSessionLifecycle());
   const lastAuthUidRef = useRef<string | null | undefined>(undefined);
 
