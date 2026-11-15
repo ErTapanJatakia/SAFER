@@ -16,12 +16,18 @@ describe('account settings normalization', () => {
   it('preserves supported values and normalizes unknown preference values', () => {
     expect(normalizeAccountSettings({
       profile: { displayName: 'Operator', callSign: 'ALPHA', bio: 'Bio' },
-      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', numberFormat: 'en-US', locale: 'en' },
+      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', numberFormat: 'en-US', locale: 'en', notificationsEnabled: true, soundEnabled: false, displayDensity: 'comfortable', inactivityTimeoutMinutes: 10 },
     })).toEqual({
       version: 1,
       profile: { displayName: 'Operator', callSign: 'ALPHA', bio: 'Bio' },
       preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', numberFormat: 'en-US' },
     });
+  });
+
+  it('clamps imported inactivity preferences and validates workstation toggles', () => {
+    const normalized = normalizeAccountSettings({preferences: {notificationsEnabled: false, soundEnabled: true, displayDensity: 'compact', inactivityTimeoutMinutes: 999}});
+    expect(normalized.preferences).toMatchObject({notificationsEnabled: false, soundEnabled: true, displayDensity: 'compact', inactivityTimeoutMinutes: 60});
+    expect(normalizeAccountSettings({preferences: {inactivityTimeoutMinutes: 1}}).preferences.inactivityTimeoutMinutes).toBe(5);
   });
 
   it('bounds imported profile strings', () => {
