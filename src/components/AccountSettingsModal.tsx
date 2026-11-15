@@ -121,13 +121,13 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
           {activeTab === 'profile' && (
             <div className="space-y-4">
               <div><h3 className="font-semibold text-slate-900">Personal profile</h3><p className="text-xs text-slate-600 mt-1">Optional display details for this browser only.</p></div>
-              <label className={labelClass}>Display name
+              <label className={labelClass}>{translate('displayName')}
                 <input className={inputClass} maxLength={80} value={settings.profile.displayName} onChange={(event) => updateProfile('displayName', event.target.value)} placeholder="Your preferred display name" />
               </label>
-              <label className={labelClass}>Call sign
+              <label className={labelClass}>{translate('callSign')}
                 <input className={inputClass} maxLength={32} value={settings.profile.callSign} onChange={(event) => updateProfile('callSign', event.target.value)} placeholder="Optional call sign" />
               </label>
-              <label className={labelClass}>Short bio
+              <label className={labelClass}>{translate('shortBio')}
                 <textarea className={inputClass} rows={3} maxLength={280} value={settings.profile.bio} onChange={(event) => updateProfile('bio', event.target.value)} placeholder="A short profile description" />
                 <span className="font-normal text-slate-500">{settings.profile.bio.length}/280 characters</span>
               </label>
