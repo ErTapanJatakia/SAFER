@@ -34,7 +34,7 @@ test('toYYYYMMDD converts DD-MM-YYYY to ISO format', () => {
 
 test('formatDisplayDate handles fallbacks', () => {
   assert.equal(formatDisplayDate('2026-05-20'), '20-05-2026');
-  assert.equal(formatDisplayDate(null), 'N/A');
+  assert.equal(formatDisplayDate(null), '');
   assert.equal(formatDisplayDate('', 'Non-expiring'), 'Non-expiring');
 });
 
