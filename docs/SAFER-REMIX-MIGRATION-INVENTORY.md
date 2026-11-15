@@ -690,3 +690,11 @@ The security review identified that tenant-scoped read rules for personnel/incid
 - Added focused UI tests for defaults/bounds, warning/continue, expiry, activity reset, cross-tab activity, tampered preferences and preference persistence. Registered the suite in the mandatory Firebase foundation workflow and README validation instructions.
 - **Security boundary:** this is a client/browser inactivity control. It signs out the local Firebase client and propagates the auth/session boundary across same-origin tabs; it does not revoke Firebase refresh tokens server-side or invalidate sessions on other devices. Do not describe it as server-side token revocation or a substitute for backend-enforced expiry.
 - **Validation status:** implementation and test registration are committed on the feature branch; mandatory CI must pass on the final head before the UX-06 task can be marked validated. PR #138 remains draft and unmerged.
+
+
+### UX-07 — Accessibility refinement — 2026-11-15
+
+- Retained the existing keyboard skip link, labelled main landmark, primary-navigation landmark, persistent polite live region, and modal focus trapping/restoration.
+- Improved accessibility preferences by exposing explicit group names and programmatically announced selected states for browser control colour scheme, line spacing, letter spacing, speech rate, and speech volume. This aligns visual selection with assistive-technology state without changing the underlying preference model.
+- Added regression coverage for labelled groups and selected states. This is a focused refinement, not a WCAG conformance claim; browser/screen-reader validation remains necessary.
+- **Validation status:** pending mandatory CI on the resulting branch head.
