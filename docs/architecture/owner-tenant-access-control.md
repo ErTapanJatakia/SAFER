@@ -1,6 +1,6 @@
 # SAFER Owner and PMC Tenant Access-Control Architecture
 
-**Status:** Proposed architecture — design baseline, not an authorization release  
+**Status:** Implemented development baseline — production authorization release remains gated by review, emulator validation and controlled deployment  
 **Scope:** Platform Owner, PMC Super Admin, PMC Admin, PMC Managers, PMC Employees and authorised read-only users  
 **Cost target:** INR 0 recurring infrastructure spend, subject to free-tier quotas and provider terms
 
@@ -61,7 +61,7 @@ A user may have more than one tenant role only if the organisation's policy expl
 | View tenant audit trail | Yes | Own tenant, permitted | Own tenant, permitted | Assigned | No | Read-only scope |
 | Export tenant records | Yes, audited | Policy-controlled | Policy-controlled | Permission-controlled | Explicitly assigned | No by default |
 
-“Read any tenant's data” for the Platform Owner is a capability, not a reason to browse client data routinely. Sensitive access should use purpose-bound, time-limited support mode and generate audit events. Platform-level metadata dashboards may aggregate counts and health indicators without exposing unnecessary personal or operational detail.
+“Read any tenant's data” for the Platform Owner is a capability, not a reason to browse client data routinely. Sensitive access must use the implemented purpose-bound, time-limited support-session workflow and generate audit events. Platform-level metadata dashboards may aggregate counts and health indicators without exposing unnecessary personal or operational detail.
 
 ## 5. Application views
 
