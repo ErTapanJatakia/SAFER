@@ -1,0 +1,10 @@
+import {describe,it} from 'node:test';
+import assert from 'node:assert/strict';
+import {AUTH_FLOW_MARKER_KEY,AUTH_FLOW_MARKER_TTL_MS,beginAuthFlow,cleanupStaleAuthFlowMarker,endAuthFlow} from './sessionHygiene.ts';
+class MemoryStorage { values=new Map<string,string>(); getItem(k:string){return this.values.get(k)??null;} setItem(k:string,v:string){this.values.set(k,v);} removeItem(k:string){this.values.delete(k);} }
+describe('scoped auth-flow marker',()=>{
+ it('removes only stale SAFER marker and preserves unrelated values',()=>{const s=new MemoryStorage();s.setItem('safer:theme','dark');s.setItem(AUTH_FLOW_MARKER_KEY,JSON.stringify({startedAt:100}));assert.equal(cleanupStaleAuthFlowMarker(s as unknown as Storage,100+AUTH_FLOW_MARKER_TTL_MS+1),true);assert.equal(s.getItem(AUTH_FLOW_MARKER_KEY),null);assert.equal(s.getItem('safer:theme'),'dark');});
+ it('preserves a fresh marker',()=>{const s=new MemoryStorage();assert.equal(beginAuthFlow(s as unknown as Storage,1000),true);assert.equal(cleanupStaleAuthFlowMarker(s as unknown as Storage,1001),false);});
+ it('removes malformed and future markers',()=>{const s=new MemoryStorage();s.setItem(AUTH_FLOW_MARKER_KEY,'{');assert.equal(cleanupStaleAuthFlowMarker(s as unknown as Storage,1000),true);s.setItem(AUTH_FLOW_MARKER_KEY,JSON.stringify({startedAt:1001}));assert.equal(cleanupStaleAuthFlowMarker(s as unknown as Storage,1000),true);});
+ it('cleans after completion and tolerates unavailable storage',()=>{const s=new MemoryStorage();beginAuthFlow(s as unknown as Storage);endAuthFlow(s as unknown as Storage);assert.equal(s.getItem(AUTH_FLOW_MARKER_KEY),null);const denied={getItem(){throw Error('denied');},setItem(){throw Error('denied');},removeItem(){throw Error('denied');}} as unknown as Storage;assert.equal(beginAuthFlow(denied),false);assert.equal(cleanupStaleAuthFlowMarker(denied),false);assert.doesNotThrow(()=>endAuthFlow(denied));});
+});
