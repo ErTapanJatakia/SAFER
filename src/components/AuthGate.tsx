@@ -21,6 +21,7 @@ import {enterDemoGuest} from '../lib/dataBoundary.ts';
 import {DemoGuestWorkspaceProvider} from './DemoGuestWorkspaceProvider.tsx';
 import {AccountSecurityPanel} from './AccountSecurityPanel.tsx';\nimport {OwnerControlCentre} from './OwnerControlCentre.tsx';
 import {TenantOperationsWorkspace} from './TenantOperationsWorkspace.tsx';
+import {SuperAdminInvitationAcceptance} from './SuperAdminInvitationAcceptance.tsx';
 import {LOCALE_OPTIONS, applyLocaleDocumentSettings, getLocale, setLocale, translate, type SupportedLocale} from '../i18n/locale.ts';
 import {getAccountPreferences} from '../utils/accountSettings.ts';
 import {startSessionInactivityMonitor} from '../lib/sessionInactivity.ts';
@@ -402,6 +403,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
               {membership && <p role="status" className="text-xs text-emerald-300">Verified active membership · Role: {membership.role} · Organisation: {membership.orgId}</p>}
             </div>
           </section>}
+          {ownerStatus==='not-owner'&&<SuperAdminInvitationAcceptance user={user} />}
           </>
         )}
         {demoGuest && !user ? (
