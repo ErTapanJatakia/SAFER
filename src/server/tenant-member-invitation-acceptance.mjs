@@ -88,7 +88,7 @@ export async function acceptTenantMemberInvitation({
     });
     transaction.create(auditRef, {
       action: 'tenant.member.invitation_accepted',
-      actorUid, targetOrgId: orgId, targetUid: actorUid,
+      actorUid, orgId, targetOrgId: orgId, targetUid: actorUid,
       details: { invitationId, role: invitation.role },
       occurredAt: timestamp,
     });
