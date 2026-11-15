@@ -47,6 +47,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
     }
     try {
       window.localStorage.setItem(ACCOUNT_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+      window.dispatchEvent(new CustomEvent('safer:account-settings-updated'));
       setError(null);
       onSaved('Account preferences saved on this browser.');
     } catch {
