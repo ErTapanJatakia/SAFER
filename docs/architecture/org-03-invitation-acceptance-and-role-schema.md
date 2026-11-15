@@ -1,6 +1,6 @@
 # ORG-03 — Invitation acceptance and canonical tenant membership
 
-**Status:** implementation contract; not yet wired to live tenant access  
+**Status:** server-side invitation acceptance implemented in draft branch; tests added but not run; organisation activation remains gated  
 **Parent:** ORG-01/ORG-02 on `feature/org-01-tenant-onboarding`  
 **Runtime:** Existing Vercel Node Functions + Firebase Admin SDK  
 **Cost target:** INR 0 recurring infrastructure spend, subject to provider quotas
@@ -28,7 +28,7 @@ Do not add role, orgId, UID, or status authority from Firebase custom claims, br
 
 ## 3. Invitation acceptance contract
 
-Proposed endpoint: `POST /api/tenant/invitations/accept`.
+Candidate endpoint: `POST /api/tenant/invitations/accept` (implemented in this draft branch). It accepts `{ "orgId": "...", "invitationId": "..." }`; the organisation ID is only a locator and both values are checked against server-loaded records.
 
 The route must:
 
@@ -57,7 +57,7 @@ Do not use the existing ORG-02 generic lifecycle endpoint to activate a provisio
 
 ## 5. Compatibility work completed and remaining before activation
 
-The candidate branch now updates `src/lib/tenantMembership.ts`, its tests, the Firestore self-membership read rule, and the Firestore Rules test fixtures to accept only the canonical five tenant roles and exact version-1 membership schema. Legacy values are rejected. Client membership writes remain denied. Existing direct operational grants are limited to `tenant_super_admin` and `tenant_admin`; this is a conservative interim boundary, not full role parity. A server-side invitation acceptance endpoint and service now create pending-activation memberships atomically, with replay protection and audit logging.
+The candidate branch now updates `src/lib/tenantMembership.ts`, its tests, the Firestore self-membership read rule, and Firestore Rules test fixtures to accept only the canonical five tenant roles and exact version-1 membership schema. Legacy values are rejected. Client membership writes remain denied. Existing direct operational grants are limited to `tenant_super_admin` and `tenant_admin`; this is a conservative interim boundary, not full role parity. The server-side invitation acceptance endpoint and service create pending-activation memberships atomically, with replay protection and audit logging. A dedicated unit-test suite and package script have been added but not executed.
 
 Remaining work before organisation activation and general tenant access:
 
