@@ -42,6 +42,24 @@ describe('AuthGate membership session handling',()=>{
   expect(authScreen.dispatchEvent(event)).toBe(false);
   expect(event.defaultPrevented).toBe(true);
  });
+ it('uses the standardised authentication labels and accessible password visibility toggles',async()=>{
+  expect(host.textContent).toContain('Log In');
+  expect(host.textContent).toContain('Create Account');
+  expect(host.textContent).toContain('Reset Password');
+  expect(host.textContent).toContain('Verify. Defend. Stay Secure.');
+  const password=host.querySelector('input[autocomplete="current-password"]') as HTMLInputElement;
+  expect(password.type).toBe('password');
+  const showPassword=button('Show password');
+  expect(showPassword).toBeTruthy();
+  showPassword.click();await flush();
+  expect(password.type).toBe('text');
+  expect(button('Hide password').getAttribute('aria-pressed')).toBe('true');
+  button('Create Account').click();await flush();
+  const confirm=host.querySelector('input[autocomplete="new-password"]') as HTMLInputElement;
+  expect(confirm.type).toBe('password');
+  button('Show confirm password').click();await flush();
+  expect(confirm.type).toBe('text');
+ });
  it('keeps the browser context menu enabled after entering Demo Guest',async()=>{
   button('Continue as Demo Guest').click();await flush();
   const workspace=[...host.querySelectorAll('div')].find((element)=>element.textContent?.includes('Operational app shell')) as HTMLElement;
@@ -60,7 +78,7 @@ describe('AuthGate membership session handling',()=>{
   vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'manager',status:'active'});
   auth(makeUser('user-a'));await flush();
   vi.mocked(signOut).mockRejectedValueOnce(new Error('network unavailable'));
-  button('Sign out').click();await flush();
+  button('Log Out').click();await flush();
   expect(host.textContent).toContain('Signed in: user-a@example.test');
   expect(host.querySelector('[role="alert"]')?.textContent).toContain('Your account session remains active');
   const field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;
@@ -69,7 +87,7 @@ describe('AuthGate membership session handling',()=>{
   expect(host.textContent).toContain('Role: manager');
   expect(resolveTenantMembership).toHaveBeenCalledWith({name:'test-db'},{uid:'user-a'},'org-a');
  });
- it('revokes retained repository access during Demo Guest sign-out',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');button('Continue as Demo Guest').click();await flush();expect(retainedRepository).not.toBeNull();button('Sign out').click();await flush();expect(host.textContent).toContain('Continue as Demo Guest');expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);expect(read).toHaveBeenCalledTimes(5);});
+ it('revokes retained repository access during Demo Guest sign-out',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');button('Continue as Demo Guest').click();await flush();expect(retainedRepository).not.toBeNull();button('Log Out').click();await flush();expect(host.textContent).toContain('Continue as Demo Guest');expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);expect(read).toHaveBeenCalledTimes(5);});
  it('revokes the Demo Guest workspace when another tab signals an account boundary',async()=>{const read=vi.spyOn(dom.window.Storage.prototype,'getItem');button('Continue as Demo Guest').click();await flush();expect(retainedRepository).not.toBeNull();act(()=>window.dispatchEvent(new StorageEvent('storage',{key:'safer:session-boundary-signal',newValue:'other-tab-signout'})));await flush();expect(host.textContent).toContain('Continue as Demo Guest');expect(host.textContent).not.toContain('Operational app shell');expect(()=>retainedRepository?.loadSnapshot()).toThrow(/session has ended/);expect(read).toHaveBeenCalledTimes(5);});
 
  it('allows an authenticated user to re-check membership after a peer-tab boundary',async()=>{
@@ -137,7 +155,7 @@ describe('AuthGate membership session handling',()=>{
   expect(host.textContent).not.toContain('Role: owner');
   expect(host.textContent).toContain('Account verified — workspace not yet released');
  });
- it('clears membership on account switch and sign-out',async()=>{vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'admin',status:'active'});auth(makeUser('user-a'));await flush();let field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();expect(host.textContent).toContain('Role: admin');auth(makeUser('user-b'));await flush();expect(host.textContent).not.toContain('Role: admin');field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;expect(field.value).toBe('');change(field,'org-b');await flush();submit(field.closest('form')!);await flush();expect(host.textContent).toContain('Role: admin');button('Sign out').click();await flush();expect(host.textContent).not.toContain('Role: admin');expect(host.textContent).toContain('Continue as Demo Guest');expect(resolveTenantMembership).toHaveBeenCalledTimes(2);});
+ it('clears membership on account switch and sign-out',async()=>{vi.mocked(resolveTenantMembership).mockResolvedValue({uid:'user-a',orgId:'org-a',role:'admin',status:'active'});auth(makeUser('user-a'));await flush();let field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;change(field,'org-a');await flush();submit(field.closest('form')!);await flush();expect(host.textContent).toContain('Role: admin');auth(makeUser('user-b'));await flush();expect(host.textContent).not.toContain('Role: admin');field=host.querySelector('input[placeholder="Enter organisation ID"]') as HTMLInputElement;expect(field.value).toBe('');change(field,'org-b');await flush();submit(field.closest('form')!);await flush();expect(host.textContent).toContain('Role: admin');button('Log Out').click();await flush();expect(host.textContent).not.toContain('Role: admin');expect(host.textContent).toContain('Continue as Demo Guest');expect(resolveTenantMembership).toHaveBeenCalledTimes(2);});
 
  it('revokes Demo Guest access and pending authority when the auth observer errors',async()=>{
   const read=vi.spyOn(dom.window.Storage.prototype,'getItem');
