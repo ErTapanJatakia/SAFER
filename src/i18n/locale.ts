@@ -28,6 +28,7 @@ const EN = {
   shortBio:'Short bio', dateFormat:'Date format', timeFormat:'Time format',
   timezone:'Timezone', numberFormat:'Number format', language:'Language',
   savePreferences:'Save preferences', close:'Close', accountSecurity:'Account profile & security',
+  pleaseWait:'Please wait…', sendResetInstructions:'Send reset instructions',
   logout:'Log Out', checkingSession:'Checking SAFER account session…',
   membership:'Organisation membership', verifyMembership:'Verify membership',
 };
