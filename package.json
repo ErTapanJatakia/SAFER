@@ -67,6 +67,7 @@
     "test:account-security": "vitest run src/components/AccountSecurityPanel.test.tsx",
     "test:privacy-demo": "tsx --test src/utils/privacyRepository.test.ts src/utils/privacyExport.test.ts",
     "test:session-hygiene": "tsx --test src/lib/sessionHygiene.test.ts src/lib/authErrors.test.ts",
+    "test:session-inactivity": "vitest run src/lib/sessionInactivity.test.ts",
     "test:locale": "vitest run src/i18n/locale.test.ts",
     "test:regional-formatting": "vitest run src/utils/dateUtils.regional.test.ts",
     "test:platform-owner": "node --test tests/platform-owner-authorization.test.mjs tests/platform-owner-bootstrap.test.mjs tests/platform-owner-server-boundary.test.mjs tests/tenant-rbac-policy.test.mjs",
