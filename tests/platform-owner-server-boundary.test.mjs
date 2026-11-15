@@ -6,6 +6,7 @@ const route = readFileSync(new URL('../api/owner/status.js', import.meta.url), '
 const serverAdmin = readFileSync(new URL('../src/server/firebase-admin.js', import.meta.url), 'utf8');
 const browserFirebase = readFileSync(new URL('../src/lib/firebase.ts', import.meta.url), 'utf8');
 const firestoreRules = readFileSync(new URL('../firestore.rules', import.meta.url), 'utf8');
+const packageManifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
 test('only the explicit owner status route is present; helpers stay outside api routing', () => {
   assert.equal(existsSync(new URL('../api/_lib', import.meta.url)), false);
@@ -25,4 +26,8 @@ test('client Firestore rules do not grant platform administrator or audit collec
   assert.match(firestoreRules, /allow read, write: if false/);
   assert.doesNotMatch(firestoreRules, /match \/platformAdministrators\//);
   assert.doesNotMatch(firestoreRules, /match \/platformAuditEvents\//);
+});
+
+test('security override pins body-parser to the patched 1.20.9 release line', () => {
+  assert.equal(packageManifest.overrides['body-parser'], '^1.20.9');
 });
