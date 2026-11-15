@@ -3,6 +3,14 @@ export const AUTH_FLOW_MARKER_TTL_MS = 5 * 60 * 1000;
 
 type AuthFlowMarker = { startedAt: number };
 
+function getSessionStorage(): Storage | null {
+  try {
+    return typeof window === 'undefined' ? null : window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
 function readMarker(storage: Storage): AuthFlowMarker | null {
   const raw = storage.getItem(AUTH_FLOW_MARKER_KEY);
   if (!raw) return null;
@@ -27,9 +35,10 @@ function readMarker(storage: Storage): AuthFlowMarker | null {
  * cookies, preferences, operational data, or unrelated browser storage.
  */
 export function cleanupStaleAuthFlowMarker(
-  storage: Storage,
+  storage: Storage | null = getSessionStorage(),
   now = Date.now(),
 ): boolean {
+  if (!storage) return false;
   try {
     const marker = readMarker(storage);
     if (!marker || marker.startedAt > now || now - marker.startedAt > AUTH_FLOW_MARKER_TTL_MS) {
@@ -44,7 +53,8 @@ export function cleanupStaleAuthFlowMarker(
   }
 }
 
-export function beginAuthFlow(storage: Storage, now = Date.now()): boolean {
+export function beginAuthFlow(storage: Storage | null = getSessionStorage(), now = Date.now()): boolean {
+  if (!storage) return false;
   try {
     storage.setItem(AUTH_FLOW_MARKER_KEY, JSON.stringify({ startedAt: now } satisfies AuthFlowMarker));
     return true;
@@ -53,7 +63,8 @@ export function beginAuthFlow(storage: Storage, now = Date.now()): boolean {
   }
 }
 
-export function endAuthFlow(storage: Storage): void {
+export function endAuthFlow(storage: Storage | null = getSessionStorage()): void {
+  if (!storage) return;
   try {
     storage.removeItem(AUTH_FLOW_MARKER_KEY);
   } catch {
