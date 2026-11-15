@@ -163,6 +163,19 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
                   <p className="text-xs text-slate-700">Session-specific settings are available while signed in or using Demo Guest.</p>
                 )}
               </section>
+              <section aria-labelledby="display-density-title" className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
+                <div>
+                  <h3 id="display-density-title" className="font-semibold text-slate-900">Display density</h3>
+                  <p className="mt-1 text-xs text-slate-600">Choose the spacing used across dashboard cards, operational views, tables and forms. This setting does not reduce text size or touch-target dimensions and remains independent of theme and accessibility preferences.</p>
+                </div>
+                <label className="block max-w-xs space-y-1 text-xs font-semibold text-slate-700">Workspace spacing
+                  <select aria-label="Display density" className={inputClass} value={settings.preferences.displayDensity}
+                    onChange={(event) => setSettings((current) => ({ ...current, preferences: { ...current.preferences, displayDensity: event.target.value as AccountSettings['preferences']['displayDensity'] } }))}>
+                    <option value="comfortable">Comfortable — more breathing room</option>
+                    <option value="compact">Compact — denser information layout</option>
+                  </select>
+                </label>
+              </section>
               <div><h3 className="font-semibold text-slate-900">Regional preferences</h3><p className="text-xs text-slate-600 mt-1">Regional preferences now control visible dates in personnel details, readiness cards, deployment checklists and incident lists; timestamps and counts in the Privacy Console and DPDP governance workspace; and numeric counts in the dashboard and personnel export preview. Stored records, calculations and formal evidence exports retain their existing formats.</p></div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label className={labelClass}>Date format
