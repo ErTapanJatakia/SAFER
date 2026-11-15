@@ -55,6 +55,27 @@ describe('authenticated account security lifecycle',()=>{
   // A display-name edit does not change credentials or session authority.
   expect(sessionInvalidation.publishSessionInvalidation).not.toHaveBeenCalled();
  });
+ it('provides accessible visibility toggles for every account-security password field',async()=>{
+  const passwordForm=[...host.querySelectorAll('form')].find(form=>form.textContent?.includes('Change password')) as HTMLFormElement;
+  const current=input('Current password','Change password');
+  expect(current.type).toBe('password');
+  (passwordForm.querySelector('button[aria-label="Show current password"]') as HTMLButtonElement).click();await flush();
+  expect(current.type).toBe('text');
+  expect(passwordForm.querySelector('button[aria-label="Hide current password"]')?.getAttribute('aria-pressed')).toBe('true');
+
+  const next=input('New password','Change password');
+  (passwordForm.querySelector('button[aria-label="Show new password"]') as HTMLButtonElement).click();await flush();
+  expect(next.type).toBe('text');
+
+  const confirmation=input('Confirm new password','Change password');
+  (passwordForm.querySelector('button[aria-label="Show confirm new password"]') as HTMLButtonElement).click();await flush();
+  expect(confirmation.type).toBe('text');
+
+  const emailForm=[...host.querySelectorAll('form')].find(form=>form.textContent?.includes('Change email address')) as HTMLFormElement;
+  const emailCurrent=input('Current password','Change email address');
+  (emailForm.querySelector('button[aria-label="Show current password"]') as HTMLButtonElement).click();await flush();
+  expect(emailCurrent.type).toBe('text');
+ });
  it('rejects weak passwords without attempting re-authentication',async()=>{
   change(input('Current password'),'CurrentPass!123');change(input('New password'),'short');change(input('Confirm new password'),'short');
   submit('Change password');await flush();
