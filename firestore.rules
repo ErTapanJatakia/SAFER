@@ -24,9 +24,9 @@ service cloud.firestore {
         && get(organisationPath(orgId)).data.status == 'active';
     }
 
-    function ownerOrAdmin(orgId) {
+    function tenantSuperAdminOrAdmin(orgId) {
       return activeTenantRole(orgId)
-        && get(membershipPath(orgId)).data.role in ['owner', 'admin'];
+        && get(membershipPath(orgId)).data.role in ['tenant_super_admin', 'tenant_admin'];
     }
 
     function validProfile(uid) {
@@ -213,7 +213,7 @@ service cloud.firestore {
     }
 
     match /organisations/{orgId} {
-      allow get: if ownerOrAdmin(orgId)
+      allow get: if tenantSuperAdminOrAdmin(orgId)
         && resource.data.orgId == orgId
         && resource.data.status == 'active';
       allow list, create, update, delete: if false;
@@ -223,12 +223,26 @@ service cloud.firestore {
         // This is a locator-bound read, not tenant discovery or role management.
         allow get: if signedIn()
           && request.auth.uid == uid
-          && resource.data.keys().hasOnly(['uid', 'orgId', 'role', 'status'])
-          && resource.data.keys().hasAll(['uid', 'orgId', 'role', 'status'])
+          && resource.data.keys().hasOnly([
+            'uid', 'orgId', 'role', 'status', 'createdAt', 'createdByUid',
+            'updatedAt', 'updatedByUid', 'schemaVersion'
+          ])
+          && resource.data.keys().hasAll([
+            'uid', 'orgId', 'role', 'status', 'createdAt', 'createdByUid',
+            'updatedAt', 'updatedByUid', 'schemaVersion'
+          ])
           && resource.data.uid == uid
           && resource.data.orgId == orgId
           && resource.data.status == 'active'
-          && resource.data.role in ['owner', 'admin', 'manager', 'viewer']
+          && resource.data.role in [
+            'tenant_super_admin', 'tenant_admin', 'tenant_manager',
+            'tenant_employee', 'tenant_auditor'
+          ]
+          && resource.data.createdAt is timestamp
+          && resource.data.createdByUid is string
+          && resource.data.updatedAt is timestamp
+          && resource.data.updatedByUid is string
+          && resource.data.schemaVersion == 1
           && exists(organisationPath(orgId))
           && get(organisationPath(orgId)).data.orgId == orgId
           && get(organisationPath(orgId)).data.status == 'active';
@@ -236,27 +250,27 @@ service cloud.firestore {
       }
 
       match /personnel/{recordId} {
-        allow get, list: if ownerOrAdmin(orgId)
+        allow get, list: if tenantSuperAdminOrAdmin(orgId)
           && resource.data.orgId == orgId;
-        allow create: if ownerOrAdmin(orgId)
+        allow create: if tenantSuperAdminOrAdmin(orgId)
           && validPersonnelCreate(orgId, recordId);
-        allow update: if ownerOrAdmin(orgId)
+        allow update: if tenantSuperAdminOrAdmin(orgId)
           && validPersonnelUpdate(orgId, recordId);
         allow delete: if false;
       }
 
       match /incidents/{incidentId} {
-        allow get, list: if ownerOrAdmin(orgId)
+        allow get, list: if tenantSuperAdminOrAdmin(orgId)
           && resource.data.orgId == orgId;
-        allow create: if ownerOrAdmin(orgId)
+        allow create: if tenantSuperAdminOrAdmin(orgId)
           && validIncidentCreate(orgId, incidentId);
-        allow update: if ownerOrAdmin(orgId)
+        allow update: if tenantSuperAdminOrAdmin(orgId)
           && validIncidentUpdate(orgId, incidentId);
         allow delete: if false;
       }
 
       match /evidence/{evidenceId} {
-        allow get, list: if ownerOrAdmin(orgId)
+        allow get, list: if tenantSuperAdminOrAdmin(orgId)
           && resource.data.orgId == orgId;
         allow create, update, delete: if false;
       }
