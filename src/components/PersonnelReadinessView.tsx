@@ -559,7 +559,7 @@ export const PersonnelReadinessView: React.FC<PersonnelReadinessViewProps> = ({
                     {onOpenExport && (
                       <button
                         onClick={() => onOpenExport(person)}
-                        aria-label={`Export personnel record for ${person.displayName || person.fullName}`}
+                        aria-label={`Export Record for ${person.displayName || person.fullName}`}
                         className="px-3 py-1.5 bg-blue-900 text-white hover:bg-blue-800 rounded text-xs font-semibold flex items-center space-x-1.5 transition shadow-2xs"
                         title="Export Personnel Record (TXT, CSV, XLSX, PDF, DOCX with redaction controls)"
                       >
