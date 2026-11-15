@@ -90,15 +90,30 @@ export default async function handler(request, response) {
       const snapshot = await platformDb.collection(`organisations/${orgId}/members`)
         .orderBy('createdAt', 'desc').limit(101).get();
       const hasMore = snapshot.docs.length > 100;
-      const members = snapshot.docs.slice(0, 100).map((document) => {
+      const members = snapshot.docs.slice(0, 100).flatMap((document) => {
         const value = document.data();
-        return {
+        const roles = [
+          'tenant_super_admin', 'tenant_admin', 'tenant_manager',
+          'tenant_employee', 'tenant_auditor',
+        ];
+        const expectedFields = [
+          'uid', 'orgId', 'role', 'status', 'createdAt', 'createdByUid',
+          'updatedAt', 'updatedByUid', 'schemaVersion',
+        ].sort();
+        const fields = Object.keys(value).sort();
+        if (fields.length !== expectedFields.length
+          || fields.some((field, index) => field !== expectedFields[index])
+          || value.uid !== document.id || value.orgId !== orgId
+          || !roles.includes(value.role)
+          || !['active', 'suspended'].includes(value.status)
+          || value.schemaVersion !== 1) return [];
+        return [{
           uid: value.uid,
           role: value.role,
           status: value.status,
           createdAt: value.createdAt?.toDate?.()?.toISOString?.() ?? null,
           updatedAt: value.updatedAt?.toDate?.()?.toISOString?.() ?? null,
-        };
+        }];
       });
       return response.status(200).json({ orgId: authorization.orgId, members, hasMore });
     }
