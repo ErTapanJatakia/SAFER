@@ -11,7 +11,7 @@
 - Confirms the caller against both `platformAdministrators/{uid}` and the singleton `platform/settings` Owner pointer.
 - Creates a server-generated immutable organisation ID and a provisioning-state organisation record.
 - Resolves the nominated Super Admin by Firebase Auth email and requires a verified, enabled account.
-- Creates a pending invitation record under the organisation and a platform audit event in one Firestore transaction.
+- Creates a pending invitation with a 256-bit opaque server-generated identifier and seven-day expiry, plus a platform audit event, in one Firestore transaction.
 - Does not send email, activate membership, enable tenant data access, or change Firestore Rules.
 
 ## Request
@@ -39,7 +39,7 @@ provisioning
                     └── active organisation
 ```
 
-An organisation remains `provisioning` until a separately authenticated invitation-acceptance flow confirms the intended identity and writes the canonical tenant membership. Existing client-side membership parsing and Firestore Rules are not silently migrated by this endpoint.
+An organisation remains `provisioning` until a separately authenticated invitation-acceptance flow confirms the intended identity and writes the canonical version-1 tenant membership. The candidate branch now aligns the client resolver and membership-read Rules with the five-role schema; operational access remains separately gated.
 
 ## Security and operational notes
 
