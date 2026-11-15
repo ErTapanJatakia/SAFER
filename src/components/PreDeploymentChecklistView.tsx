@@ -164,9 +164,9 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
         <div>
           <div className="flex items-center space-x-2">
             <ClipboardList className="w-5 h-5 text-blue-900" />
-            <h2 className="text-lg font-bold text-slate-900">
+            <h1 className="text-lg font-bold text-slate-900">
               Pre-Deployment Checklist
-            </h2>
+            </h1>
             <span className="text-[11px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-900 font-semibold border border-blue-200">
               8 Readiness Domains
             </span>
@@ -221,9 +221,9 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
         <div className="flex items-start space-x-3">
           <AlertTriangle className="w-5 h-5 text-amber-700 mt-0.5 shrink-0" />
           <div className="space-y-1">
-            <h3 className="font-bold text-amber-900 text-xs uppercase tracking-wide">
+            <h2 className="font-bold text-amber-900 text-xs uppercase tracking-wide">
               Mandatory Governance & Safety Boundary
-            </h3>
+            </h2>
             <p className="text-slate-700 leading-relaxed">
               <strong>The application must never state that a person or deployment is approved solely because checklist items are complete.</strong> Checklist items verify administrative documentation and safety readiness. All deployment authorizations require independent affirmative human supervisory review. Tactical routes, target profiles, combat plans, and weapons instructions are strictly excluded.
             </p>
@@ -366,9 +366,9 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 text-amber-900">
               <AlertCircle className="w-5 h-5 text-amber-700" />
-              <h3 className="text-sm font-bold uppercase tracking-wide">
+              <h2 className="text-sm font-bold uppercase tracking-wide">
                 Prominently Outstanding Items ({metrics.outstandingItems.length})
-              </h3>
+              </h2>
             </div>
             <button
               onClick={() => setSelectedStatusFilter('OUTSTANDING')}
@@ -536,7 +536,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
         {filteredItems.length === 0 ? (
           <div className="bg-white border border-slate-200 rounded-lg p-10 text-center space-y-2">
             <ClipboardList className="w-10 h-10 text-slate-300 mx-auto" />
-            <h4 className="text-sm font-bold text-slate-800">No Checklist Items Match Filter</h4>
+            <h3 className="text-sm font-bold text-slate-800">No Checklist Items Match Filter</h3>
             <p className="text-xs text-slate-600 max-w-sm mx-auto">
               Try adjusting your search criteria, category selection, or status filters.
             </p>
@@ -565,7 +565,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                     ? 'border-amber-300/80 hover:border-amber-400'
                     : isComplete
                     ? 'border-slate-200 bg-white hover:border-slate-300'
-                    : 'border-slate-200 bg-slate-50/60 opacity-80'
+                    : 'border-slate-200 bg-slate-50/60'
                 }`}
               >
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
@@ -613,13 +613,13 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
                     </div>
 
                     {/* Task Title */}
-                    <h3
+                    <h2
                       className={`font-bold text-sm leading-snug break-words ${
                         isComplete ? 'text-slate-800' : isIncomplete ? 'text-slate-900' : 'text-slate-600'
                       }`}
                     >
                       {item.task}
-                    </h3>
+                    </h2>
 
                     {/* Task Description */}
                     <p className="text-xs text-slate-600 leading-relaxed break-words">
@@ -731,9 +731,9 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 border border-slate-200 space-y-4">
             <div className="flex items-center space-x-2 text-blue-900">
               <UserCheck className="w-5 h-5 text-blue-900" />
-              <h3 className="font-bold text-base text-slate-900">
+              <h2 className="font-bold text-base text-slate-900">
                 Supervisor Human Sign-Off
-              </h3>
+              </h2>
             </div>
             <p className="text-xs text-slate-600 leading-relaxed">
               Record that a designated human supervisor has reviewed the documentation, verification records, or mitigations for this item.
@@ -778,7 +778,7 @@ export const PreDeploymentChecklistView: React.FC<PreDeploymentChecklistViewProp
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center space-x-2">
                 <ClipboardList className="w-5 h-5 text-blue-900" />
-                <h3 className="font-bold text-base text-slate-900">Add Pre-Deployment Task</h3>
+                <h2 className="font-bold text-base text-slate-900">Add Pre-Deployment Task</h2>
               </div>
               <button
                 onClick={() => setShowAddModal(false)}
