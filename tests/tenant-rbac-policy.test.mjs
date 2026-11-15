@@ -162,6 +162,10 @@ test('unsupported platform actions and tenant roles cannot gain global authority
     actorUid: 'platform-1', principal, action: 'tenant:members:invite',
   }).allowed, false);
   assert.equal(authorizePlatformOwnerAction({
+    actorUid: 'platform-1', principal, action: 'platform:tenant-data:write',
+    purpose: 'A future write operation without a registered endpoint.',
+  }).allowed, false);
+  assert.equal(authorizePlatformOwnerAction({
     actorUid: 'platform-1', principal: { uid: 'platform-1', role: 'tenant_super_admin', status: 'active' },
     action: 'platform:security:manage',
   }).allowed, false);
