@@ -1,6 +1,6 @@
 # RBAC-01 — Canonical tenant permission engine
 
-**Status:** Implementation foundation; not yet wired to live tenant endpoints or Firestore Rules.  
+**Status:** Canonical role engine, versioned membership resolver, and membership-read Rules are aligned in the draft branch; full operational permission parity and tenant API integration remain incomplete.  
 **Parent:** `feature/iam-01-platform-owner-backend` (IAM-01 must land first).  
 **Cost:** Uses the existing Vercel Node.js / Firebase Admin SDK architecture; no new service or paid dependency.
 
@@ -50,10 +50,10 @@ This milestone adds the canonical policy engine and regression tests only. It do
 - write or mutate tenant memberships;
 - change Firestore Rules;
 - enable cross-tenant Owner data access;
-- replace the legacy membership schema already present on `main`;
+- enable the full role/action matrix for Manager, Employee and Auditor;
 - release an operational tenant workspace.
 
-Those are the next integration milestones. Before enabling them, migrate the current legacy tenant role schema deliberately, wire the policy into every Vercel API and data access path, and align Firestore Rules with the same role/action matrix. Until that is complete, existing production/default-deny boundaries remain unchanged.
+The resolver and candidate membership-read rule now accept only the canonical five-role version-1 schema; legacy role values are rejected. Candidate direct Firestore operational grants remain limited to Super Admin and Admin. Manager, Employee and Auditor remain denied until record-level/query-level constraints are implemented. Invitation acceptance, membership activation, full role-to-operation parity, and tenant API integration remain next milestones. Production rules remain separately published deny-all.
 
 ## Regression coverage
 
