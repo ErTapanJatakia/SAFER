@@ -21,7 +21,7 @@ describe('account settings normalization', () => {
     })).toEqual({
       version: 1,
       profile: { displayName: 'Operator', callSign: 'ALPHA', bio: 'Bio' },
-      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', locale: 'en-IN', numberFormat: 'en-US', defaultExportFormat: 'xlsx', defaultRedactionLevel: 'strict', displayDensity: 'comfortable' },
+      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', locale: 'en-IN', numberFormat: 'en-US', defaultExportFormat: 'xlsx', defaultRedactionLevel: 'strict', displayDensity: 'comfortable', showSuccessToasts: true },
     });
   });
 
@@ -44,6 +44,15 @@ describe('account settings normalization', () => {
 
   it('fails closed to Comfortable for unsupported display density values', () => {
     expect(normalizeAccountSettings({ preferences: { displayDensity: 'ultra-dense' } }).preferences.displayDensity).toBe('comfortable');
+  });
+
+  it('defaults routine success toasts on and preserves an explicit opt-out', () => {
+    expect(normalizeAccountSettings(null).preferences.showSuccessToasts).toBe(true);
+    expect(normalizeAccountSettings({ preferences: { showSuccessToasts: false } }).preferences.showSuccessToasts).toBe(false);
+  });
+
+  it('fails safely to enabled for malformed success-toast preference values', () => {
+    expect(normalizeAccountSettings({ preferences: { showSuccessToasts: 'disabled' } }).preferences.showSuccessToasts).toBe(true);
   });
 
   it('normalizes unsupported export preferences to the safe existing defaults', () => {
