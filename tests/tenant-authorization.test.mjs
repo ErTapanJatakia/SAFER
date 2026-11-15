@@ -10,7 +10,7 @@ function fixture({ role = 'tenant_employee', status = 'active', orgStatus = 'act
   const records = {
     'organisations/pmc-alpha/members/user-1': {
       uid: 'user-1', orgId: 'pmc-alpha', role, status,
-      createdAt: {}, createdByUid: 'owner-1', updatedAt: {}, updatedByUid: 'owner-1',
+      createdAt: new Date(0), createdByUid: 'owner-1', updatedAt: new Date(0), updatedByUid: 'owner-1',
       schemaVersion: 1,
     },
     'organisations/pmc-alpha': { orgId: 'pmc-alpha', status: orgStatus },
