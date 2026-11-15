@@ -37,6 +37,15 @@ describe('account settings normalization', () => {
     expect(invalid.preferences.numberFormat).toBe(DEFAULT_ACCOUNT_SETTINGS.preferences.numberFormat);
   });
 
+  it('defaults display density to Comfortable and accepts Compact', () => {
+    expect(normalizeAccountSettings(null).preferences.displayDensity).toBe('comfortable');
+    expect(normalizeAccountSettings({ preferences: { displayDensity: 'compact' } }).preferences.displayDensity).toBe('compact');
+  });
+
+  it('fails closed to Comfortable for unsupported display density values', () => {
+    expect(normalizeAccountSettings({ preferences: { displayDensity: 'ultra-dense' } }).preferences.displayDensity).toBe('comfortable');
+  });
+
   it('normalizes unsupported export preferences to the safe existing defaults', () => {
     const normalized = normalizeAccountSettings({
       preferences: { defaultExportFormat: 'exe', defaultRedactionLevel: 'minimal' },
