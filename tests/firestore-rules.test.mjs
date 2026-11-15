@@ -13,6 +13,7 @@ import {
   getDocs,
   query,
   serverTimestamp,
+  Timestamp,
   setDoc,
   updateDoc,
   where,
@@ -36,7 +37,7 @@ after(async () => {
 async function seedTenant({
   orgId = "org-a",
   uid = "owner-a",
-  role = "owner",
+  role = "tenant_super_admin",
   membershipStatus = "active",
   organisationStatus = "active",
 } = {}) {
@@ -48,11 +49,17 @@ async function seedTenant({
       status: organisationStatus,
       schemaVersion: 1,
     });
+    const now = Timestamp.fromDate(new Date("2026-01-01T00:00:00.000Z"));
     await setDoc(doc(db, "organisations", orgId, "members", uid), {
       uid,
       orgId,
       role,
       status: membershipStatus,
+      createdAt: now,
+      createdByUid: "trusted-platform-owner",
+      updatedAt: now,
+      updatedByUid: "trusted-platform-owner",
+      schemaVersion: 1,
     });
   });
 }
@@ -151,7 +158,7 @@ test("active owner can read organisation metadata and create/update personnel su
 });
 
 test("active admin can create and update an incident without changing reporter provenance", async () => {
-  await seedTenant({ uid: "admin-a", role: "admin" });
+  await seedTenant({ uid: "admin-a", role: "tenant_admin" });
   const db = dbFor("admin-a");
   const incident = doc(db, "organisations/org-a/incidents/incident-a");
   await assertSucceeds(setDoc(incident, validIncident("admin-a")));
@@ -168,8 +175,8 @@ test("active admin can create and update an incident without changing reporter p
   await assertFails(deleteDoc(incident));
 });
 
-test("manager and viewer cannot read or write tenant operational data", async () => {
-  for (const role of ["manager", "viewer"]) {
+test("Manager, Employee and Auditor remain denied direct operational access until scoped rules are implemented", async () => {
+  for (const role of ["tenant_manager", "tenant_employee", "tenant_auditor"]) {
     const uid = `${role}-a`;
     await seedTenant({ uid, role });
     const db = dbFor(uid);
@@ -207,7 +214,7 @@ test("suspended organisation denies otherwise active owner", async () => {
 test("bootstrap trust anchor rejects mismatched UID, tenant, role, and missing organisation", async () => {
   const fixtures = [
     { orgId: "bootstrap-wrong-uid", uid: "wrong-uid-user", member: {
-      uid: "different-uid", orgId: "bootstrap-wrong-uid", role: "owner", status: "active",
+      uid: "different-uid", orgId: "bootstrap-wrong-uid", role: "tenant_super_admin", status: "active",
     } },
     { orgId: "bootstrap-wrong-org", uid: "wrong-org-user", member: {
       uid: "wrong-org-user", orgId: "another-org", role: "owner", status: "active",
@@ -234,7 +241,7 @@ test("bootstrap trust anchor rejects mismatched UID, tenant, role, and missing o
     await setDoc(doc(db, "organisations", "bootstrap-missing-org", "members", "orphan-user"), {
       uid: "orphan-user",
       orgId: "bootstrap-missing-org",
-      role: "owner",
+      role: "tenant_super_admin",
       status: "active",
     });
   });
@@ -295,8 +302,8 @@ test("immutable creator, tenant, and record identifiers cannot be changed", asyn
   }));
 });
 
-test("users can get only their own active, valid membership across supported roles", async () => {
-  for (const role of ["owner", "admin", "manager", "viewer"]) {
+test("users can get only their own active canonical membership across all five tenant roles", async () => {
+  for (const role of ["tenant_super_admin", "tenant_admin", "tenant_manager", "tenant_employee", "tenant_auditor"]) {
     const uid = `self-${role}`;
     const orgId = `self-org-${role}`;
     await seedTenant({ orgId, uid, role });
