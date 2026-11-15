@@ -152,6 +152,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
       setMembership(null);
       setOrganisationId('');
       setMembershipError('');
+      setOwnerStatus('checking');
       if (nextUser && !nextUser.emailVerified) {
         setVerificationEmail(nextUser.email || '');
         setMode('verify');
