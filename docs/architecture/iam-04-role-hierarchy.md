@@ -20,7 +20,7 @@ The five tenant roles are the only values accepted by `src/server/tenant-rbac.mj
 - Managers, Employees and Auditors cannot invite, suspend or change member roles.
 - No tenant role can assign `platform_owner`, manage the Platform Owner, or grant platform actions.
 - A member cannot manage themselves, peers at the same level, or a higher role.
-- Employee own-record and assigned-checklist actions require the resource owner/assignee UID to match the verified actor UID.
+- Employee personnel records must be explicitly linked by a Super Admin/Admin to an active employee membership using `employeeUid`; both server queries and candidate Firestore Rules filter by the verified employee UID. Assigned-checklist and own-incident actions likewise require the resource owner/assignee UID to match the verified actor UID.
 - Auditors have no mutation or report-export capability.
 
 ## Enforcement layers
