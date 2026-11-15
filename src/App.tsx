@@ -205,7 +205,7 @@ export default function App() {
   const [exportPerson, setExportPerson] = useState<PersonnelRecord | null | undefined>(undefined);
 
   // Re-render preference consumers when another same-origin tab changes local account settings.
-  const [, setAccountSettingsRevision] = useState(0);
+  const [accountSettingsRevision, setAccountSettingsRevision] = useState(0);
 
   // Feedback & Screen Reader Announcements
   const [toastMessage, setToastMessage] = useState<string | null>(null);
