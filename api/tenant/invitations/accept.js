@@ -53,6 +53,9 @@ export default async function handler(request, response) {
     return response.status(200).json(result);
   } catch (error) {
     const code = error && typeof error === 'object' ? error.code : null;
+    if (typeof code === 'string' && code.startsWith('auth/')) {
+      return response.status(401).json({ error: 'unauthenticated' });
+    }
     const clientErrors = new Map([
       ['invalid_invitation', 404],
       ['invitation_identity_mismatch', 403],
