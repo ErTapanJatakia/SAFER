@@ -90,6 +90,10 @@ const PURPOSE_REQUIRED_PLATFORM_ACTIONS = new Set([
 
 const UID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
 const ORG_ID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
+const MEMBERSHIP_FIELDS = Object.freeze([
+  'uid', 'orgId', 'role', 'status', 'createdAt', 'createdByUid',
+  'updatedAt', 'updatedByUid', 'schemaVersion',
+].sort());
 
 function isRecord(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -127,9 +131,15 @@ export function authorizeTenantAction({
     return denied('invalid_authorization_context');
   }
 
-  if (membership.uid !== actorUid || membership.orgId !== requestedOrgId
+  const membershipFields = Object.keys(membership).sort();
+  if (membershipFields.length !== MEMBERSHIP_FIELDS.length
+    || membershipFields.some((field, index) => field !== MEMBERSHIP_FIELDS[index])
+    || membership.uid !== actorUid || membership.orgId !== requestedOrgId
     || membership.schemaVersion !== 1 || membership.status !== 'active'
-    || !TENANT_ROLES.includes(membership.role)) {
+    || !TENANT_ROLES.includes(membership.role)
+    || typeof membership.createdByUid !== 'string'
+    || typeof membership.updatedByUid !== 'string'
+    || membership.createdAt == null || membership.updatedAt == null) {
     return denied('active_tenant_membership_required');
   }
 
