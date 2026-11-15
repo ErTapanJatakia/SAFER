@@ -21,6 +21,8 @@ import {enterDemoGuest} from '../lib/dataBoundary.ts';
 import {DemoGuestWorkspaceProvider} from './DemoGuestWorkspaceProvider.tsx';
 import {AccountSecurityPanel} from './AccountSecurityPanel.tsx';
 import {LOCALE_OPTIONS, applyLocaleDocumentSettings, getLocale, setLocale, translate, type SupportedLocale} from '../i18n/locale.ts';
+import {getAccountPreferences} from '../utils/accountSettings.ts';
+import {startSessionInactivityMonitor} from '../lib/sessionInactivity.ts';
 
 type AuthMode = 'signin' | 'register' | 'reset' | 'verify';
 
@@ -44,6 +46,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
   const [demoGuest, setDemoGuest] = useState(false);
   const [mode, setMode] = useState<AuthMode>('signin');
   const [locale, setLocaleState] = useState<SupportedLocale>(getLocale);
+  const [preferencesRevision, setPreferencesRevision] = useState(0);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -66,6 +69,40 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
     setLocaleState(nextLocale);
     setLocale(nextLocale);
   };
+
+  useEffect(() => {
+    const refreshPreferences = () => setPreferencesRevision((revision) => revision + 1);
+    window.addEventListener('safer:preferences-changed', refreshPreferences);
+    return () => window.removeEventListener('safer:preferences-changed', refreshPreferences);
+  }, []);
+
+  useEffect(() => {
+    if (!user && !demoGuest) return;
+    const timeoutMinutes = getAccountPreferences().inactivityTimeoutMinutes;
+    const expireSession = () => {
+      publishSessionInvalidation();
+      sessionLifecycleRef.current.beginSignOut();
+      setMembership(null);
+      setOrganisationId('');
+      setMembershipBusy(false);
+      setMembershipError('');
+      setDemoGuest(false);
+      setError('');
+      setMessage(`Session ended after ${timeoutMinutes} minutes of inactivity. Sign in again to continue.`);
+      if (user && auth) {
+        void signOut(auth).catch(() => {
+          if (auth.currentUser?.uid === user.uid) {
+            sessionLifecycleRef.current.startAuthenticated(user.uid);
+          }
+          setError('Automatic sign-out could not be completed. Your Firebase account remains active; please sign out manually.');
+          setPreferencesRevision((revision) => revision + 1);
+        });
+      } else {
+        sessionLifecycleRef.current.endSession();
+      }
+    };
+    return startSessionInactivityMonitor(window, timeoutMinutes * 60 * 1000, expireSession);
+  }, [user?.uid, demoGuest, preferencesRevision]);
 
   useEffect(() => {
     // Remove only SAFER's short-lived OAuth diagnostic marker; preserve Firebase
