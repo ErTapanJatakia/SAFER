@@ -1,12 +1,21 @@
-import { doc, getDoc, type Firestore } from 'firebase/firestore';
+import { doc, getDoc, Timestamp, type Firestore } from 'firebase/firestore';
 
-export type TenantRole = 'owner' | 'admin' | 'manager' | 'viewer';
+export const TENANT_ROLES = Object.freeze([
+  'tenant_super_admin',
+  'tenant_admin',
+  'tenant_manager',
+  'tenant_employee',
+  'tenant_auditor',
+] as const);
+
+export type TenantRole = typeof TENANT_ROLES[number];
 
 export interface TenantMembership {
   readonly uid: string;
   readonly orgId: string;
   readonly role: TenantRole;
   readonly status: 'active';
+  readonly schemaVersion: 1;
 }
 
 export interface AuthenticatedUserRef {
@@ -29,13 +38,13 @@ export class TenantMembershipError extends Error {
   }
 }
 
-const SUPPORTED_ROLES = new Set<TenantRole>(['owner', 'admin', 'manager', 'viewer']);
-const MEMBERSHIP_KEYS = ['uid', 'orgId', 'role', 'status'] as const;
+const SUPPORTED_ROLES = new Set<string>(TENANT_ROLES);
+const MEMBERSHIP_KEYS = [
+  'uid', 'orgId', 'role', 'status', 'createdAt', 'createdByUid',
+  'updatedAt', 'updatedByUid', 'schemaVersion',
+] as const;
 
-/**
- * Pure schema and provenance validation, independent of Firestore access.
- * Rules may reject malformed documents before this function can receive them.
- */
+/** Validate the canonical, versioned membership document. */
 export function parseTenantMembership(
   data: unknown,
   authenticatedUid: string,
@@ -57,7 +66,14 @@ export function parseTenantMembership(
     || record.orgId !== expectedOrgId
     || record.status !== 'active'
     || typeof record.role !== 'string'
-    || !SUPPORTED_ROLES.has(record.role as TenantRole)
+    || !SUPPORTED_ROLES.has(record.role)
+    || record.schemaVersion !== 1
+    || !(record.createdAt instanceof Timestamp)
+    || typeof record.createdByUid !== 'string'
+    || record.createdByUid.length === 0
+    || !(record.updatedAt instanceof Timestamp)
+    || typeof record.updatedByUid !== 'string'
+    || record.updatedByUid.length === 0
   ) {
     throw new TenantMembershipError('invalid-membership');
   }
@@ -67,15 +83,11 @@ export function parseTenantMembership(
     orgId: expectedOrgId,
     role: record.role as TenantRole,
     status: 'active' as const,
+    schemaVersion: 1 as const,
   });
 }
 
-/**
- * Resolve one exact membership document for the currently authenticated UID.
- * The organisation ID is an out-of-band locator, never an authorisation token.
- * Firestore Security Rules remain the authoritative access-control boundary.
- * This helper deliberately performs no query, discovery, caching, or writes.
- */
+/** Resolve one exact membership document for the authenticated UID. */
 export async function resolveTenantMembership(
   database: Firestore,
   user: AuthenticatedUserRef | null,

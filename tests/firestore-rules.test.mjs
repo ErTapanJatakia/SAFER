@@ -13,6 +13,7 @@ import {
   getDocs,
   query,
   serverTimestamp,
+  Timestamp,
   setDoc,
   updateDoc,
   where,
@@ -33,10 +34,22 @@ after(async () => {
   await testEnv?.cleanup();
 });
 
+function membershipRecord(uid, orgId, role = "tenant_super_admin", status = "active") {
+  const now = Timestamp.fromDate(new Date("2026-01-01T00:00:00.000Z"));
+  return {
+    uid, orgId, role, status,
+    createdAt: now,
+    createdByUid: "trusted-platform-owner",
+    updatedAt: now,
+    updatedByUid: "trusted-platform-owner",
+    schemaVersion: 1,
+  };
+}
+
 async function seedTenant({
   orgId = "org-a",
   uid = "owner-a",
-  role = "owner",
+  role = "tenant_super_admin",
   membershipStatus = "active",
   organisationStatus = "active",
 } = {}) {
@@ -48,12 +61,10 @@ async function seedTenant({
       status: organisationStatus,
       schemaVersion: 1,
     });
-    await setDoc(doc(db, "organisations", orgId, "members", uid), {
-      uid,
-      orgId,
-      role,
-      status: membershipStatus,
-    });
+    await setDoc(
+      doc(db, "organisations", orgId, "members", uid),
+      membershipRecord(uid, orgId, role, membershipStatus),
+    );
   });
 }
 
@@ -151,7 +162,7 @@ test("active owner can read organisation metadata and create/update personnel su
 });
 
 test("active admin can create and update an incident without changing reporter provenance", async () => {
-  await seedTenant({ uid: "admin-a", role: "admin" });
+  await seedTenant({ uid: "admin-a", role: "tenant_admin" });
   const db = dbFor("admin-a");
   const incident = doc(db, "organisations/org-a/incidents/incident-a");
   await assertSucceeds(setDoc(incident, validIncident("admin-a")));
@@ -168,18 +179,93 @@ test("active admin can create and update an incident without changing reporter p
   await assertFails(deleteDoc(incident));
 });
 
-test("manager and viewer cannot read or write tenant operational data", async () => {
-  for (const role of ["manager", "viewer"]) {
-    const uid = `${role}-a`;
-    await seedTenant({ uid, role });
+test("Manager, Employee and Auditor receive only their approved candidate-rule scopes", async () => {
+  for (const role of ["tenant_manager", "tenant_employee", "tenant_auditor"]) {
+    await seedTenant({ uid: `${role}-a`, role });
+  }
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, "organisations/org-a/personnel/person-a"),
+      { ...validPersonnel("owner-a", "org-a", "person-a"), createdAt: Timestamp.now(), updatedAt: Timestamp.now() });
+    await setDoc(doc(db, "organisations/org-a/incidents/incident-employee"),
+      { ...validIncident("tenant_employee-a", "org-a", "incident-employee"), dateReported: Timestamp.now(), createdAt: Timestamp.now(), updatedAt: Timestamp.now() });
+    await setDoc(doc(db, "organisations/org-a/incidents/incident-other"),
+      { ...validIncident("reporter-x", "org-a", "incident-other"), dateReported: Timestamp.now(), createdAt: Timestamp.now(), updatedAt: Timestamp.now() });
+    await setDoc(doc(db, "organisations/org-a/evidence/evidence-a"), {
+      evidenceId: "evidence-a", orgId: "org-a",
+    });
+    await setDoc(doc(db, "organisations/org-a/auditEvents/audit-a"), {
+      eventId: "audit-a", orgId: "org-a", action: "synthetic.test",
+    });
+  });
+
+  const manager = dbFor("tenant_manager-a");
+  await assertSucceeds(getDoc(doc(manager, "organisations/org-a")));
+  await assertSucceeds(getDoc(doc(manager, "organisations/org-a/personnel/person-a")));
+  await assertSucceeds(getDoc(doc(manager, "organisations/org-a/incidents/incident-other")));
+  await assertSucceeds(getDoc(doc(manager, "organisations/org-a/evidence/evidence-a")));
+  await assertFails(getDoc(doc(manager, "organisations/org-a/auditEvents/audit-a")));
+  await assertFails(setDoc(
+    doc(manager, "organisations/org-a/personnel/manager-person"),
+    validPersonnel("tenant_manager-a", "org-a", "manager-person"),
+  ));
+  await assertSucceeds(setDoc(
+    doc(manager, "organisations/org-a/incidents/manager-incident"),
+    validIncident("tenant_manager-a", "org-a", "manager-incident"),
+  ));
+
+  const employee = dbFor("tenant_employee-a");
+  await assertSucceeds(getDoc(doc(employee, "organisations/org-a")));
+  await assertFails(getDoc(doc(employee, "organisations/org-a/personnel/person-a")));
+  await assertSucceeds(getDoc(doc(employee, "organisations/org-a/incidents/incident-employee")));
+  await assertFails(getDoc(doc(employee, "organisations/org-a/incidents/incident-other")));
+  await assertFails(getDoc(doc(employee, "organisations/org-a/evidence/evidence-a")));
+  await assertFails(getDoc(doc(employee, "organisations/org-a/auditEvents/audit-a")));
+  await assertSucceeds(setDoc(
+    doc(employee, "organisations/org-a/incidents/employee-incident"),
+    validIncident("tenant_employee-a", "org-a", "employee-incident"),
+  ));
+  await assertFails(updateDoc(doc(employee, "organisations/org-a/incidents/incident-employee"), {
+    title: "Employee cannot update after submission",
+    updatedAt: serverTimestamp(),
+    updatedByUid: "tenant_employee-a",
+  }));
+
+  const auditor = dbFor("tenant_auditor-a");
+  await assertSucceeds(getDoc(doc(auditor, "organisations/org-a")));
+  await assertSucceeds(getDoc(doc(auditor, "organisations/org-a/personnel/person-a")));
+  await assertSucceeds(getDoc(doc(auditor, "organisations/org-a/incidents/incident-other")));
+  await assertSucceeds(getDoc(doc(auditor, "organisations/org-a/evidence/evidence-a")));
+  await assertSucceeds(getDoc(doc(auditor, "organisations/org-a/auditEvents/audit-a")));
+  await assertFails(setDoc(
+    doc(auditor, "organisations/org-a/incidents/auditor-incident"),
+    validIncident("tenant_auditor-a", "org-a", "auditor-incident"),
+  ));
+  await assertFails(updateDoc(doc(auditor, "organisations/org-a/incidents/incident-other"), {
+    title: "Auditor cannot mutate",
+    updatedAt: serverTimestamp(),
+    updatedByUid: "tenant_auditor-a",
+  }));
+});
+
+test("member directory reads are limited to Super Admin, Admin and Auditor", async () => {
+  for (const role of ["tenant_super_admin", "tenant_admin", "tenant_manager", "tenant_employee", "tenant_auditor"]) {
+    const uid = `directory-${role}`;
+    const orgId = `directory-org-${role}`;
+    await seedTenant({ orgId, uid, role });
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, `organisations/${orgId}/members/other-member`),
+        membershipRecord("other-member", orgId, "tenant_employee"));
+    });
     const db = dbFor(uid);
-    await assertFails(getDoc(doc(db, "organisations/org-a")));
-    await assertFails(getDoc(doc(db, "organisations/org-a", "personnel", "person-a")));
-    await assertFails(setDoc(
-      doc(db, "organisations/org-a", "personnel", `${role}-person`),
-      validPersonnel(uid, "org-a", `${role}-person`),
-    ));
-    await assertFails(getDoc(doc(db, "organisations/org-a", "incidents", "incident-a")));
+    if (["tenant_super_admin", "tenant_admin", "tenant_auditor"].includes(role)) {
+      await assertSucceeds(getDoc(doc(db, `organisations/${orgId}/members/other-member`)));
+      await assertSucceeds(getDocs(collection(db, `organisations/${orgId}/members`)));
+    } else {
+      await assertFails(getDoc(doc(db, `organisations/${orgId}/members/other-member`)));
+      await assertFails(getDocs(collection(db, `organisations/${orgId}/members`)));
+    }
   }
 });
 
@@ -207,7 +293,7 @@ test("suspended organisation denies otherwise active owner", async () => {
 test("bootstrap trust anchor rejects mismatched UID, tenant, role, and missing organisation", async () => {
   const fixtures = [
     { orgId: "bootstrap-wrong-uid", uid: "wrong-uid-user", member: {
-      uid: "different-uid", orgId: "bootstrap-wrong-uid", role: "owner", status: "active",
+      uid: "different-uid", orgId: "bootstrap-wrong-uid", role: "tenant_super_admin", status: "active",
     } },
     { orgId: "bootstrap-wrong-org", uid: "wrong-org-user", member: {
       uid: "wrong-org-user", orgId: "another-org", role: "owner", status: "active",
@@ -234,7 +320,7 @@ test("bootstrap trust anchor rejects mismatched UID, tenant, role, and missing o
     await setDoc(doc(db, "organisations", "bootstrap-missing-org", "members", "orphan-user"), {
       uid: "orphan-user",
       orgId: "bootstrap-missing-org",
-      role: "owner",
+      role: "tenant_super_admin",
       status: "active",
     });
   });
@@ -295,15 +381,18 @@ test("immutable creator, tenant, and record identifiers cannot be changed", asyn
   }));
 });
 
-test("users can get only their own active, valid membership across supported roles", async () => {
-  for (const role of ["owner", "admin", "manager", "viewer"]) {
+test("all five roles can resolve their own active canonical membership without self-service writes", async () => {
+  for (const role of ["tenant_super_admin", "tenant_admin", "tenant_manager", "tenant_employee", "tenant_auditor"]) {
     const uid = `self-${role}`;
     const orgId = `self-org-${role}`;
     await seedTenant({ orgId, uid, role });
     const db = dbFor(uid);
     await assertSucceeds(getDoc(doc(db, "organisations", orgId, "members", uid)));
-    await assertFails(getDoc(doc(db, "organisations", orgId, "members", "someone-else")));
-    await assertFails(getDocs(collection(db, `organisations/${orgId}/members`)));
+    if (["tenant_super_admin", "tenant_admin", "tenant_auditor"].includes(role)) {
+      await assertSucceeds(getDocs(collection(db, `organisations/${orgId}/members`)));
+    } else {
+      await assertFails(getDocs(collection(db, `organisations/${orgId}/members`)));
+    }
     await assertFails(setDoc(doc(db, "organisations", orgId, "members", uid), {
       uid, orgId, role: "owner", status: "active",
     }));
@@ -316,10 +405,10 @@ test("users can get only their own active, valid membership across supported rol
 
 test("self-membership get fails closed for invalid membership or organisation trust anchors", async () => {
   const fixtures = [
-    { orgId: "self-inactive-member", uid: "inactive-member", role: "owner", membershipStatus: "suspended" },
-    { orgId: "self-revoked-member", uid: "revoked-member", role: "owner", membershipStatus: "revoked" },
+    { orgId: "self-inactive-member", uid: "inactive-member", role: "tenant_super_admin", membershipStatus: "suspended" },
+    { orgId: "self-revoked-member", uid: "revoked-member", role: "tenant_super_admin", membershipStatus: "revoked" },
     { orgId: "self-invalid-role", uid: "invalid-role", role: "platform-admin" },
-    { orgId: "self-suspended-org", uid: "suspended-org-member", role: "owner", organisationStatus: "suspended" },
+    { orgId: "self-suspended-org", uid: "suspended-org-member", role: "tenant_super_admin", organisationStatus: "suspended" },
   ];
   for (const fixture of fixtures) {
     await seedTenant(fixture);
@@ -332,18 +421,15 @@ test("self-membership get fails closed for invalid membership or organisation tr
     await setDoc(doc(db, "organisations/self-mismatch-uid"), {
       orgId: "self-mismatch-uid", displayName: "Synthetic", status: "active", schemaVersion: 1,
     });
-    await setDoc(doc(db, "organisations/self-mismatch-uid/members/mismatch-user"), {
-      uid: "different-user", orgId: "self-mismatch-uid", role: "owner", status: "active",
-    });
+    await setDoc(doc(db, "organisations/self-mismatch-uid/members/mismatch-user"),
+      membershipRecord("different-user", "self-mismatch-uid"));
     await setDoc(doc(db, "organisations/self-mismatch-org"), {
       orgId: "another-org", displayName: "Synthetic", status: "active", schemaVersion: 1,
     });
-    await setDoc(doc(db, "organisations/self-mismatch-org/members/mismatch-org-user"), {
-      uid: "mismatch-org-user", orgId: "another-org", role: "owner", status: "active",
-    });
-    await setDoc(doc(db, "organisations/self-missing-parent/members/orphan-user"), {
-      uid: "orphan-user", orgId: "self-missing-parent", role: "owner", status: "active",
-    });
+    await setDoc(doc(db, "organisations/self-mismatch-org/members/mismatch-org-user"),
+      membershipRecord("mismatch-org-user", "another-org"));
+    await setDoc(doc(db, "organisations/self-missing-parent/members/orphan-user"),
+      membershipRecord("orphan-user", "self-missing-parent"));
   });
 
   await assertFails(getDoc(doc(dbFor("mismatch-user"), "organisations/self-mismatch-uid/members/mismatch-user")));
@@ -356,7 +442,7 @@ test("membership, restricted records, audit events, and unapproved organisation 
   const db = dbFor("owner-a");
   await assertSucceeds(getDoc(doc(db, "organisations/org-a", "members", "owner-a")));
   await assertFails(getDoc(doc(db, "organisations/org-a", "members", "attacker")));
-  await assertFails(getDocs(collection(db, "organisations/org-a/members")));
+  await assertSucceeds(getDocs(collection(db, "organisations/org-a/members")));
   await assertFails(setDoc(doc(db, "organisations/org-a", "members", "attacker"), {
     uid: "attacker", orgId: "org-a", role: "owner", status: "active",
   }));

@@ -1,43 +1,42 @@
 # Application tenant-membership resolver
 
-**Status:** resolver service, emulator-backed tests, and AuthGate UI integration implemented; stale-request handling covered by UI tests  
-**Production posture:** Firebase Console-published Firestore rules remain deny-all  
-**Data posture:** no operational Firestore reads/writes, localStorage migration, or background sync
+**Status:** canonical schema resolver implementation; validation not yet run  
+**Production posture:** production Firestore rules remain separately published deny-all  
+**Data posture:** no operational Firestore writes, localStorage migration, or background sync
 
-## Purpose
+## Canonical tenant roles
 
-The resolver provides a narrow application-side way to validate a membership after a user has authenticated and has received an opaque organisation ID through an approved out-of-band process.
+The resolver accepts exactly five tenant-scoped roles: `tenant_super_admin`, `tenant_admin`, `tenant_manager`, `tenant_employee`, and `tenant_auditor`.
 
-## Behaviour
+The platform-level `platform_owner` principal is stored separately under `platformAdministrators/{uid}` and is never a tenant membership role.
+
+Legacy values (`owner`, `admin`, `manager`, `viewer`) are rejected. They must be migrated only through a reviewed, auditable server-side process; no role is inferred or silently upgraded.
+
+## Versioned membership schema
+
+The exact document at `organisations/{orgId}/members/{uid}` contains `uid`, `orgId`, `role`, `status`, `createdAt`, `createdByUid`, `updatedAt`, `updatedByUid`, and `schemaVersion: 1`.
+
+The resolver requires matching authenticated UID and expected organisation ID, active status, one canonical tenant role, valid timestamp/provenance fields, and the supported schema version. Unexpected or missing fields fail closed.
+
+## Behaviour and boundary
 
 - Requires a non-empty authenticated Firebase UID.
-- Accepts one organisation ID as a locator; it is not a credential.
-- Restricts the locator to one safe Firestore document-ID segment.
-- Performs exactly one getDoc at /organisations/{orgId}/members/{authenticatedUid}.
-- Accepts only the exact minimal fields uid, orgId, role, and status.
-- Requires matching UID and organisation ID, active membership, and one supported role (owner, admin, manager, viewer).
-- Returns an immutable minimal result in memory.
+- Accepts one organisation ID as a locator, never as an authorization token.
+- Performs exactly one getDoc at `/organisations/{orgId}/members/{authenticatedUid}`.
+- Returns an immutable minimal in-memory result.
 - Does not query, discover, create, update, delete, persist, or cache membership data.
-- Fails closed with generic user-facing errors.
-- AuthGate invalidates pending lookups when the organisation locator changes, the authenticated identity changes, or the user signs out.
-- Demo Guest sessions do not resolve or inherit an authenticated user's membership.
+- Firestore Security Rules remain the authoritative access-control boundary.
+- Membership client writes remain denied; only trusted server provisioning may create or change membership.
+- Demo Guest sessions do not resolve or inherit authenticated membership.
 
-## Security boundary
+## Current operational permission limitation
 
-Firestore Security Rules remain authoritative. This helper is not an access-control bypass and does not grant access to operational collections. Every later Firestore operation must independently satisfy the published rules.
+The canonical resolver and membership-read rule now recognize the five-role schema. Existing direct operational Firestore rules currently grant personnel, incident and evidence access only to `tenant_super_admin` and `tenant_admin`. Manager, Employee and Auditor access remains denied at this direct-client boundary until their record-level and query-level constraints are implemented and tested. This is intentionally restrictive and does not yet represent the complete RBAC permission catalogue.
 
-AuthGate now exposes the exact-membership verification flow for signed-in users. The verified membership is held in React session state only; it is not persisted as a role or reusable access token. This UI integration is not an operational data-access integration.
-
-The application continues to use clearly labelled synthetic demonstration data. Operational records remain browser-local and are not yet tenant/account isolated. No real organisation data should be entered or migrated.
+No role in this resolver grants Platform Owner privileges or cross-tenant access.
 
 ## Validation
 
-The dedicated test suite uses synthetic fixtures and the Firestore Emulator to cover supported roles, unauthenticated calls, unsafe organisation locators, missing membership, inactive membership, unsupported roles, mismatched tenant IDs, and unexpected membership fields.
+The emulator suite is updated for all five canonical roles, exact schema validation, legacy-role rejection, malformed fields, unsupported versions, and inactive membership. Tests have not been run at the user's request.
 
-AuthGate UI tests cover Demo Guest isolation, exact authenticated UID/organisation membership lookup, generic denied-lookup handling, stale lookups after locator changes, account switching, and sign-out cleanup.
-
-Run with:
-- `npm run test:tenant-membership`
-- `npm run test:auth-membership-ui`
-
-Production rules publication, first-owner provisioning, operational repositories, and migration remain separately gated.
+Production rules publication, invitation acceptance, membership activation, operational repositories, and legacy data migration remain separately gated.

@@ -8,7 +8,7 @@ import {
 } from './dataBoundary.ts';
 
 const demo = { kind: 'demo' } as DemoRepository;
-const membership = { uid: 'user-a', orgId: 'org-a', role: 'owner' as const, status: 'active' as const };
+const membership = { uid: 'user-a', orgId: 'org-a', role: 'tenant_super_admin' as const, status: 'active' as const, schemaVersion: 1 as const };
 
 describe('SAFER operational data boundary', () => {
   it('starts fail-closed while signed out', () => {

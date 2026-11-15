@@ -1,5 +1,7 @@
 # Firestore role-to-permission matrix and membership lifecycle
 
+> **Superseded policy draft — do not use as the active role model.** The canonical hierarchy is now defined in `docs/architecture/rbac-01-tenant-permission-engine.md`: `platform_owner` is the separate global principal, while PMC memberships use `tenant_super_admin`, `tenant_admin`, `tenant_manager`, `tenant_employee`, and `tenant_auditor`. Legacy `owner/admin/manager/viewer` labels below are historical proposal text only and are not accepted by the current resolver or candidate rules.
+
 **Status:** proposed policy; documentation only  
 **Applies to:** SAFER Firestore default database in `asia-south1`  
 **Security posture:** production client rules remain default-deny

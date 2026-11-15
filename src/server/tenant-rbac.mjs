@@ -34,7 +34,10 @@ export const TENANT_ACTIONS = Object.freeze([
   'incidents:create',
   'incidents:update',
   'evidence:read',
+  'evidence:register',
   'checklists:read',
+  'checklists:create',
+  'checklists:assign',
   'checklists:read:assigned',
   'checklists:update',
   'checklists:update:assigned',
@@ -49,12 +52,12 @@ const ROLE_ACTIONS = Object.freeze({
   tenant_admin: new Set([
     'organisation:read', 'members:read', 'members:invite', 'members:suspend',
     'members:role:assign', 'personnel:read', 'personnel:create', 'personnel:update',
-    'incidents:read', 'incidents:create', 'incidents:update', 'evidence:read',
-    'checklists:read', 'checklists:update', 'audit:read', 'reports:read', 'reports:export',
+    'incidents:read', 'incidents:create', 'incidents:update', 'evidence:read', 'evidence:register',
+    'checklists:read', 'checklists:create', 'checklists:assign', 'checklists:update', 'audit:read', 'reports:read', 'reports:export',
   ]),
   tenant_manager: new Set([
     'organisation:read', 'personnel:read', 'incidents:read', 'incidents:create',
-    'incidents:update', 'evidence:read', 'checklists:read', 'checklists:update',
+    'incidents:update', 'evidence:read', 'evidence:register', 'checklists:read', 'checklists:create', 'checklists:assign', 'checklists:update',
     'reports:read',
   ]),
   tenant_employee: new Set([
@@ -90,6 +93,10 @@ const PURPOSE_REQUIRED_PLATFORM_ACTIONS = new Set([
 
 const UID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
 const ORG_ID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
+const MEMBERSHIP_FIELDS = Object.freeze([
+  'uid', 'orgId', 'role', 'status', 'createdAt', 'createdByUid',
+  'updatedAt', 'updatedByUid', 'schemaVersion',
+].sort());
 
 function isRecord(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -127,8 +134,15 @@ export function authorizeTenantAction({
     return denied('invalid_authorization_context');
   }
 
-  if (membership.uid !== actorUid || membership.orgId !== requestedOrgId
-    || membership.status !== 'active' || !TENANT_ROLES.includes(membership.role)) {
+  const membershipFields = Object.keys(membership).sort();
+  if (membershipFields.length !== MEMBERSHIP_FIELDS.length
+    || membershipFields.some((field, index) => field !== MEMBERSHIP_FIELDS[index])
+    || membership.uid !== actorUid || membership.orgId !== requestedOrgId
+    || membership.schemaVersion !== 1 || membership.status !== 'active'
+    || !TENANT_ROLES.includes(membership.role)
+    || typeof membership.createdByUid !== 'string'
+    || typeof membership.updatedByUid !== 'string'
+    || membership.createdAt == null || membership.updatedAt == null) {
     return denied('active_tenant_membership_required');
   }
 
