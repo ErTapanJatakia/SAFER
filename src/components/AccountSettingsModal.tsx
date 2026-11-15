@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Download, RotateCcw, Save, UserRound, X } from 'lucide-react';
 import { useModalFocus } from '../hooks/useModalFocus.ts';
-import {LOCALE_OPTIONS, setLocale, translate, type SupportedLocale} from '../i18n/locale.ts';
+import {LOCALE_OPTIONS, getLocale, setLocale, translate, type SupportedLocale} from '../i18n/locale.ts';
 import {
   ACCOUNT_SETTINGS_STORAGE_KEY,
   createAccountSettingsExport,
@@ -20,7 +20,8 @@ interface AccountSettingsModalProps {
 function readStoredSettings(): AccountSettings {
   try {
     const raw = window.localStorage.getItem(ACCOUNT_SETTINGS_STORAGE_KEY);
-    return raw ? normalizeAccountSettings(JSON.parse(raw)) : normalizeAccountSettings(null);
+    const normalized = raw ? normalizeAccountSettings(JSON.parse(raw)) : normalizeAccountSettings(null);
+    return {...normalized, preferences: {...normalized.preferences, locale: getLocale()}};
   } catch {
     return normalizeAccountSettings(null);
   }
