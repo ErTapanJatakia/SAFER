@@ -5,6 +5,7 @@ export type AccountLocale = string;
 export type AccountNumberFormat = string;
 export type AccountExportFormat = 'txt' | 'csv' | 'xlsx' | 'pdf' | 'docx';
 export type AccountRedactionLevel = 'standard' | 'strict';
+export type AccountDisplayDensity = 'comfortable' | 'compact';
 
 export interface AccountProfile {
   displayName: string;
@@ -20,6 +21,7 @@ export interface AccountPreferences {
   numberFormat: AccountNumberFormat;
   defaultExportFormat: AccountExportFormat;
   defaultRedactionLevel: AccountRedactionLevel;
+  displayDensity: AccountDisplayDensity;
 }
 
 export interface AccountSettings {
@@ -39,6 +41,7 @@ export const DEFAULT_ACCOUNT_SETTINGS: AccountSettings = {
     numberFormat: 'en-IN',
     defaultExportFormat: 'txt',
     defaultRedactionLevel: 'standard',
+    displayDensity: 'comfortable',
   },
 };
 
@@ -78,6 +81,7 @@ export function normalizeAccountSettings(raw: unknown): AccountSettings {
       defaultExportFormat: ['txt', 'csv', 'xlsx', 'pdf', 'docx'].includes(String(preferences.defaultExportFormat))
         ? preferences.defaultExportFormat as AccountExportFormat : DEFAULT_ACCOUNT_SETTINGS.preferences.defaultExportFormat,
       defaultRedactionLevel: preferences.defaultRedactionLevel === 'strict' ? 'strict' : 'standard',
+      displayDensity: preferences.displayDensity === 'compact' ? 'compact' : 'comfortable',
     },
   };
 }
