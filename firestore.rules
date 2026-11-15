@@ -217,11 +217,12 @@ service cloud.firestore {
           && request.resource.data.employeeUid.size() <= 128
           && request.resource.data.employeeUid.matches('[A-Za-z0-9_-]{1,128}')
           && exists(employeeMembershipPath(orgId, request.resource.data.employeeUid))
-          && get(employeeMembershipPath(orgId, request.resource.data.employeeUid)).data.uid == request.resource.data.employeeUid
-          && get(employeeMembershipPath(orgId, request.resource.data.employeeUid)).data.orgId == orgId
-          && get(employeeMembershipPath(orgId, request.resource.data.employeeUid)).data.role == 'tenant_employee'
-          && get(employeeMembershipPath(orgId, request.resource.data.employeeUid)).data.status == 'active'
-          && get(employeeMembershipPath(orgId, request.resource.data.employeeUid)).data.schemaVersion == 1);
+          && validCanonicalMemberDocument(
+            get(employeeMembershipPath(orgId, request.resource.data.employeeUid)).data,
+            request.resource.data.employeeUid,
+            orgId
+          )
+          && get(employeeMembershipPath(orgId, request.resource.data.employeeUid)).data.role == 'tenant_employee');
     }
     function validPersonnelUpdate(orgId, recordId) {
       return validPersonnelData(orgId, recordId)
