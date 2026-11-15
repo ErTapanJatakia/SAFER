@@ -10,7 +10,7 @@ import { createDemoRepository, type DemoStorage } from './demoRepository.ts';
 import { INITIAL_PERSONNEL } from '../data/mockData.ts';
 
 const repository = { kind: 'demo' } as DemoRepository;
-const membership = { uid: 'user-a', orgId: 'org-a', role: 'owner' as const, status: 'active' as const };
+const membership = { uid: 'user-a', orgId: 'org-a', role: 'tenant_super_admin' as const, status: 'active' as const, schemaVersion: 1 as const };
 
 function trackedStorage(): DemoStorage & { calls: string[] } {
   const values = new Map<string, string>();
