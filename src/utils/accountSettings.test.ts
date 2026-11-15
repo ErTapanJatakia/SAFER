@@ -20,7 +20,7 @@ describe('account settings normalization', () => {
     })).toEqual({
       version: 1,
       profile: { displayName: 'Operator', callSign: 'ALPHA', bio: 'Bio' },
-      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', numberFormat: 'en-US' },
+      preferences: { dateFormat: 'YYYY-MM-DD', timeFormat: '12h', timezone: 'UTC', numberFormat: 'en-US', locale: 'en', notificationsEnabled: true, soundEnabled: false, displayDensity: 'comfortable', inactivityTimeoutMinutes: 10 },
     });
   });
 
