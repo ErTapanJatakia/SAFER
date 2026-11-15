@@ -331,9 +331,29 @@ export default function App() {
       if (event.key !== ACCOUNT_SETTINGS_STORAGE_KEY && event.key !== null) return;
       setAccountSettingsRevision((revision) => revision + 1);
     };
+    const handleAccountSettingsUpdated = () => setAccountSettingsRevision((revision) => revision + 1);
     window.addEventListener('storage', handleAccountSettingsStorage);
-    return () => window.removeEventListener('storage', handleAccountSettingsStorage);
+    window.addEventListener('safer:account-settings-updated', handleAccountSettingsUpdated);
+    return () => {
+      window.removeEventListener('storage', handleAccountSettingsStorage);
+      window.removeEventListener('safer:account-settings-updated', handleAccountSettingsUpdated);
+    };
   }, []);
+
+  // Display density is a presentation-only preference; it never changes data or permissions.
+  useEffect(() => {
+    let density: 'comfortable' | 'compact' = 'comfortable';
+    try {
+      const raw = localStorage.getItem(ACCOUNT_SETTINGS_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { preferences?: { displayDensity?: unknown } };
+        if (parsed.preferences?.displayDensity === 'compact') density = 'compact';
+      }
+    } catch {
+      // Fail back to the comfortable layout if local preferences are unavailable or malformed.
+    }
+    document.documentElement.setAttribute('data-display-density', density);
+  }, [accountSettingsRevision]);
 
   // Apply Accessibility attributes to <html> root
   useEffect(() => {
