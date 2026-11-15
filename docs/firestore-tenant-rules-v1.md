@@ -2,39 +2,52 @@
 
 **Status:** candidate rules update; not validated or published  
 **Production posture:** separately published production rules remain deny-all  
-**Purpose:** align the self-membership read boundary and existing top-level operational grants with the canonical tenant role vocabulary.
+**Purpose:** enforce the canonical five-role vocabulary and role-scoped access for the currently modelled tenant resources.
 
 ## Canonical role separation
 
 - Platform Owner: `platform_owner`, stored separately in `platformAdministrators/{uid}`; never a tenant membership.
 - PMC roles: `tenant_super_admin`, `tenant_admin`, `tenant_manager`, `tenant_employee`, `tenant_auditor`.
-- Legacy tenant values `owner`, `admin`, `manager`, and `viewer` are not accepted by this ruleset.
+- Legacy tenant role values are rejected.
 
-## Membership read
+## Membership and organisation reads
 
-A signed-in user may read only their own membership document at `organisations/{orgId}/members/{request.auth.uid}`, and only when:
-- the document has the exact version-1 canonical field set;
-- UID and organisation ID match the path;
-- status is active;
-- role is one of the five canonical tenant roles;
-- timestamps and provenance fields have the required types; and
-- the parent organisation exists and is active.
+- Every active tenant role may read its own active organisation metadata.
+- Every signed-in user may read only their own active, exact version-1 membership document.
+- Super Admin, Admin and Auditor may read/list canonical active membership records within their own active PMC.
+- Manager and Employee cannot browse the member directory.
+- Client membership writes and organisation writes remain denied.
 
-Client list, create, update and delete of membership records remain denied.
+## Candidate rules for existing resources
 
-## Existing direct operational rules
+| Resource | Super Admin | Admin | Manager | Employee | Auditor |
+|---|---|---|---|---|---|
+| Organisation metadata | Read | Read | Read | Read | Read |
+| Personnel summary | Read/write | Read/write | Read | Denied | Read |
+| Incidents | Read/create/update | Read/create/update | Read/create/update | Create + read own | Read |
+| Evidence metadata | Read | Read | Read | Denied | Read |
+| Tenant audit events | Read | Read | Denied | Denied | Read |
 
-The existing personnel, incident and evidence rules are retained with a renamed helper that grants the same conservative direct-client operations only to `tenant_super_admin` and `tenant_admin`. Manager, Employee and Auditor remain denied at this direct Firestore boundary for now. The RBAC policy catalogue is not yet fully implemented in direct Firestore rules or tenant API routes; do not interpret the catalogue as live authorization.
+All list operations remain organisation-bound. Employee incident reads are additionally constrained by `reportedByUid == request.auth.uid`; the query must include that constraint. Employee incident creation is allowed, but employee updates are denied. Incident reporter provenance is immutable.
 
-The remaining roles must not be granted broad access merely to make the UI work. Their read/write scopes require query constraints, record ownership/assignment checks, and dedicated positive/negative emulator tests before any access is added.
+## Deliberate restrictions / incomplete resource models
+
+- Employee personnel self-service remains denied because the current personnel summary schema has no authoritative Firebase UID ownership field. The `employeeRef` string is not treated as identity.
+- Checklist documents and assignment fields are not yet represented by a confirmed Firestore collection/schema in this ruleset; no checklist access is granted.
+- Reports and exports are not Firestore resources here; no report/export API is enabled by these rules.
+- Restricted personnel and incident collections remain denied.
+- Evidence metadata is read-only; client create/update/delete remains denied.
+- Audit events are read-only; only trusted server processes may create them.
+
+The shared server-side RBAC engine and trusted authorization boundary must also be applied by every future tenant API. A UI permission map is never authorization. Resource-owner and assignment values must come from server-loaded records, not request input.
 
 ## Release gate
 
-Do not publish these candidate rules or enable operational tenant data access until:
-1. all five roles are reconciled across the resolver, API authorization and Firestore Rules;
-2. employee own-record and assigned-task restrictions are enforced;
-3. auditor read-only and export denial are verified;
-4. emulator tests pass for both allowed and denied operations;
+Do not publish these candidate rules or enable tenant operational access until:
+1. focused authorization and Firestore emulator tests pass;
+2. tenant API routes use the trusted server authorization boundary;
+3. employee personnel and checklist ownership/assignment schemas are defined and tested;
+4. reports/export authorization and audit behavior are implemented server-side;
 5. a security review and explicit production-release approval are complete.
 
-No CI was run for this update at the user's request.
+No CI or emulator test run was initiated for this update, in accordance with the user's instruction.
