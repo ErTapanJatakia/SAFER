@@ -167,3 +167,13 @@ html[data-contrast="high"] [class*="border-"] {
 .skip-link:focus {
   top: 1rem;
 }
+
+
+/* Bidirectional language support for Arabic and Urdu interfaces. */
+html[dir="rtl"] body { direction: rtl; }
+html[dir="rtl"] .text-left { text-align: right; }
+html[dir="rtl"] .text-right { text-align: left; }
+html[dir="rtl"] input,
+html[dir="rtl"] textarea,
+html[dir="rtl"] select { text-align: right; }
+html[dir="rtl"] .skip-link { left: auto; right: 1rem; }
