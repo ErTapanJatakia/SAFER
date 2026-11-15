@@ -35,7 +35,7 @@ Workstation behaviour preferences:
 - In-app toast notifications can be disabled without suppressing form/security errors or independently configured screen-reader announcements.
 - Optional notification audio uses a short locally generated Web Audio tone; no external audio asset or service is required and browser autoplay restrictions may suppress playback.
 - Display density supports comfortable and compact layouts.
-- Automatic sign-out after inactivity is configurable from 5 to 60 minutes in five-minute increments, with a 10-minute default. Activity resets the deadline for authenticated and Demo Guest sessions.
+- Automatic sign-out after inactivity is configurable from 5 to 60 minutes in five-minute increments, with a 10-minute default. Activity resets the deadline for authenticated and Demo Guest sessions in this browser; it does not revoke refresh tokens or sign out other devices.
 
 Regional display preferences:
 - Date: DD-MM-YYYY, YYYY-MM-DD, or DD/MM/YYYY
