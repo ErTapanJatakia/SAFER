@@ -62,6 +62,9 @@ jobs:
       - name: Install Chromium for browser validation
         run: bunx playwright install --with-deps chromium
 
+      - name: Automated WCAG accessibility audit (axe-core)
+        run: npm run test:accessibility-axe
+
       - name: Vercel browser security header policy tests
         run: node --test tests/vercel-security-headers.test.mjs
 
