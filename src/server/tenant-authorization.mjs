@@ -41,16 +41,20 @@ export async function resolveTenantAuthorization({
   }
 
   let decoded;
-  let user;
   try {
     decoded = await auth.verifyIdToken(token.trim(), true);
-    if (!decoded || typeof decoded.uid !== 'string' || !decoded.uid) {
-      throw new TenantAuthorizationError('unauthenticated', 401);
-    }
-    user = await auth.getUser(decoded.uid);
-  } catch (error) {
-    if (error instanceof TenantAuthorizationError) throw error;
+  } catch {
     throw new TenantAuthorizationError('unauthenticated', 401);
+  }
+  if (!decoded || typeof decoded.uid !== 'string' || !decoded.uid) {
+    throw new TenantAuthorizationError('unauthenticated', 401);
+  }
+
+  let user;
+  try {
+    user = await auth.getUser(decoded.uid);
+  } catch {
+    throw new TenantAuthorizationError('identity_service_unavailable', 503);
   }
 
   if (!user || user.uid !== decoded.uid || user.disabled === true) {
