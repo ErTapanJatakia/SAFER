@@ -214,9 +214,9 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
         <div>
           <div className="flex items-center space-x-2">
             <ShieldCheck className="w-5 h-5 text-blue-900" />
-            <h2 className="text-lg font-bold text-slate-900">
+            <h1 className="text-lg font-bold text-slate-900">
               Defensive Cybersecurity Hygiene & Verification
-            </h2>
+            </h1>
           </div>
           <p className="text-xs text-slate-600 mt-1 max-w-3xl leading-relaxed">
             Administrative readiness checklist covering 10 defensive operational domains, verified findings, plain-English rationales, and simulated phishing awareness training for protective personnel.
@@ -564,11 +564,11 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
                             </span>
                           </div>
 
-                          <h3 className="font-bold text-sm text-slate-900 leading-snug">
+                          <h2 className="font-bold text-sm text-slate-900 leading-snug">
                             {item.title}
-                          </h3>
+                          </h2>
 
-                          <div className="text-[11px] text-slate-500 mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <div className="text-[11px] text-slate-600 mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                             <span>Audited: {item.lastChecked}</span>
                             <span>&bull;</span>
                             <span>Reviewer: {item.verifiedBy || 'Unassigned'}</span>
@@ -580,7 +580,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
                       <div className="flex flex-wrap items-center gap-2 shrink-0 self-start sm:self-auto">
                         <button
                           onClick={() => onUpdateStatus(item.id, isCompleted ? 'Outstanding' : 'Completed')}
-                          aria-label={`Mark ${item.title} as ${isCompleted ? 'Outstanding' : 'Completed'}`}
+                          aria-label={`${isCompleted ? 'Completed' : 'Outstanding'} — mark ${item.title} as ${isCompleted ? 'Outstanding' : 'Completed'}`}
                           className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-semibold border transition shadow-2xs ${
                             isCompleted
                               ? 'bg-teal-50 text-teal-800 border-teal-300 hover:bg-teal-100'
@@ -633,7 +633,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
 
                     {/* Bottom Actions: Edit, Delete */}
                     <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                      <span className="text-[11px] text-slate-400">
+                      <span className="text-[11px] text-slate-600">
                         Task Control ID: {item.id}
                       </span>
 
@@ -641,7 +641,7 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
                         <button
                           onClick={() => handleOpenEdit(item)}
                           className="inline-flex items-center space-x-1 px-2.5 py-1 rounded text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition"
-                          aria-label={`Edit ${item.title}`}
+                          aria-label={`Edit / Sign-off ${item.title}`}
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                           <span>Edit / Sign-off</span>
@@ -650,8 +650,8 @@ export const CyberHygieneView: React.FC<CyberHygieneViewProps> = ({
                         {onDeleteItem && (
                           <button
                             onClick={() => onDeleteItem(item.id)}
-                            className="inline-flex items-center space-x-1 px-2 py-1 rounded text-slate-400 hover:text-rose-700 hover:bg-rose-50 transition"
-                            aria-label={`Delete ${item.title}`}
+                            className="inline-flex items-center space-x-1 px-2 py-1 rounded text-slate-600 hover:text-rose-700 hover:bg-rose-50 transition"
+                            aria-label={`Remove ${item.title}`}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                             <span>Remove</span>
