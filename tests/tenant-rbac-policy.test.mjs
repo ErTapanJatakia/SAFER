@@ -87,6 +87,12 @@ test('tenant authorization fails closed for forged identity, wrong tenant, and i
     organisation: { orgId: 'pmc-alpha', status: 'suspended' },
   }).allowed, false);
   assert.equal(authorize('owner', 'personnel:read').allowed, false);
+  assert.equal(authorize('tenant_super_admin', 'personnel:read', {
+    membership: { ...membership('tenant_super_admin'), schemaVersion: 2 },
+  }).allowed, false);
+  assert.equal(authorize('tenant_super_admin', 'personnel:read', {
+    membership: { ...membership('tenant_super_admin'), platformOverride: true },
+  }).allowed, false);
   assert.equal(authorize('tenant_super_admin', 'unknown:action').allowed, false);
 });
 
