@@ -94,7 +94,7 @@ export async function createTenantPersonnel({orgId,actorUid,input,database,serve
   const record={
     recordId,orgId,
     employeeRef:boundedString(input?.employeeRef,64,true),
-    ...(input?.displayLabel?{displayLabel:boundedString(input.displayLabel,80)}:{}),
+    displayLabel:input?.displayLabel?boundedString(input.displayLabel,80):'',
     operationalRoles:boundedList(input?.operationalRoles??[],10,60),
     specialisations:boundedList(input?.specialisations??[],10,80),
     assignmentSector:SECTORS.includes(input?.assignmentSector)?input.assignmentSector:fail('invalid_personnel_data'),
