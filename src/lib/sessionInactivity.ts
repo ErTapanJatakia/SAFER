@@ -1,6 +1,6 @@
 export type InactivityEventTarget = Pick<Window, 'addEventListener' | 'removeEventListener' | 'setTimeout' | 'clearTimeout'>;
 
-const ACTIVITY_EVENTS = ['pointerdown', 'keydown', 'scroll', 'touchstart'] as const;
+const ACTIVITY_EVENTS = ['pointerdown', 'pointermove', 'keydown', 'scroll', 'touchstart'] as const;
 
 /** Starts an inactivity deadline and resets it on meaningful user activity. */
 export function startSessionInactivityMonitor(
