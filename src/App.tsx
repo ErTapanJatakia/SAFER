@@ -68,6 +68,7 @@ function playNotificationTone(): void {
     const context = new AudioContextConstructor();
     const oscillator = context.createOscillator();
     const gain = context.createGain();
+    void context.resume().catch(() => { void context.close(); });
     oscillator.type = 'sine';
     oscillator.frequency.setValueAtTime(880, context.currentTime);
     gain.gain.setValueAtTime(0.025, context.currentTime);
