@@ -50,6 +50,10 @@ The Remix tree contains the candidate modules listed above. SAFER already contai
 - [ ] Final source-to-destination reconciliation.
 - [ ] Archive/delete SAFER-Remix only after all approved features are verified in SAFER and the owner explicitly confirms retirement.
 
+## UX-04 — Audio controls
+
+**Disposition:** Implemented where a genuine zero-cost browser capability exists. Accessibility Preferences now offer opt-in spoken interface announcements through the browser/operating-system Speech Synthesis engine, with a sample playback control and user-selectable speech rate and volume. The default is off; disabling it cancels ongoing speech. Existing screen-reader live-region announcements remain independent and enabled. If the browser lacks Speech Synthesis, the controls are unavailable and the live-region fallback remains. SAFER does not provide hosted audio, background playback, audio alerts, or a proprietary voice service; browser/OS voice processing and availability are device-dependent.
+
 ## Definition of complete
 
 A Remix capability is considered migrated only when SAFER contains the reviewed implementation, relevant automated regression/security tests pass, documentation matches actual behavior, and the feature is usable in SAFER without relying on the Remix repository. The Remix repository must remain available until every candidate is classified as **ported**, **already present**, or **explicitly rejected/deferred with rationale**.
