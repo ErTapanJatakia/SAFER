@@ -164,6 +164,29 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ isOp
                   </select>
                 </label>
               </div>
+              <div className="space-y-3 border-t border-slate-200 pt-4">
+                <h4 className="text-xs font-bold text-slate-900">Workstation behaviour</h4>
+                <label className="flex items-start gap-2 text-xs font-semibold text-slate-700">
+                  <input type="checkbox" className="mt-0.5" checked={settings.preferences.notificationsEnabled} onChange={(event) => setSettings((current) => ({...current, preferences: {...current.preferences, notificationsEnabled: event.target.checked}}))} />
+                  <span>In-app toast notifications <span className="block font-normal text-slate-500">Controls non-critical toast messages. Security and form errors remain visible.</span></span>
+                </label>
+                <label className="flex items-start gap-2 text-xs font-semibold text-slate-700">
+                  <input type="checkbox" className="mt-0.5" checked={settings.preferences.soundEnabled} onChange={(event) => setSettings((current) => ({...current, preferences: {...current.preferences, soundEnabled: event.target.checked}}))} />
+                  <span>Notification sound <span className="block font-normal text-slate-500">Uses a short locally generated tone; no audio service or external asset is required.</span></span>
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label className={labelClass}>Display density
+                    <select className={inputClass} value={settings.preferences.displayDensity} onChange={(event) => setSettings((current) => ({...current, preferences: {...current.preferences, displayDensity: event.target.value as AccountSettings['preferences']['displayDensity']}}))}>
+                      <option value="comfortable">Comfortable</option><option value="compact">Compact</option>
+                    </select>
+                  </label>
+                  <label className={labelClass}>Automatic sign-out after inactivity
+                    <select className={inputClass} value={settings.preferences.inactivityTimeoutMinutes} onChange={(event) => setSettings((current) => ({...current, preferences: {...current.preferences, inactivityTimeoutMinutes: Number(event.target.value)}}))}>
+                      {[5,10,15,20,30,45,60].map((minutes) => <option key={minutes} value={minutes}>{minutes} minutes</option>)}
+                    </select>
+                  </label>
+                </div>
+              </div>
               <p className="text-xs text-slate-500">Theme and accessibility remain managed by their existing dedicated controls, avoiding duplicate settings stores.</p>
             </div>
           )}
