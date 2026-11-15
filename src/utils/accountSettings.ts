@@ -1,3 +1,5 @@
+import {isSupportedLocale, type SupportedLocale} from '../i18n/locale.ts';
+
 export type AccountDateFormat = 'DD-MM-YYYY' | 'YYYY-MM-DD' | 'DD/MM/YYYY';
 export type AccountTimeFormat = '24h' | '12h';
 export type AccountTimezone = 'Asia/Kolkata' | 'UTC';
@@ -14,6 +16,7 @@ export interface AccountPreferences {
   timeFormat: AccountTimeFormat;
   timezone: AccountTimezone;
   numberFormat: AccountNumberFormat;
+  locale: SupportedLocale;
 }
 
 export interface AccountSettings {
@@ -30,6 +33,7 @@ export const DEFAULT_ACCOUNT_SETTINGS: AccountSettings = {
     timeFormat: '24h',
     timezone: 'Asia/Kolkata',
     numberFormat: 'en-IN',
+    locale: 'en',
   },
 };
 
@@ -55,6 +59,7 @@ export function normalizeAccountSettings(raw: unknown): AccountSettings {
       timeFormat: preferences.timeFormat === '12h' ? '12h' : '24h',
       timezone: preferences.timezone === 'UTC' ? 'UTC' : 'Asia/Kolkata',
       numberFormat: preferences.numberFormat === 'en-US' ? 'en-US' : 'en-IN',
+      locale: isSupportedLocale(preferences.locale) ? preferences.locale : 'en',
     },
   };
 }
