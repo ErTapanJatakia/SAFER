@@ -104,7 +104,7 @@ function isRecord(value) {
   return prototype === Object.prototype || prototype === null;
 }
 
-function denied(reason) {
+function validTimestamp(value) {\n  if (value instanceof Date) return Number.isFinite(value.getTime());\n  if (!value || typeof value !== 'object') return false;\n  if (typeof value.toDate === 'function') return value.toDate() instanceof Date && Number.isFinite(value.toDate().getTime());\n  if (typeof value.toMillis === 'function') return Number.isFinite(value.toMillis());\n  return false;\n}\n\nfunction denied(reason) {
   return Object.freeze({ allowed: false, reason, auditRequired: false });
 }
 
