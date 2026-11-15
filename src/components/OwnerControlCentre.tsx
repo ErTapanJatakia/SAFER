@@ -128,9 +128,12 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
       await action();
     } catch (failure) {
       const code = failure instanceof Error ? failure.message : '';
-      setError(code === 'platform_access_denied' || code === 'platform_identity_ineligible'
-        ? 'Platform Owner authority is no longer active. Sign out and contact the platform operator.'
-        : 'The requested operation was not completed. Verify the details and retry; no success is assumed.');
+      if (['platform_access_denied', 'platform_identity_ineligible', 'unauthenticated', 'invalid_identity_token'].includes(code)) {
+        setOwnerState('not-owner');
+        setError('Platform Owner authority is no longer active. Sign out and contact the platform operator.');
+      } else {
+        setError('The requested operation was not completed. Verify the details and retry; no success is assumed.');
+      }
     } finally {
       setBusy(false);
     }
