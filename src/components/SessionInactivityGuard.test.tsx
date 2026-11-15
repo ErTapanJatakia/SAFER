@@ -58,6 +58,7 @@ describe('session inactivity guard', () => {
     expect(timeoutInput().max).toBe('60');
     expect(host.textContent).toContain('Protected session');
     expect(host.textContent).toContain('10 min remaining');
+    expect(host.querySelector('[role="region"][aria-label="Session inactivity status"]')?.textContent).toContain('10 min remaining');
   });
 
   it('warns two minutes before expiry and allows the user to continue', async () => {
