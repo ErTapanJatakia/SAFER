@@ -42,24 +42,27 @@ Collection names and fields remain provisional until the schema and validation r
 6. No `platform-admin` role is accepted from client data, browser state, or a Firestore profile document.
 7. Tenant identifiers and record ownership fields are validated against the path and authenticated identity, not trusted merely because the client supplied them.
 
-## 4. Proposed least-privilege role vocabulary
+## 4. Canonical role separation
 
-The following is a starting vocabulary, not a final grant matrix:
+The active role model is defined in `docs/architecture/rbac-01-tenant-permission-engine.md` and is enforced by the candidate resolver/rules:
 
-| Role | Intended scope |
+| Principal | Scope |
 | --- | --- |
-| `owner` | Tenant governance and membership oversight |
-| `admin` | Approved tenant administration |
-| `manager` | Operational workflows explicitly assigned to managers |
-| `viewer` | Read-only access to explicitly approved records |
+| `platform_owner` | Global SAFER platform authority; stored separately in `platformAdministrators/{uid}` |
+| `tenant_super_admin` | Full authority within one PMC |
+| `tenant_admin` | Delegated administration within one PMC |
+| `tenant_manager` | Constrained operational permissions within one PMC |
+| `tenant_employee` | Own-record and assigned-task permissions within one PMC |
+| `tenant_auditor` | Read-only audit and approved tenant data within one PMC |
 
-Permissions must be defined per collection and operation (get, list, create, update, delete). A broad role check such as "any active member can read/write everything" is not acceptable. Sensitive personnel, incident, evidence, and audit data may require narrower permissions than the general role.
+Legacy tenant labels `owner`, `admin`, `manager`, and `viewer` are not canonical and must not be silently mapped. The Platform Owner is not a tenant membership role and cannot be assigned through PMC onboarding or delegation.
+
 
 ## 5. Bootstrap and membership lifecycle
 
-The first tenant owner is a critical trust anchor. With the current zero-cost constraint and no trusted server-side provisioning service, SAFER must not implement public self-service organisation creation that lets the creator write their own `owner` membership.
+The first PMC Super Admin is a critical trust anchor; the Platform Owner remains a separately provisioned platform principal. With the current zero-cost constraint and no trusted server-side provisioning service, SAFER must not implement public self-service organisation creation that lets the creator write their own `tenant_super_admin` membership.
 
-Initial bootstrap must be a controlled, documented operator action outside the untrusted client (for example, a carefully reviewed Firebase Console seed using a verified UID). The process must verify the UID from Firebase Authentication, record the organisation identifier and intended owner, and preserve an auditable change record. Do not put credentials or service-account keys in the repository or browser.
+Initial PMC Super Admin bootstrap must be a controlled, documented operator action outside the untrusted client (for example, a carefully reviewed Firebase Console seed using a verified UID). The process must verify the UID from Firebase Authentication, record the organisation identifier and intended owner, and preserve an auditable change record. Do not put credentials or service-account keys in the repository or browser.
 
 Invitations, role changes, suspensions, revocations, owner transfer, and recovery require explicit lifecycle design. Until that design is implemented and tested, membership writes remain denied to application clients. Do not imply that email verification alone proves authority to join an organisation.
 
