@@ -20,6 +20,7 @@ import {publishSessionInvalidation, subscribeToSessionInvalidation} from '../lib
 import {enterDemoGuest} from '../lib/dataBoundary.ts';
 import {DemoGuestWorkspaceProvider} from './DemoGuestWorkspaceProvider.tsx';
 import {AccountSecurityPanel} from './AccountSecurityPanel.tsx';\nimport {OwnerControlCentre} from './OwnerControlCentre.tsx';
+import {TenantOperationsWorkspace} from './TenantOperationsWorkspace.tsx';
 import {LOCALE_OPTIONS, applyLocaleDocumentSettings, getLocale, setLocale, translate, type SupportedLocale} from '../i18n/locale.ts';
 import {getAccountPreferences} from '../utils/accountSettings.ts';
 import {startSessionInactivityMonitor} from '../lib/sessionInactivity.ts';
@@ -410,12 +411,14 @@ export const AuthGate: React.FC<AuthGateProps> = ({children}) => {
             </div>
             <DemoGuestWorkspaceProvider accessState={enterDemoGuest(1)}>{children}</DemoGuestWorkspaceProvider>
           </>
-        ) : ownerStatus === 'owner' || ownerStatus === 'checking' || ownerStatus === 'unavailable' ? null : (
+        ) : ownerStatus === 'owner' || ownerStatus === 'checking' || ownerStatus === 'unavailable' ? null : membership ? (
+          <TenantOperationsWorkspace user={user} membership={membership} onLeave={leaveAccount} />
+        ) : (
           <main className="min-h-[60vh] bg-slate-950 px-4 py-10 text-slate-100">
             <section className="mx-auto max-w-3xl rounded-xl border border-amber-700 bg-slate-900 p-6">
-              <h1 className="text-lg font-semibold">Account verified — workspace not yet released</h1>
-              <p className="mt-2 text-sm text-slate-300">Your account session is active, but SAFER tenant operational access has not been released. The operational workspace is intentionally unavailable in authenticated sessions.</p>
-              <p className="mt-3 text-xs text-amber-200">No personnel, incident, checklist or other operational browser data is loaded or written in this session. Membership verification alone does not grant access. Production Firestore rules remain deny-all.</p>
+              <h1 className="text-lg font-semibold">Account verified — workspace access pending</h1>
+              <p className="mt-2 text-sm text-slate-300">Your authenticated session is active. Enter your PMC organisation ID above and verify your exact active membership to open its tenant-scoped operations workspace.</p>
+              <p className="mt-3 text-xs text-amber-200">No operational data is loaded until membership is verified. Server APIs enforce permissions independently; production Firestore client rules remain deny-all.</p>
             </section>
           </main>
         )}
