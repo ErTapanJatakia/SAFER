@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import {
   createAccountSettingsExport,
   DEFAULT_ACCOUNT_SETTINGS,
@@ -41,7 +42,7 @@ describe('account settings normalization', () => {
 
 
   it('applies compact spacing to workspace views and operational dialogs without changing control sizing or text', () => {
-    const css = readFileSync(new URL('../index.css', import.meta.url), 'utf8');
+    const css = readFileSync(resolve(process.cwd(), 'src/index.css'), 'utf8');
     expect(css).toContain(':is(#main-content, [role="dialog"])');
     expect(css).toContain('[class~="p-6"] { padding: 1rem; }');
     expect(css).toContain('[class~="gap-4"] { gap: 0.75rem; }');
