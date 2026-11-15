@@ -1,6 +1,6 @@
 import { authorizePlatformOwner } from './platform-owner-auth.mjs';
 
-export function createOwnerStatusHandler({ verifyIdToken, readPlatformAdministrator }) {
+export function createOwnerStatusHandler({ verifyIdToken, readAuthUser, readPlatformAdministrator, readPlatformSettings }) {
   return async function ownerStatusHandler(request, response) {
     response.setHeader('Cache-Control', 'no-store, max-age=0');
     response.setHeader('Pragma', 'no-cache');
@@ -15,7 +15,9 @@ export function createOwnerStatusHandler({ verifyIdToken, readPlatformAdministra
     const result = await authorizePlatformOwner({
       authorizationHeader: request.headers?.authorization,
       verifyIdToken,
+      readAuthUser,
       readPlatformAdministrator,
+      readPlatformSettings,
     });
 
     if (!result.ok) {
