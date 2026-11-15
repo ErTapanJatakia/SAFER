@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 const ORG_ID = /^org_[a-f0-9]{32}$/;
 const UID = /^[A-Za-z0-9_-]{1,128}$/;
 const MEMBERSHIP_FIELDS = [
@@ -26,7 +28,7 @@ export async function activateProvisionedOrganisation({
     const org = orgSnap.data();
     if (org.orgId !== orgId || org.status !== 'provisioning'
       || org.lifecycleStage !== 'super_admin_invitation_accepted'
-      || org.ownerUid !== org.ownerUid || !UID.test(org.ownerUid ?? '')) {
+      || !UID.test(org.ownerUid ?? '')) {
       fail('organisation_not_ready');
     }
     const ownerUid = org.ownerUid;
@@ -57,6 +59,5 @@ export async function activateProvisionedOrganisation({
 }
 
 function cryptoRandomId() {
-  // UUID entropy is sufficient for a non-secret audit document locator.
-  return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return randomUUID();
 }
