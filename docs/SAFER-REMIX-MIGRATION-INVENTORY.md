@@ -379,7 +379,7 @@ A deeper review of Remix MyAccountSettingsView and its settings schema found sev
 | Regional date/time/timezone/number preferences | Canonical account preferences store these values but explicitly state they are not yet applied globally. | Already represented as stored preferences; global formatting integration remains a safe candidate for a future coherent implementation batch. |
 | Theme and accessibility controls | Dedicated canonical controls and settings stores already exist. | Already represented; keep separate to avoid duplicate sources of truth. |
 | Layout density and camouflage trim | Canonical theme system handles visual themes/trim; density is not established as a global account preference. | Candidate only if implemented consistently across operational screens and responsive breakpoints; otherwise defer. |
-| In-app operational/incident/audit alerts, expiry threshold, audio chimes, realtime/batch display | Canonical dashboard has visual status indicators and live announcements, but no equivalent user-configurable notification preference contract was found in the account settings model. Remix describes client-side in-app indicators and Web Audio, not verified push/email/SMS delivery. | Safe candidate for an in-app-only preference layer after verifying each toggle controls actual existing UI behavior. No push, email, SMS, background delivery, or false delivery claims. |
+| In-app operational/incident/audit alerts, expiry threshold, audio chimes, realtime/batch display | Canonical SAFER supports transient visual toasts and accessible live-region announcements, but has no durable event feed, audit-alert writer, dispatch pipeline or verified push/email/SMS service. | UX-03 implements only a browser-local preference for routine success toasts. Errors, conflict/security/session warnings and live-region announcements remain active. Legacy operational/audit/batch/audio controls remain deferred; no push/email/SMS/background-delivery claims. |
 | English/Hindi language preference | Remix exposes only en-IN and hi-IN settings; that does not establish complete translated application coverage. | Defer until canonical localization resources and full-screen translation coverage exist. Do not add a language selector that changes only a stored label. |
 | Inactivity timeout | Remix stores a selectable timeout value. Canonical session lifecycle already has its own security behavior. | Compare against canonical session lifecycle before any change; never introduce a second independent timer or weaken current invalidation. |
 | Default export redaction level (strict/standard/minimal) | Canonical personnel export already has field-level sensitive defaults and user-controlled selection, but account settings do not yet persist a preferred redaction profile. | Safe candidate: add a local-only default profile only if strict/standard/minimal are precisely mapped to existing field keys and export remains fail-safe. Never make “minimal” the default; retain sensitive redaction by default. |
@@ -390,7 +390,7 @@ A deeper review of Remix MyAccountSettingsView and its settings schema found sev
 ### Settings migration sequencing
 
 1. First candidate batch: local-only default export format and redaction profile, with runtime allowlists and explicit mapping to existing export field keys.
-2. Second candidate batch: in-app notification preferences only, but only after each preference is connected to a real status indicator/chime and its limits are stated.
+2. UX-03 implements only the verified routine-success-toast control. Additional alert classes remain deferred until trustworthy event sources, severity, persistence and delivery exist.
 3. Later: regional formatting integration and density only after all affected screens can consume one canonical preference source without breaking date consistency or accessibility.
 4. Deferred: language selector until actual translation coverage; analytics consent until a defined analytics data flow; account deletion and statutory request submission until trusted backend and legal process exist.
 
@@ -414,10 +414,11 @@ This is a local preference only. It does not automatically export data, change s
 
 The Remix notification tab was reviewed at implementation level. It stores checkbox/radio preferences and provides a user-triggered audio test, but the inspected code does not establish a complete event-driven notification pipeline for every advertised event. In particular, membership/audit event alerts, dispatch/muster transitions, and a batched digest are not demonstrated by the settings UI itself. Its delivery claims must not be treated as proof of those features.
 
-Canonical SAFER currently exposes live status indicators, navigation badges, toast announcements, and accessibility announcements, but has no equivalent notification preference/event contract. Therefore:
+Canonical SAFER exposes transient status toasts and accessibility announcements, but no durable notification feed or event-dispatch service. UX-03 now adds a narrowly scoped preference for routine success toasts only. Therefore:
 - Do not port the Remix tab or its claims as-is.
 - Do not add toggles that appear to control alerts when no corresponding event source or behavior exists.
-- Any future notification work must first define real event sources, severity, deduplication, persistence, user-visible delivery, accessibility behavior, and which critical security/session warnings cannot be suppressed.
+- Routine success toasts may be hidden by the user's browser-local preference; the associated live-region announcement remains active. Error/status/security/session and cross-tab conflict warnings are never suppressed by this preference.
+- Operational, incident, audit, audio, digest/batching, push, email, SMS and background alerts remain deferred until real event sources, severity, deduplication, persistence, user-visible delivery and accessibility behavior are implemented.
 - Browser Web Audio may be considered only as an optional, user-initiated/in-app enhancement; it must respect browser gesture/autoplay restrictions and never be represented as guaranteed delivery.
 - External email, SMS, push, background delivery, and membership/audit events remain out of scope unless their trusted infrastructure and cost boundary are separately approved.
 
@@ -511,7 +512,7 @@ The canonical application already provides separate theme and accessibility cont
 
 - Safe local profile, export format, redaction profile and regional display preferences are implemented.
 - Existing theme/accessibility controls remain authoritative.
-- Notification settings remain deferred until real event sources, severity, deduplication, persistence, delivery and accessibility behavior are specified.
+- Broad notification settings remain deferred. UX-03 supports only the existing transient routine-success toast channel; no durable notification feed, audit alerts, digest, audio, push, email, SMS or background delivery is claimed.
 - Density, language, analytics consent and inactivity timeout remain deferred under the criteria above; they are not represented as implemented features.
 - Tests for the account settings/profile reader and all other implementation-batch changes remain pending consolidated validation. No test or CI run is implied by this audit entry.
 
@@ -558,7 +559,7 @@ This section supersedes earlier provisional wording where later canonical implem
 | Multi-organisation RBAC | Canonical four-role tenant model and Firestore Rules foundation already exist; lifecycle policy and UI/domain mirrors implemented on branch | No Remix six-role model. Membership invites, role changes, suspension/revocation writes, owner transfer and provisioning remain unavailable without trusted execution and emulator-backed gates. |
 | Audit log | Strict dormant event envelope and supplied-link continuity checker implemented/hardened on branch | No trusted writer, canonical hash recomputation, signatures/key custody, atomic ordering, append-only storage, audit UI, or client read/write. Firestore Rules deny audit access. |
 | Trusted provisioning | SAFER-specific Spark-era manual owner-operated provisioning ADR documented | In-app provisioning and privileged automation deferred; no paid backend or Firebase plan change. |
-| In-app notification preferences / alert controls | Not migrated; canonical status indicators/toasts/accessibility announcements exist, but Remix settings do not prove a complete event/delivery pipeline | Defer until real event sources, severity, deduplication, persistence, user-visible and accessible delivery are implemented. No push/email/SMS/background-delivery claims. |
+| In-app notification preferences / alert controls | UX-03 implements a browser-local toggle for routine success toasts only; accessibility announcements and warnings remain active | Legacy operational/audit/audio/digest/push/email/SMS/background alert controls remain deferred until genuine event and delivery infrastructure exists. |
 | Layout density (comfortable/compact) | Not migrated | Defer until a consistent app-wide density contract is available and accessibility/reflow/target-size regressions are covered. |
 | English/Hindi language preference | Not migrated | Defer until end-to-end translated resources cover screens, validation, dialogs, announcements and exports. |
 | Analytics consent | Not migrated | Defer until exact analytics events, provider boundary, exclusions, retention, consent enforcement and withdrawal are defined. Keep product analytics separate from operational security records. |
@@ -633,7 +634,7 @@ Structural comparison was performed against the inventory baseline Remix commit 
 | `AuthGatewayView.tsx`, `firebaseAuth.ts`, `authValidation.ts` | `AuthGate.tsx`, canonical Firebase setup, `AccountSecurityPanel.tsx` | Canonical verified-email admission, password policy, re-authentication and session invalidation retained. Do not copy the old auth gateway or Firebase configuration. |
 | `MyAccountSettingsView.tsx`, `accountSettingsHelpers.ts`, `types/settings.ts` | `AccountSettingsModal.tsx`, `accountSettings.ts`, `accountFormatting.ts`, dedicated theme/accessibility controls | Profile, local preferences, export/redaction defaults and regional preferences are represented. Global regional formatting has been integrated into reviewed user-visible surfaces. |
 | Legacy appearance/accessibility settings | Existing 20-theme system and dedicated accessibility controls | Retain canonical controls and storage; do not create a second settings store. Legacy density/camouflage-only settings are not separately ported where no canonical behavior exists. |
-| Legacy notification preferences | **Deferred** | Source toggles claim operational/audit alerts, batching and delivery behavior without a corresponding trustworthy event/notification service. Audit alerts are especially unsupported because there is no in-app audit writer/feed. Do not expose non-functional controls or imply delivery. |
+| Legacy notification preferences | **Partially implemented in UX-03; broad legacy controls deferred** | Canonical Account Preferences exposes only “Show routine success confirmations”, controlling transient visual success toasts. Error/status/security/session and cross-tab warnings remain visible; live-region announcements are always retained. No audit feed, operational alert service, batching, audio, push, email, SMS or background delivery is claimed. |
 | Legacy inactivity-timeout preference | **Implemented in UX-06** | Canonical browser-side inactivity guard defaults to 10 minutes and provides a per-session account preference from 5 to 60 minutes (whole-minute values), a two-minute warning, activity reset, same-origin tab activity coordination, and AuthGate sign-out on expiry. Authenticated UID namespaces and Demo Guest have separate browser-local preferences; the UID itself is not written to the preference key. It does not claim server-side refresh-token revocation; production-grade revocation requires a separately authorised trusted backend. |
 | Legacy analytics-consent preference | **Deferred** | No old settings boolean is treated as proof of valid telemetry consent. Review actual analytics collection, notice, opt-in/opt-out semantics and platform controls independently before adding a preference. |
 | `OrganisationModal.tsx`, `types/multiorg.ts` | `OrganisationWorkspacePanel.tsx`, `OrganisationProfilePanel.tsx`, `types/organisation.ts`, candidate Firestore Rules | Canonical four-role model and read-only verified context retained. Remix six-role vocabulary, sample organisations, client administration, and simulated audit claims rejected. |
@@ -658,6 +659,22 @@ This reconciliation does not authorise production configuration changes, remote 
 
 The security review identified that tenant-scoped read rules for personnel/incidents and evidence previously checked tenant binding without validating the stored document's complete field envelope. The candidate Rules now validate exact keys and core schema on personnel/incident reads and enforce an explicit metadata-only evidence allowlist. A new emulator regression seeds malformed records with extra sensitive-looking fields and expects read denial. This follow-up remains pending latest-head CI.
 
+
+### UX-05 — Display density implementation — 2026-11-15
+
+- Added Comfortable (default) and Compact display-density preferences in My Account → Preferences.
+- Compact mode reduces selected layout spacing only; it does not reduce font sizes, control dimensions or touch targets, and remains independent of theme and accessibility settings.
+- The preference uses the existing browser-local account-settings store and is applied to the workspace root for consistent scoped layout styling.
+- Normalization accepts only the supported values and safely falls back to Comfortable for malformed or unknown values.
+- **Validation status:** the full mandatory workflow passed on commit `1183726f4e1873f8dc4c9e7d47c30b7826fe8460`, including account preference tests, browser conflict recovery, type-check and production build. The later UX-03 changes require a fresh final-head run.
+
+### UX-03 — In-app notification preference implementation — 2026-11-15
+
+- Added a browser-local Account Preferences toggle for routine success confirmations, enabled by default.
+- The toggle controls only transient visual success toasts already emitted by the application (for example, successful saves, exports and applied settings).
+- Error/status messages, cross-tab conflict warnings, security/session warnings and screen-reader live-region announcements remain active regardless of this preference.
+- No new notification event bus or persistence layer was invented. No audit feed, operational/incident alert service, digest/batching, audio, push, email, SMS or background delivery is represented as available.
+- **Validation status:** implementation and regression tests are committed on the feature branch; mandatory CI on the final head is required before marking UX-03 validated.
 
 ### UX-06 — Inactivity timeout implementation — 2026-11-15
 
