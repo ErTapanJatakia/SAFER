@@ -20,7 +20,7 @@ Canonical membership fields:
 - `uid`: Firebase Auth UID; immutable.
 - `orgId`: exact tenant ID; immutable.
 - `role`: one of `tenant_super_admin`, `tenant_admin`, `tenant_manager`, `tenant_employee`, `tenant_auditor`.
-- `status`: `active`, `suspended`, or `revoked`.
+- `status`: `pending_activation`, `active`, `suspended`, or `revoked`. The client resolver and membership-read Rules accept only `active`.
 - `createdAt`, `createdByUid`, `updatedAt`, `updatedByUid`.
 - `schemaVersion`: integer version for explicit migration and parser compatibility.
 
@@ -34,9 +34,9 @@ The route must:
 
 1. Accept only POST and require a Firebase ID token in the Authorization Bearer header.
 2. Verify the token with revocation checking and require a non-disabled, email-verified Firebase Auth user.
-3. Resolve the invitation from a server-controlled invitation identifier; never trust a client-supplied orgId or role as authority.
+3. Treat the supplied `orgId` only as a document-path locator and the `invitationId` as an opaque identifier; load the fixed invitation path server-side and verify both stored values. Never trust either field or a client-supplied role as authority.
 4. Verify invitation status is pending, invited UID equals verified UID, normalized invited email equals the verified Auth email, role is exactly `tenant_super_admin`, and the organisation is still in the expected provisioning lifecycle.
-5. In one Firestore transaction, re-read and validate the organisation, invitation, and any existing membership; create the canonical membership, mark the invitation accepted, update the organisation lifecycle stage, and append an immutable platform audit event.
+5. In one Firestore transaction, re-read and validate the organisation, invitation, and any existing membership; create the canonical membership with `status: pending_activation`, mark the invitation accepted, update the organisation lifecycle stage, and append an immutable platform audit event.
 6. Treat a retry by the same UID for an already accepted invitation as an idempotent success only when the existing membership exactly matches the accepted invitation. Reject conflicting, expired, revoked, mismatched, or duplicate invitations.
 7. Never allow a caller to choose the resulting role or tenant.
 
@@ -47,7 +47,7 @@ Invitation IDs are now generated server-side from 32 random bytes (256 bits), st
 Acceptance and activation are separate states:
 
 - Before acceptance: organisation `provisioning`, lifecycle `super_admin_invitation_pending`.
-- After acceptance: organisation remains `provisioning`, lifecycle `super_admin_invitation_accepted`; membership exists but is not yet usable for operational tenant access.
+- After acceptance: organisation remains `provisioning`, lifecycle `super_admin_invitation_accepted`; membership exists with `pending_activation` and cannot pass the active-only client resolver or Firestore Rules.
 - Activation is permitted only after the client membership parser, Firestore membership-read rule, tenant role permission functions, and server RBAC engine use the same five-role vocabulary and schema version.
 - Activation and its platform audit event must be committed atomically.
 - An organisation with no matching active `tenant_super_admin` membership must never be activated.
@@ -57,7 +57,7 @@ Do not use the existing ORG-02 generic lifecycle endpoint to activate a provisio
 
 ## 5. Compatibility work completed and remaining before activation
 
-The candidate branch now updates `src/lib/tenantMembership.ts`, its tests, and the Firestore self-membership read rule to accept only the canonical five tenant roles and exact version-1 membership schema. Legacy values are rejected. Client membership writes remain denied. Existing Firestore direct operational grants are limited to `tenant_super_admin` and `tenant_admin`; this is a conservative interim boundary, not full role parity.
+The candidate branch now updates `src/lib/tenantMembership.ts`, its tests, the Firestore self-membership read rule, and the Firestore Rules test fixtures to accept only the canonical five tenant roles and exact version-1 membership schema. Legacy values are rejected. Client membership writes remain denied. Existing direct operational grants are limited to `tenant_super_admin` and `tenant_admin`; this is a conservative interim boundary, not full role parity. A server-side invitation acceptance endpoint and service now create pending-activation memberships atomically, with replay protection and audit logging.
 
 Remaining work before organisation activation and general tenant access:
 
@@ -65,6 +65,7 @@ Remaining work before organisation activation and general tenant access:
 - Implement Employee own-record and assigned-checklist access with both server-side and Rules enforcement.
 - Implement Auditor read-only access and explicit export denial.
 - Wire the RBAC engine into every tenant API and data access path; never trust browser-supplied membership.
+- Implement the separate audited organisation activation workflow only after the full role-to-operation matrix is enforced and tested.
 - Keep Platform Owner access separate and purpose-bound for cross-tenant operational data.
 - Review existing legacy membership fixtures and any real records before migration. Never automatically promote an unverified legacy role.
 - Preserve deny-by-default behaviour for every unmodelled collection and field.
@@ -95,7 +96,7 @@ Migration must be a reviewed, auditable server-side operation. No client self-mi
 - Invitation acceptance binds the exact verified Firebase UID and email.
 - Duplicate/replayed acceptance cannot create duplicate or conflicting membership.
 - Cross-tenant invitation substitution is rejected.
-- Invitation, membership, organisation lifecycle, and audit event cannot partially commit.
+- Invitation, pending-activation membership, organisation lifecycle, and audit event cannot partially commit.
 - Organisation activation is impossible before role-schema compatibility is complete.
 - All five roles have regression coverage for both allowed and denied operations.
 - Existing legacy roles are rejected by the new runtime until individually migrated.
