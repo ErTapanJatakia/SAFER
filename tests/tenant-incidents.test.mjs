@@ -86,3 +86,26 @@ test('incident updates reject accessor properties without invoking getters',asyn
  await assert.rejects(()=>updateTenantIncident({orgId,actorUid:'u1',incidentId:`inc_${'b'.repeat(32)}`,patch,database:db,serverTimestamp:stamp}),/invalid_incident_data/);
  assert.equal(evaluated,false);
 });
+
+test('incident list skips malformed and oversized stored records safely',async()=>{
+ const db=fakeDb();
+ const valid={
+  incidentId:`inc_${'b'.repeat(32)}`,orgId,referenceNumber:'IR-0123456789',
+  incidentType:'Equipment Malfunction',dateReported:new Date('2026-01-01T00:00:00Z'),
+  title:'Door sensor fault',status:'Under Investigation / Human Review',priority:'Routine',
+  summary:'Sensor reported intermittent failure.',reportedByUid:'u1',
+  createdAt:new Date('2026-01-01T00:00:00Z'),createdByUid:'u1',
+  updatedAt:new Date('2026-01-01T00:00:00Z'),updatedByUid:'u1',
+ };
+ const corrupt={...valid,title:'x'.repeat(5000)};
+ const malformedTimestamp={...valid,dateReported:{toDate(){throw new Error('bad timestamp');}}};
+ db.collection=()=>({orderBy(){return this;},where(){return this;},limit(n){this.limitValue=n;return this;},async get(){return {docs:[
+  {id:valid.incidentId,data:()=>valid},
+  {id:'inc_'+ 'c'.repeat(32),data:()=>corrupt},
+  {id:'inc_'+ 'd'.repeat(32),data:()=>malformedTimestamp},
+ ]};}});
+ const result=await listTenantIncidents({orgId,actorUid:'u1',role:'tenant_employee',database:db,limit:100});
+ assert.equal(result.incidents.length,1);
+ assert.equal(result.incidents[0].title,'Door sensor fault');
+ assert.equal(result.hasMore,false);
+});
