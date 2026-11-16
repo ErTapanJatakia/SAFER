@@ -42,3 +42,11 @@ test('request guard rejects oversized parsed JSON and accepts bounded payloads',
   assert.equal(isRequestBodyTooLarge({ headers: {}, body: { value: 'safe' } }), false);
   assert.equal(isRequestBodyTooLarge({ headers: { 'content-length': 'not-a-number' }, body: {} }), true);
 });
+
+test('request guard rejects malformed JSON body access without leaking an exception', () => {
+  const request = {
+    headers: {},
+    get body() { throw new SyntaxError('malformed JSON'); },
+  };
+  assert.equal(isRequestBodyTooLarge(request), true);
+});
