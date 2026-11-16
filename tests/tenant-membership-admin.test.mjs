@@ -55,11 +55,17 @@ test('Super Admin can invite a verified existing user into a lower PMC role', as
 
 test('Admin cannot invite an Admin or Super Admin and unverified invitees are rejected', async () => {
   const admin = fixture({ actorRole: 'tenant_admin' });
+  let identityLookups = 0;
+  admin.authAdmin.getUserByEmail = async () => {
+    identityLookups += 1;
+    return { uid: admin.targetUid, email: 'new.member@example.com', emailVerified: true, disabled: false };
+  };
   await assert.rejects(inviteTenantMember({
     orgId: admin.orgId, actorUid: admin.actorUid, email: 'new.member@example.com',
     role: 'tenant_admin', database: admin.database, authAdmin: admin.authAdmin,
     serverTimestamp: () => new Date(),
   }), (error) => error instanceof TenantMembershipError && error.code === 'role_delegation_denied');
+  assert.equal(identityLookups, 0, 'unauthorised invite requests must not query Firebase Auth by email');
 
   const unverified = fixture();
   unverified.authAdmin.getUserByEmail = async (email) => ({
