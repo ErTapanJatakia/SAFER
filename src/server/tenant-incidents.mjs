@@ -17,6 +17,23 @@ function validateText(value, max, required = false) {
   if (typeof value !== 'string' || value.length > max || (required && !value.trim())) fail('invalid_incident_data');
   return value.trim();
 }
+function parseIncidentDate(value) {
+  if (value === undefined || value === null || value === '') return new Date();
+  if (typeof value !== 'string'
+    || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/.test(value)) {
+    fail('invalid_incident_data');
+  }
+  const datePart = value.slice(0, 10);
+  const calendarDate = new Date(`${datePart}T00:00:00.000Z`);
+  const parsed = new Date(value);
+  if (!Number.isFinite(calendarDate.getTime())
+    || !Number.isFinite(parsed.getTime())
+    || calendarDate.toISOString().slice(0, 10) !== datePart
+    || parsed.getTime() > Date.now() + 5 * 60 * 1000) {
+    fail('invalid_incident_data');
+  }
+  return parsed;
+}
 function validMembership(data, uid, orgId) {
   const keys = ['uid','orgId','role','status','createdAt','createdByUid','updatedAt','updatedByUid','schemaVersion'].sort();
   const actual = data && typeof data === 'object' ? Object.keys(data).sort() : [];
@@ -69,8 +86,7 @@ export async function createTenantIncident({ orgId, actorUid, input, database, s
   const ref = database.doc(`organisations/${orgId}/incidents/${incidentId}`);
   const audit = database.doc(`organisations/${orgId}/auditEvents/${randomBytes(16).toString('hex')}`);
   const timestamp = serverTimestamp();
-  const dateReported = input?.dateReported ? new Date(input.dateReported) : new Date();
-  if (Number.isNaN(dateReported.getTime())) fail('invalid_incident_data');
+  const dateReported = parseIncidentDate(input?.dateReported);
   const record = {
     incidentId, orgId, referenceNumber,
     incidentType: TYPES.includes(input?.incidentType) ? input.incidentType : fail('invalid_incident_data'),

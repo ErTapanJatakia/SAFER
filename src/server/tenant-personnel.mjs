@@ -11,6 +11,10 @@ const READINESS = [
   'DOCS_CURRENT_AWAITING_REVIEW', 'REQUIRES_HUMAN_REVIEW',
   'FLAGGED_EXPIRED_CERTS', 'UNVERIFIED_CREDENTIALS', 'PENDING_INTAKE_DOCS',
 ];
+const INPUT_FIELDS = new Set([
+  'orgId', 'employeeRef', 'displayLabel', 'operationalRoles',
+  'specialisations', 'assignmentSector', 'readinessStatus', 'requiresHumanReview',
+]);
 const FIELDS = [
   'recordId','orgId','employeeRef','displayLabel','operationalRoles','specialisations',
   'assignmentSector','readinessStatus','requiresHumanReview','createdAt','createdByUid',
@@ -87,6 +91,14 @@ export async function listTenantPersonnel({orgId,database,limit=100}) {
 export async function createTenantPersonnel({orgId,actorUid,input,database,serverTimestamp}) {
   assertOrg(orgId);
   if(!UID.test(actorUid??'')||!database?.runTransaction||typeof serverTimestamp!=='function') fail('invalid_request');
+  const descriptors = input && typeof input === 'object' ? Object.getOwnPropertyDescriptors(input) : null;
+  if (!descriptors || Array.isArray(input)
+    || (Object.getPrototypeOf(input) !== Object.prototype && Object.getPrototypeOf(input) !== null)
+    || Object.getOwnPropertySymbols(input).length > 0
+    || Object.keys(descriptors).some((key) => !INPUT_FIELDS.has(key) || !Object.hasOwn(descriptors[key], 'value'))
+    || (input.orgId !== undefined && input.orgId !== orgId)) {
+    fail('invalid_personnel_data');
+  }
   const recordId=`per_${randomBytes(16).toString('hex')}`;
   const ref=database.doc(`organisations/${orgId}/personnel/${recordId}`);
   const audit=database.doc(`organisations/${orgId}/auditEvents/${randomBytes(16).toString('hex')}`);
