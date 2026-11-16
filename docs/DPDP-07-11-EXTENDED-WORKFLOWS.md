@@ -15,7 +15,8 @@
 ## Security and data handling
 
 - All records are explicitly marked as synthetic demonstration workspace data.
-- Storage validates exact top-level schema, bounded collections, IDs, field lengths and ISO timestamps; malformed or oversized data fails closed.
+- Storage validates exact top-level and record-level key sets, rejects accessor/exotic runtime objects, bounds collections and field lengths, validates ISO timestamps, and rejects unexpected fields that could smuggle non-demo data; malformed or oversized data fails closed.
+- Request status history and consent preference history are checked for valid transitions and strictly increasing event timestamps. Retention evaluation rejects a clock rollback rather than rewriting its evaluation timestamp backwards.
 - Writes perform stale-snapshot checks and read-back verification.
 - No remote database, tenant records, production identity data or paid service is used.
 - Role values are workflow labels, not authenticated authorization.
