@@ -55,3 +55,8 @@ test('Tenant membership administration exposes reactivation only for suspended r
  assert.match(workspace,/row\.status==='suspended'/);
  assert.match(workspace,/row\.status==='active'&&<select aria-label="Change member role"/);
 });
+
+
+test('Activity feed tab is limited to roles with audit-read permission',()=>{
+ assert.match(workspace,/\{id:'notifications',label:'Activity',roles:\['tenant_super_admin','tenant_admin','tenant_auditor'\]\}/);
+});
