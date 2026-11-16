@@ -50,3 +50,12 @@ test('Owner registry offers loaded-record search, status filters and bounded sta
   assert.match(ownerUi, /maximum 100/);
   assert.match(ownerUi, /not a platform-wide operational analytics feed/);
 });
+
+
+test('Owner onboarding exposes the one-time Super Admin invitation receipt for manual secure delivery', () => {
+  assert.match(ownerUi, /superAdminInvitationReceipt/);
+  assert.match(ownerUi, /Copy invitation ID/);
+  assert.match(ownerUi, /intended verified Super Admin/);
+  assert.match(ownerUi, /does not activate the PMC by itself/);
+  assert.match(ownerUi, /no email is sent automatically/);
+});
