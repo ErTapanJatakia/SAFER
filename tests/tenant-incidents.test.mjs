@@ -67,3 +67,22 @@ test('incident timestamps require valid timezone-qualified RFC3339 values',async
   }),/invalid_incident_data/);
  }
 });
+
+test('incident creation rejects unknown fields and accessor properties without invoking getters',async()=>{
+ const db=fakeDb();
+ const base={incidentType:'Equipment Malfunction',title:'Door sensor fault',summary:'Sensor reported intermittent failure.'};
+ await assert.rejects(()=>createTenantIncident({orgId,actorUid:'u1',input:{...base,healthData:'not permitted'},database:db,serverTimestamp:stamp}),/invalid_incident_data/);
+ let evaluated=false;
+ const input={...base};
+ Object.defineProperty(input,'title',{enumerable:true,get(){evaluated=true;return 'unexpected';}});
+ await assert.rejects(()=>createTenantIncident({orgId,actorUid:'u1',input,database:db,serverTimestamp:stamp}),/invalid_incident_data/);
+ assert.equal(evaluated,false);
+});
+test('incident updates reject accessor properties without invoking getters',async()=>{
+ const db=fakeDb({role:'tenant_admin'});
+ const patch={};
+ let evaluated=false;
+ Object.defineProperty(patch,'status',{enumerable:true,get(){evaluated=true;return 'Documented & Filed';}});
+ await assert.rejects(()=>updateTenantIncident({orgId,actorUid:'u1',incidentId:`inc_${'b'.repeat(32)}`,patch,database:db,serverTimestamp:stamp}),/invalid_incident_data/);
+ assert.equal(evaluated,false);
+});
