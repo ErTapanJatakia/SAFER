@@ -166,7 +166,7 @@ export function authorizeTenantAction({
   if (action === 'members:invite' && !canAssignTenantRole(membership.role, targetRole)) {
     return denied('role_delegation_denied');
   }
-  if (action === 'members:suspend' || action === 'members:role:assign') {
+  if (action === 'members:suspend' || action === 'members:reactivate' || action === 'members:role:assign') {
     if (!UID_PATTERN.test(targetUid ?? '') || targetUid === actorUid
       || !canManageTenantRole(membership.role, targetCurrentRole)) {
       return denied('target_membership_not_manageable');
