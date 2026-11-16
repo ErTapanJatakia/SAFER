@@ -28,6 +28,7 @@ test('Cloudflare Pages applies browser security headers to every static route', 
   assert.equal(headers.get('x-content-type-options'), 'nosniff');
   assert.equal(headers.get('x-frame-options'), 'DENY');
   assert.equal(headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
+  assert.equal(headers.get('strict-transport-security'), 'max-age=31536000');
   assert.equal(headers.get('cross-origin-resource-policy'), 'same-origin');
   assert.equal(headers.get('permissions-policy'), 'camera=(), microphone=(), geolocation=()');
 });
