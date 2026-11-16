@@ -28,9 +28,13 @@ test('Manager can read directory but cannot create records',async()=>{
  assert.deepEqual(listed.records,[]);
  await assert.rejects(()=>createTenantPersonnel({orgId,actorUid:'u1',input:validInput,database,serverTimestamp:stamp}),/role_permission_denied/);
 });
-test('Unsupported personal data fields are rejected',async()=>{
+test('Unsupported personal data and cross-tenant fields are rejected',async()=>{
  const database=db();
  await assert.rejects(()=>createTenantPersonnel({orgId,actorUid:'u1',input:{...validInput,healthParticulars:'sensitive'},database,serverTimestamp:stamp}),/invalid_personnel_data/);
+ await assert.rejects(()=>createTenantPersonnel({orgId,actorUid:'u1',input:{...validInput,orgId:'org_'+'b'.repeat(32)},database,serverTimestamp:stamp}),/invalid_personnel_data/);
+ const accessorInput={...validInput};
+ Object.defineProperty(accessorInput,'displayLabel',{enumerable:true,get(){throw new Error('getter must not execute');}});
+ await assert.rejects(()=>createTenantPersonnel({orgId,actorUid:'u1',input:accessorInput,database,serverTimestamp:stamp}),/invalid_personnel_data/);
 });
 test('Invalid readiness status is rejected',async()=>{
  const database=db();

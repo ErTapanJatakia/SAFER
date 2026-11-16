@@ -17,6 +17,11 @@ const FIELDS = [
   'updatedAt','updatedByUid',
 ].sort();
 
+const INPUT_FIELDS = new Set([
+  'orgId', 'employeeUid', 'employeeRef', 'displayLabel', 'operationalRoles',
+  'specialisations', 'assignmentSector', 'readinessStatus', 'requiresHumanReview',
+]);
+
 export class TenantPersonnelError extends Error {
   constructor(code) { super(code); this.name='TenantPersonnelError'; this.code=code; }
 }
@@ -101,6 +106,14 @@ export async function listTenantPersonnel({orgId,database,actorUid,role,limit=10
 export async function createTenantPersonnel({orgId,actorUid,input,database,serverTimestamp}) {
   assertOrg(orgId);
   if(!UID.test(actorUid??'')||!database?.runTransaction||typeof serverTimestamp!=='function') fail('invalid_request');
+  const inputDescriptors = input && typeof input === 'object' ? Object.getOwnPropertyDescriptors(input) : null;
+  if (!inputDescriptors || Array.isArray(input)
+    || (Object.getPrototypeOf(input) !== Object.prototype && Object.getPrototypeOf(input) !== null)
+    || Object.getOwnPropertySymbols(input).length > 0
+    || Object.keys(inputDescriptors).some((key) => !INPUT_FIELDS.has(key) || !Object.hasOwn(inputDescriptors[key], 'value'))
+    || (input.orgId !== undefined && input.orgId !== orgId)) {
+    fail('invalid_personnel_data');
+  }
   const recordId=`per_${randomBytes(16).toString('hex')}`;
   const ref=database.doc(`organisations/${orgId}/personnel/${recordId}`);
   const audit=database.doc(`organisations/${orgId}/auditEvents/${randomBytes(16).toString('hex')}`);

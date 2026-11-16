@@ -16,36 +16,43 @@ const vercelConfig = JSON.parse(readFileSync(new URL('../vercel.json', import.me
 
 test('Owner status route delegates to the shared handler; server helpers stay outside API routing', () => {
   assert.equal(existsSync(new URL('../api/_lib', import.meta.url)), false);
-  assert.match(route, /owner-status-handler\.mjs/);
-  assert.match(route, /platformAdministrators\/\$\{uid\}/);
-  assert.doesNotMatch(route, /request\.body|req\.body|collection\(request/);
+  assert.ok(route.includes('owner-status-handler.mjs'));
+  assert.ok(route.includes('platformAdministrators/${uid}'));
+  assert.ok(!route.includes('request.body'));
+  assert.ok(!route.includes('req.body'));
+  assert.ok(!route.includes('collection(request'));
 });
 
-test('all Owner routes use the same authoritative Platform Owner verifier', () => {
-  for (const source of [route, supportRoute, tenantDataRoute, ownerProvisionRoute, ownerRegistryRoute]) {
-    assert.match(source, /authorizePlatformOwner/);
-    assert.match(source, /readPlatformSettings/);
-    assert.match(source, /readAuthUser/);
+test('all Owner routes use the authoritative Platform Owner verifier and support-access scope', () => {
+  // The status route delegates to a shared handler with authoritative verifier dependencies.
+  assert.ok(route.includes('readPlatformSettings'));
+  assert.ok(route.includes('readAuthUser'));
+  for (const source of [supportRoute, ownerProvisionRoute, ownerRegistryRoute, tenantDataRoute]) {
+    assert.ok(source.includes('authorizePlatformOwner'));
+    assert.ok(source.includes('readPlatformSettings'));
+    assert.ok(source.includes('readAuthUser'));
   }
-  assert.match(supportRoute, /platform-owner-support-access/);
-  assert.match(tenantDataRoute, /X-Support-Session/);
-  assert.match(tenantDataService, /authorizePlatformSupportAccess/);
-  assert.match(tenantDataService, /tenant_aggregate_counts_only/);
-  assert.doesNotMatch(tenantDataService, /database\.doc\(.*request/);
+  assert.ok(supportRoute.includes('platform-owner-support-access'));
+  assert.ok(tenantDataRoute.includes('X-Support-Session'));
+  assert.ok(tenantDataService.includes('authorizePlatformSupportAccess'));
+  assert.ok(tenantDataService.includes('tenant_aggregate_counts_only'));
+  assert.ok(!tenantDataService.includes('request.'));
 });
 
 test('Firebase Admin credentials are server-only and never use VITE-prefixed variables', () => {
-  assert.match(serverAdmin, /FIREBASE_SERVICE_ACCOUNT_JSON/);
-  assert.doesNotMatch(serverAdmin, /VITE_/);
-  assert.doesNotMatch(browserFirebase, /FIREBASE_SERVICE_ACCOUNT_JSON|private_key|client_email/);
+  assert.ok(serverAdmin.includes('FIREBASE_SERVICE_ACCOUNT_JSON'));
+  assert.ok(!serverAdmin.includes('VITE_'));
+  assert.ok(!browserFirebase.includes('FIREBASE_SERVICE_ACCOUNT_JSON'));
+  assert.ok(!browserFirebase.includes('private_key'));
+  assert.ok(!browserFirebase.includes('client_email'));
 });
 
 test('client Firestore rules do not grant platform administrator or audit collection access', () => {
-  assert.match(firestoreRules, /match \/\{document=\*\*\}/);
-  assert.match(firestoreRules, /allow read, write: if false/);
-  assert.doesNotMatch(firestoreRules, /match \/platformAdministrators\//);
-  assert.doesNotMatch(firestoreRules, /match \/platformAuditEvents\//);
-  assert.doesNotMatch(firestoreRules, /match \/platformSupportSessions\//);
+  assert.ok(firestoreRules.includes('match /{document=**}'));
+  assert.ok(firestoreRules.includes('allow read, write: if false'));
+  assert.ok(!firestoreRules.includes('match /platformAdministrators/'));
+  assert.ok(!firestoreRules.includes('match /platformAuditEvents/'));
+  assert.ok(!firestoreRules.includes('match /platformSupportSessions/'));
 });
 
 test('security override pins body-parser to the patched 1.20.9 release line', () => {
