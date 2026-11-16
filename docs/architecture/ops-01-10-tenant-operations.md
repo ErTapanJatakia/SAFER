@@ -16,7 +16,7 @@
 | OPS-05 | Reporting | Aggregate dashboard plus audited CSV, XLSX and PDF exports | Exports contain aggregate counts only, not individual records or incident narratives |
 | OPS-06 | Audit viewer | Read-only event viewer with client-side action/actor filtering | API is capped at 100 events; cursor pagination and date-range filters remain future work |
 | OPS-07 | Member management | Member directory, verified-account invitation creation, role changes, suspension and audited reactivation of suspended lower-role memberships | Invitation creation does not send email; invitation IDs are handed to the authorised inviter for manual secure delivery; role delegation and reactivation remain enforced server-side |
-| OPS-08 | Notifications | In-app activity feed derived from tenant audit events | No email, SMS, push, scheduled delivery, or read receipts; no external provider added |
+| OPS-08 | Notifications | In-app activity feed derived from tenant audit events; visible only to Super Admin, Admin and Auditor roles that hold `audit:read` | No email, SMS, push, scheduled delivery, or read receipts; no external provider added |
 | OPS-09 | PMC configuration | Super Admin-only allowlisted timezone, date format, default incident priority, checklist review target and in-app activity preference | No billing, identity-provider, or security-policy settings exposed |
 | OPS-10 | Cross-module integration | Evidence links to same-PMC incidents; checklists assign to active Employee UIDs; aggregate reporting counts all operational modules; audit trail captures mutations | No external command systems, external storage, or third-party integrations |
 
