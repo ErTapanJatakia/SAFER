@@ -64,7 +64,7 @@ test('audit reader applies inclusive date filters and returns a stable next curs
   assert.equal(first.hasMore,true);
   assert.equal(first.nextCursor,'2'.repeat(32));
   const second=await listTenantAuditEvents({orgId,database:db(rows),limit:2,startDate:'2026-01-01',endDate:'2026-01-03',cursor:first.nextCursor});
-  assert.deepEqual(second.events.map(event=>event.eventId),[]);
+  assert.deepEqual(second.events.map(event=>event.eventId),['3'.repeat(32)]);
   assert.equal(second.hasMore,false);
 });
 
