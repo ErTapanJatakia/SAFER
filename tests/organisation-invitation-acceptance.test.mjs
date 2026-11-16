@@ -132,7 +132,7 @@ test('rejects an invitation addressed to another UID or email', async () => {
   const state = fixture();
   await assert.rejects(
     accept(state, { actorUid: 'different-user' }),
-    (error) => error instanceof InvitationAcceptanceError && error.code === 'invitation_identity_mismatch',
+    (error) => error instanceof InvitationAcceptanceError && error.code === 'invitation_conflict',
   );
   await assert.rejects(
     accept(state, { actorEmail: 'attacker@example.test' }),
