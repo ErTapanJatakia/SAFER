@@ -43,7 +43,8 @@ export async function createOrganisationWithSuperAdminInvitation({
   const invitedUser = await authAdmin.getUserByEmail(email);
   if (!invitedUser || invitedUser.disabled === true || invitedUser.emailVerified !== true
     || typeof invitedUser.uid !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(invitedUser.uid)
-    || normalizeEmail(invitedUser.email) !== email) {
+    || typeof invitedUser.email !== 'string'
+    || invitedUser.email.trim().toLowerCase() !== email) {
     throw new Error('The nominated Super Admin account is not eligible.');
   }
 
