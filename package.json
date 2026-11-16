@@ -86,7 +86,8 @@
     "test:tenant-configuration": "node --test tests/tenant-configuration.test.mjs",
     "test:ops-workspace": "node --test tests/ops-workspace-boundary.test.mjs",
     "test:ui-dashboards": "node --test tests/role-dashboard-responsive-ui.test.mjs",
-    "test:firebase-config": "vitest run src/lib/firebaseConfig.test.ts"
+    "test:firebase-config": "vitest run src/lib/firebaseConfig.test.ts",
+    "test:tenant-notifications": "node --test tests/tenant-notifications.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
