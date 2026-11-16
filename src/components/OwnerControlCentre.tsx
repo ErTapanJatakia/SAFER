@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState, type FormEvent} from 'react';
+import React, {useCallback, useEffect, useMemo, useState, type FormEvent} from 'react';
 import type {User} from 'firebase/auth';
 
 type Organisation = {
@@ -33,6 +33,8 @@ interface OwnerControlCentreProps {
 export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onOwnerStatusChange}) => {
   const [ownerState, setOwnerState] = useState<'checking' | 'owner' | 'not-owner' | 'unavailable'>('checking');
   const [organisations, setOrganisations] = useState<Organisation[]>([]);
+  const [registrySearch, setRegistrySearch] = useState('');
+  const [registryStatusFilter, setRegistryStatusFilter] = useState<'all' | Organisation['status']>('all');
   const [loadingRegistry, setLoadingRegistry] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -67,6 +69,20 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
     }
     return payload;
   }, [user]);
+
+  const filteredOrganisations = useMemo(() => organisations.filter((org) => {
+    const matchesStatus = registryStatusFilter === 'all' || org.status === registryStatusFilter;
+    const query = registrySearch.trim().toLowerCase();
+    const matchesSearch = !query || org.displayName.toLowerCase().includes(query) || org.orgId.toLowerCase().includes(query);
+    return matchesStatus && matchesSearch;
+  }), [organisations, registrySearch, registryStatusFilter]);
+  const registryCounts = useMemo(() => ({
+    total: organisations.length,
+    provisioning: organisations.filter((org) => org.status === 'provisioning').length,
+    active: organisations.filter((org) => org.status === 'active').length,
+    suspended: organisations.filter((org) => org.status === 'suspended').length,
+    closed: organisations.filter((org) => org.status === 'closed').length,
+  }), [organisations]);
 
   const loadRegistry = useCallback(async () => {
     setLoadingRegistry(true);
@@ -247,12 +263,20 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
             </div>
             <button type="button" onClick={() => void loadRegistry()} disabled={loadingRegistry || busy} className="rounded-lg border border-slate-600 px-3 py-2 text-xs font-semibold hover:bg-slate-800 disabled:opacity-50">Refresh registry</button>
           </div>
+          <dl className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+            {Object.entries(registryCounts).map(([label, count]) => <div key={label} className="rounded-lg border border-slate-700 bg-slate-950 p-3"><dt className="text-[10px] uppercase tracking-wide text-slate-400">{label}</dt><dd className="mt-1 text-xl font-semibold tabular-nums text-slate-100">{count}</dd></div>)}
+          </dl>
+          <div className="mt-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_12rem]">
+            <label className="block text-xs font-semibold text-slate-300">Search loaded PMCs<input aria-label="Search PMC registry" value={registrySearch} onChange={(event) => setRegistrySearch(event.target.value)} placeholder="Organisation name or ID" className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white" /></label>
+            <label className="block text-xs font-semibold text-slate-300">Filter by status<select aria-label="Filter PMC status" value={registryStatusFilter} onChange={(event) => setRegistryStatusFilter(event.target.value as typeof registryStatusFilter)} className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white"><option value="all">All statuses</option><option value="provisioning">Provisioning</option><option value="active">Active</option><option value="suspended">Suspended</option><option value="closed">Closed</option></select></label>
+          </div>
+          <p className="mt-2 text-[10px] text-slate-500">Counts and filters apply to the registry records currently loaded (maximum 100). This is not a platform-wide operational analytics feed.</p>
           {loadingRegistry ? <p className="py-4 text-xs text-slate-400" role="status">Loading registry…</p> : (
             <div className="mt-4 overflow-x-auto">
               <table className="w-full min-w-[620px] text-left text-xs">
                 <thead className="border-b border-slate-700 text-slate-400"><tr><th className="py-2 pr-3">PMC</th><th className="py-2 pr-3">Organisation ID</th><th className="py-2 pr-3">Status</th><th className="py-2 pr-3">Lifecycle</th><th className="py-2">Actions</th></tr></thead>
                 <tbody>
-                  {organisations.map((org) => <tr key={org.orgId} className="border-b border-slate-800">
+                  {filteredOrganisations.map((org) => <tr key={org.orgId} className="border-b border-slate-800">
                     <td className="py-3 pr-3 font-semibold text-slate-100">{org.displayName}</td>
                     <td className="py-3 pr-3 font-mono text-[10px] text-slate-400">{org.orgId}</td>
                     <td className="py-3 pr-3"><span className="rounded-full border border-slate-600 px-2 py-1">{org.status}</span></td>
@@ -263,7 +287,7 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
                       {['active', 'suspended'].includes(org.status) && <button type="button" disabled={busy} onClick={() => changeStatus(org.orgId, 'closed')} className="rounded border border-red-800 px-2 py-1 text-red-200 disabled:opacity-50">Close</button>}
                     </div></td>
                   </tr>)}
-                  {!organisations.length && <tr><td colSpan={5} className="py-5 text-center text-slate-500">No PMC records are currently available.</td></tr>}
+                  {!filteredOrganisations.length && <tr><td colSpan={5} className="py-5 text-center text-slate-500">{organisations.length ? 'No PMCs match the current search and status filter.' : 'No PMC records are currently available.'}</td></tr>}
                 </tbody>
               </table>
             </div>
