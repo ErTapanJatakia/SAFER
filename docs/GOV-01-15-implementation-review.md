@@ -40,6 +40,7 @@
 - UI-12: tenant audit view/API now support inclusive date filters, a default page size of 50 (maximum 100), tenant-bound cursor validation and load-older navigation. Text search remains limited to loaded pages.
 - OPS-07 / GOV-03: suspended manageable memberships can be reactivated by authorised Super Admin/Admin actors. The status transition and audit event are committed in one transaction.
 - OPS-08 / GOV-06: Activity tab visibility now matches the server-side `audit:read` permission; it is not shown to Manager or Employee roles.
+- DPDP-07–11: synthetic workspace validation now rejects unexpected record fields/accessors, validates request and consent history chronology, rejects retention clock rollback and validates evidence category enums. These remain local synthetic workflows, not statutory execution.
 
 ## Validation and runtime handoff
 
