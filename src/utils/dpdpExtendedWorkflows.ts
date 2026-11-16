@@ -96,30 +96,30 @@ export function validateDpdpExtendedWorkspace(v:unknown):v is DpdpExtendedWorksp
 export function transitionRequest(events:RequestEvent[],requestId:string,next:WorkflowStatus,at:string,note:string):RequestEvent|null {
  const prior=events.filter(e=>e.requestId===requestId).sort((a,b)=>Date.parse(b.at)-Date.parse(a.at))[0];
  const current=prior?.to??'received';
- const allowed:Record<WorkflowStatus,WorkflowStatus[]>={received:['identity-check','closed'], 'identity-check':['in-progress','awaiting-information','declined','closed'], 'in-progress':['awaiting-information','completed','declined','closed'], 'awaiting-information':['identity-check','in-progress','closed'],completed:[],declined:[],closed:[]};
- if(!id(requestId)||!iso(at)||!text(note,1000)||!allowed[current].includes(next))return null;
+ if(!id(requestId)||!iso(at)||!text(note,1000)||!Object.hasOwn(REQUEST_TRANSITIONS,current)||!REQUEST_TRANSITIONS[current].includes(next)
+   ||(prior&&Date.parse(at)<=Date.parse(prior.at)))return null;
  return {id:'request-event-'+crypto.randomUUID(),requestId,from:prior?.to??null,to:next,at,note};
 }
 export function updateConsentPreference(prior:ConsentPreference|null,input:{id:string;subjectRef:string;purposeRef:string;preference:ConsentPreference['preference'];at:string;note:string}):ConsentPreference|null {
- if(!id(input.id)||!text(input.subjectRef,120)||!text(input.purposeRef,120)||!iso(input.at)||!text(input.note,500))return null;
- if(prior&&(prior.subjectRef!==input.subjectRef||prior.purposeRef!==input.purposeRef||Date.parse(input.at)<Date.parse(prior.updatedAt)))return null;
+ if(!id(input.id)||!text(input.subjectRef,120)||!text(input.purposeRef,120)||!['granted','withdrawn','paused'].includes(input.preference)||!iso(input.at)||!text(input.note,500))return null;
+ if(prior&&(prior.subjectRef!==input.subjectRef||prior.purposeRef!==input.purposeRef||Date.parse(input.at)<=Date.parse(prior.updatedAt)))return null;
  const entry={id:input.id,preference:input.preference,at:input.at,note:input.note};
  return prior?{...prior,preference:input.preference,updatedAt:input.at,history:[...prior.history,entry]}:{id:'preference-'+input.id,subjectRef:input.subjectRef,purposeRef:input.purposeRef,preference:input.preference,updatedAt:input.at,history:[entry]};
 }
 export function evaluateRetentionTask(task:RetentionReviewTask,now:string):RetentionReviewTask|null {
- if(!iso(now)||!iso(task.reviewAt)||!id(task.id))return null;
+ if(!iso(now)||!iso(task.reviewAt)||!iso(task.evaluatedAt)||!id(task.id)||Date.parse(now)<Date.parse(task.evaluatedAt))return null;
  if(task.state==='reviewed'||task.state==='deferred')return {...task,evaluatedAt:now};
  const state=Date.parse(now)>Date.parse(task.reviewAt)?'overdue':Date.parse(now)===Date.parse(task.reviewAt)?'due':'scheduled';
  return {...task,state,evaluatedAt:now};
 }
 export function appendBreachTimeline(events:BreachTimelineEvent[],item:BreachTimelineEvent):BreachTimelineEvent[]|null {
- if(!id(item.id)||!id(item.breachRef)||!iso(item.at)||!text(item.note,1000)||events.some(e=>e.id===item.id))return null;
+ if(!id(item.id)||!id(item.breachRef)||!['discovered','recorded','contained','remediated','notification-assessed','closed','other'].includes(item.kind)||!iso(item.at)||!text(item.note,1000)||events.some(e=>e.id===item.id))return null;
  const prior=events.filter(e=>e.breachRef===item.breachRef).sort((a,b)=>Date.parse(b.at)-Date.parse(a.at))[0];
  if(prior&&Date.parse(item.at)<Date.parse(prior.at))return null;
  return [item,...events];
 }
 export function createPrivacyEvidenceItem(input:Omit<PrivacyEvidenceItem,'verification'|'limitations'>):PrivacyEvidenceItem|null {
- if(!id(input.id)||!text(input.title,160)||!text(input.reference,240)||!id(input.linkedRecordId)||!text(input.ownerRole,80)||!iso(input.createdAt))return null;
+ if(!id(input.id)||!text(input.title,160)||!['policy-reference','assessment-reference','test-reference','meeting-note','other'].includes(input.evidenceType)||!text(input.reference,240)||!['request','consent','retention','breach','control'].includes(input.linkedRecordType)||!id(input.linkedRecordId)||!text(input.ownerRole,80)||!iso(input.createdAt))return null;
  return {...input,verification:'unverified-reference-only',limitations:'Reference metadata only; no file is stored, scanned, hashed, independently verified or made immutable.'};
 }
 export const DPDP_EXTENDED_STORAGE_KEY='safer_dpdp_07_11_demo_v1';
