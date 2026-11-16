@@ -47,8 +47,7 @@ function AuthorizedDemoGuestWorkspace({ accessState, children }: { accessState: 
   if (!repository) {
     return (
       <main role="alert" aria-live="assertive">
-        Browser storage is unavailable. SAFER cannot safely open the Demo Guest workspace in this browser.
-        Enable site storage or use a browser profile that permits local storage, then reload.
+        SAFER cannot safely read the Demo Guest workspace. Browser storage may be unavailable or saved records may be damaged or invalid. The workspace is locked to avoid overwriting stored data. Do not clear this site's browser data unless you intend to discard the local demo records; check browser storage permissions or restore a valid browser profile, then reload.
       </main>
     );
   }
