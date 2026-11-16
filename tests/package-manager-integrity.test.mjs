@@ -16,7 +16,7 @@ test('Bun is the single declared package manager and npm lockfile is absent', ()
 test('Vite development server is not exposed on all network interfaces by default', () => {
   assert.equal(manifest.scripts.dev, 'vite --port=3000 --host=127.0.0.1');
   const viteConfig = readFileSync(new URL('../vite.config.ts', import.meta.url), 'utf8');
-  assert.match(viteConfig, /host:\s*'127\\.0\\.0\\.1'/u);
+  assert.match(viteConfig, /host:\s*'127\.0\.0\.1'/u);
 });
 
 test('supported deployment and validation paths use frozen Bun dependencies', () => {
