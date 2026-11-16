@@ -40,3 +40,22 @@ test('AuthGate defers authenticated workspace routing until Owner authority is r
   assert.match(authGate, /setOwnerStatus\('checking'\)/);
   assert.match(authGate, /ownerStatus === 'owner' \|\| ownerStatus === 'checking'/);
 });
+
+
+test('Owner registry offers loaded-record search, status filters and bounded status summaries', () => {
+  assert.match(ownerUi, /Search PMC registry/);
+  assert.match(ownerUi, /Filter PMC status/);
+  assert.match(ownerUi, /filteredOrganisations/);
+  assert.match(ownerUi, /registryCounts/);
+  assert.match(ownerUi, /maximum 100/);
+  assert.match(ownerUi, /not a platform-wide operational analytics feed/);
+});
+
+
+test('Owner onboarding exposes the one-time Super Admin invitation receipt for manual secure delivery', () => {
+  assert.match(ownerUi, /superAdminInvitationReceipt/);
+  assert.match(ownerUi, /Copy invitation ID/);
+  assert.match(ownerUi, /intended verified Super Admin/);
+  assert.match(ownerUi, /does not activate the PMC by itself/);
+  assert.match(ownerUi, /no email is sent automatically/);
+});

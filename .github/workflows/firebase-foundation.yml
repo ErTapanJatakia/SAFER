@@ -11,6 +11,7 @@ on:
       - "package-lock.json"
       - "bun.lock"
       - "src/**"
+      - "api/**"
       - "tests/**"
       - "firestore.rules"
       - "firebase.json"
@@ -29,6 +30,7 @@ on:
       - "package-lock.json"
       - "bun.lock"
       - "src/**"
+      - "api/**"
       - "tests/**"
       - "firestore.rules"
       - "firebase.json"
@@ -92,6 +94,9 @@ jobs:
 
       - name: Tenant membership resolver Emulator tests
         run: npm run test:tenant-membership
+
+      - name: Tenant activity feed authorization regression tests
+        run: npm run test:tenant-notifications
 
       - name: AuthGate membership UI tests
         run: npm run test:auth-membership-ui
