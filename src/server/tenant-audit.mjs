@@ -23,7 +23,7 @@ export async function listTenantAuditEvents({ orgId, database, limit = 100 }) {
   const boundedLimit = Number.isInteger(requestedLimit)
     ? Math.min(Math.max(requestedLimit, 1), 100)
     : 100;
-  const snapshot = await database.collection(`organisations/${orgId}/auditEvents`)
+  const snapshot = await database.collection(\`organisations/\${orgId}/auditEvents\`)
     .orderBy('occurredAt', 'desc').limit(boundedLimit + 1).get();
   const hasMore = snapshot.docs.length > boundedLimit;
   const events = snapshot.docs.slice(0, boundedLimit).flatMap((doc) => {
@@ -37,7 +37,7 @@ export async function listTenantAuditEvents({ orgId, database, limit = 100 }) {
     const targetResourceId = value.targetResourceId == null ? null
       : typeof value.targetResourceId === 'string'
         && value.targetResourceId.length <= RESOURCE_ID_MAX
-        && !/[\\u0000-\\u001f\\u007f]/.test(value.targetResourceId)
+        && !/[\u0000-\u001f\u007f]/.test(value.targetResourceId)
         ? value.targetResourceId : null;
     return [{
       eventId: doc.id,
