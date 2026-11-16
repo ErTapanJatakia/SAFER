@@ -25,7 +25,7 @@ Example body:
 Allowed transitions:
 
 - `active → suspended`
-- `suspended → active`
+- `suspended → active` only when the organisation lifecycle stage is already `active` and a canonical active `tenant_super_admin` membership is verified in the same transaction.
 - `active → closed`
 - `suspended → closed`
 - `provisioning → suspended`
