@@ -50,23 +50,43 @@ function hasCanonicalActiveSuperAdmin(membership, documentId, orgId) {
  * Owner-only registry operations. All lifecycle changes are transactional and
  * append a platform audit event. Provisioning tenants cannot be activated here.
  */
+function safeRegistryTimestamp(value) {
+  try {
+    const date = value instanceof Date ? value : value?.toDate?.();
+    return date instanceof Date && Number.isFinite(date.getTime()) ? date.toISOString() : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function listPlatformOrganisations({ database, limit = 100 }) {
+  if (!database?.collection) throw new Error('Organisation registry is unavailable.');
   const boundedLimit = Number.isInteger(limit) ? Math.min(Math.max(limit, 1), 100) : 100;
   const snapshot = await database.collection('organisations')
     .orderBy('createdAt', 'desc')
     .limit(boundedLimit)
     .get();
 
-  return snapshot.docs.map((document) => {
+  return snapshot.docs.flatMap((document) => {
     const data = document.data();
-    return {
+    const createdAt = safeRegistryTimestamp(data?.createdAt);
+    const updatedAt = safeRegistryTimestamp(data?.updatedAt);
+    if (!validOrgId(document.id) || data?.orgId !== document.id
+      || typeof data.displayName !== 'string' || !data.displayName.trim()
+      || data.displayName.length > 120 || /[\u0000-\u001f\u007f]/.test(data.displayName)
+      || !['provisioning', 'active', 'suspended', 'closed'].includes(data.status)
+      || !createdAt || !updatedAt) return [];
+    const lifecycleStage = typeof data.lifecycleStage === 'string'
+      && /^[a-z][a-z0-9_-]{0,63}$/.test(data.lifecycleStage)
+      ? data.lifecycleStage : null;
+    return [{
       orgId: data.orgId,
       displayName: data.displayName,
       status: data.status,
-      lifecycleStage: data.lifecycleStage ?? null,
-      createdAt: data.createdAt?.toDate?.()?.toISOString?.() ?? null,
-      updatedAt: data.updatedAt?.toDate?.()?.toISOString?.() ?? null,
-    };
+      lifecycleStage,
+      createdAt,
+      updatedAt,
+    }];
   });
 }
 

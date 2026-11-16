@@ -128,3 +128,18 @@ test('malformed or non-canonical Super Admin membership cannot authorize reactiv
     assert.equal(database.writes.length, 0);
   }
 });
+
+test('registry list skips malformed organisation records and safely serializes timestamps',async()=>{
+  const rows=[
+    [orgId,{orgId,displayName:'Synthetic PMC',status:'active',lifecycleStage:'active',createdAt:new Date('2026-01-01T00:00:00Z'),updatedAt:new Date('2026-01-02T00:00:00Z')}],
+    [`org_${'b'.repeat(32)}`,{orgId:`org_${'b'.repeat(32)}`,displayName:'x'.repeat(500),status:'active',createdAt:new Date(),updatedAt:new Date()}],
+    [`org_${'c'.repeat(32)}`,{orgId:`org_${'c'.repeat(32)}`,displayName:'Broken timestamp',status:'active',createdAt:{toDate(){throw new Error('bad timestamp');}},updatedAt:new Date()}],
+    [`org_${'d'.repeat(32)}`,{orgId:`org_${'e'.repeat(32)}`,displayName:'Mismatched ID',status:'active',createdAt:new Date(),updatedAt:new Date()}],
+  ];
+  const database={collection(path){assert.equal(path,'organisations');return {orderBy(){return this;},limit(n){this.cap=n;return this;},async get(){return {docs:rows.map(([id,data])=>({id,data:()=>data}))};}};}};
+  const {listPlatformOrganisations}=await import('../src/server/organisation-registry.mjs');
+  const result=await listPlatformOrganisations({database});
+  assert.equal(result.length,1);
+  assert.equal(result[0].orgId,orgId);
+  assert.equal(result[0].createdAt,'2026-01-01T00:00:00.000Z');
+});
