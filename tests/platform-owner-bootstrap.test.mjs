@@ -50,12 +50,17 @@ test('provisions one verified identity with a principal and append-only audit ev
   assert.equal(documents.get('platform/settings').ownerBootstrapStatus, 'claimed');
   assert.equal(events[0].action, 'platform_owner.provisioned');
 });
-test('refuses unverified Firebase identity without writing documents', async () => {
-  const { database, documents } = createFakeDatabase();
-  await assert.rejects(provisionFirstPlatformOwner({
-    ...validInput, database, authAdmin: { getUser: async (uid) => ({ uid, emailVerified: false }) },
-  }), /identity could not be verified/);
-  assert.equal(documents.size, 0);
+test('refuses unverified or disabled Firebase identities without writing documents', async () => {
+  for (const user of [
+    { uid: 'owner-uid', emailVerified: false, disabled: false },
+    { uid: 'owner-uid', emailVerified: true, disabled: true },
+  ]) {
+    const { database, documents } = createFakeDatabase();
+    await assert.rejects(provisionFirstPlatformOwner({
+      ...validInput, database, authAdmin: { getUser: async () => user },
+    }), /identity could not be verified as enabled and email-verified/);
+    assert.equal(documents.size, 0, 'ineligible identities must not consume the one-time bootstrap');
+  }
 });
 test('refuses a second bootstrap or pre-existing administrator record', async () => {
   const cases = [
