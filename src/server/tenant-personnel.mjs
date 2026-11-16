@@ -66,6 +66,7 @@ async function authorize(tx,db,uid,orgId,action) {
   });
   if(!decision.allowed) fail(decision.reason);
   return {membership:member.data(),organisation:org.data()};
+}
 function publicRecord(data) {
   return {
     recordId:data.recordId, employeeRef:data.employeeRef,

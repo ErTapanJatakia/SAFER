@@ -24,7 +24,12 @@ export default async function handler(req, res) {
       auth: platformAuth, database: platformDb,
     });
     const result = await listTenantAuditEvents({
-      orgId: authorization.orgId, database: platformDb,
+      orgId: authorization.orgId,
+      database: platformDb,
+      limit: req.query?.limit ?? 50,
+      cursor: req.query?.cursor ?? null,
+      startDate: req.query?.startDate ?? null,
+      endDate: req.query?.endDate ?? null,
     });
     return res.status(200).json(result);
   } catch (error) {

@@ -43,5 +43,5 @@
       "main": true
     }
   },
-  "installCommand": "bun install --frozen-lockfile"
+  "installCommand": "npx --yes bun@1.4.4 install --frozen-lockfile"
 }
