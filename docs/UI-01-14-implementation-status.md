@@ -6,7 +6,7 @@
 
 | ID | Deliverable | Status on this branch | Remaining work / boundary |
 |---|---|---|---|
-| UI-01 | Platform Owner dashboard | Implemented foundation | Owner Control Centre provides global PMC registry, lifecycle controls, onboarding and purpose-bound JIT aggregate tenant summaries. Full platform-wide analytics and richer registry filters remain future refinement. |
+| UI-01 | Platform Owner dashboard | Improved foundation; platform analytics partial | Owner Control Centre provides global PMC registry, lifecycle controls, onboarding and purpose-bound JIT aggregate tenant summaries. Added local search, status filters and counts for the maximum 100 registry records returned. Full platform-wide analytics, historical trends and paginated registry retrieval remain outstanding; no cross-tenant raw data browsing is introduced. |
 | UI-02 | PMC Super Admin dashboard | Implemented | Role-specific dashboard summary, PMC-wide aggregate overview, module access and Super Admin configuration/member controls. |
 | UI-03 | PMC Admin dashboard | Implemented | Role-specific dashboard summary and permitted member/operational administration. Super Admin-only configuration remains restricted. |
 | UI-04 | Manager dashboard | Implemented | Role-specific assignments, personnel readiness, incidents and checklist oversight. |
