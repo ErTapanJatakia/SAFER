@@ -67,6 +67,11 @@ test('incident timestamps must be valid bounded RFC3339 values', async()=>{
   }),/invalid_incident_data/);
   await assert.rejects(()=>createTenantIncident({
     orgId,actorUid:'u1',
+    input:{incidentType:'Equipment Malfunction',title:'Door sensor fault',summary:'Sensor reported intermittent failure.',dateReported:'2026-11-16T10:00:00'},
+    database:db,serverTimestamp:stamp,
+  }),/invalid_incident_data/);
+  await assert.rejects(()=>createTenantIncident({
+    orgId,actorUid:'u1',
     input:{incidentType:'Equipment Malfunction',title:'Door sensor fault',summary:'Sensor reported intermittent failure.',dateReported:new Date(Date.now()+60*60*1000).toISOString()},
     database:db,serverTimestamp:stamp,
   }),/invalid_incident_data/);
