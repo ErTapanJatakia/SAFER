@@ -130,13 +130,13 @@ function readList<T>(storage: DemoStorage, key: string, fallback: readonly T[], 
   } catch (error) {
     throw new Error(`Unable to read Demo Guest storage key: ${key}`, { cause: error });
   }
-  if (!raw) return [...fallback];
+  if (raw === null) return [...fallback];
 
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
-  } catch {
-    return [...fallback];
+  } catch (error) {
+    throw new Error(`Invalid Demo Guest JSON in ${key}. The workspace is locked to protect stored data; reset only if you intend to discard these records.`, { cause: error });
   }
   if (!Array.isArray(parsed)) {
     throw new Error(`Invalid Demo Guest record collection: ${key} must contain an array.`);
