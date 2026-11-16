@@ -55,6 +55,9 @@ test('Super Admin can invite a verified existing user into a lower PMC role', as
   assert.equal(invitation.uid, f.targetUid);
   assert.equal(invitation.schemaVersion, 1);
   assert.equal(f.audit[0].action, 'tenant.member.invitation_created');
+  assert.deepEqual(f.audit[0].details, { role: 'tenant_manager' });
+  assert.equal(JSON.stringify(f.audit[0]).includes('new.member@example.com'), false);
+  assert.equal(JSON.stringify(f.audit[0]).includes(result.invitationId), false);
 });
 
 test('Admin cannot invite an Admin or Super Admin and unverified invitees are rejected', async () => {
