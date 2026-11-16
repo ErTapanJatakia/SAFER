@@ -4,14 +4,16 @@
 
 The Firestore Local Emulator Suite is the required validation environment for
 security-rule changes. These tests use the non-production project ID
-`demo-safer` and load the repository's `firestore.rules` file directly.
-They do not connect to the production Firebase project.
+`demo-safer` and the explicit `firebase.emulator.json` configuration, which
+loads candidate tenant rules from `firestore.rules`. They do not connect to
+the production Firebase project. The default `firebase.json` configuration
+selects `firestore.production.rules`, which denies all client reads and writes.
 
 Run locally with:
 
 ```sh
-npm ci
-npm run test:firestore-rules
+bun install --frozen-lockfile
+bun run test:firestore-rules
 ```
 
 The Firebase CLI starts the Firestore emulator, executes the Node test suite,
@@ -19,12 +21,19 @@ and shuts the emulator down. Java 21 is required by the CI setup.
 
 ## Current baseline contract
 
-The current policy intentionally denies all client access. Tests assert that:
+The emulator candidate rules are intentionally separate from production. The
+candidate suite verifies its proposed least-privilege tenant scopes, including
+role-specific access and cross-tenant boundaries. Production remains deny-all
+until the candidate rules and tenant APIs complete the required release review.
 
-- unauthenticated clients cannot read or write documents;
-- authenticated users cannot read or write user profiles;
-- authenticated users cannot read or write organisation memberships or records;
-- one authenticated user cannot access another user's namespace.
+Run the production/emulator configuration guard with:
+
+```sh
+bun run test:firestore-production-config
+```
+
+The guard confirms that `firebase.json` selects the deny-all ruleset and that
+the emulator/test scripts explicitly select the candidate rules.
 
 The test data is synthetic and exists only in the emulator.
 
