@@ -40,3 +40,11 @@ The development branch now includes server-side API foundations for:
 - Aggregate operational reports (`GET/POST /api/tenant/reports`), returning counts only; export is permission-gated and audited.
 
 These are API/service foundations, not completed UI integrations. Each remains subject to the same unexecuted validation and release gates. Tenant direct Firestore access, real evidence storage, employee personnel self-service, and production tenant repository selection remain disabled.
+
+## Request-abuse controls and current limits
+
+All JSON-mutating tenant and Platform Owner API routes declare a Vercel request body parser limit of 64 KiB. This bounds parsed JSON input before route authorization and service logic. Evidence registration remains metadata-only; the limit is not a file-upload allowance.
+
+The application does not currently claim to provide distributed per-IP or per-account rate limiting. Vercel serverless instances do not share process memory, so an in-memory counter would be bypassable across instances and cold starts. Do not treat such a counter as a security control. A reliable limiter requires a shared atomic counter/store or an approved edge/WAF facility, plus a defined retention and privacy policy. Do not introduce a paid dependency or persistent Firestore counter writes under the current zero-cost constraint without a separate cost and abuse-resistance review.
+
+Until a shared limiter is approved, monitor platform-level request usage and keep privileged routes authenticated, authorization-first, bounded-input, and generic in their error responses. This is a documented residual risk, not a claim that rate limiting is implemented.

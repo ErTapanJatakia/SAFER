@@ -82,3 +82,12 @@ export default async function handler(req, res) {
     return res.status(503).json({ error:'tenant_incident_service_unavailable' });
   }
 }
+
+// Bound parsed JSON payloads before authorization or business logic runs.
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '64kb',
+    },
+  },
+};

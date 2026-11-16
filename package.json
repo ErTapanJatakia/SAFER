@@ -83,7 +83,9 @@
     "test:tenant-evidence": "node --test tests/tenant-evidence.test.mjs",
     "test:tenant-checklists": "node --test tests/tenant-checklists.test.mjs",
     "test:tenant-reports": "node --test tests/tenant-reports.test.mjs",
-    "test:firestore-production-config": "node --test tests/firestore-production-config.test.mjs"
+    "test:firestore-production-config": "node --test tests/firestore-production-config.test.mjs",
+    "test:api-request-size-limits": "node --test tests/api-request-size-limits.test.mjs",
+    "test:package-manager-integrity": "node --test tests/package-manager-integrity.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
