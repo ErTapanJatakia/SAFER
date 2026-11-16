@@ -25,15 +25,45 @@ function timestampMillis(value) {
   return Number.NaN;
 }
 
-function matchesAcceptedMembership(membership, uid, orgId) {
-  return Boolean(
-    membership
+const MEMBERSHIP_FIELDS = Object.freeze([
+  'uid', 'orgId', 'role', 'status', 'createdAt', 'createdByUid',
+  'updatedAt', 'updatedByUid', 'schemaVersion',
+].sort());
+
+function validUid(value) {
+  return typeof value === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(value);
+}
+
+function validMembershipTimestamp(value) {
+  if (value instanceof Date) return Number.isFinite(value.getTime());
+  if (!value || typeof value !== 'object') return false;
+  try {
+    if (typeof value.toDate === 'function') {
+      const date = value.toDate();
+      return date instanceof Date && Number.isFinite(date.getTime());
+    }
+    if (typeof value.toMillis === 'function') return Number.isFinite(value.toMillis());
+  } catch {
+    return false;
+  }
+  return false;
+}
+
+function matchesAcceptedMembership(membership, uid, orgId, invitedByUid) {
+  if (!membership || typeof membership !== 'object' || Array.isArray(membership)) return false;
+  const fields = Object.keys(membership).sort();
+  return fields.length === MEMBERSHIP_FIELDS.length
+    && fields.every((field, index) => field === MEMBERSHIP_FIELDS[index])
     && membership.uid === uid
     && membership.orgId === orgId
     && membership.role === SUPER_ADMIN_ROLE
     && ['pending_activation', 'active'].includes(membership.status)
-    && membership.schemaVersion === 1,
-  );
+    && membership.schemaVersion === 1
+    && membership.createdByUid === invitedByUid
+    && validUid(membership.createdByUid)
+    && validUid(membership.updatedByUid)
+    && validMembershipTimestamp(membership.createdAt)
+    && validMembershipTimestamp(membership.updatedAt);
 }
 
 /**
@@ -85,6 +115,7 @@ export async function acceptSuperAdminInvitation({
       || normalizeEmail(invitation.email) !== normalizedEmail
       || invitation.role !== SUPER_ADMIN_ROLE
       || invitation.schemaVersion !== 1
+      || !validUid(invitation.invitedByUid)
     ) fail('invitation_identity_mismatch');
 
     if (organisation.orgId !== orgId) fail('invalid_invitation');
@@ -94,7 +125,7 @@ export async function acceptSuperAdminInvitation({
       const membership = membershipSnapshot.exists ? membershipSnapshot.data() : null;
       if (
         invitation.acceptedByUid !== actorUid
-        || !matchesAcceptedMembership(membership, actorUid, orgId)
+        || !matchesAcceptedMembership(membership, actorUid, orgId, invitation.invitedByUid)
         || !['super_admin_invitation_accepted', 'active'].includes(organisation.lifecycleStage)
       ) fail('invitation_conflict');
       return {
@@ -115,7 +146,6 @@ export async function acceptSuperAdminInvitation({
     const expiresAt = timestampMillis(invitation.expiresAt);
     if (!Number.isFinite(expiresAt) || expiresAt <= now) fail('invitation_expired');
     if (membershipSnapshot.exists) fail('membership_conflict');
-    if (typeof invitation.invitedByUid !== 'string' || !invitation.invitedByUid) fail('invalid_invitation');
 
     transaction.create(membershipRef, {
       uid: actorUid,

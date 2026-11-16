@@ -98,3 +98,19 @@ test('unverified identity and non-pending invitation cannot be accepted', async 
     database: accepted.database, serverTimestamp: () => new Date(),
   }), (error) => error.code === 'invitation_unavailable');
 });
+
+
+test('rejects malformed inviter UID rather than creating an unusable membership', async () => {
+  const f = fixture();
+  const invitationPath = \`organisations/\${f.orgId}/invitations/\${f.invitationId}\`;
+  f.records.set(invitationPath, {
+    ...f.records.get(invitationPath),
+    invitedByUid: ' ',
+  });
+  await assert.rejects(acceptTenantMemberInvitation({
+    orgId: f.orgId, invitationId: f.invitationId, actorUid: f.uid,
+    actorEmail: 'member@example.com', actorEmailVerified: true,
+    database: f.database, serverTimestamp: () => new Date(),
+  }), (error) => error.code === 'invalid_invitation');
+  assert.equal(f.records.has(\`organisations/\${f.orgId}/members/\${f.uid}\`), false);
+});

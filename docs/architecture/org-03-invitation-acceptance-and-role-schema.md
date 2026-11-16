@@ -42,6 +42,8 @@ The route must:
 
 Invitation IDs are now generated server-side from 32 random bytes (256 bits), stored as opaque document IDs, and expire after seven days. The invitation document is not addressable solely by an email address. The identifier is a locator, not a login credential; acceptance still requires the exact verified Firebase UID and matching verified email.
 
+Acceptance also rejects invitations whose `invitedByUid` is not a valid Firebase UID. Super Admin acceptance replay validates the entire canonical membership field set, inviter UID, schema version, role/status and timestamp metadata before returning idempotent success; malformed or extra membership fields are treated as a conflict.
+
 ## 4.1 Pending invitation revocation
 
 The tenant administration API exposes a separate authenticated endpoint: `POST /api/tenant/invitations/revoke`. It accepts an organisation locator, opaque invitation ID and bounded revocation reason. The server verifies the Firebase ID token with revocation checking, rejects disabled accounts, and authorizes the tenant actor against the canonical membership and active organisation.
