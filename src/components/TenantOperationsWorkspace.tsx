@@ -23,7 +23,7 @@ const TABS: {id:Tab;label:string;roles?:Role[]}[] = [
   {id:'reports',label:'Reports',roles:['tenant_super_admin','tenant_admin','tenant_manager','tenant_auditor']},
   {id:'audit',label:'Audit',roles:['tenant_super_admin','tenant_admin','tenant_auditor']},
   {id:'members',label:'Members',roles:['tenant_super_admin','tenant_admin','tenant_auditor']},
-  {id:'notifications',label:'Activity',roles:['tenant_super_admin','tenant_admin','tenant_auditor']},
+  {id:'notifications',label:'Activity'},
   {id:'configuration',label:'PMC settings',roles:['tenant_super_admin']},
 ];
 const inputClass='w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900';
@@ -45,10 +45,6 @@ export const TenantOperationsWorkspace:React.FC<Props>=({user,membership,onLeave
   const [checklists,setChecklists]=useState<Row[]>([]);
   const [members,setMembers]=useState<Row[]>([]);
   const [audit,setAudit]=useState<Row[]>([]);
-  const [auditHasMore,setAuditHasMore]=useState(false);
-  const [auditNextCursor,setAuditNextCursor]=useState('');
-  const [auditStartDate,setAuditStartDate]=useState('');
-  const [auditEndDate,setAuditEndDate]=useState('');
   const [activity,setActivity]=useState<Row[]>([]);
   const [report,setReport]=useState<Row|null>(null);
   const [search,setSearch]=useState('');
@@ -58,8 +54,6 @@ export const TenantOperationsWorkspace:React.FC<Props>=({user,membership,onLeave
   const [evidenceForm,setEvidenceForm]=useState({incidentId:'',title:'',fileName:'',mediaType:'application/pdf',byteSize:0,sha256Claimed:''});
   const [evidenceFile,setEvidenceFile]=useState<File|null>(null);
   const [memberForm,setMemberForm]=useState({email:'',role:'tenant_employee' as Role});
-  const [invitationReceipt,setInvitationReceipt]=useState<{invitationId:string;email:string;role:string;expiresAt:string}|null>(null);
-  const [invitationCopyStatus,setInvitationCopyStatus]=useState('');
   const [settingsForm,setSettingsForm]=useState({timezone:'Asia/Kolkata',dateFormat:'DD-MM-YYYY',defaultIncidentPriority:'Routine',checklistReviewDays:7,notificationsEnabled:true});
 
   const request=useCallback(async(path:string,method='GET',body?:Row)=>{
@@ -70,7 +64,7 @@ export const TenantOperationsWorkspace:React.FC<Props>=({user,membership,onLeave
     return payload as Row;
   },[user]);
 
-  const load=useCallback(async(target:Tab,options:{cursor?:string;append?:boolean}={})=>{
+  const load=useCallback(async(target:Tab)=>{
     setBusy(true);setError('');setNotice('');
     try{
       const q=`?orgId=${encodeURIComponent(membership.orgId)}`;
@@ -93,14 +87,7 @@ export const TenantOperationsWorkspace:React.FC<Props>=({user,membership,onLeave
         const value=await request('/api/tenant/members'+q);setMembers(array(value.members));
       }
       if(target==='audit'){
-        const params=new URLSearchParams({orgId:membership.orgId,limit:'50'});
-        if(auditStartDate)params.set('startDate',auditStartDate);
-        if(auditEndDate)params.set('endDate',auditEndDate);
-        if(options.cursor)params.set('cursor',options.cursor);
-        const value=await request('/api/tenant/audit?'+params.toString());
-        setAudit(current=>options.append?[...current,...array(value.events)]:array(value.events));
-        setAuditHasMore(value.hasMore===true);
-        setAuditNextCursor(text(value.nextCursor));
+        const value=await request('/api/tenant/audit'+q);setAudit(array(value.events));
       }
       if(target==='notifications'){
         const value=await request('/api/tenant/notifications'+q);setActivity(array(value.notifications));
@@ -118,7 +105,7 @@ export const TenantOperationsWorkspace:React.FC<Props>=({user,membership,onLeave
       }
     }catch(e){setError(e instanceof Error?e.message:'request_failed');}
     finally{setBusy(false);}
-  },[membership.orgId,membership.role,request,auditStartDate,auditEndDate]);
+  },[membership.orgId,membership.role,request]);
 
   useEffect(()=>{void load('overview');},[load]);
   const visibleTabs=TABS.filter(item=>!item.roles||item.roles.includes(membership.role));
@@ -128,7 +115,7 @@ export const TenantOperationsWorkspace:React.FC<Props>=({user,membership,onLeave
   const filteredIncidents=useMemo(()=>incidents.filter(row=>JSON.stringify(row).toLowerCase().includes(search.toLowerCase())),[incidents,search]);
 
   const run=async(action:()=>Promise<void>)=>{setBusy(true);setError('');setNotice('');try{await action();}catch(e){setError(e instanceof Error?e.message:'operation_failed');}finally{setBusy(false);}};
-  const jsonPost=async(path:string,body:Row)=>request(path,'POST',body);
+  const jsonPost=async(path:string,body:Row)=>{await request(path,'POST',body);};
   const jsonPatch=async(path:string,body:Row)=>{await request(path,'PATCH',body);};
   const changeTab=(next:Tab)=>{setTab(next);setSearch('');void load(next);};
 
@@ -168,18 +155,9 @@ export const TenantOperationsWorkspace:React.FC<Props>=({user,membership,onLeave
     setNotice('Metadata registered. The file itself was not uploaded; hash is client-claimed and remains unverified.');await load('evidence');
   });
   const inviteMember=()=>run(async()=>{
-    const result=await jsonPost('/api/tenant/members',{orgId:membership.orgId,...memberForm});
-    const invitationId=text(result.invitationId);
-    if(!invitationId)throw new Error('invitation_id_missing_from_server_response');
-    setInvitationReceipt({invitationId,email:text(result.email)||memberForm.email,role:text(result.role)||memberForm.role,expiresAt:text(result.expiresAt)});
-    setInvitationCopyStatus('');
-    setMemberForm({email:'',role:'tenant_employee'});setNotice('Invitation created. Share the one-time invitation ID through your approved channel; no email is sent automatically.');await load('members');
+    await jsonPost('/api/tenant/members',{orgId:membership.orgId,...memberForm});
+    setMemberForm({email:'',role:'tenant_employee'});setNotice('Invitation record created. Delivery is not automatic.');await load('members');
   });
-  const copyInvitationId=async()=>{
-    if(!invitationReceipt)return;
-    try{await navigator.clipboard.writeText(invitationReceipt.invitationId);setInvitationCopyStatus('Invitation ID copied. Share it only with the intended verified recipient.');}
-    catch{setInvitationCopyStatus('Clipboard access unavailable. Select and copy the invitation ID manually.');}
-  };
   const saveSettings=()=>run(async()=>{
     await request('/api/tenant/configuration','PATCH',{orgId:membership.orgId,settings:settingsForm});
     setNotice('PMC settings saved.');await load('configuration');
@@ -201,7 +179,7 @@ export const TenantOperationsWorkspace:React.FC<Props>=({user,membership,onLeave
   const updateIncident=(incidentId:string,patch:Row)=>run(async()=>{await jsonPatch('/api/tenant/incidents',{orgId:membership.orgId,incidentId,patch});setNotice('Incident updated and audited.');await load('incidents');});
   const updatePersonnel=(recordId:string,patch:Row)=>run(async()=>{await jsonPatch('/api/tenant/personnel',{orgId:membership.orgId,recordId,patch});setNotice('Personnel directory record updated.');await load('personnel');});
   const updateChecklist=(checklistId:string,patch:Row)=>run(async()=>{await jsonPatch('/api/tenant/checklists',{orgId:membership.orgId,checklistId,patch});setNotice('Checklist workflow updated and audited.');await load('checklists');});
-  const manageMember=(targetUid:string,action:'members:suspend'|'members:reactivate'|'members:role:assign',targetRole?:Role)=>run(async()=>{await jsonPatch('/api/tenant/members',{orgId:membership.orgId,targetUid,action,...(targetRole?{targetRole}:{})});setNotice('Membership administration change recorded.');await load('members');});
+  const manageMember=(targetUid:string,action:'members:suspend'|'members:role:assign',targetRole?:Role)=>run(async()=>{await jsonPatch('/api/tenant/members',{orgId:membership.orgId,targetUid,action,...(targetRole?{targetRole}:{})});setNotice('Membership administration change recorded.');await load('members');});
   const titleFor=(value:unknown)=>text(value)||'—';
   const list=(rows:Row[],keys:string[])=>rows.length?rows.map((row,index)=><div key={String(row.incidentId??row.recordId??row.checklistId??row.evidenceId??row.uid??row.eventId??index)} className="border-b border-slate-100 py-3 last:border-0"><div className="flex flex-wrap items-start justify-between gap-2"><strong className="text-sm">{titleFor(row.title??row.displayLabel??row.task??row.action??row.email??row.employeeRef??row.referenceNumber)}</strong><span className="text-[10px] text-slate-500">{titleFor(row.status??row.priority??row.verificationState??row.role)}</span></div><p className="mt-1 break-words text-xs text-slate-600">{keys.map(key=>row[key]===undefined?'':`${key}: ${String(row[key])}`).filter(Boolean).join(' · ')}</p></div>):<p className="py-5 text-sm text-slate-500">No records available in this view.</p>;
 
@@ -243,10 +221,10 @@ export const TenantOperationsWorkspace:React.FC<Props>=({user,membership,onLeave
         {canOperate&&panel('Assign checklist task','Assignments are checked against active Employee membership.',<div className="space-y-2"><input className={inputClass} placeholder="Task" maxLength={180} value={checklistForm.task} onChange={e=>setChecklistForm({...checklistForm,task:e.target.value})}/><textarea className={inputClass} rows={3} placeholder="Description" maxLength={1200} value={checklistForm.description} onChange={e=>setChecklistForm({...checklistForm,description:e.target.value})}/><select className={inputClass} value={checklistForm.category} onChange={e=>setChecklistForm({...checklistForm,category:e.target.value})}>{['Required documentation and approvals','Training and certification validity','Emergency contacts and escalation arrangements','First-aid and emergency preparedness documentation','Equipment inventory and condition records','Device and communications security checks','Required briefings and acknowledgements',"Outstanding issues requiring a supervisor's review"].map(x=><option key={x}>{x}</option>)}</select><select className={inputClass} value={checklistForm.priority} onChange={e=>setChecklistForm({...checklistForm,priority:e.target.value})}>{['High','Medium','Low'].map(x=><option key={x}>{x}</option>)}</select><input className={inputClass} placeholder="Assignee Firebase UID" value={checklistForm.assignedToUid} onChange={e=>setChecklistForm({...checklistForm,assignedToUid:e.target.value})}/><button className={buttonClass} disabled={busy||!checklistForm.task.trim()||!checklistForm.assignedToUid.trim()} onClick={createChecklist}>Assign task</button></div>)}
       </div>}
       {tab==='reports'&&panel('Operational reports','Aggregate-only counts across tenant modules. No personal or narrative data.',<><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">{Object.entries((report?.counts??{}) as Row).map(([key,value])=><div key={key} className="rounded-lg bg-slate-100 p-3"><p className="text-xs text-slate-500">{key}</p><p className="text-xl font-bold">{String(value)}</p></div>)}</div><div className="mt-4 flex flex-wrap gap-2"><button className={buttonClass} disabled={busy||!canManage} onClick={()=>exportReport('csv')}>Export CSV</button><button className={buttonClass} disabled={busy||!canManage} onClick={()=>exportReport('xlsx')}>Export XLSX</button><button className={buttonClass} disabled={busy||!canManage} onClick={()=>exportReport('pdf')}>Export PDF</button><button className="rounded-lg border border-slate-300 px-3 py-2 text-xs" onClick={()=>void load('reports')}>Refresh report</button></div><p className="mt-2 text-[11px] text-slate-500">Report export permission is enforced by the server. Individual records are not exported.</p></>)}
-      {tab==='audit'&&panel('Audit trail','Read-only, tenant-scoped metadata. Filter by date and browse older events; event details and invitation secrets are not exposed.',<><div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-end"><label className="block text-xs font-semibold">From date<input aria-label="Audit start date" type="date" className={inputClass} value={auditStartDate} onChange={e=>setAuditStartDate(e.target.value)}/></label><label className="block text-xs font-semibold">To date<input aria-label="Audit end date" type="date" className={inputClass} value={auditEndDate} onChange={e=>setAuditEndDate(e.target.value)}/></label><button type="button" className={buttonClass} disabled={busy} onClick={()=>void load('audit')}>Apply date filter</button></div><input className={inputClass+" mt-3"} placeholder="Filter loaded events by action or actor UID" value={search} onChange={e=>setSearch(e.target.value)}/>{list(audit.filter(row=>JSON.stringify(row).toLowerCase().includes(search.toLowerCase())),['actorUid','targetUid','targetResourceId','occurredAt'])}<div className="mt-3 flex flex-wrap items-center justify-between gap-2"><p className="text-xs text-slate-500" role="status">{audit.length} audit events loaded{auditHasMore?' · more events available':''}</p><button type="button" className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold disabled:opacity-50" disabled={busy||!auditHasMore||!auditNextCursor} onClick={()=>void load('audit',{cursor:auditNextCursor,append:true})}>Load older events</button></div></>)}
+      {tab==='audit'&&panel('Audit trail','Read-only, tenant-scoped metadata. Event details and invitation secrets are not exposed.',<><input className={inputClass} placeholder="Filter by action or actor UID" value={search} onChange={e=>setSearch(e.target.value)}/>{list(audit.filter(row=>JSON.stringify(row).toLowerCase().includes(search.toLowerCase())),['actorUid','targetUid','targetResourceId','occurredAt'])}</>)}
       {tab==='members'&&<div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        {panel('PMC membership directory','UID, role, status and timestamps only.',(members.length?members.map(row=><div key={String(row.uid)} className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 py-3"><div><strong className="text-sm">{String(row.uid)}</strong><p className="text-xs text-slate-500">{String(row.role)} · {String(row.status)}</p></div>{canManage&&(membership.role==='tenant_super_admin'?row.role!=='tenant_super_admin':['tenant_manager','tenant_employee','tenant_auditor'].includes(String(row.role)))&&<div className="flex flex-wrap gap-2">{row.status==='active'&&<select aria-label="Change member role" className="rounded border border-slate-300 p-1 text-xs" defaultValue={String(row.role)} onChange={e=>manageMember(String(row.uid),'members:role:assign',e.target.value as Role)}><option value={String(row.role)}>{String(row.role)}</option>{(membership.role==='tenant_super_admin'?['tenant_admin','tenant_manager','tenant_employee','tenant_auditor']:['tenant_manager','tenant_employee','tenant_auditor']).filter(x=>x!==row.role).map(x=><option key={x} value={x}>{x}</option>)}</select>}{row.status==='active'&&<button type="button" className="text-xs text-red-700 underline" onClick={()=>{if(window.confirm('Suspend this PMC membership?'))void manageMember(String(row.uid),'members:suspend');}}>Suspend</button>}{row.status==='suspended'&&<button type="button" className="text-xs text-emerald-700 underline" onClick={()=>{if(window.confirm('Reactivate this PMC membership?'))void manageMember(String(row.uid),'members:reactivate');}}>Reactivate</button>}</div>}</div>):<p className="py-5 text-sm text-slate-500">No PMC members found.</p>))}
-        {canManage&&panel('Invite verified account','The invitee must already have a verified Firebase account. Delivery is manual through an approved channel.',<div className="space-y-2"><input type="email" className={inputClass} placeholder="Verified Firebase account email" value={memberForm.email} onChange={e=>setMemberForm({...memberForm,email:e.target.value})}/><select className={inputClass} value={memberForm.role} onChange={e=>setMemberForm({...memberForm,role:e.target.value as Role})}>{(membership.role==='tenant_super_admin'?['tenant_admin','tenant_manager','tenant_employee','tenant_auditor']:['tenant_manager','tenant_employee','tenant_auditor']).map(role=><option key={role} value={role}>{role}</option>)}</select><button className={buttonClass} disabled={busy||!memberForm.email.trim()} onClick={inviteMember}>Create invitation</button>{invitationReceipt&&<section className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-slate-900" aria-labelledby="invitation-receipt-title"><h3 id="invitation-receipt-title" className="text-sm font-semibold">Invitation created — share securely</h3><p className="mt-1 text-xs">Recipient: {invitationReceipt.email} · Role: {invitationReceipt.role}</p><label className="mt-2 block text-xs font-semibold" htmlFor="tenant-invitation-id">One-time invitation ID</label><input id="tenant-invitation-id" className={inputClass} readOnly value={invitationReceipt.invitationId} onFocus={e=>e.currentTarget.select()}/><button type="button" className="mt-2 rounded-lg border border-slate-400 px-3 py-2 text-xs font-semibold" onClick={()=>void copyInvitationId()}>Copy invitation ID</button>{invitationReceipt.expiresAt&&<p className="mt-2 text-xs">Expires: {new Date(invitationReceipt.expiresAt).toLocaleString()}</p>}<p className="mt-2 text-xs">Do not post this identifier publicly. It is valid only for the intended verified account.</p>{invitationCopyStatus&&<p className="mt-2 text-xs" role="status">{invitationCopyStatus}</p>}</section>}</div>)}
+        {panel('PMC membership directory','UID, role, status and timestamps only.',(members.length?members.map(row=><div key={String(row.uid)} className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 py-3"><div><strong className="text-sm">{String(row.uid)}</strong><p className="text-xs text-slate-500">{String(row.role)} · {String(row.status)}</p></div>{canManage&&(membership.role==='tenant_super_admin'?row.role!=='tenant_super_admin':['tenant_manager','tenant_employee','tenant_auditor'].includes(String(row.role)))&&<div className="flex flex-wrap gap-2"><select aria-label="Change member role" className="rounded border border-slate-300 p-1 text-xs" defaultValue={String(row.role)} onChange={e=>manageMember(String(row.uid),'members:role:assign',e.target.value as Role)}><option value={String(row.role)}>{String(row.role)}</option>{(membership.role==='tenant_super_admin'?['tenant_admin','tenant_manager','tenant_employee','tenant_auditor']:['tenant_manager','tenant_employee','tenant_auditor']).filter(x=>x!==row.role).map(x=><option key={x} value={x}>{x}</option>)}</select>{row.status==='active'&&<button type="button" className="text-xs text-red-700 underline" onClick={()=>{if(window.confirm('Suspend this PMC membership?'))void manageMember(String(row.uid),'members:suspend');}}>Suspend</button>}</div>}</div>):<p className="py-5 text-sm text-slate-500">No PMC members found.</p>))}
+        {canManage&&panel('Invite verified account','The invitee must already have a verified Firebase account. Delivery is not automatic.',<div className="space-y-2"><input type="email" className={inputClass} placeholder="Verified Firebase account email" value={memberForm.email} onChange={e=>setMemberForm({...memberForm,email:e.target.value})}/><select className={inputClass} value={memberForm.role} onChange={e=>setMemberForm({...memberForm,role:e.target.value as Role})}>{(membership.role==='tenant_super_admin'?['tenant_admin','tenant_manager','tenant_employee','tenant_auditor']:['tenant_manager','tenant_employee','tenant_auditor']).map(role=><option key={role} value={role}>{role}</option>)}</select><button className={buttonClass} disabled={busy||!memberForm.email.trim()} onClick={inviteMember}>Create invitation</button></div>)}
       </div>}
       {tab==='notifications'&&panel('In-app activity feed','Derived from tenant audit events. This is not email, SMS, push delivery or a read-receipt service.',list(activity,['actorUid','targetResourceId','occurredAt']))}
       {tab==='configuration'&&panel('PMC configuration','Organisation-level settings. Only the PMC Super Admin can change these values.',<div className="max-w-xl space-y-3"><label className="block text-xs font-semibold">Timezone<select className={inputClass} value={settingsForm.timezone} onChange={e=>setSettingsForm({...settingsForm,timezone:e.target.value})}>{['Asia/Kolkata','UTC','Europe/London','Europe/Moscow','Asia/Dubai','Asia/Singapore'].map(x=><option key={x}>{x}</option>)}</select></label><label className="block text-xs font-semibold">Date format<select className={inputClass} value={settingsForm.dateFormat} onChange={e=>setSettingsForm({...settingsForm,dateFormat:e.target.value})}>{['DD-MM-YYYY','YYYY-MM-DD','MM-DD-YYYY'].map(x=><option key={x}>{x}</option>)}</select></label><label className="block text-xs font-semibold">Default incident priority<select className={inputClass} value={settingsForm.defaultIncidentPriority} onChange={e=>setSettingsForm({...settingsForm,defaultIncidentPriority:e.target.value})}>{['Routine','Moderate','High Attention'].map(x=><option key={x}>{x}</option>)}</select></label><label className="block text-xs font-semibold">Checklist review target (days)<input className={inputClass} type="number" min={1} max={90} value={settingsForm.checklistReviewDays} onChange={e=>setSettingsForm({...settingsForm,checklistReviewDays:Number(e.target.value)})}/></label><label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={settingsForm.notificationsEnabled} onChange={e=>setSettingsForm({...settingsForm,notificationsEnabled:e.target.checked})}/>Enable in-app activity feed</label><button className={buttonClass} disabled={busy} onClick={saveSettings}>Save PMC settings</button><p className="text-[11px] text-slate-500">No outbound notification provider is configured.</p></div>)}
