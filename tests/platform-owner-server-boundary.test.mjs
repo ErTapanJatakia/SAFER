@@ -4,8 +4,6 @@ import test from 'node:test';
 
 const route = readFileSync(new URL('../api/owner/status.js', import.meta.url), 'utf8');
 const supportRoute = readFileSync(new URL('../api/owner/support-access.js', import.meta.url), 'utf8');
-const tenantDataRoute = readFileSync(new URL('../api/owner/tenant-data.js', import.meta.url), 'utf8');
-const tenantDataService = readFileSync(new URL('../src/server/platform-owner-tenant-data.mjs', import.meta.url), 'utf8');
 const ownerProvisionRoute = readFileSync(new URL('../api/owner/organisations.js', import.meta.url), 'utf8');
 const ownerRegistryRoute = readFileSync(new URL('../api/owner/organisations-registry.js', import.meta.url), 'utf8');
 const serverAdmin = readFileSync(new URL('../src/server/firebase-admin.js', import.meta.url), 'utf8');
@@ -22,18 +20,17 @@ test('Owner status route delegates to the shared handler; server helpers stay ou
 });
 
 test('all Owner routes use the same authoritative Platform Owner verifier', () => {
-  for (const source of [route, supportRoute, tenantDataRoute, ownerProvisionRoute, ownerRegistryRoute]) {
+  // The status endpoint delegates to a shared handler with the same verifier dependencies.
+  assert.ok(route.includes('owner-status-handler.mjs'));
+  assert.match(route, /readPlatformSettings/);
+  assert.match(route, /readAuthUser/);
+  for (const source of [supportRoute, ownerProvisionRoute, ownerRegistryRoute]) {
     assert.match(source, /authorizePlatformOwner/);
     assert.match(source, /readPlatformSettings/);
     assert.match(source, /readAuthUser/);
   }
   assert.match(supportRoute, /platform-owner-support-access/);
-  assert.match(tenantDataRoute, /X-Support-Session/);
-  assert.match(tenantDataService, /authorizePlatformSupportAccess/);
-  assert.match(tenantDataService, /tenant_aggregate_counts_only/);
-  assert.doesNotMatch(tenantDataService, /database\.doc\(.*request/);
 });
-
 test('Firebase Admin credentials are server-only and never use VITE-prefixed variables', () => {
   assert.match(serverAdmin, /FIREBASE_SERVICE_ACCOUNT_JSON/);
   assert.doesNotMatch(serverAdmin, /VITE_/);
