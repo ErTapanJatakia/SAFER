@@ -18,12 +18,15 @@ export function isRequestBodyTooLarge(request, maxBytes = DEFAULT_MAX_BODY_BYTES
     if (Number(raw) > maxBytes) return true;
   }
 
-  const body = request?.body;
-  if (body === undefined || body === null) return false;
+  let body;
   let serialized;
   try {
+    // Vercel's request.body helper may throw while parsing malformed JSON.
+    body = request?.body;
+    if (body === undefined || body === null) return false;
     serialized = typeof body === 'string' ? body : JSON.stringify(body);
   } catch {
+    // Reject unreadable payloads before route code can access the body again.
     return true;
   }
   if (typeof serialized !== 'string') return true;
