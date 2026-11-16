@@ -180,14 +180,13 @@ The future rules and client validators must enforce:
 
 Firestore Rules have expression and document-size limits. Complex schema validation may require splitting documents rather than accumulating deeply nested validation expressions. Rules are not a substitute for full application-level semantic validation.
 
-## 6. Manager permissions — explicit decision
+## 6. Manager permissions — canonical policy reference
 
-Managers are **read/write disabled for all Firestore tenant collections in schema v1**. The earlier matrix's generic “manager operational contributor” description is superseded by this more conservative decision. Manager UI controls must not be interpreted as authority. A later change may propose a specific capability, such as updating a limited incident workflow field, only after:
-1. the exact fields and transitions are specified;
-2. restricted content is separated;
-3. immutable fields and transition rules are defined;
-4. positive and negative emulator tests prove the boundaries;
-5. the policy and UI behaviour are reviewed together.
+The earlier statement that Managers have no tenant-collection access is **superseded** by the canonical role catalogue in `docs/architecture/rbac-01-tenant-permission-engine.md`. The current Manager scope is limited to operational work: read the minimised personnel directory, read/create/update permitted incident summaries, read/register evidence metadata, read/update checklists, and read aggregate reports. Managers cannot administer memberships or read tenant audit events.
+
+The candidate `firestore.rules` file and server APIs must enforce only the exact scopes in that canonical catalogue. The candidate rules do not authorise access to restricted personnel or incident detail. Production remains deny-all through `firebase.json` and `firestore.production.rules`; candidate rules are emulator-only until the separate release gates are met.
+
+Any future permission change must update the RBAC catalogue, API authorization, candidate Rules, and positive/negative emulator tests together. Manager UI controls are never authority.
 
 ## 7. Migration compatibility and data exclusions
 
@@ -211,7 +210,7 @@ The future rules implementation must test at least:
 - unauthenticated user denied every path;
 - authenticated user without membership denied tenant records;
 - active owner/admin permitted only the explicitly allowed v1 operations;
-- manager and viewer denied all tenant operational reads/writes in v1;
+- Manager access limited to the canonical RBAC-01 operational scopes; no membership administration or audit-event access;
 - suspended/revoked/missing membership denied;
 - user A cannot read/write user B profile or another tenant;
 - spoofed `orgId`, record IDs, creator UID, updater UID, timestamps, and cross-tenant references denied;
