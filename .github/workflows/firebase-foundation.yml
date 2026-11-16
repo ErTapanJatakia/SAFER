@@ -87,6 +87,9 @@ jobs:
       - name: Platform Owner authorization and bootstrap tests
         run: npm run test:platform-owner
 
+      - name: Production Firestore configuration guard
+        run: npm run test:firestore-production-config
+
       - name: Firestore Security Rules Emulator tests
         run: npm run test:firestore-rules
 
