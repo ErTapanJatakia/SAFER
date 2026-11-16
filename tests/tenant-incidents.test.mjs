@@ -52,3 +52,22 @@ test('invalid incident fields are rejected',async()=>{
   const db=fakeDb();
   await assert.rejects(()=>createTenantIncident({orgId,actorUid:'u1',input:{incidentType:'Unknown',title:'x',summary:'y'},database:db,serverTimestamp:stamp}),/invalid_incident_data/);
 });
+
+test('incident timestamps must be valid bounded RFC3339 values', async()=>{
+  const db=fakeDb();
+  await assert.rejects(()=>createTenantIncident({
+    orgId,actorUid:'u1',
+    input:{incidentType:'Equipment Malfunction',title:'Door sensor fault',summary:'Sensor reported intermittent failure.',dateReported:1730000000000},
+    database:db,serverTimestamp:stamp,
+  }),/invalid_incident_data/);
+  await assert.rejects(()=>createTenantIncident({
+    orgId,actorUid:'u1',
+    input:{incidentType:'Equipment Malfunction',title:'Door sensor fault',summary:'Sensor reported intermittent failure.',dateReported:'2026-02-30T10:00:00Z'},
+    database:db,serverTimestamp:stamp,
+  }),/invalid_incident_data/);
+  await assert.rejects(()=>createTenantIncident({
+    orgId,actorUid:'u1',
+    input:{incidentType:'Equipment Malfunction',title:'Door sensor fault',summary:'Sensor reported intermittent failure.',dateReported:new Date(Date.now()+60*60*1000).toISOString()},
+    database:db,serverTimestamp:stamp,
+  }),/invalid_incident_data/);
+});
