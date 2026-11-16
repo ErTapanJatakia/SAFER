@@ -1,5 +1,5 @@
 const ORG_ID = /^org_[a-f0-9]{32}$/;
-const EVENT_ID = /^[a-f0-9]{32}$/i;
+const EVENT_ID = /^[A-Za-z0-9_-]{1,128}$/;
 const ACTION = /^[a-z][a-z0-9_.:-]{1,127}$/;
 const DATE = /^\\d{4}-\\d{2}-\\d{2}$/;
 
@@ -41,7 +41,11 @@ export async function listTenantAuditEvents({
 
   if (cursor) {
     const cursorSnapshot = await database.doc(`${collectionPath}/${cursor}`).get();
-    if (!cursorSnapshot.exists || cursorSnapshot.data()?.orgId !== orgId) {
+    const cursorData = cursorSnapshot.data();
+    const cursorTime = cursorData?.occurredAt?.toDate?.();
+    if (!cursorSnapshot.exists || cursorData?.orgId !== orgId
+      || !(cursorTime instanceof Date) || !Number.isFinite(cursorTime.getTime())
+      || (start && cursorTime < start) || (end && cursorTime >= end)) {
       const error = new Error('invalid_request'); error.code = 'invalid_request'; throw error;
     }
     query = query.startAfter(cursorSnapshot);
