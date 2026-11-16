@@ -36,9 +36,16 @@ export async function createOrganisationWithSuperAdminInvitation({
   const actor = requiredText(actorUid, 'authenticated Platform Owner UID', 128);
   if (!/^[A-Za-z0-9_-]+$/.test(actor)) throw new Error('The authenticated Platform Owner identity is invalid.');
 
+  if (!authAdmin?.getUserByEmail || !database?.runTransaction || !database?.doc
+    || !database?.collection || typeof serverTimestamp !== 'function') {
+    throw new Error('Organisation provisioning is unavailable.');
+  }
   const invitedUser = await authAdmin.getUserByEmail(email);
-  if (!invitedUser.emailVerified) throw new Error('The nominated Super Admin must verify their email before invitation.');
-  if (invitedUser.disabled) throw new Error('The nominated Super Admin account is disabled.');
+  if (!invitedUser || invitedUser.disabled === true || invitedUser.emailVerified !== true
+    || typeof invitedUser.uid !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(invitedUser.uid)
+    || normalizeEmail(invitedUser.email) !== email) {
+    throw new Error('The nominated Super Admin account is not eligible.');
+  }
 
   const orgId = `org_${randomUUID().replace(/-/g, '')}`;
   const invitationId = randomBytes(32).toString('base64url');
@@ -88,4 +95,81 @@ export async function createOrganisationWithSuperAdminInvitation({
     status: 'provisioning',
     superAdminInvitation: { invitationId, uid: invitedUser.uid, email, status: 'pending', expiresAt: invitationExpiresAt.toISOString() },
   };
+}
+
+
+/**
+ * Cancels the initial Super Admin invitation before it is accepted. The
+ * organisation is moved to suspended/revoked state in the same transaction,
+ * so the generic registry cannot reactivate this provisioning record.
+ */
+export async function revokeSuperAdminInvitation({
+  orgId, invitationId, actorUid, reason, database, serverTimestamp,
+}) {
+  if (typeof orgId !== 'string' || !/^org_[a-f0-9]{32}$/.test(orgId)
+    || typeof invitationId !== 'string' || !/^[A-Za-z0-9_-]{40,50}$/.test(invitationId)
+    || typeof actorUid !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(actorUid)
+    || typeof reason !== 'string' || reason.trim().length < 10
+    || reason.trim().length > 500 || /[\u0000-\u001f\u007f]/.test(reason)) {
+    throw new Error('invalid_super_admin_invitation_request');
+  }
+  if (!database?.runTransaction || !database?.doc || !database?.collection
+    || typeof serverTimestamp !== 'function') {
+    throw new Error('organisation_invitation_revocation_unavailable');
+  }
+
+  const organisationRef = database.doc('organisations/' + orgId);
+  const invitationRef = database.doc('organisations/' + orgId + '/invitations/' + invitationId);
+  const auditRef = database.collection('platformAuditEvents').doc();
+  const timestamp = serverTimestamp();
+
+  return database.runTransaction(async (transaction) => {
+    const [organisationSnapshot, invitationSnapshot] = await Promise.all([
+      transaction.get(organisationRef),
+      transaction.get(invitationRef),
+    ]);
+    if (!organisationSnapshot.exists || !invitationSnapshot.exists) {
+      throw new Error('super_admin_invitation_not_found');
+    }
+    const organisation = organisationSnapshot.data();
+    const invitation = invitationSnapshot.data();
+    if (organisation.orgId !== orgId || organisation.status !== 'provisioning'
+      || organisation.lifecycleStage !== 'super_admin_invitation_pending') {
+      throw new Error('super_admin_invitation_not_pending');
+    }
+    if (invitation.invitationId !== invitationId || invitation.orgId !== orgId
+      || invitation.role !== 'tenant_super_admin' || invitation.schemaVersion !== 1
+      || !/^[A-Za-z0-9_-]{1,128}$/.test(invitation.uid ?? '')
+      || !/^[A-Za-z0-9_-]{1,128}$/.test(invitation.invitedByUid ?? '')
+      || typeof invitation.email !== 'string'
+      || normalizeEmail(invitation.email) !== invitation.email.toLowerCase()) {
+      throw new Error('super_admin_invitation_unavailable');
+    }
+    if (invitation.status !== 'pending') throw new Error('super_admin_invitation_not_pending');
+
+    transaction.update(invitationRef, {
+      status: 'revoked',
+      revokedAt: timestamp,
+      revokedByUid: actorUid,
+      revocationReason: reason.trim(),
+      updatedAt: timestamp,
+    });
+    transaction.update(organisationRef, {
+      status: 'suspended',
+      lifecycleStage: 'super_admin_invitation_revoked',
+      suspendedAt: timestamp,
+      suspendedByUid: actorUid,
+      updatedAt: timestamp,
+      updatedByUid: actorUid,
+    });
+    transaction.create(auditRef, {
+      action: 'organisation.super_admin_invitation_revoked',
+      actorUid,
+      targetOrgId: orgId,
+      targetUid: invitation.uid,
+      details: { invitationId, reason: reason.trim() },
+      occurredAt: timestamp,
+    });
+    return { orgId, invitationId, status: 'revoked', organisationStatus: 'suspended' };
+  });
 }

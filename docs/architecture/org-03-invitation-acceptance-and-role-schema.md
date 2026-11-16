@@ -48,6 +48,12 @@ The tenant administration API exposes a separate authenticated endpoint: `POST /
 
 The revocation service performs a permission preflight before reading the caller-supplied invitation ID, then rechecks the actor, organisation, invitation identity, role and pending state in the mutation transaction. Only invitations for assignable non-Super-Admin roles can be revoked. The invitation status update and tenant audit event are written in the same transaction. Accepted, expired-state, already-revoked, malformed and missing invitations are not mutated. A revoked invitation is rejected by the existing acceptance service because it no longer has `pending` status.
 
+## 4.2 Platform Owner revocation of the initial Super Admin invitation
+
+The initial organisation-provisioning invitation has a separate Owner-only endpoint: `POST /api/owner/organisations/invitations/revoke`. It requires a verified active Platform Owner principal and accepts the organisation locator, opaque invitation ID and a bounded revocation reason. The service verifies the organisation is still in `provisioning` at `super_admin_invitation_pending`, and verifies the invitation is the matching pending `tenant_super_admin` invitation.
+
+One Firestore transaction marks the invitation `revoked`, moves the organisation to `suspended` with lifecycle stage `super_admin_invitation_revoked`, and appends a platform audit event. This is deliberately fail-closed: the generic registry cannot reactivate the revoked provisioning record. A replacement-invitation workflow is not yet implemented; a new nomination must not be simulated by editing the old invitation.
+
 ## 4. Activation gate
 
 Acceptance and activation are separate states:

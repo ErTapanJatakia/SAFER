@@ -14,6 +14,7 @@ const routes = [
   'api/tenant/evidence.js',
   'api/tenant/reports.js',
   'api/owner/organisations.js',
+  'api/owner/organisations/invitations/revoke.js',
   'api/owner/organisations-registry.js',
   'api/owner/support-access.js',
 ];
