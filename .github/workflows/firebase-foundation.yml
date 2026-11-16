@@ -41,7 +41,7 @@ on:
       - ".github/workflows/firebase-foundation.yml"
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: safer-dependency-validation-${{ github.ref }}
@@ -55,7 +55,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref || github.ref_name }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -71,9 +71,6 @@ jobs:
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
-
-      - name: Regenerate Bun lockfile
-        run: bun install --lockfile-only
 
       - name: Install from frozen Bun lockfile
         run: bun install --frozen-lockfile
@@ -274,14 +271,3 @@ jobs:
 
       - name: Production build
         run: npm run build
-
-      - name: Commit regenerated lockfiles
-        if: success()
-        run: |
-          if ! git diff --quiet -- package-lock.json bun.lock; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add package-lock.json bun.lock
-            git commit -m "chore: synchronize dependency lockfiles"
-            git push
-          fi
