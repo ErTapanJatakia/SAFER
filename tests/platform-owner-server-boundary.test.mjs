@@ -36,7 +36,7 @@ test('all Owner routes use the authoritative Platform Owner verifier and support
   assert.ok(tenantDataRoute.includes('X-Support-Session'));
   assert.ok(tenantDataService.includes('authorizePlatformSupportAccess'));
   assert.ok(tenantDataService.includes('tenant_aggregate_counts_only'));
-  assert.ok(!tenantDataService.includes('database.doc(') || !tenantDataService.includes('request'));
+  assert.ok(!tenantDataService.includes('request.'));
 });
 
 test('Firebase Admin credentials are server-only and never use VITE-prefixed variables', () => {
