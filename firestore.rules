@@ -312,7 +312,7 @@ service cloud.firestore {
           || (tenantMemberReader(orgId)
             && validCanonicalMemberDocument(resource.data, uid, orgId));
         allow list: if tenantMemberReader(orgId)
-          && validCanonicalMemberDocument(resource.data, resource.data.uid, orgId);
+          && validCanonicalMemberDocument(resource.data, uid, orgId);
         allow create, update, delete: if false;
       }
 

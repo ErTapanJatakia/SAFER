@@ -533,3 +533,19 @@ test("incident updates reject extra keys, immutable identity/reporter provenance
     await assertFails(updateDoc(incident, changes));
   }
 });
+
+test("member directory rejects membership documents whose UID differs from the document path", async () => {
+  const orgId = "directory-mismatched-member-id";
+  const ownerUid = "directory-mismatch-owner";
+  await seedTenant({ orgId, uid: ownerUid, role: "tenant_super_admin" });
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(
+      doc(db, `organisations/${orgId}/members/document-user`),
+      membershipRecord("different-user", orgId, "tenant_employee"),
+    );
+  });
+  const db = dbFor(ownerUid);
+  await assertFails(getDoc(doc(db, `organisations/${orgId}/members/document-user`)));
+  await assertFails(getDocs(collection(db, `organisations/${orgId}/members`)));
+});
