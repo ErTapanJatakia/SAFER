@@ -17,6 +17,20 @@ function validateText(value, max, required = false) {
   if (typeof value !== 'string' || value.length > max || (required && !value.trim())) fail('invalid_incident_data');
   return value.trim();
 }
+function safeInput(value, allowed) {
+  try {
+    if (!value || typeof value !== 'object' || Array.isArray(value)
+      || (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null)
+      || Object.getOwnPropertySymbols(value).length > 0) return null;
+    const descriptors = Object.getOwnPropertyDescriptors(value);
+    const keys = Object.keys(descriptors);
+    if (!keys.length || keys.some((key) => !allowed.has(key)
+      || !Object.hasOwn(descriptors[key], 'value'))) return null;
+    return Object.fromEntries(keys.map((key) => [key, descriptors[key].value]));
+  } catch {
+    return null;
+  }
+}
 function parseIncidentDate(value) {
   if (value === undefined || value === null || value === '') return new Date();
   if (typeof value !== 'string'
@@ -81,6 +95,8 @@ export async function listTenantIncidents({ orgId, actorUid, role, database, lim
 export async function createTenantIncident({ orgId, actorUid, input, database, serverTimestamp }) {
   assertOrg(orgId);
   if (!UID.test(actorUid ?? '') || !database?.runTransaction || typeof serverTimestamp !== 'function') fail('invalid_request');
+  input = safeInput(input, new Set(['orgId', 'dateReported', 'incidentType', 'title', 'priority', 'summary', 'locationLabel']));
+  if (!input || (input.orgId !== undefined && input.orgId !== orgId)) fail('invalid_incident_data');
   const incidentId = `inc_${randomBytes(16).toString('hex')}`;
   const referenceNumber = `IR-${randomBytes(5).toString('hex').toUpperCase()}`;
   const ref = database.doc(`organisations/${orgId}/incidents/${incidentId}`);
@@ -115,9 +131,8 @@ export async function updateTenantIncident({ orgId, actorUid, incidentId, patch,
   assertOrg(orgId);
   if (!UID.test(actorUid ?? '') || !/^inc_[a-f0-9]{32}$/.test(incidentId ?? '')
     || !database?.runTransaction || typeof serverTimestamp !== 'function') fail('invalid_request');
-  const allowed = ['status', 'priority', 'summary'];
-  if (!patch || typeof patch !== 'object' || Array.isArray(patch)
-    || Object.keys(patch).length === 0 || Object.keys(patch).some((key) => !allowed.includes(key))) fail('invalid_incident_data');
+  patch = safeInput(patch, new Set(['status', 'priority', 'summary']));
+  if (!patch) fail('invalid_incident_data');
   if ('status' in patch && !STATUSES.includes(patch.status)) fail('invalid_incident_data');
   if ('priority' in patch && !PRIORITIES.includes(patch.priority)) fail('invalid_incident_data');
   if ('summary' in patch) patch = { ...patch, summary: validateText(patch.summary, 2000, true) };
