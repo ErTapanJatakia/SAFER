@@ -187,31 +187,32 @@ Protection operations coordinators, supervisors, and administrative officers fac
 
 ### Local development
 
-Requirements: Node.js 22 and npm. From the repository root:
+Requirements: Node.js 22, Bun 1.4.4, and Java 21 for Firestore Emulator tests. Bun is the repository's package manager and `bun.lock` is the authoritative dependency lockfile. From the repository root:
 
 ```bash
-npm install
-npm run dev
+bun install --frozen-lockfile
+bun run dev
 ```
 
 The Vite development server starts on port 3000. To validate locally:
 
 ```bash
-npm run lint
-npm run build
+bun run lint
+bun run build
 node --test tests/vercel-security-headers.test.mjs
-npm run test:firestore-rules
-npm run test:tenant-membership
-npm run test:auth-membership-ui
-npm run test:data-boundary
-npm run test:demo-repository
-npm run test:demo-workspace
-npm run test:session-lifecycle
-npm run test:session-invalidation
-npm audit --omit=dev --audit-level=high
+bun run test:firestore-production-config
+bun run test:firestore-rules
+bun run test:tenant-membership
+bun run test:auth-membership-ui
+bun run test:data-boundary
+bun run test:demo-repository
+bun run test:demo-workspace
+bun run test:session-lifecycle
+bun run test:session-invalidation
+bun audit --prod --audit-level=high
 ```
 
-Firebase Emulator tests require the Java runtime used by the CI workflow. The CI pipeline also installs dependencies from the frozen Bun lockfile before running validation.
+Firestore emulator tests use the explicit `firebase.emulator.json` configuration and candidate rules. The default `firebase.json` configuration selects deny-all production rules. Emulator tests require Java 21 and use only the synthetic `demo-safer` project.
 
 ---
 
