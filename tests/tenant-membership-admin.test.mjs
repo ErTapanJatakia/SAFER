@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { inviteTenantMember, manageTenantMember, TenantMembershipError } from '../src/server/tenant-membership-admin.mjs';
 
-function fixture({ actorRole = 'tenant_super_admin', targetRole = null } = {}) {
+function fixture({ actorRole = 'tenant_super_admin', targetRole = null, targetStatus = 'active' } = {}) {
   const records = new Map();
   const audit = [];
   const orgId = 'org_0123456789abcdef0123456789abcdef';
@@ -15,7 +15,7 @@ function fixture({ actorRole = 'tenant_super_admin', targetRole = null } = {}) {
   });
   records.set(`organisations/${orgId}`, { orgId, status: 'active' });
   records.set(`organisations/${orgId}/members/${actorUid}`, member(actorUid, actorRole));
-  if (targetRole) records.set(`organisations/${orgId}/members/${targetUid}`, member(targetUid, targetRole));
+  if (targetRole) records.set(`organisations/${orgId}/members/${targetUid}`, member(targetUid, targetRole, targetStatus));
   const database = {
     doc: (path) => ({ path }),
     collection: (path) => ({ doc: () => ({ path: `${path}/audit-${audit.length + 1}` }) }),
@@ -119,4 +119,32 @@ test('suspended or non-active tenant context cannot administer memberships', asy
     role: 'tenant_employee', database: f.database, authAdmin: f.authAdmin,
     serverTimestamp: () => new Date(),
   }), (error) => error.code === 'active_organisation_required');
+});
+
+
+test('Super Admin and Admin can reactivate a suspended lower-role member with an audit event', async () => {
+  const f = fixture({ actorRole: 'tenant_admin', targetRole: 'tenant_employee', targetStatus: 'suspended' });
+  const result = await manageTenantMember({
+    orgId: f.orgId, actorUid: f.actorUid, targetUid: f.targetUid,
+    action: 'members:reactivate', database: f.database, serverTimestamp: () => new Date(),
+  });
+  assert.equal(result.status, 'active');
+  assert.equal(f.records.get(`organisations/${f.orgId}/members/${f.targetUid}`).status, 'active');
+  assert.equal(f.audit[0].action, 'tenant.member.reactivated');
+  assert.equal(f.audit[0].details.previousStatus, 'suspended');
+  assert.equal(f.audit[0].details.newStatus, 'active');
+});
+
+test('membership reactivation is restricted to suspended manageable members', async () => {
+  const active = fixture({ actorRole: 'tenant_admin', targetRole: 'tenant_employee', targetStatus: 'active' });
+  await assert.rejects(manageTenantMember({
+    orgId: active.orgId, actorUid: active.actorUid, targetUid: active.targetUid,
+    action: 'members:reactivate', database: active.database, serverTimestamp: () => new Date(),
+  }), (error) => error.code === 'active_tenant_membership_required');
+
+  const manager = fixture({ actorRole: 'tenant_manager', targetRole: 'tenant_employee', targetStatus: 'suspended' });
+  await assert.rejects(manageTenantMember({
+    orgId: manager.orgId, actorUid: manager.actorUid, targetUid: manager.targetUid,
+    action: 'members:reactivate', database: manager.database, serverTimestamp: () => new Date(),
+  }), (error) => error.code === 'role_permission_denied');
 });
