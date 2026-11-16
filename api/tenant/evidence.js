@@ -1,3 +1,4 @@
+import { isRequestBodyTooLarge } from '../../src/server/request-body-limit.mjs';
 import {listTenantEvidence,registerTenantEvidence,TenantEvidenceError} from '../../src/server/tenant-evidence.mjs';
 import {resolveTenantAuthorization,TenantAuthorizationError} from '../../src/server/tenant-authorization.mjs';
 function bearer(req){const h=req.headers?.authorization;if(typeof h!=='string'||!h.startsWith('Bearer '))return null;const t=h.slice(7).trim();return t&&!/\s/.test(t)?t:null;}
@@ -11,6 +12,7 @@ function status(error){
 export default async function handler(req,res){
  res.setHeader('Cache-Control','no-store, max-age=0');res.setHeader('Pragma','no-cache');res.setHeader('X-Content-Type-Options','nosniff');
  if(!['GET','POST'].includes(req.method)){res.setHeader('Allow','GET, POST');return res.status(405).json({error:'method_not_allowed'});}
+ if (isRequestBodyTooLarge(req)) return res.status(413).json({ error: 'request_body_too_large' });
  const token=bearer(req);if(!token)return res.status(401).json({error:'unauthenticated'});
  try{
   const [{platformAuth,platformDb},{FieldValue}]=await Promise.all([import('../../src/server/firebase-admin.js'),import('firebase-admin/firestore')]);
@@ -27,11 +29,3 @@ export default async function handler(req,res){
  }
 }
 
-// Bound parsed JSON payloads before authorization or business logic runs.
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '64kb',
-    },
-  },
-};

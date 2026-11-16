@@ -1,3 +1,4 @@
+import { isRequestBodyTooLarge } from '../../../src/server/request-body-limit.mjs';
 import { acceptTenantMemberInvitation, TenantInvitationAcceptanceError } from '../../../src/server/tenant-member-invitation-acceptance.mjs';
 
 function bearerToken(request) {
@@ -15,6 +16,7 @@ export default async function handler(request, response) {
     response.setHeader('Allow', 'POST');
     return response.status(405).json({ error: 'method_not_allowed' });
   }
+  if (isRequestBodyTooLarge(request)) return response.status(413).json({ error: 'request_body_too_large' });
   const token = bearerToken(request);
   if (!token) return response.status(401).json({ error: 'unauthenticated' });
 
@@ -73,11 +75,3 @@ export default async function handler(request, response) {
   }
 }
 
-// Bound parsed JSON payloads before authorization or business logic runs.
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '64kb',
-    },
-  },
-};

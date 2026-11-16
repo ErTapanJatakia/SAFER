@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { isRequestBodyTooLarge } from '../src/server/request-body-limit.mjs';
 
 const routes = [
   'api/tenant/members.js',
@@ -16,10 +17,28 @@ const routes = [
   'api/owner/support-access.js',
 ];
 
-test('all JSON-mutating tenant and Owner API routes enforce a bounded parsed body', () => {
+test('all mutation-capable tenant and Owner routes enforce the shared 64 KiB payload guard', () => {
   for (const path of routes) {
     const source = readFileSync(new URL('../' + path, import.meta.url), 'utf8');
-    assert.match(source, /export const config\s*=\s*\{/u, path + ' exports Vercel config');
-    assert.match(source, /bodyParser\s*:\s*\{\s*sizeLimit\s*:\s*'64kb'/u, path + ' limits parsed JSON bodies');
+    assert.match(source, /request-body-limit\.mjs/u, path + ' imports the shared guard');
+    assert.match(source, /isRequestBodyTooLarge\((?:request|req)\)/u, path + ' checks the request');
+    assert.match(source, /request_body_too_large/u, path + ' returns a bounded error');
+    assert.doesNotMatch(source, /export const config\s*=\s*\{\s*api:/u, path + ' does not rely on Next.js-only bodyParser config');
   }
+});
+
+test('request guard rejects oversized Content-Length before accessing the parsed body', () => {
+  let bodyRead = false;
+  const request = {
+    headers: { 'content-length': '65537' },
+    get body() { bodyRead = true; return {}; },
+  };
+  assert.equal(isRequestBodyTooLarge(request), true);
+  assert.equal(bodyRead, false);
+});
+
+test('request guard rejects oversized parsed JSON and accepts bounded payloads', () => {
+  assert.equal(isRequestBodyTooLarge({ headers: {}, body: { value: 'x'.repeat(65500) } }), true);
+  assert.equal(isRequestBodyTooLarge({ headers: {}, body: { value: 'safe' } }), false);
+  assert.equal(isRequestBodyTooLarge({ headers: { 'content-length': 'not-a-number' }, body: {} }), true);
 });

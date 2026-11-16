@@ -1,3 +1,4 @@
+import { isRequestBodyTooLarge } from '../../src/server/request-body-limit.mjs';
 import { authorizePlatformOwner } from '../../src/server/platform-owner-auth.mjs';
 import {
   changeOrganisationStatus,
@@ -15,6 +16,7 @@ export default async function handler(request, response) {
     return response.status(405).json({ error: 'method_not_allowed' });
   }
 
+  if (isRequestBodyTooLarge(request)) return response.status(413).json({ error: 'request_body_too_large' });
   try {
     const [{ platformAuth, platformDb }, { FieldValue }] = await Promise.all([
       import('../../src/server/firebase-admin.js'),
@@ -58,11 +60,3 @@ export default async function handler(request, response) {
   }
 }
 
-// Bound parsed JSON payloads before authorization or business logic runs.
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '64kb',
-    },
-  },
-};

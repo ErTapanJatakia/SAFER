@@ -43,7 +43,7 @@ These are API/service foundations, not completed UI integrations. Each remains s
 
 ## Request-abuse controls and current limits
 
-All JSON-mutating tenant and Platform Owner API routes declare a Vercel request body parser limit of 64 KiB. This bounds parsed JSON input before route authorization and service logic. Evidence registration remains metadata-only; the limit is not a file-upload allowance.
+All JSON-mutating tenant and Platform Owner API routes enforce an application-level 64 KiB payload limit in the handler. The guard rejects an oversized Content-Length before reading the parsed body and checks the serialized parsed body as a fallback. This is not a streaming parser limit: the Vercel runtime may parse the body before handler invocation, and the hosting platform's function payload cap remains the upstream transport limit. Evidence registration remains metadata-only; the limit is not a file-upload allowance.
 
 The application does not currently claim to provide distributed per-IP or per-account rate limiting. Vercel serverless instances do not share process memory, so an in-memory counter would be bypassable across instances and cold starts. Do not treat such a counter as a security control. A reliable limiter requires a shared atomic counter/store or an approved edge/WAF facility, plus a defined retention and privacy policy. Do not introduce a paid dependency or persistent Firestore counter writes under the current zero-cost constraint without a separate cost and abuse-resistance review.
 
