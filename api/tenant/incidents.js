@@ -1,3 +1,4 @@
+import { isRequestBodyTooLarge } from '../../src/server/request-body-limit.mjs';
 import {
   listTenantIncidents, createTenantIncident, updateTenantIncident, TenantIncidentError,
 } from '../../src/server/tenant-incidents.mjs';
@@ -25,6 +26,7 @@ export default async function handler(req, res) {
     res.setHeader('Allow','GET, POST, PATCH');
     return res.status(405).json({ error:'method_not_allowed' });
   }
+  if (isRequestBodyTooLarge(req)) return res.status(413).json({ error: 'request_body_too_large' });
   const token = bearerToken(req);
   if (!token) return res.status(401).json({ error:'unauthenticated' });
   try {
@@ -83,11 +85,3 @@ export default async function handler(req, res) {
   }
 }
 
-// Bound parsed JSON payloads before authorization or business logic runs.
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '64kb',
-    },
-  },
-};
