@@ -4,6 +4,7 @@ import test from 'node:test';
 
 const route = readFileSync(new URL('../api/owner/status.js', import.meta.url), 'utf8');
 const supportRoute = readFileSync(new URL('../api/owner/support-access.js', import.meta.url), 'utf8');
+const platformAuditRoute = readFileSync(new URL('../api/owner/audit.js', import.meta.url), 'utf8');
 const ownerProvisionRoute = readFileSync(new URL('../api/owner/organisations.js', import.meta.url), 'utf8');
 const ownerRegistryRoute = readFileSync(new URL('../api/owner/organisations-registry.js', import.meta.url), 'utf8');
 const serverAdmin = readFileSync(new URL('../src/server/firebase-admin.js', import.meta.url), 'utf8');
@@ -26,6 +27,13 @@ test('all Owner routes use the same authoritative Platform Owner verifier', () =
     assert.match(source, /readAuthUser/);
   }
   assert.match(supportRoute, /platform-owner-support-access/);
+});
+
+test('Platform audit endpoint is Owner-authenticated and metadata reader is server-side', () => {
+  assert.match(platformAuditRoute, /authorizePlatformOwner/);
+  assert.match(platformAuditRoute, /verifyIdToken\(token, checkRevoked\)/);
+  assert.match(platformAuditRoute, /listPlatformAuditEvents/);
+  assert.match(platformAuditRoute, /Cache-Control/);
 });
 
 test('Firebase Admin credentials are server-only and never use VITE-prefixed variables', () => {
