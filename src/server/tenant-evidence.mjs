@@ -5,6 +5,14 @@ const ORG_ID=/^org_[a-f0-9]{32}$/;
 const UID=/^[A-Za-z0-9_-]{1,128}$/;
 const INCIDENT=/^inc_[a-f0-9]{32}$/;
 const MIME_TYPES=new Set(['application/pdf','image/jpeg','image/png','text/plain']);
+const INPUT_FIELDS=new Set(['orgId','incidentId','title','fileName','mediaType','byteSize','sha256Claimed']);
+function safeInput(value) {
+ if(!value||typeof value!=='object'||Array.isArray(value)
+  ||(Object.getPrototypeOf(value)!==Object.prototype&&Object.getPrototypeOf(value)!==null)
+  ||Object.getOwnPropertySymbols(value).length>0) return false;
+ const descriptors=Object.getOwnPropertyDescriptors(value);
+ return Object.keys(descriptors).every(key=>INPUT_FIELDS.has(key)&&Object.hasOwn(descriptors[key],'value'));
+}
 const FIELDS=['evidenceId','orgId','incidentId','title','fileName','mediaType','byteSize','sha256Claimed','verificationState','createdAt','createdByUid'].sort();
 export class TenantEvidenceError extends Error {
  constructor(code){super(code);this.name='TenantEvidenceError';this.code=code;}
@@ -49,6 +57,7 @@ export async function listTenantEvidence({orgId,database,limit=100}){
 /** Register metadata only. This endpoint does not upload, store, scan, or verify a file. */
 export async function registerTenantEvidence({orgId,actorUid,input,database,serverTimestamp}){
  if(!ORG_ID.test(orgId??'')||!UID.test(actorUid??'')||!database?.runTransaction||typeof serverTimestamp!=='function')fail('invalid_request');
+ if(!safeInput(input)||(input.orgId!==undefined&&input.orgId!==orgId))fail('invalid_evidence_data');
  const incidentId=input?.incidentId;
  if(!INCIDENT.test(incidentId??''))fail('invalid_evidence_data');
  const title=typeof input?.title==='string'?input.title.trim():'';
