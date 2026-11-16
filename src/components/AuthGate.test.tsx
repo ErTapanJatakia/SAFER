@@ -1,4 +1,5 @@
 import React, {act} from 'react';
+import {readFileSync} from 'node:fs';
 import {createRoot, type Root} from 'react-dom/client';
 import {JSDOM} from 'jsdom';
 import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest';
@@ -214,4 +215,9 @@ describe('AuthGate membership session handling',()=>{
   expect(host.textContent).toContain('Operational app shell');
   expect(read).toHaveBeenCalledTimes(10);
  });
+});
+
+it('contains no literal escaped newline sequences in the AuthGate TypeScript source',()=>{
+ const source=readFileSync(new URL('./AuthGate.tsx',import.meta.url),'utf8');
+ expect(source).not.toContain('\\n');
 });
