@@ -111,11 +111,20 @@ test('reactivation succeeds only with an active canonical Super Admin and is aud
 });
 
 test('malformed or non-canonical Super Admin membership cannot authorize reactivation', async () => {
-  const member = { ...activeSuperAdmin(), extraPrivilege: true };
-  const database = fakeDatabase({
-    organisation: { orgId, status: 'suspended', lifecycleStage: 'active' },
-    members: [member],
-  });
-  await assert.rejects(change(database), /not permitted without a canonical active Super Admin/);
-  assert.equal(database.writes.length, 0);
+  const canonical = activeSuperAdmin();
+  const malformedMembers = [
+    { ...canonical, extraPrivilege: true },
+    { ...canonical, createdAt: 'not-a-timestamp' },
+    { ...canonical, updatedAt: new Date(Number.NaN) },
+    { ...canonical, createdByUid: 'invalid uid' },
+    { ...canonical, updatedByUid: '' },
+  ];
+  for (const member of malformedMembers) {
+    const database = fakeDatabase({
+      organisation: { orgId, status: 'suspended', lifecycleStage: 'active' },
+      members: [member],
+    });
+    await assert.rejects(change(database), /not permitted without a canonical active Super Admin/);
+    assert.equal(database.writes.length, 0);
+  }
 });
