@@ -24,6 +24,7 @@ export const TENANT_ACTIONS = Object.freeze([
   'members:read',
   'members:invite',
   'members:suspend',
+  'members:reactivate',
   'members:role:assign',
   'personnel:read',
   'personnel:read:own',
@@ -50,7 +51,7 @@ const ALL_TENANT_ACTIONS = TENANT_ACTIONS;
 const ROLE_ACTIONS = Object.freeze({
   tenant_super_admin: new Set(ALL_TENANT_ACTIONS),
   tenant_admin: new Set([
-    'organisation:read', 'members:read', 'members:invite', 'members:suspend',
+    'organisation:read', 'members:read', 'members:invite', 'members:suspend', 'members:reactivate',
     'members:role:assign', 'personnel:read', 'personnel:create', 'personnel:update',
     'incidents:read', 'incidents:create', 'incidents:update', 'evidence:read', 'evidence:register',
     'checklists:read', 'checklists:create', 'checklists:assign', 'checklists:update', 'audit:read', 'reports:read', 'reports:export',
