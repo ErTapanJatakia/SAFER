@@ -104,6 +104,14 @@ export async function inviteTenantMember({
     fail('service_unavailable');
   }
 
+  // Authorize before querying Firebase Auth by email to prevent account-existence
+  // probing by unauthorised callers. The creation transaction below rechecks.
+  await database.runTransaction(async (transaction) => {
+    await authorizeInTransaction(transaction, database, {
+      actorUid, orgId, action: 'members:invite', targetRole: role,
+    });
+  });
+
   let invitedUser;
   try {
     invitedUser = await authAdmin.getUserByEmail(normalizedEmail);

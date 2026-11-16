@@ -120,3 +120,15 @@ test('suspended or non-active tenant context cannot administer memberships', asy
     serverTimestamp: () => new Date(),
   }), (error) => error.code === 'active_organisation_required');
 });
+
+test('unauthorised callers cannot probe Firebase Auth email existence',async()=>{
+ const f=fixture({actorRole:'tenant_employee'});
+ let lookupCalled=false;
+ f.authAdmin.getUserByEmail=async()=>{lookupCalled=true;return null;};
+ await assert.rejects(inviteTenantMember({
+  orgId:f.orgId,actorUid:f.actorUid,email:'probe@example.com',
+  role:'tenant_manager',database:f.database,authAdmin:f.authAdmin,
+  serverTimestamp:()=>new Date(),
+ }), (error)=>error.code==='role_permission_denied');
+ assert.equal(lookupCalled,false);
+});

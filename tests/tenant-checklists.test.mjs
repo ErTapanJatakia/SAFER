@@ -7,3 +7,14 @@ test('Manager assigns checklist to active employee with audit',async()=>{const d
 test('Employee list is scoped to own assigned records',async()=>{const database=db();const result=await listTenantChecklists({orgId,actorUid:'u2',role:'tenant_employee',database});assert.deepEqual(result.records,[]);});
 test('Employee cannot update another employee checklist',async()=>{const database=db('tenant_employee');await assert.rejects(()=>updateTenantChecklist({orgId,actorUid:'u2',checklistId:`chk_${'b'.repeat(32)}`,patch:{status:'Complete'},database,serverTimestamp:()=>new Date()}),/checklist_not_found/);});
 test('Invalid checklist assignment and status rejected',async()=>{await assert.rejects(()=>createTenantChecklist({orgId,actorUid:'u1',input:{...input,assignedToUid:'../x'},database:db(),serverTimestamp:()=>new Date()}),/invalid_checklist_data/);});
+
+test('Checklist creation rejects unknown and cross-tenant input fields',async()=>{
+ const database=db();
+ await assert.rejects(()=>createTenantChecklist({orgId,actorUid:'u1',input:{...input,orgId:`org_${'b'.repeat(32)}`},database,serverTimestamp:()=>new Date()}),/invalid_checklist_data/);
+ await assert.rejects(()=>createTenantChecklist({orgId,actorUid:'u1',input:{...input,healthData:'sensitive'},database,serverTimestamp:()=>new Date()}),/invalid_checklist_data/);
+});
+test('Checklist update rejects accessor-backed patch values without evaluating getters',async()=>{
+ const patch={status:'Complete'};
+ Object.defineProperty(patch,'complianceNotes',{enumerable:true,get(){throw new Error('getter must not execute');}});
+ await assert.rejects(()=>updateTenantChecklist({orgId,actorUid:'u1',checklistId:`chk_${'b'.repeat(32)}`,patch,database:db(),serverTimestamp:()=>new Date()}),/invalid_checklist_data/);
+});
