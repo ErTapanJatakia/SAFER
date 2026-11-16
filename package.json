@@ -88,7 +88,8 @@
     "test:package-manager-integrity": "node --test tests/package-manager-integrity.test.mjs",
     "test:tenant-invitation-revocation": "node --test tests/tenant-invitation-revocation.test.mjs",
     "test:organisation-registry": "node --test tests/organisation-registry.test.mjs",
-    "test:owner-superadmin-invitation-revocation": "node --test tests/owner-superadmin-invitation-revocation.test.mjs"
+    "test:owner-superadmin-invitation-revocation": "node --test tests/owner-superadmin-invitation-revocation.test.mjs",
+    "test:organisation-provisioning": "node --test tests/organisation-provisioning.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
