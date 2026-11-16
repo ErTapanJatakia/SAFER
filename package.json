@@ -9,8 +9,8 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "test:firestore-rules": "firebase emulators:exec --only firestore --project demo-safer \"node --test tests/firestore-rules.test.mjs\"",
-    "test:tenant-membership": "firebase emulators:exec --only firestore --project demo-safer \"tsx --test src/lib/tenantMembership.test.ts\"",
+    "test:firestore-rules": "firebase emulators:exec --config firebase.emulator.json --only firestore --project demo-safer \"node --test tests/firestore-rules.test.mjs\"",
+    "test:tenant-membership": "firebase emulators:exec --config firebase.emulator.json --only firestore --project demo-safer \"tsx --test src/lib/tenantMembership.test.ts\"",
     "test:auth-membership-ui": "vitest run src/components/AuthGate.test.tsx",
     "test:searchable-multiselect": "vitest run src/components/SearchableMultiSelect.test.tsx",
     "test:navbar-accessibility": "vitest run src/components/Navbar.test.tsx",
@@ -86,6 +86,7 @@
     "test:tenant-configuration": "node --test tests/tenant-configuration.test.mjs",
     "test:ops-workspace": "node --test tests/ops-workspace-boundary.test.mjs",
     "test:ui-dashboards": "node --test tests/role-dashboard-responsive-ui.test.mjs",
+    "test:firebase-config": "vitest run src/lib/firebaseConfig.test.ts",
     "test:tenant-notifications": "node --test tests/tenant-notifications.test.mjs"
   },
   "dependencies": {

@@ -1,6 +1,7 @@
 {
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "firestore.production.rules",
+    "indexes": "firestore.indexes.json"
   },
   "emulators": {
     "firestore": {

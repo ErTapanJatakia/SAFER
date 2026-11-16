@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Production remains closed until the candidate tenant policy has passed
+    // emulator, backend authorization, privacy and release review.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
