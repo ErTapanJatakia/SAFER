@@ -23,7 +23,7 @@ const TABS: {id:Tab;label:string;roles?:Role[]}[] = [
   {id:'reports',label:'Reports',roles:['tenant_super_admin','tenant_admin','tenant_manager','tenant_auditor']},
   {id:'audit',label:'Audit',roles:['tenant_super_admin','tenant_admin','tenant_auditor']},
   {id:'members',label:'Members',roles:['tenant_super_admin','tenant_admin','tenant_auditor']},
-  {id:'notifications',label:'Activity'},
+  {id:'notifications',label:'Activity',roles:['tenant_super_admin','tenant_admin','tenant_auditor']},
   {id:'configuration',label:'PMC settings',roles:['tenant_super_admin']},
 ];
 const inputClass='w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900';
