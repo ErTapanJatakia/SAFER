@@ -47,6 +47,6 @@ This is not a full application runtime sign-off. The following were not complete
 
 The uploaded ZIP was an older, separate source snapshot. Several remediations identified in that snapshot were already present on the parent GitHub review branch (including invitation authorization preflight, incident date validation, CI write-permission reduction, and the production/emulator Firestore configuration boundary).
 
-This follow-up branch carries the remaining personnel-input allowlisting and additional regression coverage. The personnel allowlist explicitly retains the supported `employeeUid` assignment field while rejecting unknown fields, cross-tenant `orgId`, non-plain input objects and accessor properties. Timestamp regression coverage also includes rejection of a timezone-less date.
+This follow-up branch carries the remaining personnel-input allowlisting and additional regression coverage. It also corrects stale test expectations/harnesses for invitation replay, Owner status-route delegation, localized mobile navigation and tenant-report test readability. The personnel allowlist explicitly retains the supported `employeeUid` assignment field while rejecting unknown fields, cross-tenant `orgId`, non-plain input objects and accessor properties. Timestamp regression coverage also includes rejection of a timezone-less date.
 
 The local 186-test result applies to the reviewed ZIP copy, not to this GitHub branch. No CI, browser test, emulator test, build, dependency audit, merge, production Rules publication or deployment has been run for this follow-up.
