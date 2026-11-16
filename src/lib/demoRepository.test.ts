@@ -23,11 +23,26 @@ describe('Demo Guest repository', () => {
     assert.deepEqual(snapshot.checklist, INITIAL_CHECKLIST);
   });
 
-  it('recovers to synthetic defaults from malformed stored JSON', () => {
-    const storage = memoryStorage();
-    storage.setItem('prot_ops_personnel_v2', '{not-json');
-    const repository = createDemoRepository(storage);
-    assert.deepEqual(repository.loadSnapshot().personnel, INITIAL_PERSONNEL);
+  it('fails closed on malformed or empty stored JSON without overwriting the original bytes', async () => {
+    for (const malformed of ['{not-json', '']) {
+      const storage = memoryStorage();
+      storage.setItem('prot_ops_personnel_v2', malformed);
+      const repository = createDemoRepository(storage);
+
+      assert.throws(
+        () => repository.loadSnapshot(),
+        /Invalid Demo Guest JSON in prot_ops_personnel_v2/,
+      );
+      await assert.rejects(
+        repository.savePersonnel(INITIAL_PERSONNEL[0]),
+        /Invalid Demo Guest JSON in prot_ops_personnel_v2/,
+      );
+      assert.equal(
+        storage.getItem('prot_ops_personnel_v2'),
+        malformed,
+        'corrupt stored bytes must remain untouched until an explicit reset',
+      );
+    }
   });
 
   it('fails closed when valid JSON contains malformed personnel records', () => {
