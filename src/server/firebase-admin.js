@@ -18,11 +18,16 @@ function loadServiceAccount() {
     throw new Error('Platform identity service is not configured.');
   }
 
+  const privateKey = typeof serviceAccount.private_key === 'string'
+    ? serviceAccount.private_key.replace(/\\n/g, '\n')
+    : '';
+
   if (
-    serviceAccount.project_id !== projectId
+    serviceAccount.type !== 'service_account'
+    || serviceAccount.project_id !== projectId
     || typeof serviceAccount.client_email !== 'string'
-    || typeof serviceAccount.private_key !== 'string'
-    || !serviceAccount.private_key.includes('BEGIN PRIVATE KEY')
+    || !/^[^\s@]+@[^\s@]+\.iam\.gserviceaccount\.com$/.test(serviceAccount.client_email)
+    || !/^-----BEGIN PRIVATE KEY-----[\s\S]+-----END PRIVATE KEY-----\s*$/.test(privateKey)
   ) {
     throw new Error('Platform identity service credentials are invalid.');
   }
@@ -31,7 +36,7 @@ function loadServiceAccount() {
     projectId,
     serviceAccount: {
       ...serviceAccount,
-      private_key: serviceAccount.private_key.replace(/\\n/g, '\n'),
+      private_key: privateKey,
     },
   };
 }
