@@ -70,25 +70,60 @@ async function authorize(transaction, db, uid, orgId, action, extra = {}) {
   return { member: member.data(), org: org.data() };
 }
 
+function safeIncidentTimestamp(value) {
+  try {
+    const date = value instanceof Date ? value : value?.toDate?.();
+    return date instanceof Date && Number.isFinite(date.getTime()) ? date.toISOString() : null;
+  } catch {
+    return null;
+  }
+}
+
+function validIncidentRecord(data, documentId, orgId) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
+  const expected = [
+    'incidentId', 'orgId', 'referenceNumber', 'incidentType', 'dateReported',
+    'title', 'status', 'priority', 'summary', 'reportedByUid',
+    'createdAt', 'createdByUid', 'updatedAt', 'updatedByUid',
+  ];
+  const keys = Object.keys(data).sort();
+  const required = expected.sort();
+  const hasExactFields = keys.length === required.length || keys.length === required.length + 1;
+  if (!hasExactFields || !required.every((key) => keys.includes(key))
+    || keys.some((key) => !required.includes(key) && key !== 'locationLabel')) return false;
+  return data.incidentId === documentId && /^inc_[a-f0-9]{32}$/.test(documentId ?? '')
+    && data.orgId === orgId && /^IR-[A-F0-9]{10}$/.test(data.referenceNumber ?? '')
+    && TYPES.includes(data.incidentType) && safeIncidentTimestamp(data.dateReported) !== null
+    && typeof data.title === 'string' && data.title.trim().length > 0 && data.title.length <= 160
+    && STATUSES.includes(data.status) && PRIORITIES.includes(data.priority)
+    && typeof data.summary === 'string' && data.summary.trim().length > 0 && data.summary.length <= 2000
+    && UID.test(data.reportedByUid ?? '') && UID.test(data.createdByUid ?? '')
+    && UID.test(data.updatedByUid ?? '') && safeIncidentTimestamp(data.createdAt) !== null
+    && safeIncidentTimestamp(data.updatedAt) !== null
+    && (data.locationLabel === undefined || (typeof data.locationLabel === 'string' && data.locationLabel.length <= 120));
+}
+
 /** List incidents. Employee scope is enforced in the Firestore query itself. */
 export async function listTenantIncidents({ orgId, actorUid, role, database, limit = 100 }) {
   assertOrg(orgId);
   if (!UID.test(actorUid ?? '') || !database?.collection) fail('invalid_request');
+  const cap = Number.isInteger(limit) ? Math.min(Math.max(limit, 1), 100) : 100;
   const collection = database.collection(`organisations/${orgId}/incidents`);
-  let query = collection.orderBy('dateReported', 'desc').limit(Math.min(Math.max(Number(limit) || 100, 1), 100));
+  let query = collection.orderBy('dateReported', 'desc');
   if (role === 'tenant_employee') query = query.where('reportedByUid', '==', actorUid);
-  const snapshot = await query.get();
-  const incidents = snapshot.docs.flatMap((doc) => {
-    const d = doc.data();
-    if (d.incidentId !== doc.id || d.orgId !== orgId || typeof d.reportedByUid !== 'string') return [];
+  const snapshot = await query.limit(cap + 1).get();
+  const hasMore = snapshot.docs.length > cap;
+  const incidents = snapshot.docs.slice(0, cap).flatMap((doc) => {
+    const data = doc.data();
+    if (!validIncidentRecord(data, doc.id, orgId)) return [];
     return [{
-      incidentId: doc.id, referenceNumber: d.referenceNumber, incidentType: d.incidentType,
-      dateReported: d.dateReported?.toDate?.()?.toISOString?.() ?? null,
-      title: d.title, status: d.status, priority: d.priority, summary: d.summary,
-      reportedByUid: d.reportedByUid, locationLabel: d.locationLabel ?? null,
+      incidentId: doc.id, referenceNumber: data.referenceNumber, incidentType: data.incidentType,
+      dateReported: safeIncidentTimestamp(data.dateReported),
+      title: data.title, status: data.status, priority: data.priority, summary: data.summary,
+      reportedByUid: data.reportedByUid, locationLabel: data.locationLabel ?? null,
     }];
   });
-  return { orgId, incidents };
+  return { orgId, incidents, hasMore };
 }
 
 /** Create an incident and its immutable audit event atomically. */
