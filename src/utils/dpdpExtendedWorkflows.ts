@@ -10,19 +10,88 @@ export const EMPTY_DpdpExtendedWorkspace:DpdpExtendedWorkspace={schemaVersion:1,
 const iso=(v:string)=>/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(v)&&Number.isFinite(Date.parse(v));
 const text=(v:unknown,n=500):v is string=>typeof v==='string'&&v.trim().length>0&&v.length<=n;
 const id=(v:unknown):v is string=>typeof v==='string'&&/^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$/.test(v);
+const REQUEST_TRANSITIONS:Record<WorkflowStatus,WorkflowStatus[]>={received:['identity-check','closed'],'identity-check':['in-progress','awaiting-information','declined','closed'],'in-progress':['awaiting-information','completed','declined','closed'],'awaiting-information':['identity-check','in-progress','closed'],completed:[],declined:[],closed:[]};
+function exactKeys(value:unknown,required:string[],optional:string[]=[]):value is Record<string,unknown>{
+ try{
+  if(!value||typeof value!=='object'||Array.isArray(value))return false;
+  const proto=Object.getPrototypeOf(value);
+  if(proto!==Object.prototype&&proto!==null)return false;
+  const keys=Reflect.ownKeys(value),allowed=new Set([...required,...optional]);
+  if(keys.length<required.length||keys.some(k=>typeof k!=='string'||!allowed.has(k)))return false;
+  if(!required.every(k=>keys.includes(k)))return false;
+  return keys.every(k=>{const d=Object.getOwnPropertyDescriptor(value,k);return Boolean(d?.enumerable&&'value'in d);});
+ }catch{return false;}
+}
 export function validateDpdpExtendedWorkspace(v:unknown):v is DpdpExtendedWorkspace {
- if(!v||typeof v!=='object'||Array.isArray(v))return false; const x=v as Record<string,unknown>;
- const keys=['schemaVersion','workspaceMode','requestEvents','consentPreferences','retentionTasks','breachTimeline','evidenceItems'];
- if(x.schemaVersion!==1||x.workspaceMode!=='synthetic-demo'||Object.keys(x).some(k=>!keys.includes(k))||keys.some(k=>!(k in x)))return false;
- const arrays=keys.slice(2).map(k=>x[k]); if(!arrays.every(a=>Array.isArray(a)&&a.length<=500))return false;
- const unique=(a:unknown[])=>{const s=new Set<string>();return a.every(r=>!!r&&typeof r==='object'&&id((r as {id?:unknown}).id)&&!s.has((r as {id:string}).id)&&!!s.add((r as {id:string}).id));};
+ const top=['schemaVersion','workspaceMode','requestEvents','consentPreferences','retentionTasks','breachTimeline','evidenceItems'];
+ if(!exactKeys(v,top))return false;
+ const x=v as Record<string,unknown>;
+ if(x.schemaVersion!==1||x.workspaceMode!=='synthetic-demo')return false;
+ const arrays=top.slice(2).map(k=>x[k]);
+ if(!arrays.every(a=>Array.isArray(a)&&a.length<=500))return false;
+ const unique=(a:unknown[])=>{
+  const seen=new Set<string>();
+  return a.every(r=>{
+   if(!r||typeof r!=='object'||Array.isArray(r)||!id((r as {id?:unknown}).id))return false;
+   const key=(r as {id:string}).id;if(seen.has(key))return false;seen.add(key);return true;
+  });
+ };
  const [events,prefs,tasks,timeline,evidence]=arrays as unknown[][];
- return [events,prefs,tasks,timeline,evidence].every(unique)&&
- events.every(r=>{const a=r as RequestEvent;return id(a.requestId)&&(['received','identity-check','in-progress','awaiting-information','completed','declined','closed'].includes(a.to))&&(a.from===null||['received','identity-check','in-progress','awaiting-information','completed','declined','closed'].includes(a.from))&&iso(a.at)&&text(a.note,1000);})&&
- prefs.every(r=>{const a=r as ConsentPreference;return text(a.subjectRef,120)&&text(a.purposeRef,120)&&['granted','withdrawn','paused'].includes(a.preference)&&iso(a.updatedAt)&&Array.isArray(a.history)&&a.history.length<=500&&a.history.every(h=>id(h.id)&&['granted','withdrawn','paused'].includes(h.preference)&&iso(h.at)&&text(h.note,500));})&&
- tasks.every(r=>{const a=r as RetentionReviewTask;return id(a.scheduleRef)&&text(a.category,160)&&iso(a.reviewAt)&&text(a.ownerRole,80)&&['scheduled','due','overdue','reviewed','deferred'].includes(a.state)&&iso(a.evaluatedAt)&&(a.note===undefined||text(a.note,1000));})&&
- timeline.every(r=>{const a=r as BreachTimelineEvent;return id(a.breachRef)&&['discovered','recorded','contained','remediated','notification-assessed','closed','other'].includes(a.kind)&&iso(a.at)&&text(a.note,1000);})&&
- evidence.every(r=>{const a=r as PrivacyEvidenceItem;return text(a.title,160)&&['policy-reference','assessment-reference','test-reference','meeting-note','other'].includes(a.evidenceType)&&text(a.reference,240)&&['request','consent','retention','breach','control'].includes(a.linkedRecordType)&&id(a.linkedRecordId)&&text(a.ownerRole,80)&&iso(a.createdAt)&&a.verification==='unverified-reference-only'&&text(a.limitations,1000);});
+ if(![events,prefs,tasks,timeline,evidence].every(unique))return false;
+
+ const requestGroups=new Map<string,RequestEvent[]>();
+ for(const raw of events){
+  if(!exactKeys(raw,['id','requestId','from','to','at','note']))return false;
+  const a=raw as unknown as RequestEvent;
+  if(!id(a.requestId)||!(a.from===null||Object.hasOwn(REQUEST_TRANSITIONS,a.from))||!Object.hasOwn(REQUEST_TRANSITIONS,a.to)||!iso(a.at)||!text(a.note,1000))return false;
+  const group=requestGroups.get(a.requestId)??[];group.push(a);requestGroups.set(a.requestId,group);
+ }
+ for(const group of requestGroups.values()){
+  group.sort((a,b)=>Date.parse(a.at)-Date.parse(b.at));
+  let previous:RequestEvent|undefined;
+  for(const event of group){
+   const current=previous?.to??'received';
+   if(event.from!==(previous?.to??null)||!REQUEST_TRANSITIONS[current].includes(event.to)
+     ||(previous&&Date.parse(event.at)<=Date.parse(previous.at)))return false;
+   previous=event;
+  }
+ }
+
+ for(const raw of prefs){
+  if(!exactKeys(raw,['id','subjectRef','purposeRef','preference','updatedAt','history']))return false;
+  const p=raw as unknown as ConsentPreference;
+  if(!text(p.subjectRef,120)||!text(p.purposeRef,120)||!['granted','withdrawn','paused'].includes(p.preference)||!iso(p.updatedAt)||!Array.isArray(p.history)||p.history.length<1||p.history.length>500)return false;
+  const historyIds=new Set<string>();let previousAt=-Infinity;
+  for(const h of p.history){
+   if(!exactKeys(h,['id','preference','at','note'])||!id(h.id)||historyIds.has(h.id)||!['granted','withdrawn','paused'].includes(h.preference)||!iso(h.at)||!text(h.note,500)||Date.parse(h.at)<=previousAt)return false;
+   historyIds.add(h.id);previousAt=Date.parse(h.at);
+  }
+  const last=p.history[p.history.length-1];
+  if(last.preference!==p.preference||last.at!==p.updatedAt)return false;
+ }
+
+ for(const raw of tasks){
+  if(!exactKeys(raw,['id','scheduleRef','category','reviewAt','ownerRole','state','evaluatedAt'],['note']))return false;
+  const a=raw as unknown as RetentionReviewTask;
+  if(!id(a.scheduleRef)||!text(a.category,160)||!iso(a.reviewAt)||!text(a.ownerRole,80)||!['scheduled','due','overdue','reviewed','deferred'].includes(a.state)||!iso(a.evaluatedAt)||(a.note!==undefined&&!text(a.note,1000)))return false;
+ }
+ const breachGroups=new Map<string,BreachTimelineEvent[]>();
+ for(const raw of timeline){
+  if(!exactKeys(raw,['id','breachRef','kind','at','note']))return false;
+  const a=raw as unknown as BreachTimelineEvent;
+  if(!id(a.breachRef)||!['discovered','recorded','contained','remediated','notification-assessed','closed','other'].includes(a.kind)||!iso(a.at)||!text(a.note,1000))return false;
+  const group=breachGroups.get(a.breachRef)??[];group.push(a);breachGroups.set(a.breachRef,group);
+ }
+ for(const group of breachGroups.values()){
+  group.sort((a,b)=>Date.parse(a.at)-Date.parse(b.at));
+  for(let i=1;i<group.length;i++)if(Date.parse(group[i].at)<Date.parse(group[i-1].at))return false;
+ }
+ for(const raw of evidence){
+  if(!exactKeys(raw,['id','title','evidenceType','reference','linkedRecordType','linkedRecordId','ownerRole','createdAt','verification','limitations']))return false;
+  const a=raw as unknown as PrivacyEvidenceItem;
+  if(!text(a.title,160)||!['policy-reference','assessment-reference','test-reference','meeting-note','other'].includes(a.evidenceType)||!text(a.reference,240)||!['request','consent','retention','breach','control'].includes(a.linkedRecordType)||!id(a.linkedRecordId)||!text(a.ownerRole,80)||!iso(a.createdAt)||a.verification!=='unverified-reference-only'||!text(a.limitations,1000))return false;
+ }
+ return true;
 }
 export function transitionRequest(events:RequestEvent[],requestId:string,next:WorkflowStatus,at:string,note:string):RequestEvent|null {
  const prior=events.filter(e=>e.requestId===requestId).sort((a,b)=>Date.parse(b.at)-Date.parse(a.at))[0];
