@@ -110,7 +110,7 @@ Account recovery alone does not restore a revoked Platform Owner role. A replace
 Before adding production credentials:
 - pass the dedicated unit tests for forged claims, invalid/revoked tokens, tenant-role separation, missing/revoked principals, bootstrap replay, and revocation;
 - pass the repository dependency/build/security CI;
-- review the generated `package-lock.json` and Bun lockfile;
+- review the committed `bun.lock` with the frozen Bun install path;
 - review the final API and server-only credential diff;
 - confirm the Vercel Function is included in a preview or controlled test deployment without production credentials.
 
