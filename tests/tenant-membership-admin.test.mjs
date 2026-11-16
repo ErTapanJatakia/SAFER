@@ -5,6 +5,7 @@ import { inviteTenantMember, manageTenantMember, TenantMembershipError } from '.
 function fixture({ actorRole = 'tenant_super_admin', targetRole = null } = {}) {
   const records = new Map();
   const audit = [];
+  const reads = [];
   const orgId = 'org_0123456789abcdef0123456789abcdef';
   const actorUid = 'actor-1';
   const targetUid = 'target-1';
@@ -20,7 +21,10 @@ function fixture({ actorRole = 'tenant_super_admin', targetRole = null } = {}) {
     doc: (path) => ({ path }),
     collection: (path) => ({ doc: () => ({ path: `${path}/audit-${audit.length + 1}` }) }),
     runTransaction: async (callback) => callback({
-      get: async (ref) => ({ exists: records.has(ref.path), data: () => records.get(ref.path) }),
+      get: async (ref) => {
+        reads.push(ref.path);
+        return { exists: records.has(ref.path), data: () => records.get(ref.path) };
+      },
       create: (ref, data) => {
         if (records.has(ref.path)) throw new Error('already exists');
         records.set(ref.path, data);
@@ -34,7 +38,7 @@ function fixture({ actorRole = 'tenant_super_admin', targetRole = null } = {}) {
       uid: targetUid, email, emailVerified: true, disabled: false,
     }),
   };
-  return { records, audit, database, authAdmin, orgId, actorUid, targetUid, member };
+  return { records, audit, reads, database, authAdmin, orgId, actorUid, targetUid, member };
 }
 
 test('Super Admin can invite a verified existing user into a lower PMC role', async () => {
@@ -109,6 +113,25 @@ test('tenant administrators cannot modify peers, higher roles, or themselves', a
     orgId: peer.orgId, actorUid: peer.actorUid, targetUid: peer.actorUid,
     action: 'members:suspend', database: peer.database, serverTimestamp: () => new Date(),
   }), (error) => error.code === 'invalid_request');
+});
+
+test('roles without member-management permission cannot probe target UID membership', async () => {
+  for (const targetRole of [null, 'tenant_employee']) {
+    const f = fixture({ actorRole: 'tenant_manager', targetRole });
+    await assert.rejects(manageTenantMember({
+      orgId: f.orgId,
+      actorUid: f.actorUid,
+      targetUid: f.targetUid,
+      action: 'members:suspend',
+      database: f.database,
+      serverTimestamp: () => new Date(),
+    }), (error) => error.code === 'role_permission_denied');
+    assert.equal(
+      f.reads.includes(`organisations/${f.orgId}/members/${f.targetUid}`),
+      false,
+      'target membership must not be read before the actor is authorized for this action',
+    );
+  }
 });
 
 test('suspended or non-active tenant context cannot administer memberships', async () => {
