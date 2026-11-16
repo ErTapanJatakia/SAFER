@@ -26,8 +26,8 @@ function loadServiceAccount() {
     serviceAccount.type !== 'service_account'
     || serviceAccount.project_id !== projectId
     || typeof serviceAccount.client_email !== 'string'
-    || !/^[^\\s@]+@[^\\s@]+\\.iam\\.gserviceaccount\\.com$/.test(serviceAccount.client_email)
-    || !/^-----BEGIN PRIVATE KEY-----[\\s\\S]+-----END PRIVATE KEY-----\\s*$/.test(privateKey)
+    || !/^[^\s@]+@[^\s@]+\.iam\.gserviceaccount\.com$/.test(serviceAccount.client_email)
+    || !/^-----BEGIN PRIVATE KEY-----[\s\S]+-----END PRIVATE KEY-----\s*$/.test(privateKey)
   ) {
     throw new Error('Platform identity service credentials are invalid.');
   }
