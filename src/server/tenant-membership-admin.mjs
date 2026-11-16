@@ -146,7 +146,7 @@ export async function inviteTenantMember({
     transaction.create(auditRef, {
       action: 'tenant.member.invitation_created',
       actorUid, orgId, targetOrgId: orgId, targetUid: invitedUser.uid,
-      details: { role, invitationId, email: normalizedEmail },
+      details: { role },
       occurredAt: timestamp,
     });
   });
