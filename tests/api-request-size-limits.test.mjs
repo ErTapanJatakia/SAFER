@@ -7,6 +7,7 @@ const routes = [
   'api/tenant/members.js',
   'api/tenant/invitations/accept.js',
   'api/tenant/invitations/accept-member.js',
+  'api/tenant/invitations/revoke.js',
   'api/tenant/incidents.js',
   'api/tenant/personnel.js',
   'api/tenant/checklists.js',

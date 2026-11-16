@@ -250,6 +250,81 @@ export async function manageTenantMember({
   });
 }
 
+
+/**
+ * Revokes a pending tenant invitation. The actor is authorized before the
+ * invitation document is read, then the actor, organisation and invitation
+ * are revalidated together in the mutation transaction.
+ */
+export async function revokeTenantMemberInvitation({
+  orgId, actorUid, invitationId, reason, database, serverTimestamp,
+}) {
+  assertTenantLocator(orgId);
+  if (typeof actorUid !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(actorUid)
+    || typeof invitationId !== 'string' || !/^[A-Za-z0-9_-]{40,50}$/.test(invitationId)
+    || typeof reason !== 'string' || reason.trim().length < 10
+    || reason.trim().length > 500 || /[\u0000-\u001f\u007f]/.test(reason)) {
+    fail('invalid_invitation_request');
+  }
+  if (!database?.runTransaction || !database?.doc || !database?.collection
+    || typeof serverTimestamp !== 'function') fail('service_unavailable');
+
+  // Prove the actor may administer at least the least-privileged invitation
+  // before looking up the caller-supplied opaque invitation identifier.
+  await database.runTransaction(async (transaction) => {
+    await authorizeInTransaction(transaction, database, {
+      actorUid, orgId, action: 'members:invite', targetRole: 'tenant_employee',
+    });
+  });
+
+  const invitationRef = database.doc('organisations/' + orgId + '/invitations/' + invitationId);
+  const auditRef = database.doc('organisations/' + orgId + '/auditEvents/' + randomBytes(16).toString('hex'));
+  const timestamp = serverTimestamp();
+
+  return database.runTransaction(async (transaction) => {
+    const [actorSnapshot, orgSnapshot, invitationSnapshot] = await Promise.all([
+      transaction.get(database.doc('organisations/' + orgId + '/members/' + actorUid)),
+      transaction.get(database.doc('organisations/' + orgId)),
+      transaction.get(invitationRef),
+    ]);
+    if (!actorSnapshot.exists || !orgSnapshot.exists) fail('tenant_membership_required');
+    if (!invitationSnapshot.exists) fail('invitation_not_found');
+
+    const actor = actorSnapshot.data();
+    const organisation = orgSnapshot.data();
+    const invitation = invitationSnapshot.data();
+    if (invitation.invitationId !== invitationId || invitation.orgId !== orgId
+      || !/^[A-Za-z0-9_-]{1,128}$/.test(invitation.uid ?? '')
+      || !TENANT_ROLES.includes(invitation.role) || invitation.role === 'tenant_super_admin'
+      || invitation.schemaVersion !== 1 || typeof invitation.invitedByUid !== 'string'
+      || !/^[A-Za-z0-9_-]{1,128}$/.test(invitation.invitedByUid)) {
+      fail('invitation_unavailable');
+    }
+    if (invitation.status !== 'pending') fail('invitation_not_pending');
+
+    const decision = authorizeTenantAction({
+      actorUid, membership: actor, organisation, requestedOrgId: orgId,
+      action: 'members:invite', targetRole: invitation.role,
+    });
+    if (!decision.allowed) fail(decision.reason);
+
+    transaction.update(invitationRef, {
+      status: 'revoked',
+      revokedAt: timestamp,
+      revokedByUid: actorUid,
+      revocationReason: reason.trim(),
+      updatedAt: timestamp,
+    });
+    transaction.create(auditRef, {
+      action: 'tenant.member.invitation_revoked',
+      actorUid, orgId, targetOrgId: orgId, targetUid: invitation.uid,
+      details: { invitationId, role: invitation.role, reason: reason.trim() },
+      occurredAt: timestamp,
+    });
+    return { orgId, invitationId, status: 'revoked' };
+  });
+}
+
 /** Expiry helper used by the invitation acceptance workflow. */
 export function isTenantInvitationExpired(invitation, now = Date.now()) {
   return timestampMillis(invitation?.expiresAt) <= now;
