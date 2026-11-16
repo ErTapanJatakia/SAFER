@@ -18,6 +18,10 @@ function fail(code) {
   throw new TenantInvitationAcceptanceError(code);
 }
 
+function validUid(value) {
+  return typeof value === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(value);
+}
+
 function normalizeEmail(value) {
   return typeof value === 'string' ? value.trim().toLowerCase() : '';
 }
@@ -74,9 +78,7 @@ export async function acceptTenantMemberInvitation({
     const expiresAt = timestampMillis(invitation.expiresAt);
     if (!Number.isFinite(expiresAt) || expiresAt <= now) fail('invitation_expired');
     if (memberSnapshot.exists) fail('membership_conflict');
-    if (typeof invitation.invitedByUid !== 'string' || !invitation.invitedByUid) {
-      fail('invalid_invitation');
-    }
+    if (!validUid(invitation.invitedByUid)) fail('invalid_invitation');
 
     transaction.create(memberRef, {
       uid: actorUid, orgId, role: invitation.role, status: 'active',
