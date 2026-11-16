@@ -54,3 +54,13 @@ Firestore's Spark allowance is quota-limited. Monitor usage in Firebase
 Console. On Spark, quota exhaustion can cause service interruption; do not
 attach a billing account to avoid interruption. Do not enable products that
 require Blaze as part of this foundation.
+
+
+## Composite index configuration
+
+The repository registers `firestore.indexes.json` through `firebase.json`. The current candidate inventory contains the composite indexes needed for employee-filtered incident and checklist lists:
+
+- Incidents: `reportedByUid ASC`, `dateReported DESC`.
+- Checklists: `assignedToUid ASC`, `updatedAt DESC`.
+
+The index manifest is source configuration only. It does not provision indexes until an explicit Firebase deployment command is run. Verify query plans in the Firestore emulator and obtain separate approval before deploying indexes to a live project. Single-field ordering queries rely on Firestore's automatic single-field indexes unless a future exemption is introduced.
