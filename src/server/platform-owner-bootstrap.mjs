@@ -13,7 +13,9 @@ export async function provisionFirstPlatformOwner({ uid, changeReference, operat
   const operatorRef = requireNonEmpty(operatorReference, 'operator reference');
   const auditReason = requireNonEmpty(reason, 'provisioning reason', 20);
   const user = await authAdmin.getUser(ownerUid);
-  if (user.uid !== ownerUid || user.emailVerified !== true) throw new Error('The intended Firebase identity could not be verified.');
+  if (user.uid !== ownerUid || user.emailVerified !== true || user.disabled === true) {
+    throw new Error('The intended Firebase identity could not be verified as enabled and email-verified.');
+  }
   const settingsRef = database.doc('platform/settings');
   const administratorRef = database.doc(`platformAdministrators/${ownerUid}`);
   const auditRef = database.collection('platformAuditEvents').doc();
