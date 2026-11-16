@@ -8,6 +8,7 @@
 | `POST /api/tenant/members` | Create an invitation for an existing verified Firebase user | `members:invite` plus role delegation ceiling |
 | `PATCH /api/tenant/members` | Suspend a member or change their tenant role | `members:suspend` or `members:role:assign`; target is re-read in the transaction |
 | `POST /api/tenant/invitations/accept-member` | Accept an ordinary PMC invitation | Exact Firebase UID, verified email, active PMC, pending unexpired invitation |
+| `POST /api/tenant/invitations/revoke` | Revoke a pending lower-role invitation | `members:invite` plus role-delegation ceiling; permission preflight before invitation lookup |
 
 ## Invitation lifecycle
 
@@ -17,6 +18,7 @@
 4. The invitation and tenant audit event are written in one Firestore transaction after the actor's membership, organisation status, and role-delegation permission are revalidated.
 5. The trusted administrator shares the returned invitation ID through an approved channel. This implementation does not send email or disclose invitation IDs to unauthorised users.
 6. The invitee signs in and accepts. The endpoint checks the Firebase ID token with revocation enabled, verifies the account and email again, then atomically creates the active membership, accepts the invitation, and writes a tenant audit event.
+7. An authorized Super Admin or Admin can revoke a still-pending lower-role invitation through the dedicated revoke endpoint. The service rechecks role delegation inside the transaction and commits the revoked state with its tenant audit event. Accepted invitations cannot be revoked; suspend the resulting membership instead.
 
 Super Admin invitations remain separate and use the Owner-controlled organisation provisioning lifecycle. Tenant roles cannot invite or promote another Super Admin.
 
@@ -26,7 +28,7 @@ Super Admin invitations remain separate and use the Owner-controlled organisatio
 - Admin can invite or administer Manager, Employee, and Auditor; cannot administer peers, higher roles, or themselves.
 - Manager, Employee, and Auditor cannot administer memberships.
 - Role changes and suspensions re-read actor, target, and organisation inside the same transaction. Target records must match the exact canonical version-1 membership shape.
-- Every successful invite, acceptance, role change, and suspension creates a tenant-scoped audit event under `organisations/{orgId}/auditEvents`.
+- Every successful invite, acceptance, invitation revocation, role change, and suspension creates a tenant-scoped audit event under `organisations/{orgId}/auditEvents`.
 
 ## Security and operational boundaries
 
