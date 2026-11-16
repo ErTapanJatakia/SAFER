@@ -38,3 +38,15 @@ test('Evidence registration rejects accessor-backed metadata without evaluating 
  Object.defineProperty(accessorInput,'title',{enumerable:true,get(){throw new Error('getter must not execute');}});
  await assert.rejects(()=>registerTenantEvidence({orgId,actorUid:'u1',input:accessorInput,database:db(),serverTimestamp:()=>new Date()}),/invalid_evidence_data/);
 });
+
+test('evidence listing skips oversized filenames and malformed timestamps',async()=>{
+ const database=db();
+ const good={evidenceId:`ev_${'b'.repeat(32)}`,orgId,incidentId:`inc_${'b'.repeat(32)}`,title:'Evidence note',fileName:'register.pdf',mediaType:'application/pdf',byteSize:1200,sha256Claimed:null,verificationState:'metadata_registered_unverified',createdAt:new Date(),createdByUid:'u1'};
+ database.collection=()=>({orderBy(){return this;},limit(n){this.n=n;return this;},async get(){return {docs:[
+  {id:good.evidenceId,data:()=>good},
+  {id:`ev_${'c'.repeat(32)}`,data:()=>({...good,fileName:'x'.repeat(500)})},
+  {id:`ev_${'d'.repeat(32)}`,data:()=>({...good,createdAt:{toDate(){throw new Error('bad timestamp');}}})},
+ ]};}});
+ const result=await listTenantEvidence({orgId,database});
+ assert.equal(result.records.length,1);
+});

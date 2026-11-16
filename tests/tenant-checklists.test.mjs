@@ -40,3 +40,15 @@ test('Read-only auditor is authorized before checklist target lookup',async()=>{
  }),/role_permission_denied/);
  assert.equal(database.reads.includes(`organisations/${orgId}/checklists/${checklistId}`),false);
 });
+
+test('checklist listing skips records with invalid timestamps or actor identifiers',async()=>{
+ const database=db();
+ const good={checklistId:`chk_${'b'.repeat(32)}`,orgId,category:'Required documentation and approvals',task:'Verify induction',description:'Confirm signed record.',status:'Incomplete',priority:'High',requiresHumanReview:true,complianceNotes:'',assignedToUid:'u2',assignedByUid:'u1',createdAt:new Date(),createdByUid:'u1',updatedAt:new Date(),updatedByUid:'u1'};
+ database.collection=()=>({orderBy(){return this;},where(){return this;},limit(n){this.n=n;return this;},async get(){return {docs:[
+  {id:good.checklistId,data:()=>good},
+  {id:`chk_${'c'.repeat(32)}`,data:()=>({...good,updatedAt:{toDate(){throw new Error('bad timestamp');}}})},
+  {id:`chk_${'d'.repeat(32)}`,data:()=>({...good,task:'x'.repeat(5000)})},
+ ]};}});
+ const result=await listTenantChecklists({orgId,actorUid:'u1',role:'tenant_manager',database});
+ assert.equal(result.records.length,1);
+});

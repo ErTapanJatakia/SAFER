@@ -34,6 +34,14 @@ function boundedList(value,maxItems,maxLength) {
   if(!Array.isArray(value)||value.length>maxItems||value.some(v=>typeof v!=='string'||!v.trim()||v.length>maxLength)) fail('invalid_personnel_data');
   return [...new Set(value.map(v=>v.trim()))];
 }
+function safeTimestamp(value) {
+  try {
+    const date = value instanceof Date ? value : value?.toDate?.();
+    return date instanceof Date && Number.isFinite(date.getTime()) ? date.toISOString() : null;
+  } catch {
+    return null;
+  }
+}
 function validRecord(value, recordId, orgId) {
   if(!value||typeof value!=='object'||Array.isArray(value)) return false;
   const keys=Object.keys(value).sort();
@@ -47,8 +55,8 @@ function validRecord(value, recordId, orgId) {
     && value.specialisations.every(v=>typeof v==='string'&&v.length>0&&v.length<=80)
     && SECTORS.includes(value.assignmentSector) && READINESS.includes(value.readinessStatus)
     && typeof value.requiresHumanReview==='boolean'
-    && value.createdAt!=null && value.updatedAt!=null
-    && typeof value.createdByUid==='string' && typeof value.updatedByUid==='string';
+    && safeTimestamp(value.createdAt)!==null && safeTimestamp(value.updatedAt)!==null
+    && UID.test(value.createdByUid??'') && UID.test(value.updatedByUid??'');
 }
 async function authorize(tx,db,uid,orgId,action) {
   const memberRef=db.doc(`organisations/${orgId}/members/${uid}`);
@@ -68,8 +76,8 @@ function publicRecord(data) {
     operationalRoles:data.operationalRoles, specialisations:data.specialisations,
     assignmentSector:data.assignmentSector, readinessStatus:data.readinessStatus,
     requiresHumanReview:data.requiresHumanReview,
-    createdAt:data.createdAt?.toDate?.()?.toISOString?.()??null,
-    updatedAt:data.updatedAt?.toDate?.()?.toISOString?.()??null,
+    createdAt:safeTimestamp(data.createdAt),
+    updatedAt:safeTimestamp(data.updatedAt),
   };
 }
 
