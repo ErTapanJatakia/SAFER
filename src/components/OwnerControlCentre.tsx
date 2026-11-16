@@ -46,6 +46,8 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
   const [durationMinutes, setDurationMinutes] = useState(15);
   const [activeSession, setActiveSession] = useState<{sessionId: string; orgId: string; expiresAt: string} | null>(null);
   const [revokeReason, setRevokeReason] = useState('');
+  const [createdInvitation, setCreatedInvitation] = useState<{orgId: string; invitationId: string} | null>(null);
+  const [invitationRevokeReason, setInvitationRevokeReason] = useState('');
 
   const request = useCallback(async (path: string, method = 'GET', body?: Record<string, unknown>) => {
     const token = await user.getIdToken();
@@ -82,6 +84,7 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
     setOwnerState('checking');
     setOrganisations([]);
     setActiveSession(null);
+    setCreatedInvitation(null);
   }, [user.uid]);
 
   useEffect(() => {
@@ -145,6 +148,10 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
       const result = await request('/api/owner/organisations', 'POST', {displayName, superAdminEmail});
       setDisplayName('');
       setSuperAdminEmail('');
+      const invitationId = result.superAdminInvitation?.invitationId;
+      setCreatedInvitation(typeof invitationId === 'string' && invitationId.length >= 40
+        ? {orgId: result.orgId, invitationId}
+        : null);
       setMessage(`PMC created in provisioning state. Super Admin invitation: ${result.superAdminInvitation?.status || 'pending'}.`);
       await loadRegistry();
     });
@@ -154,6 +161,20 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
     void run(async () => {
       await request('/api/owner/organisations-registry', 'PATCH', {orgId, status});
       setMessage(`PMC lifecycle updated to ${status}.`);
+      await loadRegistry();
+    });
+  };
+
+  const revokeInitialInvitation = () => {
+    if (!createdInvitation || invitationRevokeReason.trim().length < 10) return;
+    void run(async () => {
+      await request('/api/owner/organisations/invitations/revoke', 'POST', {
+        ...createdInvitation,
+        reason: invitationRevokeReason,
+      });
+      setCreatedInvitation(null);
+      setInvitationRevokeReason('');
+      setMessage('Initial Super Admin invitation revoked. The PMC remains suspended; replacement invitation issuance is not available yet.');
       await loadRegistry();
     });
   };
@@ -291,6 +312,17 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
             </div>}
           </section>
         </div>
+
+        {createdInvitation && <section className="rounded-xl border border-amber-700 bg-amber-950/20 p-5">
+          <h2 className="text-lg font-semibold text-amber-100">Initial Super Admin invitation</h2>
+          <p className="mt-1 text-xs text-slate-300">This opaque identifier is needed to revoke the pending invitation. Share it only through an approved channel with the nominated, verified account.</p>
+          <p className="mt-3 break-all rounded-lg border border-slate-700 bg-slate-950 p-3 font-mono text-xs text-slate-100">{createdInvitation.invitationId}</p>
+          <p className="mt-1 text-[10px] text-slate-400">PMC: {createdInvitation.orgId}</p>
+          <label className="mt-3 block text-xs text-slate-300">Revocation reason
+            <input value={invitationRevokeReason} onChange={(event) => setInvitationRevokeReason(event.target.value)} minLength={10} maxLength={500} className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white" />
+          </label>
+          <button type="button" disabled={busy || invitationRevokeReason.trim().length < 10} onClick={revokeInitialInvitation} className="mt-3 rounded-lg border border-red-800 px-3 py-2 text-xs font-semibold text-red-200 disabled:opacity-50">Revoke initial invitation</button>
+        </section>}
 
         <p className="text-[11px] text-slate-500">Platform Owner authority is separate from tenant RBAC. All registry mutations and support-session lifecycle events are recorded server-side. The support-session ID is a bearer secret and must be handled accordingly.</p>
       </div>
