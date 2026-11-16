@@ -27,7 +27,8 @@ function parseIncidentDate(value) {
   const datePart = value.slice(0, 10);
   const calendarDate = new Date(`${datePart}T00:00:00.000Z`);
   const parsed = new Date(value);
-  if (!Number.isFinite(parsed.getTime())
+  if (!Number.isFinite(calendarDate.getTime())
+    || !Number.isFinite(parsed.getTime())
     || calendarDate.toISOString().slice(0, 10) !== datePart
     || parsed.getTime() > Date.now() + 5 * 60 * 1000) {
     fail('invalid_incident_data');
