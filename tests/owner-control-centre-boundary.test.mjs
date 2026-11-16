@@ -40,3 +40,13 @@ test('AuthGate defers authenticated workspace routing until Owner authority is r
   assert.match(authGate, /setOwnerStatus\('checking'\)/);
   assert.match(authGate, /ownerStatus === 'owner' \|\| ownerStatus === 'checking'/);
 });
+
+
+test('Owner registry offers loaded-record search, status filters and bounded status summaries', () => {
+  assert.match(ownerUi, /Search PMC registry/);
+  assert.match(ownerUi, /Filter PMC status/);
+  assert.match(ownerUi, /filteredOrganisations/);
+  assert.match(ownerUi, /registryCounts/);
+  assert.match(ownerUi, /maximum 100/);
+  assert.match(ownerUi, /not a platform-wide operational analytics feed/);
+});
