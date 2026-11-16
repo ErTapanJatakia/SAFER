@@ -212,3 +212,38 @@ test('rejects replay of an accepted invitation by a different identity or with c
     (error) => error instanceof InvitationAcceptanceError && error.code === 'invitation_identity_mismatch',
   );
 });
+
+
+test('accepted invitation replay rejects membership documents with unexpected fields', async () => {
+  const state = fixture();
+  await accept(state);
+  const memberPath = `organisations/${orgId}/members/${actorUid}`;
+  state.store.set(memberPath, {
+    ...state.store.get(memberPath),
+    platformOwner: true,
+  });
+  await assert.rejects(
+    accept(state),
+    (error) => error instanceof InvitationAcceptanceError && error.code === 'invitation_conflict',
+  );
+});
+
+test('accepted invitation replay rejects incomplete or malformed canonical membership fields', async () => {
+  const state = fixture();
+  await accept(state);
+  const memberPath = `organisations/${orgId}/members/${actorUid}`;
+  const valid = state.store.get(memberPath);
+  const malformedCases = [
+    (() => { const value = { ...valid }; delete value.updatedByUid; return value; })(),
+    { ...valid, createdByUid: 'different-inviter' },
+    { ...valid, updatedAt: 'not-a-timestamp' },
+    { ...valid, createdAt: new Date(state.now + 1000) },
+  ];
+  for (const membership of malformedCases) {
+    state.store.set(memberPath, membership);
+    await assert.rejects(
+      accept(state),
+      (error) => error instanceof InvitationAcceptanceError && error.code === 'invitation_conflict',
+    );
+  }
+});
