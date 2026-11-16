@@ -41,6 +41,8 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
   const [message, setMessage] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [superAdminEmail, setSuperAdminEmail] = useState('');
+  const [superAdminInvitationReceipt, setSuperAdminInvitationReceipt] = useState<{orgId:string;invitationId:string;email:string;expiresAt:string}|null>(null);
+  const [superAdminInvitationCopyStatus, setSuperAdminInvitationCopyStatus] = useState('');
   const [supportOrgId, setSupportOrgId] = useState('');
   const [supportPurpose, setSupportPurpose] = useState('');
   const [changeReference, setChangeReference] = useState('');
@@ -162,11 +164,22 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
     event.preventDefault();
     void run(async () => {
       const result = await request('/api/owner/organisations', 'POST', {displayName, superAdminEmail});
+      const invitation = result.superAdminInvitation && typeof result.superAdminInvitation === 'object' ? result.superAdminInvitation as Record<string, unknown> : {};
+      const invitationId = typeof invitation.invitationId === 'string' ? invitation.invitationId : '';
+      if (!invitationId || typeof result.orgId !== 'string') throw new Error('invitation_receipt_unavailable');
+      setSuperAdminInvitationReceipt({orgId:result.orgId,invitationId,email:typeof invitation.email==='string'?invitation.email:superAdminEmail,expiresAt:typeof invitation.expiresAt==='string'?invitation.expiresAt:''});
+      setSuperAdminInvitationCopyStatus('');
       setDisplayName('');
       setSuperAdminEmail('');
-      setMessage(`PMC created in provisioning state. Super Admin invitation: ${result.superAdminInvitation?.status || 'pending'}.`);
+      setMessage('PMC created in provisioning state. Share the one-time Super Admin invitation ID through your approved channel; no email is sent automatically.');
       await loadRegistry();
     });
+  };
+
+  const copySuperAdminInvitationId = async () => {
+    if (!superAdminInvitationReceipt) return;
+    try { await navigator.clipboard.writeText(superAdminInvitationReceipt.invitationId); setSuperAdminInvitationCopyStatus('Invitation ID copied. Share it only with the intended verified Super Admin.'); }
+    catch { setSuperAdminInvitationCopyStatus('Clipboard access unavailable. Select and copy the invitation ID manually.'); }
   };
 
   const changeStatus = (orgId: string, status: 'active' | 'suspended' | 'closed') => {
@@ -307,6 +320,7 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
               </label>
               <button type="submit" disabled={busy} className="rounded-lg bg-blue-700 px-4 py-2.5 text-xs font-bold hover:bg-blue-600 disabled:opacity-50">Create PMC invitation</button>
             </form>
+            {superAdminInvitationReceipt && <section className="mt-4 rounded-lg border border-amber-700 bg-amber-950/30 p-3" aria-labelledby="super-admin-invitation-title"><h3 id="super-admin-invitation-title" className="text-sm font-semibold text-amber-100">Super Admin invitation — share securely</h3><p className="mt-1 text-xs text-slate-300">PMC: {superAdminInvitationReceipt.orgId} · Recipient: {superAdminInvitationReceipt.email}</p><label htmlFor="super-admin-invitation-id" className="mt-2 block text-xs font-semibold text-slate-200">One-time invitation ID</label><input id="super-admin-invitation-id" readOnly value={superAdminInvitationReceipt.invitationId} onFocus={(event)=>event.currentTarget.select()} className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 font-mono text-xs text-white"/><button type="button" onClick={()=>void copySuperAdminInvitationId()} className="mt-2 rounded-lg border border-amber-700 px-3 py-2 text-xs font-semibold text-amber-100">Copy invitation ID</button>{superAdminInvitationReceipt.expiresAt&&<p className="mt-2 text-xs text-slate-400">Expires: {new Date(superAdminInvitationReceipt.expiresAt).toLocaleString()}</p>}<p className="mt-2 text-xs text-amber-200">Do not post this identifier publicly. It is bound to the nominated verified account and does not activate the PMC by itself.</p>{superAdminInvitationCopyStatus&&<p className="mt-2 text-xs text-slate-300" role="status">{superAdminInvitationCopyStatus}</p>}</section>}
           </section>
 
           <section className="rounded-xl border border-slate-700 bg-slate-900 p-5">
