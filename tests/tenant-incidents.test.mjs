@@ -52,3 +52,18 @@ test('invalid incident fields are rejected',async()=>{
   const db=fakeDb();
   await assert.rejects(()=>createTenantIncident({orgId,actorUid:'u1',input:{incidentType:'Unknown',title:'x',summary:'y'},database:db,serverTimestamp:stamp}),/invalid_incident_data/);
 });
+
+test('incident timestamps require valid timezone-qualified RFC3339 values',async()=>{
+ const db=fakeDb();
+ const base={incidentType:'Equipment Malfunction',title:'Door sensor fault',summary:'Sensor reported intermittent failure.'};
+ for (const dateReported of [
+  1730000000000,
+  '2026-02-30T10:00:00Z',
+  '2026-11-16T10:00:00',
+  new Date(Date.now()+60*60*1000).toISOString(),
+ ]) {
+  await assert.rejects(()=>createTenantIncident({
+   orgId,actorUid:'u1',input:{...base,dateReported},database:db,serverTimestamp:stamp,
+  }),/invalid_incident_data/);
+ }
+});
