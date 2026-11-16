@@ -3,7 +3,8 @@
 The Owner-only `GET /api/owner/audit` endpoint returns the latest 100 records from
 `platformAuditEvents`, ordered by `occurredAt` descending. It uses the shared
 Platform Owner verifier, including Firebase token revocation checks and current
-administrator/settings records.
+administrator/settings records, and separately enforces the
+`platform:audit:read` permission through the canonical Platform action policy.
 
 The response is deliberately metadata-only: event ID, action, actor UID or
 out-of-band actor reference, target organisation, target UID and timestamp.
