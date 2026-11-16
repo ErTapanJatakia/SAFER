@@ -26,9 +26,11 @@ Map `TenantAuthorizationError.status` and `.code` to a minimal API response. Do 
 
 ## Release boundary
 
-This helper and its focused tests are an authorization foundation, not a release of operational tenant access. The API tree now includes tenant membership directory, invitation creation/acceptance, role assignment, and suspension endpoints. These routes use the trusted server authorization boundary or revalidate actor/target/organisation state inside a Firestore transaction. No tenant personnel, incident, evidence, checklist, report, or export data APIs are yet wired into this boundary. The application data boundary still does not select a tenant repository, and published Firestore rules remain deny-all. Those restrictions must remain until each resource has a defined owner/assignee schema, query constraints, route-level authorization, and positive/negative emulator coverage.
+The repository now contains server-side API/service foundations for tenant membership administration and invitations, personnel directory metadata, incident summaries, evidence metadata, assigned checklists, tenant audit events, and aggregate reports. The handlers use the trusted server authorization boundary, and resource-specific services re-check relevant permissions and tenant paths where applicable. These are implementation foundations, not a production release of authenticated tenant operations.
 
-Do not infer that a feature is available because the policy catalogue lists its action. A route and data-store rule must both enforce it. Membership administration is the first implemented tenant API slice; its UI and invitation notification transport are not yet implemented.
+The default production Firebase configuration selects `firestore.production.rules`, which denies all client reads and writes. Candidate role-scoped rules remain in `firestore.rules` and are selected only by `firebase.emulator.json` for synthetic emulator validation. The authenticated tenant workspace and production tenant repository selection remain disabled. Evidence is metadata-only; no file upload, malware scanning, server-side hash verification, or chain-of-custody solution is provided.
+
+Do not infer that a feature is released because an API route or policy catalogue exists. Production release still requires positive and negative emulator coverage, review of every resource query and mutation, browser integration/accessibility validation, and an explicit release decision. Membership and operational APIs do not by themselves authorise direct client Firestore access.
 
 ## Additional operational API slices (implementation batch)
 The development branch now includes server-side API foundations for:
