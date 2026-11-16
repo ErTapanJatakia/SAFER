@@ -10,6 +10,16 @@ type Organisation = {
   updatedAt: string | null;
 };
 
+type PlatformAuditEvent = {
+  eventId: string | null;
+  action: string;
+  actorUid: string | null;
+  actorReference: string | null;
+  targetOrgId: string | null;
+  targetUid: string | null;
+  occurredAt: string;
+};
+
 type SupportAction =
   | 'platform:tenant-data:read'
   | 'platform:tenant-data:write'
@@ -33,6 +43,9 @@ interface OwnerControlCentreProps {
 export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onOwnerStatusChange}) => {
   const [ownerState, setOwnerState] = useState<'checking' | 'owner' | 'not-owner' | 'unavailable'>('checking');
   const [organisations, setOrganisations] = useState<Organisation[]>([]);
+  const [auditEvents, setAuditEvents] = useState<PlatformAuditEvent[]>([]);
+  const [loadingAudit, setLoadingAudit] = useState(false);
+  const [auditHasMore, setAuditHasMore] = useState(false);
   const [loadingRegistry, setLoadingRegistry] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -68,6 +81,21 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
     return payload;
   }, [user]);
 
+  const loadAuditEvents = useCallback(async () => {
+    setLoadingAudit(true);
+    try {
+      const payload = await request('/api/owner/audit');
+      setAuditEvents(Array.isArray(payload.events) ? payload.events : []);
+      setAuditHasMore(payload.hasMore === true);
+    } catch {
+      setError('The Platform audit history could not be loaded. No cached audit data is displayed.');
+      setAuditEvents([]);
+      setAuditHasMore(false);
+    } finally {
+      setLoadingAudit(false);
+    }
+  }, [request]);
+
   const loadRegistry = useCallback(async () => {
     setLoadingRegistry(true);
     try {
@@ -83,6 +111,8 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
   useEffect(() => {
     setOwnerState('checking');
     setOrganisations([]);
+    setAuditEvents([]);
+    setAuditHasMore(false);
     setActiveSession(null);
     setCreatedInvitation(null);
   }, [user.uid]);
@@ -112,8 +142,11 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
   }, [ownerState, onOwnerStatusChange]);
 
   useEffect(() => {
-    if (ownerState === 'owner') void loadRegistry();
-  }, [ownerState, loadRegistry]);
+    if (ownerState === 'owner') {
+      void loadRegistry();
+      void loadAuditEvents();
+    }
+  }, [ownerState, loadRegistry, loadAuditEvents]);
 
   if (ownerState === 'checking') {
     return <section className="mx-auto max-w-7xl px-4 py-5 text-xs text-slate-300" role="status">Verifying Platform Owner authority…</section>;
@@ -256,6 +289,34 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
               </table>
             </div>
           )}
+        </section>
+
+        <section className="rounded-xl border border-slate-700 bg-slate-900 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold">Platform audit history</h2>
+              <p className="mt-1 text-xs text-slate-400">Latest 100 platform events. Free-form details, reasons and opaque identifiers are withheld.</p>
+            </div>
+            <button type="button" onClick={() => void loadAuditEvents()} disabled={loadingAudit || busy} className="rounded-lg border border-slate-600 px-3 py-2 text-xs font-semibold hover:bg-slate-800 disabled:opacity-50">Refresh audit</button>
+          </div>
+          {loadingAudit ? <p className="py-4 text-xs text-slate-400" role="status">Loading platform audit…</p> : (
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full min-w-[680px] text-left text-xs">
+                <thead className="border-b border-slate-700 text-slate-400"><tr><th className="py-2 pr-3">Time (UTC)</th><th className="py-2 pr-3">Action</th><th className="py-2 pr-3">Actor</th><th className="py-2 pr-3">Target PMC</th><th className="py-2">Target UID</th></tr></thead>
+                <tbody>
+                  {auditEvents.map((event, index) => <tr key={event.eventId || index} className="border-b border-slate-800">
+                    <td className="py-3 pr-3 whitespace-nowrap text-slate-400">{new Date(event.occurredAt).toLocaleString(undefined, {timeZone: 'UTC'})}</td>
+                    <td className="py-3 pr-3 font-semibold text-slate-100">{event.action}</td>
+                    <td className="py-3 pr-3 font-mono text-[10px] text-slate-300">{event.actorUid || event.actorReference || 'Unattributed'}</td>
+                    <td className="py-3 pr-3 font-mono text-[10px] text-slate-400">{event.targetOrgId || '—'}</td>
+                    <td className="py-3 font-mono text-[10px] text-slate-400">{event.targetUid || '—'}</td>
+                  </tr>)}
+                  {!auditEvents.length && <tr><td colSpan={5} className="py-5 text-center text-slate-500">No platform audit events are currently available.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {auditHasMore && <p className="mt-3 text-[11px] text-amber-200">Additional events exist. Cursor pagination is not yet implemented; this view shows only the latest 100.</p>}
         </section>
 
         <div className="grid gap-6 lg:grid-cols-2">
