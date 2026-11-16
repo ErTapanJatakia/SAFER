@@ -1,4 +1,5 @@
 import { authorizePlatformOwner } from '../../src/server/platform-owner-auth.mjs';
+import { authorizePlatformOwnerAction } from '../../src/server/tenant-rbac.mjs';
 import { listPlatformAuditEvents } from '../../src/server/platform-audit.mjs';
 
 export default async function handler(request, response) {
@@ -28,6 +29,12 @@ export default async function handler(request, response) {
       },
     });
     if (!authorization.ok) return response.status(authorization.status).json({error: authorization.code});
+    const permission = authorizePlatformOwnerAction({
+      actorUid: authorization.uid,
+      principal: authorization.principal,
+      action: 'platform:audit:read',
+    });
+    if (!permission.allowed) return response.status(403).json({error: permission.reason});
     const result = await listPlatformAuditEvents({database: platformDb});
     return response.status(200).json(result);
   } catch {
