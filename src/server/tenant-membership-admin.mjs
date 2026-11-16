@@ -104,6 +104,16 @@ export async function inviteTenantMember({
     fail('service_unavailable');
   }
 
+  // Authorize the caller before querying Firebase Auth by email. Otherwise
+  // an unprivileged signed-in user could use this endpoint to enumerate
+  // registered/verified accounts. The invitation transaction below repeats
+  // this check to close the role-change race between preflight and creation.
+  await database.runTransaction(async (transaction) => {
+    await authorizeInTransaction(transaction, database, {
+      actorUid, orgId, action: 'members:invite', targetRole: role,
+    });
+  });
+
   let invitedUser;
   try {
     invitedUser = await authAdmin.getUserByEmail(normalizedEmail);
