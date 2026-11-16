@@ -5,21 +5,21 @@ import {
   exportTenantOperationalSummary,
 } from '../src/server/tenant-reports.mjs';
 
-const orgId = \`org_\${'a'.repeat(32)}\`;
+const orgId = `org_${'a'.repeat(32)}`;
 
 function db(role = 'tenant_admin') {
   const docs = new Map([
-    [\`organisations/\${orgId}/members/u1\`, {
+    [`organisations/${orgId}/members/u1`, {
       uid: 'u1', orgId, role, status: 'active',
       createdAt: new Date(), createdByUid: 'seed',
       updatedAt: new Date(), updatedByUid: 'seed', schemaVersion: 1,
     }],
-    [\`organisations/\${orgId}\`, { orgId, status: 'active' }],
+    [`organisations/${orgId}`, { orgId, status: 'active' }],
   ]);
   const writes = [];
   return {
     writes,
-    collection(path) {
+    collection(_path) {
       return {
         count() {
           return {
