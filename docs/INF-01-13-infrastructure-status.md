@@ -12,7 +12,7 @@
 | INF-03 | Firestore schema redesign | Canonical organisation/member/operational schemas and schema-version checks already exist in server modules, rules candidate and architecture documents. | Partially implemented. Complete schema inventory, migrations/version transitions and final data lifecycle design remain. No live data migration. |
 | INF-04 | Firestore Security Rules | Candidate least-privilege tenant rules and emulator suite exist on the stacked branch. Production posture is separately deny-all. | Candidate implemented; review and emulator validation pending. Do not publish or enable client data access without separate explicit approval. |
 | INF-05 | Server-side authorization | Trusted Firebase token verification, disabled-user checks, authoritative membership/organisation reads and canonical role/action policy exist. Tenant APIs use the trusted boundary. | Foundation implemented; perform full endpoint-by-endpoint authorization and transaction audit before production. |
-| INF-06 | Firestore indexes | Added `firestore.indexes.json` and registered it in `firebase.json`. Includes employee-filtered incident/date and checklist/updatedAt composite indexes. Other observed list queries use single-field ordering, covered by Firestore automatic indexes. | Configuration implemented; emulator/deployment verification pending. No index deployment was performed. Revisit if query shapes change. |
+| INF-06 | Firestore indexes | Added `firestore.indexes.json` and registered it in `firebase.json`. Includes employee-filtered incident/date, checklist/updatedAt and personnel/updatedAt composite indexes. Other observed list queries use single-field ordering, covered by Firestore automatic indexes. | Configuration implemented; emulator/deployment verification pending. No index deployment was performed. Revisit if query shapes change. |
 | INF-07 | Security regression coverage | Existing rules, tenant RBAC, role matrix, platform-owner, endpoint and cross-tenant tests provide substantial authored coverage. | Partially implemented. The consolidated test suites have not been run; close any uncovered endpoint/resource cases after review. |
 | INF-08 | Dependency and build assurance | Existing dependency/build workflow and package scripts remain in place. | Workflow exists; no dependency audit, lockfile regeneration, build or CI run was executed. GitHub Actions remain under the user's control. |
 | INF-09 | Budget Policy Inspector | Existing local-only INR 0 Budget Policy Inspector and evaluator are already integrated. Unknown providers return manual review; paid billing/non-zero cost are rejected. | Implemented. Advisory only: it cannot prevent billing or provide live provider pricing. Keep all provider plan claims subject to current-term review. |
@@ -27,6 +27,7 @@
 |---|---|---|
 | `incidents` | Employee filter `reportedByUid == uid`, ordered by `dateReported DESC` | `reportedByUid ASC, dateReported DESC` |
 | `checklists` | Employee filter `assignedToUid == uid`, ordered by `updatedAt DESC` | `assignedToUid ASC, updatedAt DESC` |
+| `personnel` | Employee filter `employeeUid == uid`, ordered by `updatedAt DESC` | `employeeUid ASC, updatedAt DESC` |
 
 The indexes file is configuration only. It does not create indexes until explicitly deployed. No Firestore index deployment or production database mutation was performed.
 
@@ -42,6 +43,8 @@ The indexes file is configuration only. It does not create indexes until explici
 - No CI, test, type-check, build, emulator or deployment was run for this work.
 
 ## Consolidated validation gate (not executed)
+
+The default Firebase deployment configuration uses `firestore.production.rules` (deny-all). Emulator suites must explicitly use `firebase.emulator.json`, which selects candidate `firestore.rules`. This separation is intentional.
 
 1. Run the Firebase web configuration unit tests and verify expected project mismatch fails closed.
 2. Run Firebase Admin SDK configuration tests using synthetic credentials only; never use or print live secrets.
