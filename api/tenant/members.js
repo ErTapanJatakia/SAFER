@@ -13,6 +13,15 @@ function bearerToken(request) {
   return token && !/\s/.test(token) ? token : null;
 }
 
+function safeTimestamp(value) {
+  try {
+    const date = value instanceof Date ? value : value?.toDate?.();
+    return date instanceof Date && Number.isFinite(date.getTime()) ? date.toISOString() : null;
+  } catch {
+    return null;
+  }
+}
+
 function responseError(error) {
   const code = error?.code;
   const clientErrors = new Map([
@@ -105,16 +114,20 @@ export default async function handler(request, response) {
         const fields = Object.keys(value).sort();
         if (fields.length !== expectedFields.length
           || fields.some((field, index) => field !== expectedFields[index])
-          || value.uid !== document.id || value.orgId !== orgId
-          || !roles.includes(value.role)
+          || value.uid !== document.id || !/^[A-Za-z0-9_-]{1,128}$/.test(value.uid ?? '')
+          || value.orgId !== orgId || !roles.includes(value.role)
           || !['active', 'suspended'].includes(value.status)
-          || value.schemaVersion !== 1) return [];
+          || value.schemaVersion !== 1
+          || !/^[A-Za-z0-9_-]{1,128}$/.test(value.createdByUid ?? '')
+          || !/^[A-Za-z0-9_-]{1,128}$/.test(value.updatedByUid ?? '')
+          || safeTimestamp(value.createdAt) === null
+          || safeTimestamp(value.updatedAt) === null) return [];
         return [{
           uid: value.uid,
           role: value.role,
           status: value.status,
-          createdAt: value.createdAt?.toDate?.()?.toISOString?.() ?? null,
-          updatedAt: value.updatedAt?.toDate?.()?.toISOString?.() ?? null,
+          createdAt: safeTimestamp(value.createdAt),
+          updatedAt: safeTimestamp(value.updatedAt),
         }];
       });
       return response.status(200).json({ orgId: authorization.orgId, members, hasMore });
