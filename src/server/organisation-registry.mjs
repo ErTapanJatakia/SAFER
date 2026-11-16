@@ -13,21 +13,37 @@ function validOrgId(value) {
   return typeof value === 'string' && /^org_[a-f0-9]{32}$/.test(value);
 }
 
+function validMembershipTimestamp(value) {
+  if (value instanceof Date) return Number.isFinite(value.getTime());
+  if (!value || typeof value !== 'object') return false;
+  try {
+    if (typeof value.toDate === 'function') {
+      const date = value.toDate();
+      return date instanceof Date && Number.isFinite(date.getTime());
+    }
+    if (typeof value.toMillis === 'function') return Number.isFinite(value.toMillis());
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 function hasCanonicalActiveSuperAdmin(membership, documentId, orgId) {
   if (!membership || typeof membership !== 'object' || Array.isArray(membership)) return false;
   const fields = Object.keys(membership).sort();
+  const validUid = (value) => typeof value === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(value);
   return fields.length === MEMBERSHIP_FIELDS.length
     && fields.every((field, index) => field === MEMBERSHIP_FIELDS[index])
     && membership.uid === documentId
-    && /^[A-Za-z0-9_-]{1,128}$/.test(documentId ?? '')
+    && validUid(documentId)
     && membership.orgId === orgId
     && membership.role === 'tenant_super_admin'
     && membership.status === 'active'
     && membership.schemaVersion === 1
-    && typeof membership.createdByUid === 'string'
-    && typeof membership.updatedByUid === 'string'
-    && membership.createdAt != null
-    && membership.updatedAt != null;
+    && validUid(membership.createdByUid)
+    && validUid(membership.updatedByUid)
+    && validMembershipTimestamp(membership.createdAt)
+    && validMembershipTimestamp(membership.updatedAt);
 }
 
 /**
