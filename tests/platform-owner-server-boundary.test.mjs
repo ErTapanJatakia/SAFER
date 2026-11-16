@@ -60,3 +60,12 @@ test('Vercel uses the committed frozen Bun lockfile rather than a stale npm lock
   assert.equal(packageManifest.packageManager, 'bun@1.4.4');
   assert.equal(vercelConfig.installCommand, 'bun install --frozen-lockfile');
 });
+
+test('tenant member list validates stored actor IDs and timestamps before serializing',()=>{
+ const memberRoute=readFileSync(new URL('../api/tenant/members.js',import.meta.url),'utf8');
+ assert.match(memberRoute,/function safeTimestamp\(value\)/);
+ assert.match(memberRoute,/safeTimestamp\(value\.createdAt\) === null/);
+ assert.match(memberRoute,/safeTimestamp\(value\.updatedAt\) === null/);
+ assert.match(memberRoute,/value\.createdByUid/);
+ assert.match(memberRoute,/value\.updatedByUid/);
+});
