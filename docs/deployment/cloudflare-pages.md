@@ -1,13 +1,14 @@
 # Cloudflare Pages deployment
 
-SAFER is a React + Vite single-page application. Its current hosting build is static: \`npm run build\` emits \`dist/\`. It does not currently require a Vercel Function or a server-side rendering runtime for the application shell.
+SAFER is a React + Vite single-page application. Its current hosting build is static: \`bun run build\` emits \`dist/\`. It does not currently require a Vercel Function or a server-side rendering runtime for the application shell.
 
 ## Cloudflare Pages project settings
 
 - Connect the existing GitHub repository: \`ErTapanJatakia/SAFER\`.
 - Production branch: \`main\`.
 - Framework preset: React (Vite), or configure manually.
-- Build command: \`npm run build\`.
+- Install command: \`bun install --frozen-lockfile\`.
+- Build command: \`bun run build\`.
 - Build output directory: \`dist\`.
 - Root directory: repository root.
 - Node.js: use Node 22, matching the repository validation workflow.
