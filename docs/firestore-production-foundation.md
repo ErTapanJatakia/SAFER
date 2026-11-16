@@ -25,9 +25,11 @@ Confirm the project ID and region carefully before finalising.
 
 ## Initial security posture
 
-The checked-in `firestore.rules` now contains a candidate, role-scoped tenant
-policy with a deny-by-default catch-all and emulator coverage. It is **not**
-the production-published policy. Production Firestore rules remain deny-all.
+The checked-in `firestore.rules` contains the candidate, role-scoped tenant
+policy for emulator validation. The explicit `firebase.emulator.json` config
+selects that candidate policy. The default `firebase.json` deployment config
+selects `firestore.production.rules`, which denies all reads and writes.
+Production Firestore rules therefore remain deny-all by default.
 
 Do not publish the candidate rules by following this foundation runbook.
 Publishing them requires a separate explicit approval after the final source
@@ -54,3 +56,14 @@ Firestore's Spark allowance is quota-limited. Monitor usage in Firebase
 Console. On Spark, quota exhaustion can cause service interruption; do not
 attach a billing account to avoid interruption. Do not enable products that
 require Blaze as part of this foundation.
+
+
+## Composite index configuration
+
+The repository registers `firestore.indexes.json` in both Firebase configurations. The current candidate inventory contains the composite indexes needed for employee-filtered incident, checklist and personnel lists:
+
+- Incidents: `reportedByUid ASC`, `dateReported DESC`.
+- Checklists: `assignedToUid ASC`, `updatedAt DESC`.
+- Personnel: `employeeUid ASC`, `updatedAt DESC`.
+
+The index manifest is source configuration only. It does not provision indexes until an explicit Firebase deployment command is run. Verify query plans in the Firestore emulator and obtain separate approval before deploying indexes to a live project. Single-field ordering queries rely on Firestore's automatic single-field indexes unless a future exemption is introduced.
