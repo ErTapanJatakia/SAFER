@@ -31,6 +31,8 @@ test('all Owner routes use the same authoritative Platform Owner verifier', () =
 
 test('Platform audit endpoint is Owner-authenticated and metadata reader is server-side', () => {
   assert.match(platformAuditRoute, /authorizePlatformOwner/);
+  assert.match(platformAuditRoute, /authorizePlatformOwnerAction/);
+  assert.match(platformAuditRoute, /platform:audit:read/);
   assert.match(platformAuditRoute, /verifyIdToken\(token, checkRevoked\)/);
   assert.match(platformAuditRoute, /listPlatformAuditEvents/);
   assert.match(platformAuditRoute, /Cache-Control/);
