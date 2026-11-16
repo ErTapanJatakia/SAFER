@@ -72,3 +72,12 @@ export default async function handler(request, response) {
     return response.status(503).json({ error: 'invitation_acceptance_unavailable' });
   }
 }
+
+// Bound parsed JSON payloads before authorization or business logic runs.
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '64kb',
+    },
+  },
+};
