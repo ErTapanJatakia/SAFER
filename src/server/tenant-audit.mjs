@@ -1,7 +1,7 @@
 const ORG_ID = /^org_[a-f0-9]{32}$/;
 const EVENT_ID = /^[A-Za-z0-9_-]{1,128}$/;
 const ACTION = /^[a-z][a-z0-9_.:-]{1,127}$/;
-const DATE = /^\\d{4}-\\d{2}-\\d{2}$/;
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 function dateBound(value, exclusiveEnd = false) {
   if (value === undefined || value === null || value === '') return null;
