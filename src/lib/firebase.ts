@@ -1,6 +1,7 @@
 import {getApp, getApps, initializeApp, type FirebaseApp} from 'firebase/app';
 import {getAuth, type Auth} from 'firebase/auth';
 import {getFirestore, type Firestore} from 'firebase/firestore';
+import {SAFER_FIREBASE_PROJECT_ID, validateFirebaseWebConfig} from './firebaseConfig.ts';
 
 /**
  * Public Firebase web configuration. These values are not secrets.
@@ -13,8 +14,11 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-export const isFirebaseConfigured = Object.values(firebaseConfig)
-  .every((value) => typeof value === 'string' && value.trim().length > 0);
+export const firebaseConfigurationStatus = validateFirebaseWebConfig(firebaseConfig);
+export const isFirebaseConfigured = firebaseConfigurationStatus.configured;
+
+// Keep the expected project identifier explicit for diagnostics without exposing secrets.
+export const firebaseProjectId = SAFER_FIREBASE_PROJECT_ID;
 
 /**
  * Firebase remains optional at build/runtime so deployments without credentials
