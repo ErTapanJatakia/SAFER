@@ -63,6 +63,8 @@ A user may have more than one tenant role only if the organisation's policy expl
 
 “Read any tenant's data” for the Platform Owner is a capability, not a reason to browse client data routinely. Sensitive access must use the implemented purpose-bound, time-limited support-session workflow and generate audit events. Platform-level metadata dashboards may aggregate counts and health indicators without exposing unnecessary personal or operational detail.
 
+**Current implementation boundary (IAM-02):** the Owner Control Centre currently exposes a purpose-bound, time-limited aggregate-count read/export for one active PMC at a time. It does not expose raw tenant records, impersonation, or generic cross-tenant writes. The broader authority matrix above is the intended policy, not a claim that every data operation is already released.
+
 ## 5. Application views
 
 ### 5.1 Owner Control Centre

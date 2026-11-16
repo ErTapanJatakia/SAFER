@@ -40,17 +40,17 @@ This is the initial conservative permission catalogue. Record ownership and assi
 
 ## Platform Owner access
 
-The separate platform policy evaluator accepts only an active `platform_owner` principal whose UID matches the verified actor UID. Cross-tenant operational data reads, writes and exports require a purpose-bound, time-limited support session, scoped to one active PMC and an explicit action set. Session activation, revocation and each authorized action are appended to the platform audit trail. Future data endpoints must call `authorizePlatformSupportAccess()` before touching tenant records; the session lifecycle alone does not expose those records.
+The separate platform policy evaluator accepts only an active `platform_owner` principal whose UID matches the verified actor UID. Cross-tenant operational data reads, writes and exports require a purpose-bound, time-limited support session, scoped to one active PMC and an explicit action set. Session activation, revocation and each authorized action are appended to the platform audit trail. The aggregate summary read/export endpoint now calls `authorizePlatformSupportAccess()` before reading tenant counts and writes a completion audit event. Any future raw-record or mutation endpoint must call the same helper before touching tenant records; session creation alone never exposes those records.
 
 ## Current integration boundary
 
-This milestone includes the canonical policy engine, trusted server authorization boundary, versioned membership validation, candidate Firestore Rules, and server API integration. The development chain now includes APIs for tenant membership administration and invitations, incidents, personnel, evidence metadata, checklists, tenant audit and aggregate reports, as well as Owner organisation provisioning and registry operations.
+This milestone includes the canonical policy engine, trusted server authorization boundary, versioned membership validation, candidate Firestore Rules, and server API integration. The development chain now includes APIs for tenant membership administration and invitations, incidents, personnel, evidence metadata, checklists, tenant audit and aggregate reports, as well as Owner organisation provisioning, registry operations, and an IAM-02 purpose-bound aggregate summary read/export endpoint.
 
 It does **not** yet:
 - publish the candidate Firestore Rules to production;
 - release an authenticated operational tenant workspace UI;
 - release a full Owner Control Centre UI;
-- expose cross-tenant tenant-record browsing or mutation endpoints;
+- expose raw cross-tenant tenant-record browsing or mutation endpoints; aggregate counts-only read/export is implemented separately under IAM-02;
 - complete Firestore emulator and production security validation.
 
 The AuthGate intentionally keeps the authenticated operational workspace unavailable until the candidate rules and API-backed UI are reviewed and released. Demo Guest remains isolated and is not an authenticated tenant workspace.

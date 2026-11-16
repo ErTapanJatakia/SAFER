@@ -10,14 +10,14 @@ type Organisation = {
   updatedAt: string | null;
 };
 
+type TenantSummary = {orgId: string; generatedAt: string; scope: string; counts: Record<string, number>};
+
 type SupportAction =
   | 'platform:tenant-data:read'
-  | 'platform:tenant-data:write'
   | 'platform:tenant-data:export';
 
 const SUPPORT_ACTIONS: {value: SupportAction; label: string}[] = [
   {value: 'platform:tenant-data:read', label: 'Read tenant data'},
-  {value: 'platform:tenant-data:write', label: 'Write tenant data'},
   {value: 'platform:tenant-data:export', label: 'Export tenant data'},
 ];
 
@@ -44,16 +44,18 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
   const [changeReference, setChangeReference] = useState('');
   const [supportActions, setSupportActions] = useState<SupportAction[]>(['platform:tenant-data:read']);
   const [durationMinutes, setDurationMinutes] = useState(15);
-  const [activeSession, setActiveSession] = useState<{sessionId: string; orgId: string; expiresAt: string} | null>(null);
+  const [activeSession, setActiveSession] = useState<{sessionId: string; orgId: string; expiresAt: string; actions: SupportAction[]} | null>(null);
+  const [tenantSummary, setTenantSummary] = useState<TenantSummary | null>(null);
   const [revokeReason, setRevokeReason] = useState('');
 
-  const request = useCallback(async (path: string, method = 'GET', body?: Record<string, unknown>) => {
+  const request = useCallback(async (path: string, method = 'GET', body?: Record<string, unknown>, extraHeaders?: Record<string, string>) => {
     const token = await user.getIdToken();
     const response = await fetch(path, {
       method,
       headers: {
         Authorization: `Bearer ${token}`,
         ...(body ? {'Content-Type': 'application/json'} : {}),
+        ...(extraHeaders ?? {}),
       },
       ...(body ? {body: JSON.stringify(body)} : {}),
       cache: 'no-store',
@@ -82,6 +84,7 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
     setOwnerState('checking');
     setOrganisations([]);
     setActiveSession(null);
+    setTenantSummary(null);
   }, [user.uid]);
 
   useEffect(() => {
@@ -168,7 +171,8 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
         actions: supportActions,
         durationMinutes,
       });
-      setActiveSession({sessionId: result.sessionId, orgId: result.orgId, expiresAt: result.expiresAt});
+      setActiveSession({sessionId: result.sessionId, orgId: result.orgId, expiresAt: result.expiresAt, actions: [...supportActions]});
+      setTenantSummary(null);
       setMessage('Just-in-time support session activated. Its secret identifier is shown once below; keep it out of screenshots and logs.');
     });
   };
@@ -182,6 +186,7 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
         changeReference,
       });
       setActiveSession(null);
+      setTenantSummary(null);
       setRevokeReason('');
       setMessage('Support session revoked and the revocation event recorded.');
     });
@@ -191,6 +196,34 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
     setSupportActions((current) => current.includes(action)
       ? current.filter((item) => item !== action)
       : [...current, action]);
+  };
+
+  const loadTenantSummary = () => {
+    if (!activeSession || !activeSession.actions.includes('platform:tenant-data:read')) return;
+    void run(async () => {
+      const payload = await request(
+        `/api/owner/tenant-data?orgId=${encodeURIComponent(activeSession.orgId)}`,
+        'GET',
+        undefined,
+        {'X-Support-Session': activeSession.sessionId},
+      );
+      setTenantSummary(payload as TenantSummary);
+      setMessage('Tenant aggregate summary retrieved and audited. No individual records were exposed.');
+    });
+  };
+
+  const exportTenantSummary = () => {
+    if (!activeSession || !activeSession.actions.includes('platform:tenant-data:export')) return;
+    void run(async () => {
+      const payload = await request(
+        '/api/owner/tenant-data',
+        'POST',
+        {orgId: activeSession.orgId},
+        {'X-Support-Session': activeSession.sessionId},
+      );
+      setTenantSummary(payload as TenantSummary);
+      setMessage('Tenant aggregate summary export prepared and audited. No individual records were exposed.');
+    });
   };
 
   return (
@@ -254,7 +287,7 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
 
           <section className="rounded-xl border border-slate-700 bg-slate-900 p-5">
             <h2 className="text-lg font-semibold">Just-in-time support access</h2>
-            <p className="mt-1 text-xs text-slate-400">Purpose-bound, one-PMC access session. No cross-tenant data operation is exposed by this screen.</p>
+            <p className="mt-1 text-xs text-slate-400">Purpose-bound, one-PMC session. This screen exposes only audited aggregate counts, never individual tenant records.</p>
             <form onSubmit={createSupportSession} className="mt-4 space-y-3">
               <label className="block text-xs text-slate-300">Target PMC
                 <select required value={supportOrgId} onChange={(event) => setSupportOrgId(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white">
@@ -287,7 +320,17 @@ export const OwnerControlCentre: React.FC<OwnerControlCentreProps> = ({user, onO
               <label className="mt-3 block text-xs text-slate-300">Revocation reason
                 <input value={revokeReason} onChange={(event) => setRevokeReason(event.target.value)} minLength={10} maxLength={500} className="mt-1 w-full rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white" />
               </label>
+              {activeSession.actions.includes('platform:tenant-data:read') && <button type="button" disabled={busy} onClick={loadTenantSummary} className="mt-3 mr-2 rounded-lg border border-blue-700 px-3 py-2 text-xs font-semibold text-blue-200 disabled:opacity-50">Read aggregate summary</button>}
+              {activeSession.actions.includes('platform:tenant-data:export') && <button type="button" disabled={busy} onClick={exportTenantSummary} className="mt-3 mr-2 rounded-lg border border-cyan-700 px-3 py-2 text-xs font-semibold text-cyan-200 disabled:opacity-50">Prepare aggregate export</button>}
               <button type="button" disabled={busy || revokeReason.trim().length < 10} onClick={revokeSupportSession} className="mt-3 rounded-lg border border-red-800 px-3 py-2 text-xs font-semibold text-red-200 disabled:opacity-50">Revoke support session</button>
+            </div>}
+            {tenantSummary && <div className="mt-4 rounded-lg border border-slate-700 bg-slate-950 p-3">
+              <p className="text-xs font-semibold text-slate-200">Audited aggregate tenant summary</p>
+              <p className="mt-1 text-[10px] text-slate-500">PMC: {tenantSummary.orgId} · Generated: {new Date(tenantSummary.generatedAt).toLocaleString()}</p>
+              <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                {Object.entries(tenantSummary.counts).map(([label, count]) => <div key={label} className="rounded border border-slate-800 p-2"><dt className="text-slate-400">{label}</dt><dd className="mt-1 font-semibold tabular-nums text-slate-100">{count}</dd></div>)}
+              </dl>
+              <p className="mt-2 text-[10px] text-slate-500">Aggregate counts only. No personal or operational record contents.</p>
             </div>}
           </section>
         </div>

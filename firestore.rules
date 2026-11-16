@@ -14,6 +14,10 @@ service cloud.firestore {
       return /databases/$(database)/documents/organisations/$(orgId);
     }
 
+    function employeeMembershipPath(orgId, uid) {
+      return /databases/$(database)/documents/organisations/$(orgId)/members/$(uid);
+    }
+
     function activeTenantRole(orgId) {
       return signedIn()
         && exists(membershipPath(orgId))
@@ -171,7 +175,7 @@ service cloud.firestore {
 
     function validPersonnelData(orgId, recordId) {
       return request.resource.data.keys().hasOnly([
-          'recordId', 'orgId', 'employeeRef', 'displayLabel',
+          'recordId', 'orgId', 'employeeUid', 'employeeRef', 'displayLabel',
           'operationalRoles', 'specialisations', 'assignmentSector',
           'readinessStatus', 'requiresHumanReview',
           'createdAt', 'createdByUid', 'updatedAt', 'updatedByUid'
@@ -206,8 +210,24 @@ service cloud.firestore {
         && request.resource.data.updatedByUid == request.auth.uid;
     }
 
+    function validPersonnelEmployeeBinding(orgId) {
+      return !('employeeUid' in request.resource.data)
+        || (request.resource.data.employeeUid is string
+          && request.resource.data.employeeUid.size() >= 1
+          && request.resource.data.employeeUid.size() <= 128
+          && request.resource.data.employeeUid.matches('[A-Za-z0-9_-]{1,128}')
+          && exists(employeeMembershipPath(orgId, request.resource.data.employeeUid))
+          && validCanonicalMemberDocument(
+            get(employeeMembershipPath(orgId, request.resource.data.employeeUid)).data,
+            request.resource.data.employeeUid,
+            orgId
+          )
+          && get(employeeMembershipPath(orgId, request.resource.data.employeeUid)).data.role == 'tenant_employee');
+    }
+
     function validPersonnelCreate(orgId, recordId) {
       return validPersonnelData(orgId, recordId)
+        && validPersonnelEmployeeBinding(orgId)
         && request.resource.data.createdAt == request.time
         && request.resource.data.createdByUid == request.auth.uid;
     }
@@ -217,7 +237,10 @@ service cloud.firestore {
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.createdByUid == resource.data.createdByUid
         && request.resource.data.recordId == resource.data.recordId
-        && request.resource.data.orgId == resource.data.orgId;
+        && request.resource.data.orgId == resource.data.orgId
+        && ((!('employeeUid' in resource.data) && !('employeeUid' in request.resource.data))
+          || (('employeeUid' in resource.data) && ('employeeUid' in request.resource.data)
+            && request.resource.data.employeeUid == resource.data.employeeUid));
     }
 
     function validIncidentData(orgId, incidentId) {
@@ -317,7 +340,9 @@ service cloud.firestore {
       }
 
       match /personnel/{recordId} {
-        allow get, list: if tenantPersonnelReader(orgId)
+        allow get, list: if (tenantPersonnelReader(orgId)
+          || (tenantRoleIn(orgId, ['tenant_employee'])
+            && resource.data.employeeUid == request.auth.uid))
           && resource.data.orgId == orgId;
         allow create: if tenantSuperAdminOrAdmin(orgId)
           && validPersonnelCreate(orgId, recordId);

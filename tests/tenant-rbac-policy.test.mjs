@@ -48,6 +48,7 @@ test('Super Admin receives the complete tenant permission set but no platform au
 test('Admin has delegated tenant permissions but cannot change organisation settings', () => {
   assert.equal(authorize('tenant_admin', 'personnel:create').allowed, true);
   assert.equal(authorize('tenant_admin', 'incidents:update').allowed, true);
+  assert.equal(authorize('tenant_admin', 'members:reactivate', { targetUid: 'user-2', targetCurrentRole: 'tenant_employee' }).allowed, true);
   assert.equal(authorize('tenant_admin', 'organisation:update').allowed, false);
   assert.equal(authorize('tenant_admin', 'platform:tenant-data:read').allowed, false);
 });
@@ -56,6 +57,7 @@ test('Manager can work on operational modules but cannot administer memberships 
   assert.equal(authorize('tenant_manager', 'incidents:create').allowed, true);
   assert.equal(authorize('tenant_manager', 'checklists:update').allowed, true);
   assert.equal(authorize('tenant_manager', 'members:invite').allowed, false);
+  assert.equal(authorize('tenant_manager', 'members:reactivate', { targetUid: 'user-2', targetCurrentRole: 'tenant_employee' }).allowed, false);
   assert.equal(authorize('tenant_manager', 'audit:read').allowed, false);
 });
 
@@ -160,6 +162,10 @@ test('unsupported platform actions and tenant roles cannot gain global authority
   const principal = { uid: 'platform-1', role: 'platform_owner', status: 'active' };
   assert.equal(authorizePlatformOwnerAction({
     actorUid: 'platform-1', principal, action: 'tenant:members:invite',
+  }).allowed, false);
+  assert.equal(authorizePlatformOwnerAction({
+    actorUid: 'platform-1', principal, action: 'platform:tenant-data:write',
+    purpose: 'A future write operation without a registered endpoint.',
   }).allowed, false);
   assert.equal(authorizePlatformOwnerAction({
     actorUid: 'platform-1', principal: { uid: 'platform-1', role: 'tenant_super_admin', status: 'active' },

@@ -5,7 +5,6 @@ const ORG_ID = /^org_[a-f0-9]{32}$/;
 const SESSION_ID = /^[a-f0-9]{64}$/;
 const ACTIONS = Object.freeze([
   'platform:tenant-data:read',
-  'platform:tenant-data:write',
   'platform:tenant-data:export',
 ]);
 const ACTION_SET = new Set(ACTIONS);

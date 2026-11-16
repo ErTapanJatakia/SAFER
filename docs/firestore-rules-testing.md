@@ -17,22 +17,23 @@ npm run test:firestore-rules
 The Firebase CLI starts the Firestore emulator, executes the Node test suite,
 and shuts the emulator down. Java 21 is required by the CI setup.
 
-## Current baseline contract
+## Current source-rule contract
 
-The current policy intentionally denies all client access. Tests assert that:
+The checked-in `firestore.rules` is a **candidate tenant policy**, not the
+production-published policy. Its emulator suite exercises positive and
+negative cases for the five canonical tenant roles, active membership and
+organisation state, strict document schemas, immutable provenance, query
+constraints, restricted collections, and default-deny unmodelled paths.
 
-- unauthenticated clients cannot read or write documents;
-- authenticated users cannot read or write user profiles;
-- authenticated users cannot read or write organisation memberships or records;
-- one authenticated user cannot access another user's namespace.
+The production Firebase rules remain separately published as deny-all. Do not
+infer production access from the source file or a passing emulator test.
 
 The test data is synthetic and exists only in the emulator.
 
 ## What this does not authorise
 
-Passing these baseline tests does not mean SAFER is ready to store operational
-records. The rules remain deny-all. Before permitting any client access, a
-separate reviewed change must define and test:
+Passing these tests does not mean SAFER is ready to store operational records.
+Before any production client access, a separate reviewed change must verify:
 
 1. immutable UID ownership for user profile documents;
 2. authoritative organisation membership documents and role validation;

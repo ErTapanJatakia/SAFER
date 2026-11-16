@@ -128,7 +128,7 @@ export default async function handler(request, response) {
     }
 
     const action = request.body?.action;
-    if (!['members:suspend', 'members:role:assign'].includes(action)) {
+    if (!['members:suspend', 'members:reactivate', 'members:role:assign'].includes(action)) {
       return response.status(400).json({ error: 'invalid_request' });
     }
     const result = await manageTenantMember({
