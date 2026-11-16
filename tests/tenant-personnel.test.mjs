@@ -54,3 +54,16 @@ test('personnel update rejects accessor properties without evaluating getters',a
  await assert.rejects(()=>updateTenantPersonnel({orgId,actorUid:'u1',recordId:created.recordId,patch,database,serverTimestamp:stamp}),/invalid_personnel_data/);
  assert.equal(evaluated,false);
 });
+
+test('personnel listing skips malformed stored timestamps and oversized fields',async()=>{
+ const database=db();
+ const good={recordId:`per_${'b'.repeat(32)}`,orgId,employeeRef:'PMC-001',displayLabel:'Officer 001',operationalRoles:['Site Officer'],specialisations:['Access Control'],assignmentSector:'Sector Alpha (Metropolitan)',readinessStatus:'DOCS_CURRENT_AWAITING_REVIEW',requiresHumanReview:false,createdAt:new Date(),createdByUid:'u1',updatedAt:new Date(),updatedByUid:'u1'};
+ database.collection=()=>({orderBy(){return this;},limit(n){this.n=n;return this;},async get(){return {docs:[
+  {id:good.recordId,data:()=>good},
+  {id:`per_${'c'.repeat(32)}`,data:()=>({...good,employeeRef:'x'.repeat(500)})},
+  {id:`per_${'d'.repeat(32)}`,data:()=>({...good,createdAt:{toDate(){throw new Error('bad timestamp');}}})},
+ ]};}});
+ const result=await listTenantPersonnel({orgId,database});
+ assert.equal(result.records.length,1);
+ assert.equal(result.records[0].createdAt instanceof String,false);
+});
