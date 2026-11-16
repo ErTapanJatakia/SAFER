@@ -176,6 +176,24 @@ export async function manageTenantMember({
   if (!database?.runTransaction || !database?.doc || !database?.collection
     || typeof serverTimestamp !== 'function') fail('service_unavailable');
 
+  // Establish that the actor may perform this class of membership operation
+  // before looking up the requested target. Otherwise a caller without member-
+  // management rights could distinguish an existing UID (403) from a missing
+  // UID (404). The authoritative target-specific check still runs below.
+  const preflightTargetUid = actorUid === 'safer-membership-preflight'
+    ? 'safer-membership-preflight-2'
+    : 'safer-membership-preflight';
+  await database.runTransaction(async (transaction) => {
+    await authorizeInTransaction(transaction, database, {
+      actorUid,
+      orgId,
+      action,
+      targetUid: preflightTargetUid,
+      targetCurrentRole: action === 'members:suspend' ? 'tenant_employee' : 'tenant_manager',
+      ...(action === 'members:role:assign' ? { targetRole: 'tenant_employee' } : {}),
+    });
+  });
+
   const actorRef = database.doc(`organisations/${orgId}/members/${actorUid}`);
   const targetRef = database.doc(`organisations/${orgId}/members/${targetUid}`);
   const orgRef = database.doc(`organisations/${orgId}`);
