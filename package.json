@@ -87,7 +87,8 @@
     "test:api-request-size-limits": "node --test tests/api-request-size-limits.test.mjs",
     "test:package-manager-integrity": "node --test tests/package-manager-integrity.test.mjs",
     "test:tenant-invitation-revocation": "node --test tests/tenant-invitation-revocation.test.mjs",
-    "test:organisation-registry": "node --test tests/organisation-registry.test.mjs"
+    "test:organisation-registry": "node --test tests/organisation-registry.test.mjs",
+    "test:owner-superadmin-invitation-revocation": "node --test tests/owner-superadmin-invitation-revocation.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
