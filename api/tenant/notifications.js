@@ -7,12 +7,12 @@ export default async function handler(req,res){
  if(!token||/\s/.test(token))return res.status(401).json({error:'unauthenticated'});
  try{
   const {platformAuth,platformDb}=await import('../../src/server/firebase-admin.js');
-  const authorization=await resolveTenantAuthorization({token,orgId:req.query?.orgId,action:'organisation:read',auth:platformAuth,database:platformDb});
+  const authorization=await resolveTenantAuthorization({token,orgId:req.query?.orgId,action:'audit:read',auth:platformAuth,database:platformDb});
   const snapshot=await platformDb.collection(`organisations/${authorization.orgId}/auditEvents`).orderBy('occurredAt','desc').limit(30).get();
   const notifications=snapshot.docs.flatMap(doc=>{
    const value=doc.data();
    if(value.orgId!==authorization.orgId||typeof value.action!=='string'||typeof value.actorUid!=='string')return [];
-   return [{eventId:doc.id,action:value.action,actorUid:value.actorUid,targetResourceId:typeof value.targetResourceId==='string'?value.targetResourceId:null,occurredAt:value.occurredAt?.toDate?.()?.toISOString?.()??null}];
+   return [{eventId:doc.id,action:value.action,occurredAt:value.occurredAt?.toDate?.()?.toISOString?.()??null}];
   });
   return res.status(200).json({orgId:authorization.orgId,notifications,delivery:'in_app_activity_only'});
  }catch(error){
