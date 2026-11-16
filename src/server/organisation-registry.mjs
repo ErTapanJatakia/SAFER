@@ -73,7 +73,7 @@ export async function listPlatformOrganisations({ database, limit = 100 }) {
     const updatedAt = safeRegistryTimestamp(data?.updatedAt);
     if (!validOrgId(document.id) || data?.orgId !== document.id
       || typeof data.displayName !== 'string' || !data.displayName.trim()
-      || data.displayName.length > 120 || /[\\u0000-\\u001f\\u007f]/.test(data.displayName)
+      || data.displayName.length > 120 || /[\u0000-\u001f\u007f]/.test(data.displayName)
       || !['provisioning', 'active', 'suspended', 'closed'].includes(data.status)
       || !createdAt || !updatedAt) return [];
     const lifecycleStage = typeof data.lifecycleStage === 'string'
