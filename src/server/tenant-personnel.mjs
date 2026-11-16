@@ -132,8 +132,14 @@ export async function updateTenantPersonnel({orgId,actorUid,recordId,patch,datab
   if(!UID.test(actorUid??'')||!/^per_[a-f0-9]{32}$/.test(recordId??'')
     ||!database?.runTransaction||typeof serverTimestamp!=='function') fail('invalid_request');
   const allowed=['displayLabel','operationalRoles','specialisations','assignmentSector','readinessStatus','requiresHumanReview'];
-  if(!patch||typeof patch!=='object'||Array.isArray(patch)||Object.keys(patch).length===0
-    ||Object.keys(patch).some(k=>!allowed.includes(k))) fail('invalid_personnel_data');
+  const descriptors = patch && typeof patch === 'object' ? Object.getOwnPropertyDescriptors(patch) : null;
+  if(!descriptors || Array.isArray(patch)
+    || (Object.getPrototypeOf(patch)!==Object.prototype&&Object.getPrototypeOf(patch)!==null)
+    || Object.getOwnPropertySymbols(patch).length>0
+    || Object.keys(descriptors).length===0
+    || Object.keys(descriptors).some(key=>!allowed.includes(key)||!Object.hasOwn(descriptors[key],'value'))) {
+    fail('invalid_personnel_data');
+  }
   const clean={};
   for(const [key,value] of Object.entries(patch)) {
     if(key==='displayLabel') clean[key]=boundedString(value,80);
