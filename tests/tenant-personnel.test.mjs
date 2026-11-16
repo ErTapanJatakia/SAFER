@@ -44,3 +44,13 @@ test('rejects cross-tenant locators and accessor-based personnel input without e
  Object.defineProperty(accessorInput,'displayLabel',{enumerable:true,get(){throw new Error('getter must not execute');}});
  await assert.rejects(()=>createTenantPersonnel({orgId,actorUid:'u1',input:accessorInput,database,serverTimestamp:stamp}),/invalid_personnel_data/);
 });
+
+test('personnel update rejects accessor properties without evaluating getters',async()=>{
+ const database=db();
+ const created=await createTenantPersonnel({orgId,actorUid:'u1',input:validInput,database,serverTimestamp:stamp});
+ let evaluated=false;
+ const patch={};
+ Object.defineProperty(patch,'displayLabel',{enumerable:true,get(){evaluated=true;return 'unexpected';}});
+ await assert.rejects(()=>updateTenantPersonnel({orgId,actorUid:'u1',recordId:created.recordId,patch,database,serverTimestamp:stamp}),/invalid_personnel_data/);
+ assert.equal(evaluated,false);
+});
