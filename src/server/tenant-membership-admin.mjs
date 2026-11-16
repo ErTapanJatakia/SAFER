@@ -189,8 +189,11 @@ export async function manageTenantMember({
       orgId,
       action,
       targetUid: preflightTargetUid,
-      targetCurrentRole: action === 'members:suspend' ? 'tenant_employee' : 'tenant_manager',
-      ...(action === 'members:role:assign' ? { targetRole: 'tenant_employee' } : {}),
+      // Use the least-privileged manageable target as the preflight baseline.
+      // The real target role and requested destination are checked again inside
+      // the authoritative mutation transaction below.
+      targetCurrentRole: 'tenant_employee',
+      ...(action === 'members:role:assign' ? { targetRole } : {}),
     });
   });
 

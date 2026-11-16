@@ -84,6 +84,11 @@ test('role delegation and suspension are transactionally scoped and audited', as
     database: f.database, serverTimestamp: () => new Date(),
   });
   assert.equal(changed.role, 'tenant_auditor');
+  assert.equal(
+    f.reads.includes(`organisations/${f.orgId}/members/${f.targetUid}`),
+    true,
+    'the real target is read only in the authoritative mutation transaction',
+  );
   assert.equal(f.records.get(`organisations/${f.orgId}/members/${f.targetUid}`).updatedByUid, f.actorUid);
   assert.equal(f.audit[0].action, 'tenant.member.role_changed');
 
