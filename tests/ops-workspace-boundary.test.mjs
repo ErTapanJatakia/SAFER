@@ -30,3 +30,12 @@ test('PMC configuration has an explicit allowlist and server-side organisation u
  assert.match(config,/validSettings/);
  assert.match(config,/DEFAULT_SETTINGS/);
 });
+
+
+test('Tenant invitations return a shareable one-time ID to the authorised inviter',()=>{
+ assert.match(workspace,/const result=await jsonPost\('\/api\/tenant\/members'/);
+ assert.match(workspace,/invitationReceipt\.invitationId/);
+ assert.match(workspace,/Copy invitation ID/);
+ assert.match(workspace,/intended verified recipient/);
+ assert.match(workspace,/no email is sent automatically/);
+});
