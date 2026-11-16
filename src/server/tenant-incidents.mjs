@@ -20,7 +20,7 @@ function validateText(value, max, required = false) {
 function parseIncidentDate(value) {
   if (value === undefined || value === null || value === '') return new Date();
   if (typeof value !== 'string'
-    || !/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?(?:Z|[+-]\\d{2}:\\d{2})$/.test(value)) {
+    || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/.test(value)) {
     fail('invalid_incident_data');
   }
   const datePart = value.slice(0, 10);
