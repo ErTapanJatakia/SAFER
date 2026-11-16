@@ -44,6 +44,7 @@ function matchesAcceptedMembership(membership, uid, orgId, invitedByUid) {
     && ['pending_activation', 'active'].includes(membership.status)
     && membership.schemaVersion === 1
     && membership.createdByUid === invitedByUid
+    && /^[A-Za-z0-9_-]{1,128}$/.test(membership.createdByUid ?? '')
     && /^[A-Za-z0-9_-]{1,128}$/.test(membership.updatedByUid ?? '')
     && Number.isFinite(createdAt)
     && Number.isFinite(updatedAt)
@@ -109,7 +110,14 @@ export async function acceptSuperAdminInvitation({
       if (
         invitation.acceptedByUid !== actorUid
         || !matchesAcceptedMembership(membership, actorUid, orgId, invitation.invitedByUid)
-        || !['super_admin_invitation_accepted', 'active'].includes(organisation.lifecycleStage)
+        || !(
+          (organisation.status === 'provisioning'
+            && organisation.lifecycleStage === 'super_admin_invitation_accepted'
+            && membership.status === 'pending_activation')
+          || (organisation.status === 'active'
+            && organisation.lifecycleStage === 'active'
+            && membership.status === 'active')
+        )
       ) fail('invitation_conflict');
       return {
         orgId,
