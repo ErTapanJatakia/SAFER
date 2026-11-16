@@ -37,7 +37,7 @@ function assertTenantLocator(orgId) {
   if (typeof orgId !== 'string' || !ORG_ID_PATTERN.test(orgId)) fail('invalid_request');
 }
 
-function assertMembership(membership, uid, orgId) {
+function assertMembership(membership, uid, orgId, allowedStatuses = ['active']) {
   const requiredFields = [
     'uid', 'orgId', 'role', 'status', 'createdAt', 'createdByUid',
     'updatedAt', 'updatedByUid', 'schemaVersion',
@@ -48,7 +48,7 @@ function assertMembership(membership, uid, orgId) {
   if (fields.length !== requiredFields.length
     || fields.some((field, index) => field !== requiredFields[index])
     || membership.uid !== uid || membership.orgId !== orgId
-    || membership.status !== 'active' || membership.schemaVersion !== 1
+    || !allowedStatuses.includes(membership.status) || membership.schemaVersion !== 1
     || !TENANT_ROLES.includes(membership.role)
     || typeof membership.createdByUid !== 'string'
     || typeof membership.updatedByUid !== 'string'
@@ -161,7 +161,7 @@ export async function manageTenantMember({
   if (!/^[A-Za-z0-9_-]{1,128}$/.test(actorUid ?? '')
     || !/^[A-Za-z0-9_-]{1,128}$/.test(targetUid ?? '')
     || actorUid === targetUid
-    || !['members:suspend', 'members:role:assign'].includes(action)
+    || !['members:suspend', 'members:reactivate', 'members:role:assign'].includes(action)
     || (action === 'members:role:assign' && !TENANT_ROLES.includes(targetRole))) {
     fail('invalid_request');
   }
@@ -184,7 +184,7 @@ export async function manageTenantMember({
     const actor = actorSnapshot.data();
     const target = targetSnapshot.data();
     const organisation = orgSnapshot.data();
-    assertMembership(target, targetUid, orgId);
+    assertMembership(target, targetUid, orgId, action === 'members:reactivate' ? ['suspended'] : ['active']);
     assertOrganisation(organisation, orgId);
 
     const decision = authorizeTenantAction({
@@ -193,9 +193,9 @@ export async function manageTenantMember({
     });
     if (!decision.allowed) fail(decision.reason);
 
-    if (action === 'members:suspend') {
+    if (action === 'members:suspend' || action === 'members:reactivate') {
       transaction.update(targetRef, {
-        status: 'suspended', updatedAt: timestamp, updatedByUid: actorUid,
+        status: action === 'members:suspend' ? 'suspended' : 'active', updatedAt: timestamp, updatedByUid: actorUid,
       });
     } else {
       transaction.update(targetRef, {
@@ -203,20 +203,20 @@ export async function manageTenantMember({
       });
     }
     transaction.create(auditRef, {
-      action: action === 'members:suspend' ? 'tenant.member.suspended' : 'tenant.member.role_changed',
+      action: action === 'members:suspend' ? 'tenant.member.suspended' : action === 'members:reactivate' ? 'tenant.member.reactivated' : 'tenant.member.role_changed',
       actorUid, orgId, targetOrgId: orgId, targetUid,
       details: {
         previousRole: target.role,
         newRole: action === 'members:role:assign' ? targetRole : target.role,
         previousStatus: target.status,
-        newStatus: action === 'members:suspend' ? 'suspended' : target.status,
+        newStatus: action === 'members:suspend' ? 'suspended' : action === 'members:reactivate' ? 'active' : target.status,
       },
       occurredAt: timestamp,
     });
     return {
       orgId, targetUid,
       role: action === 'members:role:assign' ? targetRole : target.role,
-      status: action === 'members:suspend' ? 'suspended' : target.status,
+      status: action === 'members:suspend' ? 'suspended' : action === 'members:reactivate' ? 'active' : target.status,
     };
   });
 }
