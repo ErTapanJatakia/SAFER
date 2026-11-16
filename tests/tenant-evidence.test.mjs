@@ -27,3 +27,14 @@ test('Invalid type and oversized declared file are rejected',async()=>{
  await assert.rejects(()=>registerTenantEvidence({orgId,actorUid:'u1',input:{...input,mediaType:'application/octet-stream'},database:db(),serverTimestamp:()=>new Date()}),/invalid_evidence_data/);
  await assert.rejects(()=>registerTenantEvidence({orgId,actorUid:'u1',input:{...input,byteSize:21*1024*1024},database:db(),serverTimestamp:()=>new Date()}),/invalid_evidence_data/);
 });
+
+test('Evidence registration rejects unexpected and cross-tenant metadata fields',async()=>{
+ const database=db();
+ await assert.rejects(()=>registerTenantEvidence({orgId,actorUid:'u1',input:{...input,orgId:`org_${'b'.repeat(32)}`},database,serverTimestamp:()=>new Date()}),/invalid_evidence_data/);
+ await assert.rejects(()=>registerTenantEvidence({orgId,actorUid:'u1',input:{...input,personalData:'sensitive'},database,serverTimestamp:()=>new Date()}),/invalid_evidence_data/);
+});
+test('Evidence registration rejects accessor-backed metadata without evaluating getters',async()=>{
+ const accessorInput={...input};
+ Object.defineProperty(accessorInput,'title',{enumerable:true,get(){throw new Error('getter must not execute');}});
+ await assert.rejects(()=>registerTenantEvidence({orgId,actorUid:'u1',input:accessorInput,database:db(),serverTimestamp:()=>new Date()}),/invalid_evidence_data/);
+});
