@@ -39,3 +39,12 @@ test('Tenant invitations return a shareable one-time ID to the authorised invite
  assert.match(workspace,/intended verified recipient/);
  assert.match(workspace,/no email is sent automatically/);
 });
+
+
+test('Audit interface supports server-side date filtering and cursor pagination',()=>{
+ assert.match(workspace,/Audit start date/);
+ assert.match(workspace,/Audit end date/);
+ assert.match(workspace,/Apply date filter/);
+ assert.match(workspace,/Load older events/);
+ assert.match(workspace,/nextCursor/);
+});
