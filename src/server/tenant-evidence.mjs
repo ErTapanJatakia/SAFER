@@ -18,16 +18,18 @@ export class TenantEvidenceError extends Error {
  constructor(code){super(code);this.name='TenantEvidenceError';this.code=code;}
 }
 const fail=code=>{throw new TenantEvidenceError(code);};
+function safeTimestamp(value){try{const date=value instanceof Date?value:value?.toDate?.();return date instanceof Date&&Number.isFinite(date.getTime())?date.toISOString():null;}catch{return null;}}
 function valid(data,id,orgId){
  if(!data||typeof data!=='object'||Array.isArray(data))return false;
  const keys=Object.keys(data).sort();
  return keys.length===FIELDS.length&&keys.every((k,i)=>k===FIELDS[i])
   &&data.evidenceId===id&&data.orgId===orgId&&INCIDENT.test(data.incidentId??'')
-  &&typeof data.title==='string'&&typeof data.fileName==='string'
+  &&typeof data.title==='string'&&data.title.trim().length>0&&data.title.length<=160
+  &&typeof data.fileName==='string'&&data.fileName.trim().length>0&&data.fileName.length<=180&&!/[\\/]/.test(data.fileName)
   &&MIME_TYPES.has(data.mediaType)&&Number.isInteger(data.byteSize)&&data.byteSize>0&&data.byteSize<=20*1024*1024
   &&(data.sha256Claimed===null||/^[a-f0-9]{64}$/i.test(data.sha256Claimed??''))
   &&data.verificationState==='metadata_registered_unverified'
-  &&data.createdAt!=null&&typeof data.createdByUid==='string';
+  &&safeTimestamp(data.createdAt)!==null&&UID.test(data.createdByUid??'');
 }
 async function authorize(tx,db,uid,orgId,action){
  const [m,o]=await Promise.all([
@@ -49,7 +51,7 @@ export async function listTenantEvidence({orgId,database,limit=100}){
    evidenceId:d.evidenceId,incidentId:d.incidentId,title:d.title,fileName:d.fileName,
    mediaType:d.mediaType,byteSize:d.byteSize,sha256Claimed:d.sha256Claimed,
    verificationState:d.verificationState,
-   createdAt:d.createdAt?.toDate?.()?.toISOString?.()??null,createdByUid:d.createdByUid,
+   createdAt:safeTimestamp(d.createdAt),createdByUid:d.createdByUid,
   }]:[];
  });
  return {orgId,records,hasMore};
