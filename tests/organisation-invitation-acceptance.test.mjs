@@ -247,3 +247,43 @@ test('accepted invitation replay rejects incomplete or malformed canonical membe
     );
   }
 });
+
+
+test('accepted invitation replay rejects inconsistent organisation and membership lifecycle pairs', async () => {
+  const state = fixture();
+  await accept(state);
+  const organisationPath = `organisations/${orgId}`;
+  const memberPath = `organisations/${orgId}/members/${actorUid}`;
+  state.store.set(organisationPath, {
+    ...state.store.get(organisationPath),
+    status: 'active',
+  });
+  await assert.rejects(
+    accept(state),
+    (error) => error instanceof InvitationAcceptanceError && error.code === 'invitation_conflict',
+  );
+  state.store.set(organisationPath, {
+    ...state.store.get(organisationPath),
+    status: 'provisioning',
+    lifecycleStage: 'active',
+  });
+  await assert.rejects(
+    accept(state),
+    (error) => error instanceof InvitationAcceptanceError && error.code === 'invitation_conflict',
+  );
+  state.store.set(organisationPath, {
+    ...state.store.get(organisationPath),
+    status: 'active',
+    lifecycleStage: 'active',
+  });
+  state.store.set(memberPath, {
+    ...state.store.get(memberPath),
+    status: 'active',
+    updatedAt: new Date(state.now + 1000),
+    updatedByUid: 'activation-operator',
+  });
+  const result = await accept(state);
+  assert.equal(result.idempotent, true);
+  assert.equal(result.membershipStatus, 'active');
+  assert.equal(result.activationRequired, false);
+});
