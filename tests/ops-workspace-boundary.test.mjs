@@ -48,3 +48,10 @@ test('Audit interface supports server-side date filtering and cursor pagination'
  assert.match(workspace,/Load older events/);
  assert.match(workspace,/nextCursor/);
 });
+
+
+test('Tenant membership administration exposes reactivation only for suspended records',()=>{
+ assert.match(workspace,/members:reactivate/);
+ assert.match(workspace,/row\.status==='suspended'/);
+ assert.match(workspace,/row\.status==='active'&&<select aria-label="Change member role"/);
+});
