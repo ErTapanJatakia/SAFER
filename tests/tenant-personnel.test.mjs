@@ -36,3 +36,11 @@ test('Invalid readiness status is rejected',async()=>{
  const database=db();
  await assert.rejects(()=>createTenantPersonnel({orgId,actorUid:'u1',input:{...validInput,readinessStatus:'APPROVED'},database,serverTimestamp:stamp}),/invalid_personnel_data/);
 });
+
+test('rejects cross-tenant locators and accessor-based personnel input without evaluating getters',async()=>{
+ const database=db();
+ await assert.rejects(()=>createTenantPersonnel({orgId,actorUid:'u1',input:{...validInput,orgId:`org_${'b'.repeat(32)}`},database,serverTimestamp:stamp}),/invalid_personnel_data/);
+ const accessorInput={...validInput};
+ Object.defineProperty(accessorInput,'displayLabel',{enumerable:true,get(){throw new Error('getter must not execute');}});
+ await assert.rejects(()=>createTenantPersonnel({orgId,actorUid:'u1',input:accessorInput,database,serverTimestamp:stamp}),/invalid_personnel_data/);
+});
