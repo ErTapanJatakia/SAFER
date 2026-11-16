@@ -212,3 +212,46 @@ test('rejects replay of an accepted invitation by a different identity or with c
     (error) => error instanceof InvitationAcceptanceError && error.code === 'invitation_identity_mismatch',
   );
 });
+
+
+test('rejects a pending invitation with a malformed inviter UID before creating membership', async () => {
+  const state = fixture({ invitation: { invitedByUid: ' ' } });
+  await assert.rejects(
+    accept(state),
+    (error) => error instanceof InvitationAcceptanceError && error.code === 'invitation_identity_mismatch',
+  );
+  assert.equal(state.store.has(\`organisations/\${orgId}/members/\${actorUid}\`), false);
+});
+
+test('accepted-invitation replay requires the exact canonical membership schema', async () => {
+  const now = new Date('2026-11-17T00:00:00.000Z');
+  const malformedMemberships = [
+    {
+      uid: actorUid, orgId, role: 'tenant_super_admin', status: 'pending_activation',
+      createdAt: now, createdByUid: 'platform-owner-uid', updatedAt: now,
+      updatedByUid: actorUid, schemaVersion: 1, extra: true,
+    },
+    {
+      uid: actorUid, orgId, role: 'tenant_super_admin', status: 'pending_activation',
+      createdAt: 'not-a-timestamp', createdByUid: 'platform-owner-uid', updatedAt: now,
+      updatedByUid: actorUid, schemaVersion: 1,
+    },
+    {
+      uid: actorUid, orgId, role: 'tenant_super_admin', status: 'pending_activation',
+      createdAt: now, createdByUid: 'wrong-inviter', updatedAt: now,
+      updatedByUid: actorUid, schemaVersion: 1,
+    },
+  ];
+
+  for (const membership of malformedMemberships) {
+    const state = fixture({
+      organisation: { lifecycleStage: 'super_admin_invitation_accepted' },
+      invitation: { status: 'accepted', acceptedByUid: actorUid },
+      membership,
+    });
+    await assert.rejects(
+      accept(state),
+      (error) => error instanceof InvitationAcceptanceError && error.code === 'invitation_conflict',
+    );
+  }
+});
