@@ -48,7 +48,7 @@ export default async function handler(request, response) {
     if (message.includes('No user record') || message.includes('user-not-found')) {
       return response.status(422).json({ error: 'super_admin_account_not_found' });
     }
-    if (message.includes('verify their email') || message.includes('account is disabled')) {
+    if (message.includes('verify their email') || message.includes('account is disabled') || message.includes('account is not eligible')) {
       return response.status(422).json({ error: 'super_admin_account_not_eligible' });
     }
     if (message.includes('required') || message.includes('valid')) {
